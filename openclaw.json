@@ -1,10 +1,10 @@
 {
   "meta": {
     "lastTouchedVersion": "2026.2.15",
-    "lastTouchedAt": "2026-02-17T18:54:26.625Z"
+    "lastTouchedAt": "2026-02-17T19:20:06.825Z"
   },
   "wizard": {
-    "lastRunAt": "2026-02-17T18:52:22.638Z",
+    "lastRunAt": "2026-02-17T19:20:06.816Z",
     "lastRunVersion": "2026.2.15",
     "lastRunCommand": "doctor",
     "lastRunMode": "local"
@@ -43,12 +43,24 @@
         "mode": "non-main",
         "workspaceAccess": "none",
         "scope": "session"
+      },
+      "maxConcurrent": 4,
+      "subagents": {
+        "maxConcurrent": 8
       }
     },
     "list": [
       {
         "id": "main",
         "name": "Central Core"
+      },
+      {
+        "id": "clawdia_prime",
+        "name": "Head of Development",
+        "role": "Level 1: Orchestrator",
+        "sandbox": {
+          "mode": "off"
+        }
       },
       {
         "id": "pumplai_pm",
