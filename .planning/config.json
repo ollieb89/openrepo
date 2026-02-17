@@ -1,0 +1,8 @@
+{
+  "workflow": "gsd",
+  "preferences": {
+    "tech_stack": ["OpenClaw", "Next.js", "Bun", "Docker", "Gemini"],
+    "testing_framework": "Playwright",
+    "deployment": "Docker Compose"
+  }
+}

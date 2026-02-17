@@ -1,0 +1,89 @@
+{
+  "meta": {
+    "lastTouchedVersion": "2026.2.15",
+    "lastTouchedAt": "2026-02-17T20:05:00.000Z"
+  },
+  "auth": {
+    "profiles": {
+      "google-gemini-cli:buitelaarolivier@gmail.com": {
+        "provider": "google-gemini-cli",
+        "mode": "oauth",
+        "email": "buitelaarolivier@gmail.com"
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "google-gemini-cli/gemini-2.5-flash"
+      },
+      "models": {
+        "google-gemini-cli/gemini-3-pro-preview": {
+          "params": { "temperature": 0.4, "topP": 0.9 }
+        },
+        "google-gemini-cli/gemini-2.5-flash": {
+          "params": { "temperature": 0.7 }
+        }
+      },
+      "sandbox": {
+        "mode": "non-main",
+        "scope": "session",
+        "workspaceAccess": "none"
+      }
+    },
+    "list": [
+      {
+        "id": "main",
+        "name": "Central Core"
+      },
+      {
+        "id": "pumplai_pm",
+        "name": "PumpLAI Project Manager",
+        "workspace": "/home/ollie/Development/Projects/pumplai",
+        "sandbox": {
+          "mode": "all"
+        }
+      },
+      {
+        "id": "nextjs_pm",
+        "name": "Frontend Architect",
+        "workspace": "/home/ollie/Development/Projects/pumplai",
+        "sandbox": {
+          "mode": "off"
+        }
+      },
+      {
+        "id": "python_backend_worker",
+        "name": "ML Pipeline Worker",
+        "workspace": "/home/ollie/Development/Projects/pumplai",
+        "sandbox": {
+          "mode": "off"
+        }
+      }
+    ]
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "dmPolicy": "pairing",
+      "botToken": "8261002797:AAFMJm4sifdywmKM8oKezRnFdAgxezvIHW0",
+      "groupPolicy": "allowlist",
+      "streamMode": "partial"
+    }
+  },
+  "gateway": {
+    "port": 18789,
+    "mode": "local",
+    "bind": "loopback",
+    "auth": {
+      "mode": "token",
+      "token": "c1701657cb4ba6739dcb5684bebf077384ce540c3c41e112"
+    }
+  },
+  "plugins": {
+    "entries": {
+      "telegram": { "enabled": true },
+      "google-gemini-cli-auth": { "enabled": true }
+    }
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "828d35f6147683dec74a3a601d4034c92487728e2035196e9fd52aefe680f091": {
+    "deviceId": "828d35f6147683dec74a3a601d4034c92487728e2035196e9fd52aefe680f091",
+    "publicKey": "8nqkaFKaHQxZLMVUOfxpUtsnlPwp_0t3chC7jXsof6I",
+    "platform": "linux",
+    "clientId": "cli",
+    "clientMode": "cli",
+    "role": "operator",
+    "roles": [
+      "operator"
+    ],
+    "scopes": [
+      "operator.admin",
+      "operator.approvals",
+      "operator.pairing"
+    ],
+    "tokens": {
+      "operator": {
+        "token": "Bya8jKhwBnwJSUsriTXBxGsA5hcHdYvpRA_QFnxeS-Q",
+        "role": "operator",
+        "scopes": [
+          "operator.admin",
+          "operator.approvals",
+          "operator.pairing"
+        ],
+        "createdAtMs": 1771323451764
+      }
+    },
+    "createdAtMs": 1771323451764,
+    "approvedAtMs": 1771323451764
+  },
+  "f9242920df124a826cdb5f2b9d7e5f3d61b91445264083c61697f976e5c2784d": {
+    "deviceId": "f9242920df124a826cdb5f2b9d7e5f3d61b91445264083c61697f976e5c2784d",
+    "publicKey": "iz94HO-Ou6Dfn6jWkIUD-UDL6o7cWSWakYwVN7SeX5Q",
+    "platform": "Linux x86_64",
+    "clientId": "openclaw-control-ui",
+    "clientMode": "webchat",
+    "role": "operator",
+    "roles": [
+      "operator"
+    ],
+    "scopes": [
+      "operator.admin",
+      "operator.approvals",
+      "operator.pairing"
+    ],
+    "tokens": {
+      "operator": {
+        "token": "ck4A5gstE5VMU8elHPyivH3JB5nkBtXbHSkyBoC23iQ",
+        "role": "operator",
+        "scopes": [
+          "operator.admin",
+          "operator.approvals",
+          "operator.pairing"
+        ],
+        "createdAtMs": 1771324241964,
+        "lastUsedAtMs": 1771354373471
+      }
+    },
+    "createdAtMs": 1771324241964,
+    "approvedAtMs": 1771324241964
+  },
+  "8d7004ad253726d4485161d47533c3b4d347a48ce41bd2535e63ce4a1891631a": {
+    "deviceId": "8d7004ad253726d4485161d47533c3b4d347a48ce41bd2535e63ce4a1891631a",
+    "publicKey": "qhEV4Id7SmI_XV2ruZHISz57iCBrlGc-4n8NMOb9l2s",
+    "platform": "Linux x86_64",
+    "clientId": "openclaw-control-ui",
+    "clientMode": "webchat",
+    "role": "operator",
+    "roles": [
+      "operator"
+    ],
+    "scopes": [
+      "operator.admin",
+      "operator.approvals",
+      "operator.pairing"
+    ],
+    "tokens": {
+      "operator": {
+        "token": "6fjGRt9u_5hqCxg4qOTrEeZiIkFmmcQG1FdfhGBxTXQ",
+        "role": "operator",
+        "scopes": [
+          "operator.admin",
+          "operator.approvals",
+          "operator.pairing"
+        ],
+        "createdAtMs": 1771324288216,
+        "lastUsedAtMs": 1771354375845
+      }
+    },
+    "createdAtMs": 1771324288216,
+    "approvedAtMs": 1771324288216
+  }
+}

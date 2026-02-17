@@ -1,0 +1,12 @@
+{
+  "entries": [
+    {
+      "containerName": "openclaw-sbx-agent-pumplai_pm-5190ef92",
+      "sessionKey": "agent:pumplai_pm",
+      "createdAtMs": 1771349983801,
+      "lastUsedAtMs": 1771349983801,
+      "image": "openclaw-sandbox:bookworm-slim",
+      "configHash": "0fcf72c7e0d2fcb69270264a0260f196bc13b1f41722c8645e0302deac9df5ff"
+    }
+  ]
+}

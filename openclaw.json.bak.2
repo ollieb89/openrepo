@@ -1,0 +1,96 @@
+{
+  "meta": {
+    "lastTouchedVersion": "2026.2.15",
+    "lastTouchedAt": "2026-02-17T17:38:07.174Z"
+  },
+  "wizard": {
+    "lastRunAt": "2026-02-17T10:17:21.602Z",
+    "lastRunVersion": "2026.2.15",
+    "lastRunCommand": "onboard",
+    "lastRunMode": "local"
+  },
+  "auth": {
+    "profiles": {
+      "google-gemini-cli:buitelaarolivier@gmail.com": {
+        "provider": "google-gemini-cli",
+        "mode": "oauth",
+        "email": "buitelaarolivier@gmail.com"
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "google-gemini-cli/gemini-2.5-flash"
+      },
+      "models": {
+        "google-gemini-cli/gemini-3-pro-preview": {},
+        "google-gemini-cli/gemini-2.5-flash": {}
+      },
+      "workspace": "/home/ollie/.openclaw/workspace",
+      "compaction": {
+        "mode": "safeguard"
+      },
+      "maxConcurrent": 4,
+      "subagents": {
+        "maxConcurrent": 8
+      }
+    },
+    "list": [
+      {
+        "id": "main"
+      },
+      {
+        "id": "pumplai_pm",
+        "name": "pumplai_pm",
+        "workspace": "/home/ollie/Development/Projects/pumplai",
+        "agentDir": "/home/ollie/.openclaw/agents/pumplai_pm/agent",
+        "sandbox": {
+          "mode": "all",
+          "provider": "custom",
+          "custom": {
+            "engine": "docker",
+            "image": "openclaw-sandbox:bookworm-slim",
+            "args": [
+              "--gpus=all",
+              "--cap-add=SYS_ADMIN",
+              "-v", "/usr/lib/x86_64-linux-gnu/libnvidia-ml.so:/usr/lib/x86_64-linux-gnu/libnvidia-ml.so",
+              "-v", "/dev/nvidiactl:/dev/nvidiactl",
+              "-v", "/dev/nvidia-uvm:/dev/nvidia-uvm"
+            ]
+          }
+        }
+      },
+      {
+        "id": "nextjs_pm",
+        "name": "nextjs_pm",
+        "workspace": "/home/ollie/Development/Projects/pumplai",
+        "agentDir": "/home/ollie/.openclaw/agents/nextjs_pm/agent"
+      },
+      {
+        "id": "python_backend_worker",
+        "name": "python_backend_worker",
+        "workspace": "/home/ollie/Development/Projects/pumplai",
+        "agentDir": "/home/ollie/.openclaw/agents/python_backend_worker/agent"
+      }
+    ]
+  },
+  "messages": {
+    "ackReactionScope": "group-mentions"
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "botToken": "8261002797:AAFMJm4sifdywmKM8oKezRnFdAgxezvIHW0"
+    }
+  },
+  "gateway": {
+    "port": 18789,
+    "mode": "local",
+    "bind": "loopback",
+    "auth": {
+      "mode": "token",
+      "token": "c1701657cb4ba6739dcb5684bebf077384ce540c3c41e112"
+    }
+  }
+}

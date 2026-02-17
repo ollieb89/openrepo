@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "profiles": {
+    "google-gemini-cli:buitelaarolivier@gmail.com": {
+      "type": "oauth",
+      "provider": "google-gemini-cli",
+      "access": "ya29.a0ATkoCc4Qw4Bw4IFBnzvoiLKuj95mFvVZFi9MCKvC6ZPRcenJx2AeyGG05qdxcmLxEzlJQlizwZ3hTdidazm1EHgU4UCf0hGL6YG6gdtxpeU_oivSDI4RkgcNfMRkiEh1AlQTg_-8YPz9f161PmKEwBaRidBc7L-oTrgDFGJePIblBA7ajNwC7eo0PnBRRIcoQrt-Xhqadu4GhAaCgYKAYASARcSFQHGX2Mi79cw0jmoLSLVkt7YQCz4yQ0213",
+      "refresh": "1//096JKqv3cOK9SCgYIARAAGAkSNwF-L9IryyYQjCM95WGLSsi-UENgxD0JPb8vRw7LgH3PMg6gcgnIZCfLYIgegyh19s8u8DfcD3U",
+      "expires": 1771350670892,
+      "email": "buitelaarolivier@gmail.com",
+      "projectId": "named-magnet-783hx"
+    }
+  },
+  "lastGood": {
+    "google-gemini-cli": "google-gemini-cli:buitelaarolivier@gmail.com"
+  },
+  "usageStats": {
+    "google-gemini-cli:buitelaarolivier@gmail.com": {
+      "lastUsed": 1771350046662,
+      "errorCount": 0
+    }
+  }
+}
