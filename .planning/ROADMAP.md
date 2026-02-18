@@ -75,6 +75,9 @@
   1. ClawdiaPrime (L1) has a config.json with skill_registry that references router_skill.
   2. L1 → L2 delegation flow completes end-to-end.
   3. workspace/.openclaw/snapshots/ directory exists and snapshot capture flow works.
+**Plans**: 2 plans
+- [ ] 05-01-PLAN.md -- L1 Config + Delegation Wiring (COM-01)
+- [ ] 05-02-PLAN.md -- Snapshots Initialization + Verification (COM-04)
 
 ### Phase 6: Phase 3 Formal Verification
 **Goal**: Formally verify all Phase 3 deliverables and create the missing VERIFICATION.md.
@@ -108,6 +111,6 @@
 | 2. Core Orchestration | 2/2 | ✓ Complete | 2026-02-17 |
 | 3. Specialist Execution | 4/4 | ✓ Complete | 2026-02-18 |
 | 4. Monitoring Uplink | 0/4 | Planning Complete | - |
-| 5. Wiring Fixes & Initialization | 0/0 | Pending | - |
+| 5. Wiring Fixes & Initialization | 0/2 | Planned | - |
 | 6. Phase 3 Formal Verification | 0/0 | Pending | - |
 | 7. Phase 4 Formal Verification | 0/0 | Pending | - |
