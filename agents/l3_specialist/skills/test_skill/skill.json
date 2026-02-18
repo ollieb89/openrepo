@@ -1,0 +1,8 @@
+{
+  "id": "test",
+  "name": "Test Skill",
+  "description": "Run test suites, capture output, and report pass/fail results.",
+  "capabilities": ["test_execution", "coverage_report"],
+  "timeout_seconds": 300,
+  "expected_outputs": ["test_results", "exit_code", "output_log"]
+}

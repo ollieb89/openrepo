@@ -1,13 +1,7 @@
 {
   "meta": {
     "lastTouchedVersion": "2026.2.15",
-    "lastTouchedAt": "2026-02-17T17:38:07.174Z"
-  },
-  "wizard": {
-    "lastRunAt": "2026-02-17T10:17:21.602Z",
-    "lastRunVersion": "2026.2.15",
-    "lastRunCommand": "onboard",
-    "lastRunMode": "local"
+    "lastTouchedAt": "2026-02-17T20:05:00.000Z"
   },
   "auth": {
     "profiles": {
@@ -24,64 +18,57 @@
         "primary": "google-gemini-cli/gemini-2.5-flash"
       },
       "models": {
-        "google-gemini-cli/gemini-3-pro-preview": {},
-        "google-gemini-cli/gemini-2.5-flash": {}
+        "google-gemini-cli/gemini-3-pro-preview": {
+          "params": { "temperature": 0.4, "topP": 0.9 }
+        },
+        "google-gemini-cli/gemini-2.5-flash": {
+          "params": { "temperature": 0.7 }
+        }
       },
-      "workspace": "/home/ollie/.openclaw/workspace",
-      "compaction": {
-        "mode": "safeguard"
-      },
-      "maxConcurrent": 4,
-      "subagents": {
-        "maxConcurrent": 8
+      "sandbox": {
+        "mode": "non-main",
+        "scope": "session",
+        "workspaceAccess": "none"
       }
     },
     "list": [
       {
-        "id": "main"
+        "id": "main",
+        "name": "Central Core"
       },
       {
         "id": "pumplai_pm",
-        "name": "pumplai_pm",
+        "name": "PumpLAI Project Manager",
         "workspace": "/home/ollie/Development/Projects/pumplai",
-        "agentDir": "/home/ollie/.openclaw/agents/pumplai_pm/agent",
         "sandbox": {
-          "mode": "all",
-          "provider": "custom",
-          "custom": {
-            "engine": "docker",
-            "image": "openclaw-sandbox:bookworm-slim",
-            "args": [
-              "--gpus=all",
-              "--cap-add=SYS_ADMIN",
-              "-v", "/usr/lib/x86_64-linux-gnu/libnvidia-ml.so:/usr/lib/x86_64-linux-gnu/libnvidia-ml.so",
-              "-v", "/dev/nvidiactl:/dev/nvidiactl",
-              "-v", "/dev/nvidia-uvm:/dev/nvidia-uvm"
-            ]
-          }
+          "mode": "all"
         }
       },
       {
         "id": "nextjs_pm",
-        "name": "nextjs_pm",
+        "name": "Frontend Architect",
         "workspace": "/home/ollie/Development/Projects/pumplai",
-        "agentDir": "/home/ollie/.openclaw/agents/nextjs_pm/agent"
+        "sandbox": {
+          "mode": "off"
+        }
       },
       {
         "id": "python_backend_worker",
-        "name": "python_backend_worker",
+        "name": "ML Pipeline Worker",
         "workspace": "/home/ollie/Development/Projects/pumplai",
-        "agentDir": "/home/ollie/.openclaw/agents/python_backend_worker/agent"
+        "sandbox": {
+          "mode": "off"
+        }
       }
     ]
-  },
-  "messages": {
-    "ackReactionScope": "group-mentions"
   },
   "channels": {
     "telegram": {
       "enabled": true,
-      "botToken": "8261002797:AAFMJm4sifdywmKM8oKezRnFdAgxezvIHW0"
+      "dmPolicy": "pairing",
+      "botToken": "8261002797:AAFMJm4sifdywmKM8oKezRnFdAgxezvIHW0",
+      "groupPolicy": "allowlist",
+      "streamMode": "partial"
     }
   },
   "gateway": {
@@ -91,6 +78,12 @@
     "auth": {
       "mode": "token",
       "token": "c1701657cb4ba6739dcb5684bebf077384ce540c3c41e112"
+    }
+  },
+  "plugins": {
+    "entries": {
+      "telegram": { "enabled": true },
+      "google-gemini-cli-auth": { "enabled": true }
     }
   }
 }

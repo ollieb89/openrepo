@@ -1,7 +1,7 @@
 {
   "meta": {
     "lastTouchedVersion": "2026.2.15",
-    "lastTouchedAt": "2026-02-17T17:34:02.554Z"
+    "lastTouchedAt": "2026-02-17T17:38:07.174Z"
   },
   "wizard": {
     "lastRunAt": "2026-02-17T10:17:21.602Z",
@@ -46,7 +46,19 @@
         "workspace": "/home/ollie/Development/Projects/pumplai",
         "agentDir": "/home/ollie/.openclaw/agents/pumplai_pm/agent",
         "sandbox": {
-          "mode": "non-main"
+          "mode": "all",
+          "provider": "custom",
+          "custom": {
+            "engine": "docker",
+            "image": "openclaw-sandbox:bookworm-slim",
+            "args": [
+              "--gpus=all",
+              "--cap-add=SYS_ADMIN",
+              "-v", "/usr/lib/x86_64-linux-gnu/libnvidia-ml.so:/usr/lib/x86_64-linux-gnu/libnvidia-ml.so",
+              "-v", "/dev/nvidiactl:/dev/nvidiactl",
+              "-v", "/dev/nvidia-uvm:/dev/nvidia-uvm"
+            ]
+          }
         }
       },
       {
@@ -66,42 +78,10 @@
   "messages": {
     "ackReactionScope": "group-mentions"
   },
-  "commands": {
-    "native": "auto",
-    "nativeSkills": "auto"
-  },
-  "hooks": {
-    "internal": {
-      "enabled": true,
-      "entries": {
-        "boot-md": {
-          "enabled": true
-        },
-        "command-logger": {
-          "enabled": true
-        },
-        "session-memory": {
-          "enabled": true
-        }
-      }
-    }
-  },
   "channels": {
     "telegram": {
       "enabled": true,
-      "dmPolicy": "pairing",
-      "botToken": "8261002797:AAFMJm4sifdywmKM8oKezRnFdAgxezvIHW0",
-      "groups": {
-        "*": {}
-      },
-      "allowFrom": [
-        "*"
-      ],
-      "groupAllowFrom": [
-        "*"
-      ],
-      "groupPolicy": "allowlist",
-      "streamMode": "partial"
+      "botToken": "8261002797:AAFMJm4sifdywmKM8oKezRnFdAgxezvIHW0"
     }
   },
   "gateway": {
@@ -111,115 +91,6 @@
     "auth": {
       "mode": "token",
       "token": "c1701657cb4ba6739dcb5684bebf077384ce540c3c41e112"
-    },
-    "tailscale": {
-      "mode": "off",
-      "resetOnExit": false
-    },
-    "nodes": {
-      "denyCommands": [
-        "camera.snap",
-        "camera.clip",
-        "screen.record",
-        "calendar.add",
-        "contacts.add",
-        "reminders.add"
-      ]
-    }
-  },
-  "skills": {
-    "entries": {
-      "nano-banana-pro": {
-        "apiKey": "AIzaSyBySHE-lcoNchybIM0bDzSBOuyY_ZPByig"
-      },
-      "notion": {
-        "apiKey": "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"
-      },
-      "apple-reminders": {
-        "enabled": false
-      },
-      "bear-notes": {
-        "enabled": false
-      },
-      "apple-notes": {
-        "enabled": false
-      },
-      "blogwatcher": {
-        "enabled": false
-      },
-      "blucli": {
-        "enabled": false
-      },
-      "bluebubbles": {
-        "enabled": false
-      },
-      "camsnap": {
-        "enabled": false
-      },
-      "discord": {
-        "enabled": false
-      },
-      "eightctl": {
-        "enabled": false
-      },
-      "nano-pdf": {
-        "enabled": false
-      },
-      "openai-image-gen": {
-        "enabled": false
-      },
-      "openai-whisper": {
-        "enabled": false
-      },
-      "openai-whisper-api": {
-        "enabled": false
-      },
-      "openhue": {
-        "enabled": false
-      },
-      "oracle": {
-        "enabled": false
-      },
-      "ordercli": {
-        "enabled": false
-      },
-      "peekaboo": {
-        "enabled": false
-      },
-      "sag": {
-        "enabled": false
-      },
-      "sherpa-onnx-tts": {
-        "enabled": false
-      },
-      "slack": {
-        "enabled": false
-      },
-      "songsee": {
-        "enabled": false
-      },
-      "sonoscli": {
-        "enabled": false
-      },
-      "things-mac": {
-        "enabled": false
-      },
-      "trello": {
-        "enabled": false
-      },
-      "voice-call": {
-        "enabled": false
-      }
-    }
-  },
-  "plugins": {
-    "entries": {
-      "google-gemini-cli-auth": {
-        "enabled": true
-      },
-      "telegram": {
-        "enabled": true
-      }
     }
   }
 }

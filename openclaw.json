@@ -57,7 +57,6 @@
       {
         "id": "clawdia_prime",
         "name": "Head of Development",
-        "role": "Level 1: Orchestrator",
         "sandbox": {
           "mode": "off"
         }
@@ -85,6 +84,18 @@
         "sandbox": {
           "mode": "off"
         }
+      },
+      {
+        "id": "l3_specialist",
+        "name": "L3 Specialist Executor",
+        "workspace": "/home/ollie/Development/Projects/pumplai",
+        "sandbox": {
+          "mode": "all"
+        },
+        "level": 3,
+        "reports_to": "pumplai_pm",
+        "spawned_by": "pumplai_pm",
+        "lifecycle": "ephemeral"
       }
     ]
   },

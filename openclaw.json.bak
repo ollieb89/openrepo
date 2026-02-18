@@ -1,7 +1,7 @@
 {
   "meta": {
     "lastTouchedVersion": "2026.2.15",
-    "lastTouchedAt": "2026-02-17T18:52:22.648Z"
+    "lastTouchedAt": "2026-02-17T18:54:26.625Z"
   },
   "wizard": {
     "lastRunAt": "2026-02-17T18:52:22.638Z",
@@ -35,6 +35,9 @@
             "temperature": 0.7
           }
         }
+      },
+      "memorySearch": {
+        "enabled": false
       },
       "sandbox": {
         "mode": "non-main",
