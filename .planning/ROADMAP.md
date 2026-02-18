@@ -6,6 +6,9 @@
 - [x] **Phase 2: Core Orchestration** - Implement the L1 (ClawdiaPrime) and L2 (PumplAI_PM) hierarchy and delegation. ✓ COMPLETE
 - [x] **Phase 3: Specialist Execution** - Deploy isolated L3 specialists and implement Jarvis Protocol state synchronization.
 - [ ] **Phase 4: Monitoring Uplink** - Deploy the "occc" dashboard for real-time human oversight and monitoring.
+- [ ] **Phase 5: Wiring Fixes & Initialization** - Fix L1 config.json and initialize snapshots directory to close integration gaps.
+- [ ] **Phase 6: Phase 3 Formal Verification** - Verify HIE-03, HIE-04, COM-03, COM-04 and create Phase 3 VERIFICATION.md.
+- [ ] **Phase 7: Phase 4 Formal Verification** - Verify DSH-01, DSH-02, DSH-03, DSH-04, SEC-02 and create Phase 4 VERIFICATION.md.
 
 ---
 
@@ -63,6 +66,38 @@
 - [ ] 04-03-PLAN.md -- Mission Control Dashboard UI (DSH-01, DSH-04)
 - [ ] 04-04-PLAN.md -- Deployment + End-to-End Verification (DSH-01, DSH-02, DSH-03, DSH-04, SEC-02)
 
+### Phase 5: Wiring Fixes & Initialization
+**Goal**: Close integration and flow gaps identified by milestone audit — fix broken L1→L2 delegation wiring and initialize missing snapshots directory.
+**Depends on**: Phase 2, Phase 3
+**Requirements**: COM-01 (integration fix), COM-04 (initialization fix)
+**Gap Closure**: Closes gaps from v1.0 audit
+**Success Criteria**:
+  1. ClawdiaPrime (L1) has a config.json with skill_registry that references router_skill.
+  2. L1 → L2 delegation flow completes end-to-end.
+  3. workspace/.openclaw/snapshots/ directory exists and snapshot capture flow works.
+
+### Phase 6: Phase 3 Formal Verification
+**Goal**: Formally verify all Phase 3 deliverables and create the missing VERIFICATION.md.
+**Depends on**: Phase 5
+**Requirements**: HIE-03, HIE-04, COM-03, COM-04
+**Gap Closure**: Closes gaps from v1.0 audit
+**Success Criteria**:
+  1. L3 specialist containers spawn with physical isolation (no-new-privileges, cap_drop ALL).
+  2. Jarvis Protocol state.json updates in real-time during L3 task execution.
+  3. Semantic snapshots capture and persist workspace state changes.
+  4. Phase 3 VERIFICATION.md created with all criteria assessed.
+
+### Phase 7: Phase 4 Formal Verification
+**Goal**: Formally verify all Phase 4 deliverables and create the missing VERIFICATION.md.
+**Depends on**: Phase 6
+**Requirements**: DSH-01, DSH-02, DSH-03, DSH-04, SEC-02
+**Gap Closure**: Closes gaps from v1.0 audit
+**Success Criteria**:
+  1. occc dashboard renders live agent status and global metrics.
+  2. Live logs from isolated containers stream to the dashboard with redaction.
+  3. Sensitive information is successfully redacted from all debug outputs.
+  4. Phase 4 VERIFICATION.md created with all criteria assessed.
+
 ---
 
 ## Progress Table
@@ -73,3 +108,6 @@
 | 2. Core Orchestration | 2/2 | ✓ Complete | 2026-02-17 |
 | 3. Specialist Execution | 4/4 | ✓ Complete | 2026-02-18 |
 | 4. Monitoring Uplink | 0/4 | Planning Complete | - |
+| 5. Wiring Fixes & Initialization | 0/0 | Pending | - |
+| 6. Phase 3 Formal Verification | 0/0 | Pending | - |
+| 7. Phase 4 Formal Verification | 0/0 | Pending | - |
