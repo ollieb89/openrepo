@@ -126,32 +126,7 @@ def create_staging_branch(task_id: str, workspace_path: str, stash_if_needed: bo
             f"Stash them first or use stash_if_needed=True"
         )
     
-    # Detect default branch (main or master)
-    default_branch = "main"
-    try:
-        branch_result = subprocess.run(
-            ['git', '-C', str(workspace), 'symbolic-ref', 'refs/remotes/origin/HEAD'],
-            capture_output=True,
-            text=True
-        )
-        if branch_result.returncode == 0 and branch_result.stdout.strip():
-            # Extract branch name from refs/remotes/origin/HEAD -> refs/remotes/origin/main
-            default_branch = branch_result.stdout.strip().split('/')[-1]
-        else:
-            # Fallback: check if main exists, else use master
-            main_check = subprocess.run(
-                ['git', '-C', str(workspace), 'rev-parse', '--verify', 'main'],
-                capture_output=True
-            )
-            if main_check.returncode != 0:
-                master_check = subprocess.run(
-                    ['git', '-C', str(workspace), 'rev-parse', '--verify', 'master'],
-                    capture_output=True
-                )
-                if master_check.returncode == 0:
-                    default_branch = "master"
-    except Exception:
-        pass  # Use default "main"
+    default_branch = _detect_default_branch(workspace)
     
     # Check if branch already exists
     result = subprocess.run(
@@ -193,17 +168,18 @@ def create_staging_branch(task_id: str, workspace_path: str, stash_if_needed: bo
     return branch_name
 
 
-def capture_semantic_snapshot(task_id: str, workspace_path: str) -> Tuple[Path, Dict[str, Any]]:
+def capture_semantic_snapshot(task_id: str, workspace_path: str, project_id: str) -> Tuple[Path, Dict[str, Any]]:
     """
     Generate git diff as semantic snapshot.
-    
+
     Captures diff against default branch and saves to .openclaw/snapshots/{task_id}.diff
     with metadata header.
-    
+
     Args:
         task_id: The task identifier
         workspace_path: Path to the workspace git repository
-        
+        project_id: The project identifier (required — determines snapshot directory via get_snapshot_dir)
+
     Returns:
         Tuple of (snapshot_path, summary_dict)
         summary_dict contains: files_changed, insertions, deletions
@@ -214,7 +190,11 @@ def capture_semantic_snapshot(task_id: str, workspace_path: str) -> Tuple[Path, 
     workspace = Path(workspace_path)
     branch_name = f"l3/task-{task_id}"
     default_branch = _detect_default_branch(workspace)
-    
+
+    # Create snapshots directory
+    snapshots_dir = get_snapshot_dir(project_id)
+    snapshots_dir.mkdir(parents=True, exist_ok=True)
+
     # Generate diff against default branch
     try:
         diff_result = subprocess.run(
@@ -255,10 +235,6 @@ def capture_semantic_snapshot(task_id: str, workspace_path: str) -> Tuple[Path, 
                     insertions = int(part.split()[0])
                 elif 'deletion' in part:
                     deletions = int(part.split()[0])
-    
-    # Create snapshots directory
-    snapshots_dir = get_snapshot_dir()
-    snapshots_dir.mkdir(parents=True, exist_ok=True)
     
     # Create metadata header
     timestamp = time.time()
@@ -482,18 +458,19 @@ def l2_reject_staging(task_id: str, workspace_path: str, state_file: Optional[Pa
     }
 
 
-def cleanup_old_snapshots(workspace_path: str, max_snapshots: int = 100) -> Dict[str, Any]:
+def cleanup_old_snapshots(workspace_path: str, project_id: str, max_snapshots: int = 100) -> Dict[str, Any]:
     """
     Keep last N snapshots, delete oldest when exceeded.
-    
+
     Args:
         workspace_path: Path to the workspace (retained for API compatibility)
+        project_id: The project identifier (required — determines snapshot directory via get_snapshot_dir)
         max_snapshots: Maximum number of snapshots to retain (default: 100)
-        
+
     Returns:
         Dictionary with 'deleted_count' and 'remaining_count'
     """
-    snapshots_dir = get_snapshot_dir()
+    snapshots_dir = get_snapshot_dir(project_id)
     
     if not snapshots_dir.exists():
         return {'deleted_count': 0, 'remaining_count': 0}

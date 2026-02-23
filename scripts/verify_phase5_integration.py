@@ -357,10 +357,12 @@ def validate_snapshot_capture(project_root: Path) -> Tuple[bool, str, Optional[s
         return False, f"Failed to import capture_semantic_snapshot: {exc}", None
 
     task_id = f"phase5-integration-{int(time.time())}"
-    expected_snapshot = project_root / "workspace" / ".openclaw" / "snapshots" / f"{task_id}.diff"
+    # Legacy verification: use "default" as project_id (pre-multi-project convention)
+    verify_project_id = "default"
+    expected_snapshot = project_root / "workspace" / ".openclaw" / verify_project_id / "snapshots" / f"{task_id}.diff"
 
     try:
-        snapshot_path, _summary = capture_semantic_snapshot(task_id, str(workspace_path))
+        snapshot_path, _summary = capture_semantic_snapshot(task_id, str(workspace_path), verify_project_id)
     except Exception as exc:
         return False, f"capture_semantic_snapshot failed: {exc}", None
 
