@@ -52,11 +52,15 @@
     "list": [
       {
         "id": "main",
-        "name": "Central Core"
+        "name": "Central Core",
+        "level": 1,
+        "reports_to": null
       },
       {
         "id": "clawdia_prime",
         "name": "Head of Development",
+        "level": 1,
+        "reports_to": null,
         "sandbox": {
           "mode": "off"
         }
@@ -64,6 +68,8 @@
       {
         "id": "pumplai_pm",
         "name": "PumpLAI Project Manager",
+        "level": 2,
+        "reports_to": "clawdia_prime",
         "workspace": "/home/ollie/Development/Projects/pumplai",
         "sandbox": {
           "mode": "all"
@@ -72,6 +78,8 @@
       {
         "id": "nextjs_pm",
         "name": "Frontend Architect",
+        "level": 2,
+        "reports_to": "clawdia_prime",
         "workspace": "/home/ollie/Development/Projects/pumplai",
         "sandbox": {
           "mode": "off"
@@ -80,6 +88,8 @@
       {
         "id": "python_backend_worker",
         "name": "ML Pipeline Worker",
+        "level": 3,
+        "reports_to": "pumplai_pm",
         "workspace": "/home/ollie/Development/Projects/pumplai",
         "sandbox": {
           "mode": "off"
@@ -88,6 +98,8 @@
       {
         "id": "l3_specialist",
         "name": "L3 Specialist Executor",
+        "level": 3,
+        "reports_to": "pumplai_pm",
         "workspace": "/home/ollie/Development/Projects/pumplai",
         "sandbox": {
           "mode": "all"
