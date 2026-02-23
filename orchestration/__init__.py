@@ -1,5 +1,5 @@
 from .state_engine import JarvisState
-from .config import STATE_FILE, LOCK_TIMEOUT, POLL_INTERVAL, SNAPSHOT_DIR
+from .config import LOCK_TIMEOUT, POLL_INTERVAL
 from .init import initialize_workspace, verify_workspace
 from .project_config import (
     load_project_config,
@@ -20,7 +20,7 @@ from .snapshot import (
 
 __all__ = [
     'JarvisState',
-    'STATE_FILE', 'LOCK_TIMEOUT', 'POLL_INTERVAL', 'SNAPSHOT_DIR',
+    'LOCK_TIMEOUT', 'POLL_INTERVAL',
     'initialize_workspace', 'verify_workspace',
     'create_staging_branch', 'capture_semantic_snapshot',
     'l2_review_diff', 'l2_merge_staging', 'l2_reject_staging',

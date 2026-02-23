@@ -15,19 +15,17 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Set, Tuple
+from typing import Dict, Any, List, Optional, Tuple
 
 # Handle both module import and direct execution
 try:
     from .state_engine import JarvisState
-    from .config import STATE_FILE, POLL_INTERVAL
-    from .project_config import get_state_path
+    from .config import POLL_INTERVAL
 except ImportError:
     # Direct execution - add parent dir to path
     sys.path.insert(0, str(Path(__file__).parent.parent))
     from orchestration.state_engine import JarvisState
-    from orchestration.config import STATE_FILE, POLL_INTERVAL
-    from orchestration.project_config import get_state_path
+    from orchestration.config import POLL_INTERVAL
 
 
 # ANSI color codes

@@ -6,7 +6,6 @@ with variable substitution and per-project section-level overrides.
 """
 
 import argparse
-import json
 import string
 import sys
 from pathlib import Path
