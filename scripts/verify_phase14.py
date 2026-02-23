@@ -55,11 +55,20 @@ def get_active_project() -> str:
 
 
 def cleanup_test_projects() -> None:
-    """Remove all verify14* project directories (best-effort)."""
+    """Remove all verify14* project and agent directories (best-effort).
+
+    project_cli.py init also generates agents/<l2_pm>/ directories via soul_renderer.
+    These follow the naming convention <project_id>_pm, so we clean them up too.
+    """
     for pid in TEST_PROJECTS:
+        # Remove projects/<id>/
         project_dir = ROOT / "projects" / pid
         if project_dir.exists():
             shutil.rmtree(project_dir, ignore_errors=True)
+        # Remove agents/<id>_pm/ (created by soul_renderer during init)
+        agent_dir = ROOT / "agents" / f"{pid}_pm"
+        if agent_dir.exists():
+            shutil.rmtree(agent_dir, ignore_errors=True)
 
 
 # ---------------------------------------------------------------------------

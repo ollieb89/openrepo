@@ -32,7 +32,7 @@ See: `.planning/milestones/v1.0-ROADMAP.md` for full phase details.
 - [ ] **Phase 11: Config Decoupling Foundation** - Decouple all state/snapshot paths from hardcoded single-project constants; establish per-project path resolution as the canonical pattern
 - [ ] **Phase 12: SOUL Templating** - Default SOUL template with substitution points and per-project override mechanism; renders coherent L2 agent identity at project init time
 - [x] **Phase 13: Multi-Project Runtime** - Wire per-project context through spawn, pool, and monitor; project-labeled containers with namespaced naming and env injection (completed 2026-02-23)
-- [ ] **Phase 14: Project CLI** - `openclaw project init/list/switch/remove` subcommand group with template scaffolding for fullstack, backend, and ml-pipeline stacks
+- [x] **Phase 14: Project CLI** - `openclaw project init/list/switch/remove` subcommand group with template scaffolding for fullstack, backend, and ml-pipeline stacks (completed 2026-02-23)
 - [ ] **Phase 15: Dashboard Project Switcher** - Project selector in occc header; all API routes and SSE stream accept project scope; task/metrics views filter by selected project
 
 ## Phase Details
@@ -90,7 +90,7 @@ Plans:
   3. `openclaw project switch <id>` updates `active_project` in `openclaw.json`; running `list` immediately after confirms the active marker moved; attempting to switch while L3 tasks are in-flight prints a warning and aborts
   4. `openclaw project remove <id>` deletes the project directory; attempting to remove the currently active project prints an error and exits without deleting anything
   5. `openclaw project init --template fullstack` scaffolds a project.json pre-populated with fullstack defaults; `--template backend` and `--template ml-pipeline` produce their respective presets from `projects/_templates/`
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [ ] 14-01-PLAN.md — Template presets + CLI module with init/list/switch/remove subcommands
 - [ ] 14-02-PLAN.md — Phase 14 verification script (all 6 CLI requirements)
@@ -167,7 +167,7 @@ Plans:
 | 11. Config Decoupling Foundation | v1.1 | 0/3 | Planned | - |
 | 12. SOUL Templating | v1.1 | 0/2 | Planned | - |
 | 13. Multi-Project Runtime | 2/2 | Complete    | 2026-02-23 | - |
-| 14. Project CLI | 1/2 | In Progress|  | - |
+| 14. Project CLI | 2/2 | Complete   | 2026-02-23 | - |
 | 15. Dashboard Project Switcher | v1.1 | 0/TBD | Not started | - |
 | 16. Phase 11/12 Integration Fixes | 2/2 | Complete    | 2026-02-23 | - |
 | 17. Phase 11/12 Formal Verification | 2/2 | Complete    | 2026-02-23 | - |
