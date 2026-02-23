@@ -19,12 +19,12 @@ Requirements for milestone v1.1 Project Agnostic. Each maps to roadmap phases.
 
 ### Multi-Project Runtime
 
-- [ ] **MPR-01**: `spawn.py` adds `openclaw.project` label to all L3 containers
-- [ ] **MPR-02**: Container names prefixed with project ID: `openclaw-<project>-l3-<task_id>`
-- [ ] **MPR-03**: `pool.py` resolves state file path per-project via `get_state_path()`
+- [x] **MPR-01**: `spawn.py` adds `openclaw.project` label to all L3 containers
+- [x] **MPR-02**: Container names prefixed with project ID: `openclaw-<project>-l3-<task_id>`
+- [x] **MPR-03**: `pool.py` resolves state file path per-project via `get_state_path()`
 - [x] **MPR-04**: `monitor.py` accepts `--project` flag to filter output by project
-- [ ] **MPR-05**: `spawn.py` injects `OPENCLAW_PROJECT` env var into L3 containers
-- [ ] **MPR-06**: `active_project` resolution is env-var-first to prevent mid-execution mutation
+- [x] **MPR-05**: `spawn.py` injects `OPENCLAW_PROJECT` env var into L3 containers
+- [x] **MPR-06**: `active_project` resolution is env-var-first to prevent mid-execution mutation
 
 ### Project CLI
 
@@ -81,12 +81,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CFG-05 | Phase 12 | Pending |
 | CFG-06 | Phase 11 | Pending |
 | CFG-07 | Phase 11 | Pending |
-| MPR-01 | Phase 13 | Pending |
-| MPR-02 | Phase 13 | Pending |
-| MPR-03 | Phase 13 | Pending |
+| MPR-01 | Phase 13 | Complete |
+| MPR-02 | Phase 13 | Complete |
+| MPR-03 | Phase 13 | Complete |
 | MPR-04 | Phase 13 | Complete |
-| MPR-05 | Phase 13 | Pending |
-| MPR-06 | Phase 13 | Pending |
+| MPR-05 | Phase 13 | Complete |
+| MPR-06 | Phase 13 | Complete |
 | CLI-01 | Phase 14 | Pending |
 | CLI-02 | Phase 14 | Pending |
 | CLI-03 | Phase 14 | Pending |
