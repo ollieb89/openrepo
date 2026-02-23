@@ -14,6 +14,56 @@ from pathlib import Path
 from typing import Dict, Any, Optional, Tuple
 
 from .state_engine import JarvisState
+from .project_config import load_project_config
+
+
+def _detect_default_branch(workspace: Path, project_id: Optional[str] = None) -> str:
+    """
+    Detect the default branch for a workspace.
+
+    Resolution order:
+    1. default_branch field in project.json (if project_id given)
+    2. git symbolic-ref refs/remotes/origin/HEAD
+    3. Check if 'main' exists locally
+    4. Check if 'master' exists locally
+    5. Fallback: return "main" with a warning
+
+    Fresh detection on every call — no caching.
+    """
+    # 1. Project config
+    if project_id is not None:
+        try:
+            config = load_project_config(project_id)
+            branch = config.get("default_branch", "")
+            if branch:
+                return branch
+        except (FileNotFoundError, ValueError):
+            pass
+
+    # 2. Git symbolic-ref
+    try:
+        result = subprocess.run(
+            ['git', '-C', str(workspace), 'symbolic-ref', 'refs/remotes/origin/HEAD'],
+            capture_output=True,
+            text=True
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            return result.stdout.strip().split('/')[-1]
+    except Exception:
+        pass
+
+    # 3 & 4. Local branch existence
+    for candidate in ('main', 'master'):
+        result = subprocess.run(
+            ['git', '-C', str(workspace), 'rev-parse', '--verify', candidate],
+            capture_output=True
+        )
+        if result.returncode == 0:
+            return candidate
+
+    # 5. Last-resort fallback
+    print(f"WARNING: Could not detect default branch for {workspace}, falling back to 'main'")
+    return "main"
 
 
 class GitOperationError(Exception):
