@@ -7,6 +7,7 @@ set -euo pipefail
 : "${STAGING_BRANCH:?STAGING_BRANCH is required}"
 : "${CLI_RUNTIME:=claude-code}"
 : "${TASK_DESCRIPTION:=No task description provided}"
+: "${OPENCLAW_PROJECT:?OPENCLAW_PROJECT is required — container spawned without project context}"
 
 STATE_FILE="${OPENCLAW_STATE_FILE:-/workspace/.openclaw/workspace-state.json}"
 

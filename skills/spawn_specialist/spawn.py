@@ -3,11 +3,12 @@ L3 Specialist Container Spawning Module
 
 Implements the spawn_specialist skill for L2 to spawn isolated
 L3 containers with Docker Python SDK. Handles security isolation, GPU passthrough,
-and state synchronization. Project-agnostic — reads config from the active project.
+and state synchronization. Project-aware — resolves project identity at spawn time.
 """
 
 import json
 import os
+import re
 import sys
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -18,7 +19,29 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 import docker
 from docker.types import DeviceRequest
 from orchestration.state_engine import JarvisState
-from orchestration.project_config import load_project_config, get_workspace_path, get_agent_mapping, get_state_path
+from orchestration.project_config import (
+    get_active_project_id,
+    load_project_config,
+    get_workspace_path,
+    get_agent_mapping,
+    get_state_path,
+)
+
+
+_PROJECT_ID_PATTERN = re.compile(r'^[a-zA-Z0-9-]{1,20}$')
+
+
+def _validate_project_id(project_id: str) -> None:
+    """Validate project ID format: 1-20 chars, alphanumeric and hyphens only.
+
+    Raises:
+        ValueError: If project_id is invalid.
+    """
+    if not _PROJECT_ID_PATTERN.match(project_id):
+        raise ValueError(
+            f"Invalid project ID '{project_id}': must be 1-20 chars, "
+            "alphanumeric and hyphens only."
+        )
 
 
 def load_l3_config(project_id: Optional[str] = None) -> Dict[str, Any]:
@@ -65,6 +88,7 @@ def spawn_l3_specialist(
     workspace_path: str,
     requires_gpu: bool = False,
     cli_runtime: str = "claude-code",
+    project_id: Optional[str] = None,
 ) -> Any:
     """
     Spawn an L3 specialist container for task execution.
@@ -76,6 +100,7 @@ def spawn_l3_specialist(
         workspace_path: Path to the workspace directory on host
         requires_gpu: Whether GPU passthrough is required
         cli_runtime: CLI runtime to use (claude-code, codex, gemini-cli)
+        project_id: Project ID for namespacing. If None, resolved from active project.
 
     Returns:
         Docker container object
@@ -83,7 +108,13 @@ def spawn_l3_specialist(
     Raises:
         docker.errors.APIError: If Docker daemon is not running
         docker.errors.ImageNotFound: If the L3 image is not built
+        ValueError: If project_id is invalid or cannot be resolved
     """
+    # Resolve project identity once at entry — thread explicitly from here on
+    if project_id is None:
+        project_id = get_active_project_id()
+    _validate_project_id(project_id)
+
     client = docker.from_env()
 
     # Verify Docker daemon is running
@@ -106,18 +137,18 @@ def spawn_l3_specialist(
     # Create staging branch name
     staging_branch = f"l3/task-{task_id}"
 
-    # Build container name
-    container_name = f"openclaw-l3-{task_id}"
+    # Build namespaced container name — prevents cross-project name collisions
+    container_name = f"openclaw-{project_id}-l3-{task_id}"
 
     # Get project root for orchestration mount
     project_root = Path(__file__).parent.parent.parent
 
-    # Load L3 config for hierarchy metadata
-    l3_config = load_l3_config()
+    # Load L3 config for hierarchy metadata (pass project_id for overrides)
+    l3_config = load_l3_config(project_id)
 
     # Resolve spawned_by from project config, falling back to L3 config
     try:
-        agent_map = get_agent_mapping()
+        agent_map = get_agent_mapping(project_id)
         spawned_by = agent_map.get("l2_pm", l3_config.get("spawned_by", "pumplai_pm"))
     except (FileNotFoundError, ValueError):
         spawned_by = l3_config.get("spawned_by", "pumplai_pm")
@@ -135,14 +166,15 @@ def spawn_l3_specialist(
             str(project_root / "workspace" / ".openclaw"): {"bind": "/workspace/.openclaw", "mode": "rw"},
         },
 
-        # Environment variables
+        # Environment variables — OPENCLAW_PROJECT injected for container-side identity
         "environment": {
             "TASK_ID": task_id,
             "SKILL_HINT": skill_hint,
             "STAGING_BRANCH": staging_branch,
             "CLI_RUNTIME": cli_runtime,
             "TASK_DESCRIPTION": task_description,
-            "OPENCLAW_STATE_FILE": f"/workspace/.openclaw/{get_state_path().parent.name}/workspace-state.json",
+            "OPENCLAW_PROJECT": project_id,
+            "OPENCLAW_STATE_FILE": f"/workspace/.openclaw/{project_id}/workspace-state.json",
         },
 
         # Security isolation (HIE-04 requirements)
@@ -156,7 +188,7 @@ def spawn_l3_specialist(
         # Restart policy (L2 handles retries, not Docker)
         "restart_policy": {"Name": "no"},
 
-        # Labels for tracking (INT-03 fix: openclaw.managed=true is the primary filter key)
+        # Labels for tracking and project-scoped filtering
         "labels": {
             "openclaw.managed": "true",
             "openclaw.level": str(l3_config.get("level", 3)),
@@ -164,6 +196,8 @@ def spawn_l3_specialist(
             "openclaw.spawned_by": spawned_by,
             "openclaw.skill": skill_hint,
             "openclaw.tier": f"l{l3_config.get('level', 3)}",  # preserved for backward compat
+            "openclaw.project": project_id,
+            "openclaw.task.type": skill_hint,
         },
 
         # User matching (match host UID to avoid permission errors)
@@ -180,8 +214,8 @@ def spawn_l3_specialist(
             )
         ]
 
-    # Create task entry in state.json before spawning
-    state_file = get_state_path()
+    # Create task entry in state.json before spawning — use project-scoped path
+    state_file = get_state_path(project_id)
     jarvis = JarvisState(state_file)
     jarvis.create_task(
         task_id=task_id,
@@ -203,9 +237,9 @@ def spawn_l3_specialist(
         pass  # Container doesn't exist, which is fine
 
     # Spawn container
-    print(f"[spawn] Spawning L3 container: {container_name}")
+    print(f"[spawn] Spawning L3 container: {container_name} (project: {project_id})")
     print(f"[spawn] Task: {task_id}, Skill: {skill_hint}, GPU: {requires_gpu}")
-    
+
     container = client.containers.run(**container_config)
     return container
 
@@ -262,7 +296,7 @@ if __name__ == "__main__":
     parser.add_argument("--project", default=None, help="Project ID (overrides active_project)")
     parser.add_argument("--gpu", action="store_true", help="Enable GPU passthrough")
     parser.add_argument("--runtime", default="claude-code", help="CLI runtime")
-    
+
     args = parser.parse_args()
 
     container = spawn_l3_specialist(
@@ -272,6 +306,7 @@ if __name__ == "__main__":
         workspace_path=args.workspace,
         requires_gpu=args.gpu,
         cli_runtime=args.runtime,
+        project_id=args.project,
     )
-    
+
     print(f"Container spawned: {container.id}")
