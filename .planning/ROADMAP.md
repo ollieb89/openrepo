@@ -134,7 +134,9 @@
   2. `skills/review_skill/` exists as a stub (or pumplai_pm config reference removed) — no phantom skill path.
   3. `spawn.py` sets `openclaw.managed=true` label on containers — `listSwarmContainers` primary filter works.
   4. COM-01 delegation roundtrip no longer raises WARN for unrecognized `level` key.
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] 09-01-PLAN.md — Container labels (INT-03) + review_skill stub (INT-02)
+- [ ] 09-02-PLAN.md — Agent hierarchy schema (INT-01) + metrics validation + COM-01 WARN fix
 
 ### Phase 10: Housekeeping & Documentation
 **Goal**: Clean up remaining tech debt — missing verification docs, unused exports, and misconfigured paths.
@@ -163,5 +165,5 @@
 | 6. Phase 3 Formal Verification | 0/2 | Planned | - |
 | 7. Phase 4 Formal Verification | 2/3 | In Progress|  |
 | 8. Final Gap Closure | 0/0 | Planned | - |
-| 9. Integration Wiring Cleanup | 0/0 | Planned | - |
+| 9. Integration Wiring Cleanup | 0/2 | Planned | - |
 | 10. Housekeeping & Documentation | 0/0 | Planned | - |
