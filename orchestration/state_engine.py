@@ -130,6 +130,9 @@ class JarvisState:
 
     def _write_state_locked(self, f, state: Dict[str, Any]) -> None:
         """Write state to file inside a lock context (atomic write)."""
+        # Ensure metadata key exists at top level
+        if 'metadata' not in state:
+            state['metadata'] = {}
         state['metadata']['last_updated'] = time.time()
         f.seek(0)
         f.truncate()

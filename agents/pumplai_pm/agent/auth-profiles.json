@@ -4,9 +4,9 @@
     "google-gemini-cli:buitelaarolivier@gmail.com": {
       "type": "oauth",
       "provider": "google-gemini-cli",
-      "access": "ya29.a0ATkoCc7_4xNRfLa4SdgQHNndV2OLFg51jDD1e21-Vxo7YPCRf8nRNKIVU1NFZLWM648N8DGI4OVYVCUvEClG6PVh6pFiZa1GlF2nNvAAa00HtxHs0ey8GMiCkQL27fCsszCvexQPZWCguHRWHVJMGOMT_YLtKQ3wIm7Pf2FGumZnT9g3S1VeAeXP558b43JDbdT0kLK6lJ3RrwaCgYKATUSARcSFQHGX2Mi5uVGJ0TuJNzp9GcO4UGpJw0213",
+      "access": "ya29.a0ATkoCc6ALZ6w2NFEsS31I_yy2JpZcJaZlR4ozG6rrPUI8oydrUbdTBpLRx-AuRSb1cAdTxkYEqQho6SOEzUQQfDGCrwRY5eV41nzFyVYUlLl_CXoW9VQ3ReIrJBOudbHUixHHDiBLh3AZb6BQym6FFXpdQCEOqjkT6CsLVGIqwUj3xHSDF2VotZo8i5HU4qmHyH-ifv9tRGbnQaCgYKAcoSARcSFQHGX2Miq4LeDDCfdQmo16LCD3aTwQ0213",
       "refresh": "1//096JKqv3cOK9SCgYIARAAGAkSNwF-L9IryyYQjCM95WGLSsi-UENgxD0JPb8vRw7LgH3PMg6gcgnIZCfLYIgegyh19s8u8DfcD3U",
-      "expires": 1771366571370,
+      "expires": 1771847107306,
       "email": "buitelaarolivier@gmail.com",
       "projectId": "named-magnet-783hx"
     }
@@ -16,7 +16,7 @@
   },
   "usageStats": {
     "google-gemini-cli:buitelaarolivier@gmail.com": {
-      "lastUsed": 1771363414906,
+      "lastUsed": 1771843811257,
       "errorCount": 0
     }
   }

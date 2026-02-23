@@ -91,11 +91,7 @@
         "workspace": "/home/ollie/Development/Projects/pumplai",
         "sandbox": {
           "mode": "all"
-        },
-        "level": 3,
-        "reports_to": "pumplai_pm",
-        "spawned_by": "pumplai_pm",
-        "lifecycle": "ephemeral"
+        }
       }
     ]
   },
