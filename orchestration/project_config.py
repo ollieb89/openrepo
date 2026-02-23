@@ -90,3 +90,54 @@ def get_agent_mapping(project_id: Optional[str] = None) -> Dict[str, str]:
     """Get the agent role -> ID mapping for a project."""
     config = load_project_config(project_id)
     return config.get("agents", {})
+
+
+class ProjectNotFoundError(Exception):
+    """Raised when project manifest does not exist for a given project_id."""
+    pass
+
+
+def get_state_path(project_id: Optional[str] = None) -> Path:
+    """
+    Return the per-project state file path.
+
+    Path: <project_root>/workspace/.openclaw/<project_id>/workspace-state.json
+
+    Raises:
+        ProjectNotFoundError: If project_id has no manifest in projects/<id>/project.json
+        ValueError: If no active project is configured and project_id is None
+    """
+    if project_id is None:
+        project_id = get_active_project_id()
+
+    root = _find_project_root()
+    manifest_path = root / "projects" / project_id / "project.json"
+    if not manifest_path.exists():
+        raise ProjectNotFoundError(
+            f"Project '{project_id}' not found. No manifest at {manifest_path}"
+        )
+
+    return root / "workspace" / ".openclaw" / project_id / "workspace-state.json"
+
+
+def get_snapshot_dir(project_id: Optional[str] = None) -> Path:
+    """
+    Return the per-project snapshot directory path.
+
+    Path: <project_root>/workspace/.openclaw/<project_id>/snapshots/
+
+    Raises:
+        ProjectNotFoundError: If project_id has no manifest in projects/<id>/project.json
+        ValueError: If no active project is configured and project_id is None
+    """
+    if project_id is None:
+        project_id = get_active_project_id()
+
+    root = _find_project_root()
+    manifest_path = root / "projects" / project_id / "project.json"
+    if not manifest_path.exists():
+        raise ProjectNotFoundError(
+            f"Project '{project_id}' not found. No manifest at {manifest_path}"
+        )
+
+    return root / "workspace" / ".openclaw" / project_id / "snapshots"
