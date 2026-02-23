@@ -8,7 +8,7 @@ set -euo pipefail
 : "${CLI_RUNTIME:=claude-code}"
 : "${TASK_DESCRIPTION:=No task description provided}"
 
-STATE_FILE="/workspace/.openclaw/workspace-state.json"
+STATE_FILE="${OPENCLAW_STATE_FILE:-/workspace/.openclaw/workspace-state.json}"
 
 # Helper: update state.json via Python state engine
 update_state() {
