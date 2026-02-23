@@ -159,35 +159,45 @@ def render_soul(project_id: str) -> str:
     return result
 
 
-def write_soul(project_id: str, output_path: Optional[Path] = None) -> Path:
+def write_soul(project_id: str, output_path: Optional[Path] = None, skip_if_exists: bool = False) -> Optional[Path]:
     """
     Render SOUL.md and write it to disk.
-    
+
     If output_path is None, derive the default output path from the project config:
     agents/<l2_pm_id>/agent/SOUL.md (using config["agents"]["l2_pm"]).
-    
+
     Creates parent directories if needed.
-    
+
+    Args:
+        project_id: The project ID to render SOUL for.
+        output_path: Custom output path. If None, derived from project config.
+        skip_if_exists: If True and the output file already exists, return None
+                        without writing. Use --force in CLI to override.
+
     Returns:
-        Path: The path written to.
+        Path: The path written to, or None if skip_if_exists=True and file exists.
     """
     config = load_project_config(project_id)
-    
+
     # Determine output path
     if output_path is None:
         agents = config.get("agents", {})
         l2_pm_id = agents.get("l2_pm", project_id)
         output_path = _find_project_root() / "agents" / l2_pm_id / "agent" / "SOUL.md"
-    
+
+    # Skip if file already exists and skip_if_exists requested
+    if skip_if_exists and output_path.exists():
+        return None
+
     # Render content
     content = render_soul(project_id)
-    
+
     # Create parent directories if needed
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    
+
     # Write file
     output_path.write_text(content)
-    
+
     return output_path
 
 
@@ -196,12 +206,16 @@ if __name__ == "__main__":
     parser.add_argument("--project", required=True, help="Project ID to render SOUL for")
     parser.add_argument("--write", action="store_true", help="Write the rendered SOUL.md to the agent directory")
     parser.add_argument("--output", type=Path, help="Custom output path (only used with --write)")
-    
+    parser.add_argument("--force", action="store_true", help="Overwrite existing SOUL.md (default: skip if exists)")
+
     args = parser.parse_args()
-    
+
     if args.write:
-        output_path = write_soul(args.project, args.output)
-        print(f"Written to: {output_path}", file=sys.stderr)
+        output_path = write_soul(args.project, args.output, skip_if_exists=not args.force)
+        if output_path is not None:
+            print(f"Written to: {output_path}", file=sys.stderr)
+        else:
+            print(f"SOUL.md already exists. Use --force to overwrite.", file=sys.stderr)
     else:
         # Print to stdout
         print(render_soul(args.project), end="")
