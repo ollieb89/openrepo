@@ -1,20 +1,20 @@
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
 
 /**
  * Dispatches a directive to a target agent via the OpenClaw CLI.
- * 
+ *
  * @param {string} targetId - The ID of the target agent (e.g., 'pumplai_pm').
  * @param {string} directive - The high-level instruction to execute.
  */
 function dispatchDirective(targetId, directive) {
   try {
     console.log(`[Router] Dispatching to ${targetId} :: ${directive}`);
-    
-    // Construct the openclaw command
-    // We use --json to get a machine-readable response
-    const command = `openclaw agent --agent ${targetId} --message "${directive.replace(/"/g, '\\"')}" --json`;
-    
-    const output = execSync(command, { encoding: 'utf8' });
+
+    // Use execFileSync to avoid shell interpretation entirely.
+    // Arguments are passed as an array — no shell metacharacter injection possible.
+    const output = execFileSync('openclaw', [
+      'agent', '--agent', targetId, '--message', directive, '--json'
+    ], { encoding: 'utf8', timeout: 300000 });
     const result = JSON.parse(output);
     
     if (result.status === 'ok') {
@@ -28,7 +28,7 @@ function dispatchDirective(targetId, directive) {
     // Log the actual error output if available
     if (error.stdout) console.error('STDOUT:', error.stdout);
     if (error.stderr) console.error('STDERR:', error.stderr);
-    process.exit(1);
+    throw error;
   }
 }
 
