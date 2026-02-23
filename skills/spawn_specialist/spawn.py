@@ -1,9 +1,9 @@
 """
 L3 Specialist Container Spawning Module
 
-Implements the spawn_specialist skill for L2 (PumplAI_PM) to spawn isolated
+Implements the spawn_specialist skill for L2 to spawn isolated
 L3 containers with Docker Python SDK. Handles security isolation, GPU passthrough,
-and state synchronization.
+and state synchronization. Project-agnostic — reads config from the active project.
 """
 
 import json
@@ -18,13 +18,30 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 import docker
 from docker.types import DeviceRequest
 from orchestration.state_engine import JarvisState
+from orchestration.project_config import load_project_config, get_workspace_path, get_agent_mapping
 
 
-def load_l3_config() -> Dict[str, Any]:
-    """Load L3 specialist configuration from config.json."""
+def load_l3_config(project_id: Optional[str] = None) -> Dict[str, Any]:
+    """Load L3 specialist configuration, with optional project overrides."""
     config_path = Path(__file__).parent.parent.parent / "agents" / "l3_specialist" / "config.json"
     with open(config_path) as f:
-        return json.load(f)
+        config = json.load(f)
+
+    # Apply project-level L3 overrides if available
+    try:
+        project = load_project_config(project_id)
+        l3_overrides = project.get("l3_overrides", {})
+        if l3_overrides:
+            container = config.get("container", {})
+            if "mem_limit" in l3_overrides:
+                container["mem_limit"] = l3_overrides["mem_limit"]
+            if "cpu_quota" in l3_overrides:
+                container["cpu_quota"] = l3_overrides["cpu_quota"]
+            config["container"] = container
+    except (FileNotFoundError, ValueError):
+        pass  # No project config — use base L3 config as-is
+
+    return config
 
 
 def get_skill_timeout(skill_hint: str) -> int:
@@ -91,7 +108,13 @@ def spawn_l3_specialist(
 
     # Load L3 config for hierarchy metadata
     l3_config = load_l3_config()
-    spawned_by = l3_config.get("spawned_by", "pumplai_pm")
+
+    # Resolve spawned_by from project config, falling back to L3 config
+    try:
+        agent_map = get_agent_mapping()
+        spawned_by = agent_map.get("l2_pm", l3_config.get("spawned_by", "pumplai_pm"))
+    except (FileNotFoundError, ValueError):
+        spawned_by = l3_config.get("spawned_by", "pumplai_pm")
 
     # Build container configuration
     container_config = {
@@ -222,7 +245,14 @@ if __name__ == "__main__":
     parser.add_argument("task_id", help="Task identifier")
     parser.add_argument("skill_hint", choices=["code", "test"], help="Skill to use")
     parser.add_argument("task_description", help="Task description")
-    parser.add_argument("--workspace", default="/home/ollie/.openclaw/workspace", help="Workspace path")
+    # Resolve default workspace from project config, fall back to legacy path
+    try:
+        _default_workspace = get_workspace_path()
+    except (FileNotFoundError, ValueError):
+        _default_workspace = "/home/ollie/.openclaw/workspace"
+
+    parser.add_argument("--workspace", default=_default_workspace, help="Workspace path")
+    parser.add_argument("--project", default=None, help="Project ID (overrides active_project)")
     parser.add_argument("--gpu", action="store_true", help="Enable GPU passthrough")
     parser.add_argument("--runtime", default="claude-code", help="CLI runtime")
     

@@ -23,6 +23,7 @@ from spawn import (
     spawn_l3_specialist,
 )
 from orchestration.state_engine import JarvisState
+from orchestration.project_config import get_workspace_path
 
 
 class L3ContainerPool:
@@ -319,7 +320,7 @@ async def spawn_task(
     task_id: str,
     skill_hint: str,
     task_description: str,
-    workspace_path: str = "/home/ollie/.openclaw/workspace",
+    workspace_path: Optional[str] = None,
     requires_gpu: bool = False,
     cli_runtime: str = "claude-code",
 ) -> Dict[str, Any]:
@@ -329,6 +330,12 @@ async def spawn_task(
     This is a convenience function that creates a pool and spawns one task.
     For multiple concurrent tasks, use the pool directly.
     """
+    if workspace_path is None:
+        try:
+            workspace_path = get_workspace_path()
+        except (FileNotFoundError, ValueError):
+            workspace_path = "/home/ollie/.openclaw/workspace"
+
     pool = L3ContainerPool(max_concurrent=3)
     return await pool.spawn_and_monitor(
         task_id=task_id,
@@ -348,7 +355,11 @@ if __name__ == "__main__":
     parser.add_argument("task_id", help="Task identifier")
     parser.add_argument("skill_hint", choices=["code", "test"], help="Skill to use")
     parser.add_argument("task_description", help="Task description")
-    parser.add_argument("--workspace", default="/home/ollie/.openclaw/workspace")
+    try:
+        _default_workspace = get_workspace_path()
+    except (FileNotFoundError, ValueError):
+        _default_workspace = "/home/ollie/.openclaw/workspace"
+    parser.add_argument("--workspace", default=_default_workspace)
     parser.add_argument("--gpu", action="store_true")
     parser.add_argument("--runtime", default="claude-code")
 
