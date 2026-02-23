@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-23)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.1 Project Agnostic — Phase 14: Project CLI (Complete)
+**Current focus:** v1.1 Project Agnostic — Phase 15: Dashboard Project Switcher (Next)
 
 ## Current Position
 
-Phase: 14 of 18 (Project CLI)
+Phase: 18 of 18 (Integration Hardening — Complete)
 Plan: 2 of 2 in current phase
-Status: Phase Complete
-Last activity: 2026-02-23 — 14-02 complete: verify_phase14.py confirming all 6 CLI requirements (CLI-01 through CLI-06) pass
+Status: All executed phases complete; Phase 15 remaining
+Last activity: 2026-02-23 — Phases 11-14, 16-18 complete. Phase 15 (Dashboard Project Switcher) not started.
 
-Progress: [█████░░░░░] 45% (v1.1)
+Progress: [████████░░] 88% (v1.1 — 7/8 phases complete, Phase 15 remaining)
 
 ## Performance Metrics
 

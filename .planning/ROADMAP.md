@@ -29,8 +29,8 @@ See: `.planning/milestones/v1.0-ROADMAP.md` for full phase details.
 
 **Milestone Goal:** Transform OpenClaw from a PumplAI-specific tool into a general-purpose AI swarm framework that manages N projects simultaneously with per-project configuration, isolation, and CLI tooling.
 
-- [ ] **Phase 11: Config Decoupling Foundation** - Decouple all state/snapshot paths from hardcoded single-project constants; establish per-project path resolution as the canonical pattern
-- [ ] **Phase 12: SOUL Templating** - Default SOUL template with substitution points and per-project override mechanism; renders coherent L2 agent identity at project init time
+- [x] **Phase 11: Config Decoupling Foundation** - Decouple all state/snapshot paths from hardcoded single-project constants; establish per-project path resolution as the canonical pattern (completed 2026-02-23)
+- [x] **Phase 12: SOUL Templating** - Default SOUL template with substitution points and per-project override mechanism; renders coherent L2 agent identity at project init time (completed 2026-02-23)
 - [x] **Phase 13: Multi-Project Runtime** - Wire per-project context through spawn, pool, and monitor; project-labeled containers with namespaced naming and env injection (completed 2026-02-23)
 - [x] **Phase 14: Project CLI** - `openclaw project init/list/switch/remove` subcommand group with template scaffolding for fullstack, backend, and ml-pipeline stacks (completed 2026-02-23)
 - [ ] **Phase 15: Dashboard Project Switcher** - Project selector in occc header; all API routes and SSE stream accept project scope; task/metrics views filter by selected project
@@ -47,11 +47,11 @@ See: `.planning/milestones/v1.0-ROADMAP.md` for full phase details.
   3. `snapshot.py` generates a non-empty diff for a repository whose default branch is not `main` (dynamic branch detection working)
   4. Agent config.json hierarchy references load from the project manifest rather than hardcoded strings — verified by pointing a test project at a custom agent ID and confirming it resolves
   5. The existing `workspace/.openclaw/workspace-state.json` is migrated to the new path convention with no task data lost and a guard preventing migration while tasks are in-flight
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 Plans:
-- [ ] 11-01-PLAN.md — Path API foundation (get_state_path, get_snapshot_dir, _detect_default_branch)
-- [ ] 11-02-PLAN.md — Update all hardcoded call sites across orchestration and spawn layers
-- [ ] 11-03-PLAN.md — Migration CLI script for PumplAI state file cutover
+- [x] 11-01-PLAN.md — Path API foundation (get_state_path, get_snapshot_dir, _detect_default_branch) (completed 2026-02-23)
+- [x] 11-02-PLAN.md — Update all hardcoded call sites across orchestration and spawn layers (completed 2026-02-23)
+- [x] 11-03-PLAN.md — Migration CLI script for PumplAI state file cutover (completed 2026-02-23)
 
 ### Phase 12: SOUL Templating
 **Goal**: New projects get a coherent L2 agent identity from a default template at init time; existing PumplAI SOUL.md is reproducible from template + override with semantically identical output to the v1.0 hardcoded file
@@ -61,10 +61,10 @@ Plans:
   1. Running the SOUL renderer against the PumplAI project produces a file that diffs empty against the v1.0 hardcoded `agents/pumplai_pm/agent/SOUL.md` (golden baseline passes)
   2. A new project created without a soul-override.md receives a SOUL.md rendered entirely from the default template with `$project_name` and `$tech_stack_*` substitution points filled correctly
   3. A project that supplies a `projects/<id>/soul-override.md` gets a merged SOUL.md where the override sections replace their corresponding default sections without corrupting the rest of the file
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 Plans:
-- [ ] 12-01-PLAN.md — Core renderer module, default template, and PumplAI override
-- [ ] 12-02-PLAN.md — CLI entry point and golden baseline verification script
+- [x] 12-01-PLAN.md — Core renderer module, default template, and PumplAI override (completed 2026-02-23)
+- [x] 12-02-PLAN.md — CLI entry point and golden baseline verification script (completed 2026-02-23)
 
 ### Phase 13: Multi-Project Runtime
 **Goal**: L3 containers carry their project identity as a Docker label and env var; container names are namespaced per project preventing name collisions; the pool and monitor operate correctly in a multi-project environment
@@ -77,8 +77,8 @@ Plans:
   4. Changing `active_project` in `openclaw.json` mid-execution does not redirect an in-flight L3 task to the wrong state file — the task completes in the project's state file it was spawned under
 **Plans:** 2/2 plans complete
 Plans:
-- [ ] 13-01-PLAN.md — Container identity threading (spawn, pool, entrypoint)
-- [ ] 13-02-PLAN.md — Multi-project monitoring and verification
+- [x] 13-01-PLAN.md — Container identity threading (spawn, pool, entrypoint) (completed 2026-02-23)
+- [x] 13-02-PLAN.md — Multi-project monitoring and verification (completed 2026-02-23)
 
 ### Phase 14: Project CLI
 **Goal**: Users can create, list, switch between, and remove projects using `openclaw project` subcommands without manually editing JSON files; template presets pre-populate sensible defaults for common stack types
@@ -92,7 +92,7 @@ Plans:
   5. `openclaw project init --template fullstack` scaffolds a project.json pre-populated with fullstack defaults; `--template backend` and `--template ml-pipeline` produce their respective presets from `projects/_templates/`
 **Plans:** 2/2 plans complete
 Plans:
-- [ ] 14-01-PLAN.md — Template presets + CLI module with init/list/switch/remove subcommands
+- [x] 14-01-PLAN.md — Template presets + CLI module with init/list/switch/remove subcommands (completed 2026-02-23)
 - [x] 14-02-PLAN.md — Phase 14 verification script (all 6 CLI requirements) (completed 2026-02-23)
 
 ### Phase 15: Dashboard Project Switcher
@@ -118,7 +118,7 @@ Plans:
   4. Deprecated `STATE_FILE` and `SNAPSHOT_DIR` constants removed from `config.py`; `monitor.py` no longer imports them
 **Plans:** 2/2 plans complete
 Plans:
-- [ ] 16-01-PLAN.md — Fix snapshot project_id threading, branch detection delegation, soul template variable, deprecated constant removal
+- [x] 16-01-PLAN.md — Fix snapshot project_id threading, branch detection delegation, soul template variable, deprecated constant removal (completed 2026-02-23)
 - [x] 16-02-PLAN.md — Phase 16 verification script (completed 2026-02-23)
 
 ### Phase 17: Phase 11/12 Formal Verification
@@ -132,8 +132,8 @@ Plans:
   3. All 7 CFG requirements have concrete code evidence (file:line references) confirming satisfaction
 **Plans:** 2/2 plans complete
 Plans:
-- [ ] 17-01-PLAN.md — Phase 11 VERIFICATION.md (CFG-01, CFG-02, CFG-03, CFG-06, CFG-07)
-- [ ] 17-02-PLAN.md — Phase 12 VERIFICATION.md (CFG-04, CFG-05) + REQUIREMENTS.md checkbox updates
+- [x] 17-01-PLAN.md — Phase 11 VERIFICATION.md (CFG-01, CFG-02, CFG-03, CFG-06, CFG-07) (completed 2026-02-23)
+- [x] 17-02-PLAN.md — Phase 12 VERIFICATION.md (CFG-04, CFG-05) + REQUIREMENTS.md checkbox updates (completed 2026-02-23)
 
 ### Phase 18: Integration Hardening
 **Goal**: Fix 4 cross-phase integration wiring issues identified by the v1.1 milestone audit — entrypoint branch detection, package exports, soul_renderer runtime trigger, and geriai project identity — closing 2 broken E2E flows
@@ -147,8 +147,8 @@ Plans:
   4. `projects/geriai/project.json` has correct `"id": "geriai"` and geriai-specific values
 **Plans:** 2/2 plans complete
 Plans:
-- [ ] 18-01-PLAN.md — Entrypoint branch detection, package exports, geriai JSON fix
-- [ ] 18-02-PLAN.md — Soul auto-generation trigger in initialize_workspace and CLI --force flag
+- [x] 18-01-PLAN.md — Entrypoint branch detection, package exports, geriai JSON fix (completed 2026-02-23)
+- [x] 18-02-PLAN.md — Soul auto-generation trigger in initialize_workspace and CLI --force flag (completed 2026-02-23)
 
 ## Progress
 
@@ -164,11 +164,11 @@ Plans:
 | 8. Final Gap Closure | v1.0 | 1/1 | ✓ Complete | 2026-02-23 |
 | 9. Integration Wiring | v1.0 | 2/2 | ✓ Complete | 2026-02-23 |
 | 10. Housekeeping & Docs | v1.0 | 2/2 | ✓ Complete | 2026-02-23 |
-| 11. Config Decoupling Foundation | v1.1 | 0/3 | Planned | - |
-| 12. SOUL Templating | v1.1 | 0/2 | Planned | - |
-| 13. Multi-Project Runtime | 2/2 | Complete    | 2026-02-23 | - |
-| 14. Project CLI | 2/2 | Complete    | 2026-02-23 | - |
+| 11. Config Decoupling Foundation | v1.1 | 3/3 | ✓ Complete | 2026-02-23 |
+| 12. SOUL Templating | v1.1 | 2/2 | ✓ Complete | 2026-02-23 |
+| 13. Multi-Project Runtime | v1.1 | 2/2 | ✓ Complete | 2026-02-23 |
+| 14. Project CLI | v1.1 | 2/2 | ✓ Complete | 2026-02-23 |
 | 15. Dashboard Project Switcher | v1.1 | 0/TBD | Not started | - |
-| 16. Phase 11/12 Integration Fixes | 2/2 | Complete    | 2026-02-23 | - |
-| 17. Phase 11/12 Formal Verification | 2/2 | Complete    | 2026-02-23 | - |
-| 18. Integration Hardening | 2/2 | Complete    | 2026-02-23 | - |
+| 16. Phase 11/12 Integration Fixes | v1.1 | 2/2 | ✓ Complete | 2026-02-23 |
+| 17. Phase 11/12 Formal Verification | v1.1 | 2/2 | ✓ Complete | 2026-02-23 |
+| 18. Integration Hardening | v1.1 | 2/2 | ✓ Complete | 2026-02-23 |
