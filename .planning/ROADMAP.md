@@ -142,7 +142,7 @@ Plans:
   2. `orchestration/__init__.py` exports `get_state_path`, `get_snapshot_dir`, `ProjectNotFoundError` in `__all__`
   3. `initialize_workspace()` (or documented operator step) triggers `write_soul(project_id)` so new projects auto-receive SOUL.md
   4. `projects/geriai/project.json` has correct `"id": "geriai"` and geriai-specific values
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 Plans:
 - [ ] 18-01-PLAN.md — Entrypoint branch detection, package exports, geriai JSON fix
 - [ ] 18-02-PLAN.md — Soul auto-generation trigger in initialize_workspace and CLI --force flag
@@ -168,4 +168,4 @@ Plans:
 | 15. Dashboard Project Switcher | v1.1 | 0/TBD | Not started | - |
 | 16. Phase 11/12 Integration Fixes | 2/2 | Complete    | 2026-02-23 | - |
 | 17. Phase 11/12 Formal Verification | 2/2 | Complete    | 2026-02-23 | - |
-| 18. Integration Hardening | v1.1 | 0/2 | Planned | - |
+| 18. Integration Hardening | 2/2 | Complete   | 2026-02-23 | - |
