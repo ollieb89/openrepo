@@ -119,6 +119,6 @@ Plans:
 | 10. Housekeeping & Docs | v1.0 | 2/2 | ✓ Complete | 2026-02-23 |
 | 11. Config Decoupling Foundation | v1.1 | 0/3 | Planned | - |
 | 12. SOUL Templating | v1.1 | 0/2 | Planned | - |
-| 13. Multi-Project Runtime | 2/2 | Complete   | 2026-02-23 | - |
+| 13. Multi-Project Runtime | 2/2 | Complete    | 2026-02-23 | - |
 | 14. Project CLI | v1.1 | 0/TBD | Not started | - |
 | 15. Dashboard Project Switcher | v1.1 | 0/TBD | Not started | - |
