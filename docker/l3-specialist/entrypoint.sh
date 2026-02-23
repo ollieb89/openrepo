@@ -8,6 +8,7 @@ set -euo pipefail
 : "${CLI_RUNTIME:=claude-code}"
 : "${TASK_DESCRIPTION:=No task description provided}"
 : "${OPENCLAW_PROJECT:?OPENCLAW_PROJECT is required — container spawned without project context}"
+: "${DEFAULT_BRANCH:=main}"
 
 STATE_FILE="${OPENCLAW_STATE_FILE:-/workspace/.openclaw/workspace-state.json}"
 
@@ -36,7 +37,7 @@ if git show-ref --verify --quiet "refs/heads/${STAGING_BRANCH}"; then
   git checkout "${STAGING_BRANCH}"
   update_state "in_progress" "Checked out existing staging branch: ${STAGING_BRANCH}"
 else
-  git checkout -b "${STAGING_BRANCH}" main 2>/dev/null || git checkout -b "${STAGING_BRANCH}"
+  git checkout -b "${STAGING_BRANCH}" "${DEFAULT_BRANCH}" 2>/dev/null || git checkout -b "${STAGING_BRANCH}"
   update_state "in_progress" "Created new staging branch: ${STAGING_BRANCH}"
 fi
 

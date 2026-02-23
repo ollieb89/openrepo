@@ -26,6 +26,7 @@ from orchestration.project_config import (
     get_agent_mapping,
     get_state_path,
 )
+from orchestration.snapshot import _detect_default_branch
 
 
 _PROJECT_ID_PATTERN = re.compile(r'^[a-zA-Z0-9-]{1,20}$')
@@ -137,6 +138,9 @@ def spawn_l3_specialist(
     # Create staging branch name
     staging_branch = f"l3/task-{task_id}"
 
+    # Detect default branch for this project's workspace — injected into container
+    default_branch = _detect_default_branch(Path(workspace_path), project_id)
+
     # Build namespaced container name — prevents cross-project name collisions
     container_name = f"openclaw-{project_id}-l3-{task_id}"
 
@@ -171,6 +175,7 @@ def spawn_l3_specialist(
             "TASK_ID": task_id,
             "SKILL_HINT": skill_hint,
             "STAGING_BRANCH": staging_branch,
+            "DEFAULT_BRANCH": default_branch,
             "CLI_RUNTIME": cli_runtime,
             "TASK_DESCRIPTION": task_description,
             "OPENCLAW_PROJECT": project_id,
