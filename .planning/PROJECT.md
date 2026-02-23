@@ -8,7 +8,16 @@ OpenClaw is an AI Swarm Orchestration system implementing the Grand Architect Pr
 
 Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
 
-## Current Milestone: Planning next milestone
+## Current Milestone: v1.2 Orchestration Hardening
+
+**Goal:** Make the orchestration layer production-grade — fix silent failures, improve performance under concurrency, add structured observability, and complete per-project pool isolation with dashboard metrics.
+
+**Target features:**
+- Reliability hardening: state recovery, graceful shutdown, error classification, config validation
+- Performance: Docker client pooling, state caching, batch updates, subprocess reduction
+- Full observability: structured JSON logging, task lifecycle metrics, pool utilization, adaptive monitoring
+- Per-project pool config: configurable concurrency limits, isolated/shared mode, queue overflow policy
+- Dashboard: agent hierarchy filtering per project, usage metrics visualization
 
 ## Tech Stack
 
@@ -72,7 +81,7 @@ Known limitations:
 
 ### Active
 
-(None — run `/gsd:new-milestone` to define next milestone requirements)
+(Defined in REQUIREMENTS.md for v1.2)
 
 ### Out of Scope
 
@@ -110,4 +119,4 @@ Known limitations:
 - DEV_WF_FINDINGS.md
 
 ---
-*Last updated: 2026-02-23 after v1.1 milestone completed*
+*Last updated: 2026-02-24 after v1.2 milestone started*
