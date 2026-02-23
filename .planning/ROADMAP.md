@@ -127,7 +127,10 @@ Plans:
   1. `phases/11-config-decoupling-foundation/VERIFICATION.md` exists with pass/fail evidence for CFG-01, CFG-02, CFG-03, CFG-06, CFG-07
   2. `phases/12-soul-templating/VERIFICATION.md` exists with pass/fail evidence for CFG-04, CFG-05
   3. All 7 CFG requirements have concrete code evidence (file:line references) confirming satisfaction
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 17-01-PLAN.md — Phase 11 VERIFICATION.md (CFG-01, CFG-02, CFG-03, CFG-06, CFG-07)
+- [ ] 17-02-PLAN.md — Phase 12 VERIFICATION.md (CFG-04, CFG-05) + REQUIREMENTS.md checkbox updates
 
 ## Progress
 
@@ -149,4 +152,4 @@ Plans:
 | 14. Project CLI | v1.1 | 0/TBD | Not started | - |
 | 15. Dashboard Project Switcher | v1.1 | 0/TBD | Not started | - |
 | 16. Phase 11/12 Integration Fixes | 2/2 | Complete    | 2026-02-23 | - |
-| 17. Phase 11/12 Formal Verification | v1.1 | 0/TBD | Not started | - |
+| 17. Phase 11/12 Formal Verification | v1.1 | 0/2 | Planned | - |
