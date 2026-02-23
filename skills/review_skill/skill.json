@@ -1,0 +1,18 @@
+{
+  "id": "review_skill",
+  "name": "L3 Work Reviewer",
+  "description": "Reviews L3 git diffs on staging branches and merges or rejects to main. Stub: logs request and returns success.",
+  "owner": "pumplai_pm",
+  "commands": [
+    {
+      "name": "review",
+      "description": "Review L3 staging branch and merge or reject.",
+      "parameters": {
+        "task_id": { "type": "string", "required": true },
+        "staging_branch": { "type": "string", "required": true },
+        "action": { "type": "string", "enum": ["merge", "reject"], "required": true }
+      },
+      "handler": "python3 review.py"
+    }
+  ]
+}
