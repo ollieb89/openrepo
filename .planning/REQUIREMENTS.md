@@ -75,11 +75,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | CFG-01 | Phase 11 | Pending |
-| CFG-02 | Phase 11 | Pending |
+| CFG-02 | Phase 11, 16 | Pending |
 | CFG-03 | Phase 11 | Pending |
-| CFG-04 | Phase 12 | Pending |
+| CFG-04 | Phase 12, 16 | Pending |
 | CFG-05 | Phase 12 | Pending |
-| CFG-06 | Phase 11 | Pending |
+| CFG-06 | Phase 11, 16 | Pending |
 | CFG-07 | Phase 11 | Pending |
 | MPR-01 | Phase 13 | Complete |
 | MPR-02 | Phase 13 | Complete |

@@ -3,7 +3,7 @@
 ## Milestones
 
 - ✅ **v1.0 Grand Architect Protocol Foundation** — Phases 1-10 (shipped 2026-02-23)
-- 🚧 **v1.1 Project Agnostic** — Phases 11-15 (in progress)
+- 🚧 **v1.1 Project Agnostic** — Phases 11-17 (in progress)
 
 ## Phases
 
@@ -103,6 +103,29 @@ Plans:
   4. The task list, agent hierarchy panel, and metrics widgets all display data filtered to the selected project — no cross-project task bleed visible in any panel
 **Plans**: TBD
 
+### Phase 16: Phase 11/12 Integration Fixes
+**Goal**: Fix the 3 cross-phase wiring issues identified by the v1.1 milestone audit — snapshot project_id threading, soul template variable consumption, and staging branch detection — plus remove deprecated constants
+**Depends on**: Phase 11, Phase 12
+**Requirements**: CFG-02, CFG-04, CFG-06
+**Gap Closure:** Closes integration and flow gaps from v1.1-MILESTONE-AUDIT.md
+**Success Criteria** (what must be TRUE):
+  1. `get_snapshot_dir()` callers pass explicit `project_id` — no ambient config resolution
+  2. `soul-default.md` template body contains and renders `$project_name` correctly
+  3. `create_staging_branch()` delegates to `_detect_default_branch()` instead of duplicate inline detection
+  4. Deprecated `STATE_FILE` and `SNAPSHOT_DIR` constants removed from `config.py`; `monitor.py` no longer imports them
+**Plans**: TBD
+
+### Phase 17: Phase 11/12 Formal Verification
+**Goal**: Create VERIFICATION.md for Phases 11 and 12 with evidence-based checks confirming all 7 CFG requirements are satisfied after integration fixes
+**Depends on**: Phase 16
+**Requirements**: CFG-01, CFG-02, CFG-03, CFG-04, CFG-05, CFG-06, CFG-07
+**Gap Closure:** Closes verification gaps from v1.1-MILESTONE-AUDIT.md
+**Success Criteria** (what must be TRUE):
+  1. `phases/11-config-decoupling-foundation/VERIFICATION.md` exists with pass/fail evidence for CFG-01, CFG-02, CFG-03, CFG-06, CFG-07
+  2. `phases/12-soul-templating/VERIFICATION.md` exists with pass/fail evidence for CFG-04, CFG-05
+  3. All 7 CFG requirements have concrete code evidence (file:line references) confirming satisfaction
+**Plans**: TBD
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -122,3 +145,5 @@ Plans:
 | 13. Multi-Project Runtime | 2/2 | Complete    | 2026-02-23 | - |
 | 14. Project CLI | v1.1 | 0/TBD | Not started | - |
 | 15. Dashboard Project Switcher | v1.1 | 0/TBD | Not started | - |
+| 16. Phase 11/12 Integration Fixes | v1.1 | 0/TBD | Not started | - |
+| 17. Phase 11/12 Formal Verification | v1.1 | 0/TBD | Not started | - |
