@@ -74,35 +74,35 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CFG-01 | — | Pending |
-| CFG-02 | — | Pending |
-| CFG-03 | — | Pending |
-| CFG-04 | — | Pending |
-| CFG-05 | — | Pending |
-| CFG-06 | — | Pending |
-| CFG-07 | — | Pending |
-| MPR-01 | — | Pending |
-| MPR-02 | — | Pending |
-| MPR-03 | — | Pending |
-| MPR-04 | — | Pending |
-| MPR-05 | — | Pending |
-| MPR-06 | — | Pending |
-| CLI-01 | — | Pending |
-| CLI-02 | — | Pending |
-| CLI-03 | — | Pending |
-| CLI-04 | — | Pending |
-| CLI-05 | — | Pending |
-| CLI-06 | — | Pending |
-| DSH-05 | — | Pending |
-| DSH-06 | — | Pending |
-| DSH-07 | — | Pending |
-| DSH-08 | — | Pending |
+| CFG-01 | Phase 11 | Pending |
+| CFG-02 | Phase 11 | Pending |
+| CFG-03 | Phase 11 | Pending |
+| CFG-04 | Phase 12 | Pending |
+| CFG-05 | Phase 12 | Pending |
+| CFG-06 | Phase 11 | Pending |
+| CFG-07 | Phase 11 | Pending |
+| MPR-01 | Phase 13 | Pending |
+| MPR-02 | Phase 13 | Pending |
+| MPR-03 | Phase 13 | Pending |
+| MPR-04 | Phase 13 | Pending |
+| MPR-05 | Phase 13 | Pending |
+| MPR-06 | Phase 13 | Pending |
+| CLI-01 | Phase 14 | Pending |
+| CLI-02 | Phase 14 | Pending |
+| CLI-03 | Phase 14 | Pending |
+| CLI-04 | Phase 14 | Pending |
+| CLI-05 | Phase 14 | Pending |
+| CLI-06 | Phase 14 | Pending |
+| DSH-05 | Phase 15 | Pending |
+| DSH-06 | Phase 15 | Pending |
+| DSH-07 | Phase 15 | Pending |
+| DSH-08 | Phase 15 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 23 total
-- Mapped to phases: 0
-- Unmapped: 23
+- Mapped to phases: 23
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-23*
-*Last updated: 2026-02-23 after initial definition*
+*Last updated: 2026-02-23 after roadmap creation — all 23 requirements mapped*
