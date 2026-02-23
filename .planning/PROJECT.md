@@ -8,15 +8,7 @@ OpenClaw is an AI Swarm Orchestration system implementing the Grand Architect Pr
 
 Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
 
-## Current Milestone: v1.1 Project Agnostic
-
-**Goal:** Transform OpenClaw from a PumplAI-specific tool into a general-purpose AI swarm framework that manages N projects simultaneously with per-project configuration, isolation, and CLI tooling.
-
-**Target features:**
-- Full config decoupling — SOUL templating with defaults + custom override, dynamic agent hierarchy from project.json
-- Multi-project runtime — per-project state files, configurable L3 pool isolation (shared default, isolated opt-in), N projects
-- Project CLI — `openclaw project init/switch/list/remove` subcommand group with templates (fullstack, backend, ml-pipeline)
-- Dashboard project switcher — project selector in occc, filter tasks/containers by project
+## Current Milestone: Planning next milestone
 
 ## Tech Stack
 
@@ -28,27 +20,29 @@ Hierarchical AI orchestration with physical isolation — enabling autonomous, s
 
 ## Current State
 
-**Shipped:** v1.0 Grand Architect Protocol Foundation (2026-02-23)
-**LOC:** ~14,600 (Python + TypeScript + JavaScript)
+**Shipped:** v1.1 Project Agnostic (2026-02-23)
+**LOC:** ~27,400 (Python + TypeScript + JavaScript)
 
 Architecture operational:
 - L1 (ClawdiaPrime) → L2 (PumplAI_PM) → L3 (Ephemeral Specialists) delegation chain
 - Jarvis Protocol state synchronization with file locking
 - Semantic snapshot system with git staging branches
-- occc mission control dashboard with SSE real-time streaming
+- occc mission control dashboard with SSE real-time streaming and project switching
 - Docker isolation with `no-new-privileges`, `cap_drop ALL`, memory/CPU limits
 
-Quick-win project context layer already landed (pre-v1.1):
-- `projects/pumplai/project.json` manifest with workspace, tech stack, agent mappings
-- `orchestration/project_config.py` resolver (get_workspace_path, get_tech_stack, get_agent_mapping)
-- `openclaw.json` has `active_project` field
-- `orchestration/config.py` supports env var overrides (OPENCLAW_STATE_FILE, OPENCLAW_SNAPSHOT_DIR)
-- `spawn.py` and `pool.py` resolve workspace from project config
+Multi-project framework (v1.1):
+- Per-project state/snapshot path resolution via `project_config.py`
+- SOUL template engine with default + per-project override mechanism
+- Namespaced container naming and per-project pool isolation (PoolRegistry)
+- `openclaw project` CLI with init/list/switch/remove and template presets
+- Dashboard project selector with project-scoped API routes and SSE streams
+- `OPENCLAW_PROJECT` env var takes priority over `active_project` in config
 
 Known limitations:
 - Gateway startup is manual (runtime dependency)
 - COM-04 snapshot capture cannot be E2E tested when workspace is a git submodule
 - CLI routing replaces lane queue REST API (accepted spec deviation)
+- L3 pool isolation is shared by default; per-project isolated pools deferred to v1.2
 
 ## Requirements
 
@@ -71,16 +65,24 @@ Known limitations:
 - ✓ DSH-04: Global metrics visualization — v1.0
 - ✓ SEC-01: Permission-based access isolation — v1.0
 - ✓ SEC-02: Automated log redaction — v1.0
+- ✓ CFG-01 through CFG-07: Config decoupling (per-project paths, SOUL templating, dynamic branch detection) — v1.1
+- ✓ MPR-01 through MPR-06: Multi-project runtime (container labels, namespaced naming, project-scoped pool/monitor) — v1.1
+- ✓ CLI-01 through CLI-06: Project CLI (init/list/switch/remove with template presets) — v1.1
+- ✓ DSH-05 through DSH-08: Dashboard project switcher (selector, scoped API/SSE, filtered views) — v1.1
 
 ### Active
 
-(Defined in .planning/REQUIREMENTS.md for v1.1)
+(None — run `/gsd:new-milestone` to define next milestone requirements)
 
 ### Out of Scope
 
-- Multi-host swarm — single-host only for v1.0
+- Multi-host swarm — single-host only
 - Persistent L3 agents — ephemeral containers by design
 - REST lane queue API — CLI routing accepted as equivalent
+- LLM-generated SOULs at init time — non-determinism in CLI init operations
+- Per-project Docker networks — no inter-container networking needed
+- CWD-based project auto-detection — conflicts with scripts calling openclaw from arbitrary directories
+- Cross-project agent sharing — conflicts with 1:1 L2-to-project assumption
 
 ## Key Decisions
 
@@ -93,9 +95,12 @@ Known limitations:
 | Jarvis Protocol (file locking) | ✓ Good — reliable cross-container sync | v1.0 |
 | Next.js 16 + SWR for dashboard | ✓ Good — SSE + polling hybrid works | v1.0 |
 | Git staging branches for L3 work | ✓ Good — clean isolation with L2 review | v1.0 |
-| Project context layer (project.json manifests) | — Pending | v1.1 |
-| Convention-over-configuration SOUL templating | — Pending | v1.1 |
-| Configurable L3 pool isolation (shared default) | — Pending | v1.1 |
+| Project context layer (project.json manifests) | ✓ Good — clean per-project path resolution | v1.1 |
+| SOUL templating via string.Template.safe_substitute | ✓ Good — no Jinja2 dependency, sufficient for variable substitution | v1.1 |
+| Per-project pool isolation via PoolRegistry | ✓ Good — independent semaphores per project | v1.1 |
+| argparse subparsers for project CLI | ✓ Good — consistent with existing spawn/monitor pattern | v1.1 |
+| OPENCLAW_PROJECT env var priority over config | ✓ Good — prevents mid-execution mutation | v1.1 |
+| SOUL auto-generation in initialize_workspace() | ✓ Good — skip-if-exists default, --force for explicit overwrite | v1.1 |
 
 ## Primary Docs
 
@@ -105,4 +110,4 @@ Known limitations:
 - DEV_WF_FINDINGS.md
 
 ---
-*Last updated: 2026-02-23 after v1.1 milestone started*
+*Last updated: 2026-02-23 after v1.1 milestone completed*
