@@ -58,15 +58,15 @@
 | SET-02 | Phase 1 | Pending |
 | SET-03 | Phase 1 | Pending |
 | HIE-01 | Phase 2 | Pending |
-| HIE-02 | Phase 2 | Pending |
+| HIE-02 | Phase 2 → Phase 8 | Pending |
 | HIE-03 | Phase 3 → Phase 6 | Pending |
 | HIE-04 | Phase 3 → Phase 6 | Pending |
 | COM-01 | Phase 2 → Phase 5 | Pending |
-| COM-02 | Phase 2 | Pending |
+| COM-02 | Phase 2 → Phase 8 | Pending |
 | COM-03 | Phase 3 → Phase 6 | Pending |
 | COM-04 | Phase 3 → Phase 5, 6 | Pending |
 | DSH-01 | Phase 4 → Phase 7 | Pending |
-| DSH-02 | Phase 4 → Phase 7 | Complete |
+| DSH-02 | Phase 4 → Phase 7 → Phase 8 | Pending |
 | DSH-03 | Phase 4 → Phase 7 | Pending |
 | DSH-04 | Phase 4 → Phase 7 | Pending |
 | SEC-01 | Phase 1 | Pending |

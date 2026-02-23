@@ -9,6 +9,7 @@
 - [ ] **Phase 5: Wiring Fixes & Initialization** - Fix L1 config.json and initialize snapshots directory to close integration gaps.
 - [ ] **Phase 6: Phase 3 Formal Verification** - Verify HIE-03, HIE-04, COM-03, COM-04 and create Phase 3 VERIFICATION.md.
 - [ ] **Phase 7: Phase 4 Formal Verification** - Verify DSH-01, DSH-02, DSH-03, DSH-04, SEC-02 and create Phase 4 VERIFICATION.md.
+- [ ] **Phase 8: Final Gap Closure** - Fix SSE client payload mismatch (DSH-02), create pumplai_pm config.json (HIE-02), accept COM-02 spec deviation.
 
 ---
 
@@ -108,6 +109,18 @@
 - [x] 07-02-PLAN.md — Produce 07-VERIFICATION.md with evidence (DSH-01, DSH-02, DSH-03, DSH-04, SEC-02)
 - [ ] 07-03-PLAN.md — Fix SSE stream to emit actual data events (DSH-02, gap closure from UAT)
 
+### Phase 8: Final Gap Closure
+**Goal**: Close all remaining v1.0 audit gaps — fix SSE client payload handling, create pumplai_pm L2 config, and formalize COM-02 spec deviation acceptance.
+**Depends on**: Phase 7
+**Requirements**: DSH-02 (SSE client fix), HIE-02 (L2 config), COM-02 (spec deviation acceptance)
+**Gap Closure**: Closes all remaining gaps from v1.0 audit (2026-02-23)
+**Success Criteria**:
+  1. `useSwarmState.ts` correctly processes SSE events with `{agents, metrics, state, lastUpdated}` payload — SSE push path functional.
+  2. `agents/pumplai_pm/agent/config.json` exists with L2 role definition, skill_registry, and reports_to.
+  3. COM-02 in REQUIREMENTS.md updated to reflect accepted CLI-routing deviation, marked SATISFIED.
+  4. All 16/16 requirements satisfied. All 5/5 E2E flows complete.
+**Plans**: TBD
+
 ---
 
 ## Progress Table
@@ -121,3 +134,4 @@
 | 5. Wiring Fixes & Initialization | 0/2 | Planned | - |
 | 6. Phase 3 Formal Verification | 0/2 | Planned | - |
 | 7. Phase 4 Formal Verification | 2/3 | In Progress|  |
+| 8. Final Gap Closure | 0/0 | Planned | - |
