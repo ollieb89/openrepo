@@ -66,8 +66,7 @@ def load_project_config(project_id: Optional[str] = None) -> Dict[str, Any]:
     if not manifest_path.exists():
         raise FileNotFoundError(
             f"Project manifest not found: {manifest_path}\n"
-            f"Create it with: mkdir -p projects/{project_id} && "
-            f"cp projects/pumplai/project.json projects/{project_id}/project.json"
+            f"Create it with: python3 orchestration/project_cli.py init --id {project_id}"
         )
 
     with open(manifest_path) as f:
