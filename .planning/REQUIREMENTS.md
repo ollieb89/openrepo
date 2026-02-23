@@ -61,13 +61,13 @@
 | HIE-02 | Phase 2 → Phase 8 | Satisfied |
 | HIE-03 | Phase 3 → Phase 6 | Satisfied |
 | HIE-04 | Phase 3 → Phase 6 | Satisfied |
-| COM-01 | Phase 2 → Phase 5 | Satisfied |
+| COM-01 | Phase 2 → Phase 5 → Phase 9 | Satisfied |
 | COM-02 | Phase 2 → Phase 8 | Satisfied |
 | COM-03 | Phase 3 → Phase 6 | Satisfied |
-| COM-04 | Phase 3 → Phase 5, 6 | Satisfied |
-| DSH-01 | Phase 4 → Phase 7 | Satisfied |
+| COM-04 | Phase 3 → Phase 5, 6 → Phase 9 | Satisfied |
+| DSH-01 | Phase 4 → Phase 7 → Phase 9 | Satisfied |
 | DSH-02 | Phase 4 → Phase 7 → Phase 8 | Satisfied |
-| DSH-03 | Phase 4 → Phase 7 | Satisfied |
-| DSH-04 | Phase 4 → Phase 7 | Satisfied |
+| DSH-03 | Phase 4 → Phase 7 → Phase 9 | Satisfied |
+| DSH-04 | Phase 4 → Phase 7 → Phase 9 | Satisfied |
 | SEC-01 | Phase 1 | Satisfied |
 | SEC-02 | Phase 4 → Phase 7 | Satisfied |

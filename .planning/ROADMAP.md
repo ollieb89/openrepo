@@ -10,6 +10,8 @@
 - [ ] **Phase 6: Phase 3 Formal Verification** - Verify HIE-03, HIE-04, COM-03, COM-04 and create Phase 3 VERIFICATION.md.
 - [ ] **Phase 7: Phase 4 Formal Verification** - Verify DSH-01, DSH-02, DSH-03, DSH-04, SEC-02 and create Phase 4 VERIFICATION.md.
 - [ ] **Phase 8: Final Gap Closure** - Fix SSE client payload mismatch (DSH-02), create pumplai_pm config.json (HIE-02), accept COM-02 spec deviation.
+- [ ] **Phase 9: Integration Wiring Cleanup** - Fix openclaw.json agent hierarchy fields, review_skill phantom reference, and container label mismatch.
+- [ ] **Phase 10: Housekeeping & Documentation** - Create missing VERIFICATION.md files, fix unused exports, correct config paths.
 
 ---
 
@@ -122,6 +124,31 @@
 **Plans**: 1 plan
 - [ ] 08-01-PLAN.md — Close all remaining gaps: SSE client fix (DSH-02), L2 config (HIE-02), COM-02 deviation acceptance
 
+### Phase 9: Integration Wiring Cleanup
+**Goal**: Fix all 3 cross-phase integration debt items surfaced by the v1.0 milestone audit integration checker.
+**Depends on**: Phase 8
+**Requirements**: DSH-01, DSH-03, DSH-04, HIE-01, HIE-02, COM-01, COM-04 (integration fixes)
+**Gap Closure**: Closes INT-01, INT-02, INT-03 from v1.0 audit
+**Success Criteria**:
+  1. `openclaw.json` agents list includes `level` and `reports_to` fields — `buildAgentHierarchy()` renders correct 3-tier hierarchy.
+  2. `skills/review_skill/` exists as a stub (or pumplai_pm config reference removed) — no phantom skill path.
+  3. `spawn.py` sets `openclaw.managed=true` label on containers — `listSwarmContainers` primary filter works.
+  4. COM-01 delegation roundtrip no longer raises WARN for unrecognized `level` key.
+**Plans**: TBD
+
+### Phase 10: Housekeeping & Documentation
+**Goal**: Clean up remaining tech debt — missing verification docs, unused exports, and misconfigured paths.
+**Depends on**: Phase 9
+**Requirements**: (quality/documentation — no new requirement coverage)
+**Gap Closure**: Closes remaining tech debt from v1.0 audit
+**Success Criteria**:
+  1. Phase 5 has a dedicated VERIFICATION.md with evidence.
+  2. Phase 8 has a dedicated VERIFICATION.md with evidence.
+  3. `redactWithReport()` is either wired to a consumer or removed from exports.
+  4. `pumplai_pm` workspace path corrected to openclaw workspace.
+  5. `snapshot.py` exported from `orchestration/__init__.py` `__all__`.
+**Plans**: TBD
+
 ---
 
 ## Progress Table
@@ -136,3 +163,5 @@
 | 6. Phase 3 Formal Verification | 0/2 | Planned | - |
 | 7. Phase 4 Formal Verification | 2/3 | In Progress|  |
 | 8. Final Gap Closure | 0/0 | Planned | - |
+| 9. Integration Wiring Cleanup | 0/0 | Planned | - |
+| 10. Housekeeping & Documentation | 0/0 | Planned | - |
