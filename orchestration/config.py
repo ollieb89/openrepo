@@ -1,7 +1,8 @@
 import os
 from pathlib import Path
 
-# State file location — override with OPENCLAW_STATE_FILE env var
+# DEPRECATED: Use orchestration.project_config.get_state_path() instead.
+# Retained for backward compatibility. Will be removed in Phase 13.
 STATE_FILE = Path(os.environ.get(
     'OPENCLAW_STATE_FILE',
     'workspace/.openclaw/workspace-state.json',
@@ -14,7 +15,8 @@ LOCK_RETRY_ATTEMPTS = 3
 # Polling configuration
 POLL_INTERVAL = 1.0  # seconds
 
-# Snapshot directory — override with OPENCLAW_SNAPSHOT_DIR env var
+# DEPRECATED: Use orchestration.project_config.get_snapshot_dir() instead.
+# Retained for backward compatibility. Will be removed in Phase 13.
 SNAPSHOT_DIR = Path(os.environ.get(
     'OPENCLAW_SNAPSHOT_DIR',
     'workspace/.openclaw/snapshots/',
