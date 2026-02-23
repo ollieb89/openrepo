@@ -8,10 +8,20 @@ OpenClaw is an AI Swarm Orchestration system implementing the Grand Architect Pr
 
 Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
 
+## Current Milestone: v1.1 Project Agnostic
+
+**Goal:** Transform OpenClaw from a PumplAI-specific tool into a general-purpose AI swarm framework that manages N projects simultaneously with per-project configuration, isolation, and CLI tooling.
+
+**Target features:**
+- Full config decoupling — SOUL templating with defaults + custom override, dynamic agent hierarchy from project.json
+- Multi-project runtime — per-project state files, configurable L3 pool isolation (shared default, isolated opt-in), N projects
+- Project CLI — `openclaw project init/switch/list/remove` subcommand group with templates (fullstack, backend, ml-pipeline)
+- Dashboard project switcher — project selector in occc, filter tasks/containers by project
+
 ## Tech Stack
 
 - **Core:** OpenClaw CLI, Bun, Docker 29.1.5
-- **Orchestration:** Python 3 (state engine, snapshots, spawn, monitoring)
+- **Orchestration:** Python 3 (state engine, snapshots, spawn, monitoring, project_config)
 - **Frontend:** Next.js 16 (App Router), Tailwind 4, SWR, Zod
 - **Container:** Debian bookworm-slim L3 images, Nvidia Container Toolkit
 - **OS:** Ubuntu 24.04 LTS
@@ -27,6 +37,13 @@ Architecture operational:
 - Semantic snapshot system with git staging branches
 - occc mission control dashboard with SSE real-time streaming
 - Docker isolation with `no-new-privileges`, `cap_drop ALL`, memory/CPU limits
+
+Quick-win project context layer already landed (pre-v1.1):
+- `projects/pumplai/project.json` manifest with workspace, tech stack, agent mappings
+- `orchestration/project_config.py` resolver (get_workspace_path, get_tech_stack, get_agent_mapping)
+- `openclaw.json` has `active_project` field
+- `orchestration/config.py` supports env var overrides (OPENCLAW_STATE_FILE, OPENCLAW_SNAPSHOT_DIR)
+- `spawn.py` and `pool.py` resolve workspace from project config
 
 Known limitations:
 - Gateway startup is manual (runtime dependency)
@@ -57,7 +74,7 @@ Known limitations:
 
 ### Active
 
-(None — awaiting next milestone definition)
+(Defined in .planning/REQUIREMENTS.md for v1.1)
 
 ### Out of Scope
 
@@ -76,12 +93,16 @@ Known limitations:
 | Jarvis Protocol (file locking) | ✓ Good — reliable cross-container sync | v1.0 |
 | Next.js 16 + SWR for dashboard | ✓ Good — SSE + polling hybrid works | v1.0 |
 | Git staging branches for L3 work | ✓ Good — clean isolation with L2 review | v1.0 |
+| Project context layer (project.json manifests) | — Pending | v1.1 |
+| Convention-over-configuration SOUL templating | — Pending | v1.1 |
+| Configurable L3 pool isolation (shared default) | — Pending | v1.1 |
 
 ## Primary Docs
 
 - docs/SWARM_PLAN.md
 - workspace/occc/README.md
 - .planning/MILESTONES.md
+- DEV_WF_FINDINGS.md
 
 ---
-*Last updated: 2026-02-23 after v1.0 milestone*
+*Last updated: 2026-02-23 after v1.1 milestone started*
