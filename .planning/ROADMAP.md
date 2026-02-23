@@ -3,7 +3,7 @@
 ## Milestones
 
 - ✅ **v1.0 Grand Architect Protocol Foundation** — Phases 1-10 (shipped 2026-02-23)
-- 🚧 **v1.1 Project Agnostic** — Phases 11-17 (in progress)
+- 🚧 **v1.1 Project Agnostic** — Phases 11-18 (in progress)
 
 ## Phases
 
@@ -132,6 +132,18 @@ Plans:
 - [ ] 17-01-PLAN.md — Phase 11 VERIFICATION.md (CFG-01, CFG-02, CFG-03, CFG-06, CFG-07)
 - [ ] 17-02-PLAN.md — Phase 12 VERIFICATION.md (CFG-04, CFG-05) + REQUIREMENTS.md checkbox updates
 
+### Phase 18: Integration Hardening
+**Goal**: Fix 4 cross-phase integration wiring issues identified by the v1.1 milestone audit — entrypoint branch detection, package exports, soul_renderer runtime trigger, and geriai project identity — closing 2 broken E2E flows
+**Depends on**: Phase 13, Phase 16
+**Requirements**: CFG-03, CFG-04, CFG-05, CFG-06, MPR-03
+**Gap Closure:** Closes integration gaps 1-4 and broken flows 1-2 from v1.1-MILESTONE-AUDIT.md
+**Success Criteria** (what must be TRUE):
+  1. `entrypoint.sh` uses `${DEFAULT_BRANCH:-main}` instead of hardcoded `main`; `spawn_l3_specialist()` passes `DEFAULT_BRANCH` env var to the container
+  2. `orchestration/__init__.py` exports `get_state_path`, `get_snapshot_dir`, `ProjectNotFoundError` in `__all__`
+  3. `initialize_workspace()` (or documented operator step) triggers `write_soul(project_id)` so new projects auto-receive SOUL.md
+  4. `projects/geriai/project.json` has correct `"id": "geriai"` and geriai-specific values
+**Plans**: TBD
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -153,3 +165,4 @@ Plans:
 | 15. Dashboard Project Switcher | v1.1 | 0/TBD | Not started | - |
 | 16. Phase 11/12 Integration Fixes | 2/2 | Complete    | 2026-02-23 | - |
 | 17. Phase 11/12 Formal Verification | 2/2 | Complete    | 2026-02-23 | - |
+| 18. Integration Hardening | v1.1 | 0/TBD | Planned | - |
