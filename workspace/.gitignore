@@ -6,6 +6,10 @@ node_modules/
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyo
+*.pyd
+.Python
+*.so
 
 # Logs
 logs/
@@ -21,10 +25,12 @@ logs/
 .idea/
 *.swp
 *.swo
+*~
 
 # OS files
 .DS_Store
 Thumbs.db
+*.desktop
 
 # Build artifacts
 dist/
@@ -43,3 +49,41 @@ coverage/
 # Temporary folders
 tmp/
 temp/
+*.tmp
+
+# Sandbox directories (should not be committed)
+sandboxes/
+sandbox/
+
+# Agent sessions and credentials
+sessions/
+credentials/
+*.session
+
+# Backup files
+*.bak
+*.backup
+
+# Lock files
+*.lock
+
+# Cache directories
+.cache/
+.parcel-cache/
+
+# Test artifacts
+.nyc_output
+.coverage
+test-results/
+
+# Package manager files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Docker artifacts
+.dockerignore
+
+# Monitoring and runtime files
+*.pid
+*.seed
