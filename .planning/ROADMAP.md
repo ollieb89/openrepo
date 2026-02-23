@@ -93,7 +93,7 @@ Plans:
 **Plans:** 2/2 plans complete
 Plans:
 - [ ] 14-01-PLAN.md — Template presets + CLI module with init/list/switch/remove subcommands
-- [ ] 14-02-PLAN.md — Phase 14 verification script (all 6 CLI requirements)
+- [x] 14-02-PLAN.md — Phase 14 verification script (all 6 CLI requirements) (completed 2026-02-23)
 
 ### Phase 15: Dashboard Project Switcher
 **Goal**: The occc dashboard is usable with multiple projects; users can switch the active project from the UI; all data panels (tasks, agents, metrics) reflect only the selected project's state
@@ -167,7 +167,7 @@ Plans:
 | 11. Config Decoupling Foundation | v1.1 | 0/3 | Planned | - |
 | 12. SOUL Templating | v1.1 | 0/2 | Planned | - |
 | 13. Multi-Project Runtime | 2/2 | Complete    | 2026-02-23 | - |
-| 14. Project CLI | 2/2 | Complete   | 2026-02-23 | - |
+| 14. Project CLI | 2/2 | Complete    | 2026-02-23 | - |
 | 15. Dashboard Project Switcher | v1.1 | 0/TBD | Not started | - |
 | 16. Phase 11/12 Integration Fixes | 2/2 | Complete    | 2026-02-23 | - |
 | 17. Phase 11/12 Formal Verification | 2/2 | Complete    | 2026-02-23 | - |
