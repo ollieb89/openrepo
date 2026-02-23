@@ -14,6 +14,14 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 
 
+try:
+    from .project_config import get_state_path, get_snapshot_dir
+except ImportError:
+    import sys
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from orchestration.project_config import get_state_path, get_snapshot_dir
+
+
 class Colors:
     """ANSI color codes for terminal output"""
     GREEN = '\033[92m'
@@ -70,7 +78,10 @@ def initialize_workspace(project_root: Optional[Path] = None) -> Dict[str, Any]:
     if project_root is None:
         project_root = find_project_root()
     
-    snapshots_dir = project_root / 'workspace' / '.openclaw' / 'snapshots'
+    snapshots_dir = get_snapshot_dir()
+    
+    # Ensure the per-project state directory exists
+    get_state_path().parent.mkdir(parents=True, exist_ok=True)
     
     already_existed = snapshots_dir.exists()
     
@@ -108,10 +119,10 @@ def verify_workspace(project_root: Optional[Path] = None) -> Dict[str, bool]:
     
     results = {}
     
-    snapshots_dir = project_root / 'workspace' / '.openclaw' / 'snapshots'
+    snapshots_dir = get_snapshot_dir()
     results['snapshots_dir'] = snapshots_dir.exists() and snapshots_dir.is_dir()
     
-    state_file_dir = project_root / 'workspace' / '.openclaw'
+    state_file_dir = get_state_path().parent
     results['state_file_dir'] = state_file_dir.exists() and state_file_dir.is_dir()
     
     try:
