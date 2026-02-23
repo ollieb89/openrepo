@@ -89,6 +89,9 @@
   2. Jarvis Protocol state.json updates in real-time during L3 task execution.
   3. Semantic snapshots capture and persist workspace state changes.
   4. Phase 3 VERIFICATION.md created with all criteria assessed.
+**Plans**: 2 plans
+- [ ] 06-01-PLAN.md -- Build verification script + live testing + fix failures (HIE-03, HIE-04, COM-03, COM-04)
+- [ ] 06-02-PLAN.md -- Produce 06-VERIFICATION.md with evidence (HIE-03, HIE-04, COM-03, COM-04)
 
 ### Phase 7: Phase 4 Formal Verification
 **Goal**: Formally verify all Phase 4 deliverables and create the missing VERIFICATION.md.
@@ -112,5 +115,5 @@
 | 3. Specialist Execution | 4/4 | ✓ Complete | 2026-02-18 |
 | 4. Monitoring Uplink | 0/4 | Planning Complete | - |
 | 5. Wiring Fixes & Initialization | 0/2 | Planned | - |
-| 6. Phase 3 Formal Verification | 0/0 | Pending | - |
+| 6. Phase 3 Formal Verification | 0/2 | Planned | - |
 | 7. Phase 4 Formal Verification | 0/0 | Pending | - |
