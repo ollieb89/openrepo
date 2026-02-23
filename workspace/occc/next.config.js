@@ -1,1 +1,8 @@
-/** @type {import("next").NextConfig} */\nconst nextConfig = {};\n\nmodule.exports = nextConfig;
+/** @type {import("next").NextConfig} */
+const nextConfig = {
+  experimental: {
+    serverComponentsExternalPackages: ['dockerode', 'ssh2'],
+  },
+};
+
+module.exports = nextConfig;

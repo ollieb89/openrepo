@@ -34,7 +34,6 @@ export default function LogViewer({ containerId }: LogViewerProps) {
     setError(null);
     setConnected(true);
 
-    // Create EventSource for Server-Sent Events
     const eventSource = new EventSource(`/api/swarm/stream?containerId=${containerId}`);
     eventSourceRef.current = eventSource;
 
@@ -64,58 +63,57 @@ export default function LogViewer({ containerId }: LogViewerProps) {
     };
   }, [containerId]);
 
-  // Auto-scroll to bottom
   useEffect(() => {
     if (logContainerRef.current) {
       logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
     }
   }, [logs]);
 
-  const clearLogs = () => {
-    setLogs([]);
-  };
-
   if (!containerId) {
     return (
-      <div className="border rounded-lg p-8 text-center text-gray-500">
+      <div className="border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 p-8 text-center text-gray-500 dark:text-gray-400">
         <p>Select a container to view its logs</p>
       </div>
     );
   }
 
   return (
-    <div className="border rounded-lg">
-      <div className="p-4 border-b flex justify-between items-center">
+    <div className="border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
         <div>
-          <h2 className="text-lg font-semibold">Container Logs</h2>
-          <p className="text-sm text-gray-600">
-            {connected ? 'Connected' : 'Disconnected'} • {logs.length} lines
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Container Logs</h2>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {connected ? (
+              <span className="text-green-600 dark:text-green-400">Connected</span>
+            ) : (
+              <span className="text-gray-400">Disconnected</span>
+            )} &middot; {logs.length} lines
           </p>
         </div>
         <button
-          onClick={clearLogs}
-          className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded"
+          onClick={() => setLogs([])}
+          className="px-3 py-1 text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded text-gray-600 dark:text-gray-300"
         >
           Clear
         </button>
       </div>
 
       {error && (
-        <div className="p-4 bg-red-50 border-b text-red-700">
+        <div className="p-3 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-400">
           {error}
         </div>
       )}
 
       <div
         ref={logContainerRef}
-        className="h-96 overflow-y-auto p-4 bg-gray-900 text-gray-100 font-mono text-sm"
+        className="h-96 overflow-y-auto p-4 bg-gray-900 text-gray-100 font-mono text-xs"
       >
         {logs.length === 0 ? (
           <div className="text-gray-500">Waiting for logs...</div>
         ) : (
           logs.map((log, index) => (
-            <div key={index} className="mb-1">
-              <span className="text-gray-400">
+            <div key={index} className="mb-0.5">
+              <span className="text-gray-500">
                 [{new Date(log.timestamp).toLocaleTimeString()}]
               </span>{' '}
               {log.line}

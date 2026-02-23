@@ -1,6 +1,0 @@
-{
-  "/api/projects/route": "app/api/projects/route.js",
-  "/api/swarm/route": "app/api/swarm/route.js",
-  "/api/swarm/stream/route": "app/api/swarm/stream/route.js",
-  "/page": "app/page.js"
-}
