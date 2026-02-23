@@ -1,0 +1,13 @@
+{
+  "_template": "ml-pipeline",
+  "tech_stack": {
+    "frontend": "",
+    "backend": "Python, PyTorch, FastAPI",
+    "infra": "Docker, NVIDIA GPU, MLflow"
+  },
+  "l3_overrides": {
+    "mem_limit": "8g",
+    "cpu_quota": 200000,
+    "runtimes": ["claude-code", "codex", "gemini-cli"]
+  }
+}

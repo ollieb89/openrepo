@@ -1,0 +1,22 @@
+{
+  "id": "router_skill",
+  "name": "Hub-and-Spoke Router (CLI)",
+  "description": "Enables L1 orchestrators to delegate tasks to L2 project managers via the OpenClaw CLI.",
+  "commands": [
+    {
+      "name": "dispatch_directive",
+      "description": "Send a high-level instruction to a subordinate agent.",
+      "parameters": {
+        "targetId": {
+          "type": "string",
+          "description": "ID of the target agent."
+        },
+        "directive": {
+          "type": "string",
+          "description": "The instruction to be executed."
+        }
+      },
+      "handler": "node index.js {{targetId}} \"{{directive}}\""
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "id": "code",
+  "name": "Code Skill",
+  "description": "Write, edit, and refactor source code within the workspace.",
+  "capabilities": ["file_create", "file_edit", "file_delete"],
+  "timeout_seconds": 600,
+  "expected_outputs": ["modified_files", "commit_on_staging_branch"]
+}

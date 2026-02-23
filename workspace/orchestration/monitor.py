@@ -1,0 +1,645 @@
+"""
+CLI Monitoring Tool - Real-time visibility into L3 activity.
+
+This module provides a CLI interface for human operators to monitor L3 specialist
+activity in real-time. It's the Phase 3 substitute for the Phase 4 dashboard.
+
+Usage:
+    python3 orchestration/monitor.py tail [--interval 1.0] [--project <id>]
+    python3 orchestration/monitor.py status [--project <id>]
+    python3 orchestration/monitor.py task <task_id> [--project <id>]
+"""
+
+import argparse
+import sys
+import time
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, Any, List, Optional, Tuple
+
+# Handle both module import and direct execution
+try:
+    from .state_engine import JarvisState
+    from .config import POLL_INTERVAL
+except ImportError:
+    # Direct execution - add parent dir to path
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from orchestration.state_engine import JarvisState
+    from orchestration.config import POLL_INTERVAL
+
+
+# ANSI color codes
+class Colors:
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    RED = '\033[91m'
+    BLUE = '\033[94m'
+    CYAN = '\033[96m'
+    RESET = '\033[0m'
+    BOLD = '\033[1m'
+
+
+# Standard 8-color ANSI — works in all terminals (per locked decision)
+PROJECT_COLORS = [
+    '\033[92m',  # Green
+    '\033[94m',  # Blue
+    '\033[95m',  # Magenta
+    '\033[96m',  # Cyan
+    '\033[93m',  # Yellow
+    '\033[91m',  # Red
+]
+
+
+def get_project_color(project_id: str, project_list: list) -> str:
+    """Deterministic color for a project based on its position in the known project list."""
+    idx = project_list.index(project_id) if project_id in project_list else 0
+    return PROJECT_COLORS[idx % len(PROJECT_COLORS)]
+
+
+def _discover_projects(project_filter: Optional[str] = None) -> List[Tuple[str, Path]]:
+    """Return list of (project_id, state_file_path) tuples.
+
+    Enumerates projects/ directory. Skips directories starting with '_'.
+    If project_filter is set, returns only that project.
+    State files that don't exist yet are included (exists=False) so
+    caller can decide whether to skip or show 'No tasks'.
+    """
+    root = Path(__file__).parent.parent
+    projects_dir = root / "projects"
+    results: List[Tuple[str, Path]] = []
+    if not projects_dir.exists():
+        return results
+    for entry in sorted(projects_dir.iterdir()):
+        if not entry.is_dir() or entry.name.startswith("_"):
+            continue
+        if project_filter and entry.name != project_filter:
+            continue
+        state_file = root / "workspace" / ".openclaw" / entry.name / "workspace-state.json"
+        results.append((entry.name, state_file))
+    return results
+
+
+def format_timestamp(ts: float) -> str:
+    """Format Unix timestamp as readable datetime."""
+    return datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+
+
+def get_status_color(status: str) -> str:
+    """Get ANSI color code for task status."""
+    status_colors = {
+        'completed': Colors.GREEN,
+        'failed': Colors.RED,
+        'rejected': Colors.RED,
+        'in_progress': Colors.YELLOW,
+        'testing': Colors.YELLOW,
+        'starting': Colors.CYAN,
+        'pending': Colors.BLUE,
+    }
+    return status_colors.get(status, Colors.RESET)
+
+
+def tail_state(
+    state_file_path: Optional[str] = None,
+    interval: float = 1.0,
+    project_filter: Optional[str] = None,
+) -> None:
+    """
+    Continuously poll workspace-state.json and stream new activity.
+
+    Polls at specified interval (default 1s), detects changes, and prints
+    new activity log entries with color-coded status and project column.
+
+    Args:
+        state_file_path: Legacy single-file path (backward compat). If provided,
+                         uses only that file. If None, discovers projects.
+        interval: Polling interval in seconds (default: 1.0)
+        project_filter: Filter output to a specific project ID
+    """
+    # Legacy single-file mode (backward compat)
+    if state_file_path is not None:
+        _tail_single_file(state_file_path, interval)
+        return
+
+    # Multi-project mode
+    projects = _discover_projects(project_filter)
+    project_ids = [p[0] for p in projects]
+
+    if project_filter:
+        header = f"Tailing Activity (project: {project_filter})"
+    else:
+        header = "Tailing Activity (all projects)"
+
+    print(f"{Colors.BOLD}OpenClaw L3 Monitor - {header}{Colors.RESET}")
+    print(f"Polling interval: {interval}s")
+    print(f"Press Ctrl+C to stop\n")
+
+    # Track seen activity entries per (project_id, task_id)
+    seen_entries: Dict[str, Dict[str, int]] = {}
+    last_statuses: Dict[str, Dict[str, str]] = {}
+
+    try:
+        while True:
+            for proj_id, state_file in projects:
+                if not state_file.exists():
+                    continue
+
+                project_color = get_project_color(proj_id, project_ids)
+                proj_prefix = f"{project_color}{proj_id}{Colors.RESET}"
+
+                try:
+                    js = JarvisState(state_file)
+                    state = js.read_state()
+                    tasks = state.get('tasks', {})
+
+                    if proj_id not in seen_entries:
+                        seen_entries[proj_id] = {}
+                        last_statuses[proj_id] = {}
+
+                    for task_id, task_data in tasks.items():
+                        status = task_data.get('status', 'unknown')
+                        activity_log = task_data.get('activity_log', [])
+
+                        # Initialize tracking for new tasks
+                        if task_id not in seen_entries[proj_id]:
+                            seen_entries[proj_id][task_id] = 0
+                            last_statuses[proj_id][task_id] = status
+
+                        # Check for status transitions
+                        if last_statuses[proj_id][task_id] != status:
+                            status_color = get_status_color(status)
+                            print(
+                                f"[{proj_prefix}] {Colors.CYAN}[STATUS]{Colors.RESET} "
+                                f"{Colors.BOLD}{task_id}{Colors.RESET} "
+                                f"{last_statuses[proj_id][task_id]} → "
+                                f"{status_color}{status}{Colors.RESET}"
+                            )
+                            last_statuses[proj_id][task_id] = status
+
+                        # Print new activity entries
+                        new_entries = activity_log[seen_entries[proj_id][task_id]:]
+                        for entry in new_entries:
+                            timestamp = entry.get('timestamp', time.time())
+                            entry_status = entry.get('status', status)
+                            entry_text = entry.get('entry', '')
+
+                            status_color = get_status_color(entry_status)
+                            formatted_time = format_timestamp(timestamp)
+
+                            print(
+                                f"[{proj_prefix}] [{formatted_time}] "
+                                f"[{Colors.BOLD}{task_id}{Colors.RESET}] "
+                                f"[{status_color}{entry_status}{Colors.RESET}] {entry_text}"
+                            )
+
+                        # Update seen count
+                        seen_entries[proj_id][task_id] = len(activity_log)
+
+                except Exception as e:
+                    print(
+                        f"[{proj_prefix}] {Colors.RED}Error reading state: {e}{Colors.RESET}",
+                        file=sys.stderr,
+                    )
+
+            time.sleep(interval)
+
+    except KeyboardInterrupt:
+        print(f"\n{Colors.BOLD}Monitor stopped{Colors.RESET}")
+
+
+def _tail_single_file(state_file_path: str, interval: float = 1.0) -> None:
+    """Legacy single-file tail mode for backward compatibility."""
+    js = JarvisState(Path(state_file_path))
+
+    # Track seen activity entries per task
+    seen_entries: Dict[str, int] = {}
+    last_statuses: Dict[str, str] = {}
+
+    print(f"{Colors.BOLD}OpenClaw L3 Monitor - Tailing Activity{Colors.RESET}")
+    print(f"Polling interval: {interval}s")
+    print(f"Press Ctrl+C to stop\n")
+
+    try:
+        while True:
+            try:
+                state = js.read_state()
+                tasks = state.get('tasks', {})
+
+                for task_id, task_data in tasks.items():
+                    status = task_data.get('status', 'unknown')
+                    activity_log = task_data.get('activity_log', [])
+
+                    # Initialize tracking for new tasks
+                    if task_id not in seen_entries:
+                        seen_entries[task_id] = 0
+                        last_statuses[task_id] = status
+
+                    # Check for status transitions
+                    if last_statuses[task_id] != status:
+                        status_color = get_status_color(status)
+                        print(f"{Colors.CYAN}[STATUS]{Colors.RESET} {Colors.BOLD}{task_id}{Colors.RESET} "
+                              f"{last_statuses[task_id]} → {status_color}{status}{Colors.RESET}")
+                        last_statuses[task_id] = status
+
+                    # Print new activity entries
+                    new_entries = activity_log[seen_entries[task_id]:]
+                    for entry in new_entries:
+                        timestamp = entry.get('timestamp', time.time())
+                        entry_status = entry.get('status', status)
+                        entry_text = entry.get('entry', '')
+
+                        status_color = get_status_color(entry_status)
+                        formatted_time = format_timestamp(timestamp)
+
+                        print(f"[{formatted_time}] [{Colors.BOLD}{task_id}{Colors.RESET}] "
+                              f"[{status_color}{entry_status}{Colors.RESET}] {entry_text}")
+
+                    # Update seen count
+                    seen_entries[task_id] = len(activity_log)
+
+                # Sleep until next poll
+                time.sleep(interval)
+
+            except Exception as e:
+                print(f"{Colors.RED}Error reading state: {e}{Colors.RESET}", file=sys.stderr)
+                time.sleep(interval)
+
+    except KeyboardInterrupt:
+        print(f"\n{Colors.BOLD}Monitor stopped{Colors.RESET}")
+
+
+def show_status(
+    state_file_path: Optional[str] = None,
+    project_filter: Optional[str] = None,
+) -> None:
+    """
+    One-shot display of current L3 state across all projects.
+
+    Shows all tasks with project, status, skill_hint, timestamps, and active
+    container count per project.
+
+    Args:
+        state_file_path: Legacy single-file path (backward compat).
+        project_filter: Filter output to a specific project ID
+    """
+    # Legacy single-file mode
+    if state_file_path is not None:
+        _show_status_single_file(state_file_path)
+        return
+
+    projects = _discover_projects(project_filter)
+    project_ids = [p[0] for p in projects]
+
+    # Aggregate tasks across all projects
+    all_tasks: List[Tuple[str, str, Any]] = []  # (project_id, task_id, task_data)
+    active_statuses = {'in_progress', 'starting', 'testing'}
+    active_per_project: Dict[str, int] = {}
+
+    for proj_id, state_file in projects:
+        if not state_file.exists():
+            continue
+        try:
+            js = JarvisState(state_file)
+            state = js.read_state()
+            tasks = state.get('tasks', {})
+            count = sum(1 for t in tasks.values() if t.get('status') in active_statuses)
+            active_per_project[proj_id] = count
+            for task_id, task_data in tasks.items():
+                all_tasks.append((proj_id, task_id, task_data))
+        except Exception as e:
+            print(f"{Colors.RED}Error reading state for {proj_id}: {e}{Colors.RESET}", file=sys.stderr)
+
+    if not all_tasks:
+        print(f"{Colors.YELLOW}No tasks found{Colors.RESET}")
+        return
+
+    # Print header
+    print(f"{Colors.BOLD}OpenClaw L3 Status{Colors.RESET}")
+    if active_per_project:
+        active_summary = ", ".join(
+            f"{proj} {cnt}/3" for proj, cnt in sorted(active_per_project.items())
+        )
+        print(f"Active containers: {Colors.CYAN}{active_summary}{Colors.RESET}")
+    else:
+        print(f"Active containers: {Colors.CYAN}0{Colors.RESET}")
+    print(f"Total tasks: {len(all_tasks)}\n")
+
+    # Print table header
+    print(
+        f"{Colors.BOLD}"
+        f"{'PROJECT':<15} {'TASK ID':<20} {'STATUS':<15} {'SKILL':<10} "
+        f"{'CREATED':<20} {'LAST ACTIVITY'}"
+        f"{Colors.RESET}"
+    )
+    print("-" * 115)
+
+    # Sort tasks by created_at (newest first)
+    sorted_tasks = sorted(
+        all_tasks,
+        key=lambda x: x[2].get('created_at', 0),
+        reverse=True,
+    )
+
+    for proj_id, task_id, task_data in sorted_tasks:
+        status = task_data.get('status', 'unknown')
+        skill_hint = task_data.get('skill_hint', 'N/A')
+        created_at = task_data.get('created_at', 0)
+        activity_log = task_data.get('activity_log', [])
+
+        # Get last activity entry
+        last_activity = 'No activity'
+        if activity_log:
+            last_entry = activity_log[-1]
+            last_activity = last_entry.get('entry', 'N/A')[:50]  # Truncate
+
+        # Format timestamps
+        created_str = format_timestamp(created_at) if created_at else 'N/A'
+
+        # Color code status
+        status_color = get_status_color(status)
+        colored_status = f"{status_color}{status:<15}{Colors.RESET}"
+
+        # Color code project
+        project_color = get_project_color(proj_id, project_ids)
+        colored_project = f"{project_color}{proj_id:<15}{Colors.RESET}"
+
+        print(f"{colored_project} {task_id:<20} {colored_status} {skill_hint:<10} {created_str:<20} {last_activity}")
+
+    print()
+
+
+def _show_status_single_file(state_file_path: str) -> None:
+    """Legacy single-file status mode for backward compatibility."""
+    js = JarvisState(Path(state_file_path))
+
+    try:
+        state = js.read_state()
+        tasks = state.get('tasks', {})
+
+        if not tasks:
+            print(f"{Colors.YELLOW}No tasks found{Colors.RESET}")
+            return
+
+        # Count active containers
+        active_statuses = {'in_progress', 'starting', 'testing'}
+        active_count = sum(1 for task in tasks.values()
+                          if task.get('status') in active_statuses)
+
+        # Print header
+        print(f"{Colors.BOLD}OpenClaw L3 Status{Colors.RESET}")
+        print(f"Active containers: {Colors.CYAN}{active_count}{Colors.RESET}/3")
+        print(f"Total tasks: {len(tasks)}\n")
+
+        # Print table header
+        print(f"{Colors.BOLD}{'TASK ID':<20} {'STATUS':<15} {'SKILL':<10} {'CREATED':<20} {'LAST ACTIVITY'}{Colors.RESET}")
+        print("-" * 100)
+
+        # Sort tasks by created_at (newest first)
+        sorted_tasks = sorted(
+            tasks.items(),
+            key=lambda x: x[1].get('created_at', 0),
+            reverse=True
+        )
+
+        for task_id, task_data in sorted_tasks:
+            status = task_data.get('status', 'unknown')
+            skill_hint = task_data.get('skill_hint', 'N/A')
+            created_at = task_data.get('created_at', 0)
+            activity_log = task_data.get('activity_log', [])
+
+            # Get last activity entry
+            last_activity = 'No activity'
+            if activity_log:
+                last_entry = activity_log[-1]
+                last_activity = last_entry.get('entry', 'N/A')[:50]  # Truncate
+
+            # Format timestamps
+            created_str = format_timestamp(created_at) if created_at else 'N/A'
+
+            # Color code status
+            status_color = get_status_color(status)
+            colored_status = f"{status_color}{status:<15}{Colors.RESET}"
+
+            print(f"{task_id:<20} {colored_status} {skill_hint:<10} {created_str:<20} {last_activity}")
+
+        print()
+
+    except Exception as e:
+        print(f"{Colors.RED}Error reading state: {e}{Colors.RESET}", file=sys.stderr)
+        sys.exit(1)
+
+
+def show_task_detail(
+    task_id: str,
+    state_file_path: Optional[str] = None,
+    project_filter: Optional[str] = None,
+) -> None:
+    """
+    Show full activity log for a specific task.
+
+    Searches all projects for the task_id. If found in multiple projects,
+    reports ambiguity and asks user to specify --project.
+
+    Args:
+        task_id: The task identifier
+        state_file_path: Legacy single-file path (backward compat).
+        project_filter: Restrict search to this project ID
+    """
+    # Legacy single-file mode
+    if state_file_path is not None:
+        _show_task_detail_single_file(state_file_path, task_id)
+        return
+
+    projects = _discover_projects(project_filter)
+    project_ids = [p[0] for p in projects]
+
+    # Search all project state files
+    matches: List[Tuple[str, Any]] = []  # (project_id, task_data)
+
+    for proj_id, state_file in projects:
+        if not state_file.exists():
+            continue
+        try:
+            js = JarvisState(state_file)
+            task_data = js.read_task(task_id)
+            if task_data:
+                matches.append((proj_id, task_data))
+        except Exception:
+            pass
+
+    if not matches:
+        print(f"{Colors.RED}Task {task_id} not found{Colors.RESET}")
+        sys.exit(1)
+
+    if len(matches) > 1:
+        print(f"{Colors.YELLOW}Task ID found in multiple projects:{Colors.RESET}")
+        for proj_id, task_data in matches:
+            status = task_data.get('status', 'unknown')
+            status_color = get_status_color(status)
+            print(f"  {proj_id}: {status_color}{status}{Colors.RESET}")
+        print("Use --project to specify.")
+        sys.exit(1)
+
+    # Exactly one match
+    found_proj_id, task_data = matches[0]
+    _print_task_detail(task_id, task_data, project_id=found_proj_id)
+
+
+def _print_task_detail(task_id: str, task_data: Any, project_id: Optional[str] = None) -> None:
+    """Print full task detail from task_data dict."""
+    status = task_data.get('status', 'unknown')
+    status_color = get_status_color(status)
+
+    print(f"{Colors.BOLD}Task Details: {task_id}{Colors.RESET}")
+    if project_id:
+        print(f"Project: {project_id}")
+    print(f"Status: {status_color}{status}{Colors.RESET}")
+    print(f"Skill: {task_data.get('skill_hint', 'N/A')}")
+
+    created_at = task_data.get('created_at', 0)
+    updated_at = task_data.get('updated_at', 0)
+    print(f"Created: {format_timestamp(created_at) if created_at else 'N/A'}")
+    print(f"Updated: {format_timestamp(updated_at) if updated_at else 'N/A'}")
+
+    # Print metadata
+    metadata = task_data.get('metadata', {})
+    if metadata:
+        print(f"\nMetadata:")
+        for key, value in metadata.items():
+            print(f"  {key}: {value}")
+
+    # Print activity log
+    activity_log = task_data.get('activity_log', [])
+    print(f"\n{Colors.BOLD}Activity Log ({len(activity_log)} entries):{Colors.RESET}")
+
+    if not activity_log:
+        print(f"{Colors.YELLOW}No activity recorded{Colors.RESET}")
+    else:
+        print()
+        for entry in activity_log:
+            timestamp = entry.get('timestamp', 0)
+            entry_status = entry.get('status', 'unknown')
+            entry_text = entry.get('entry', '')
+
+            formatted_time = format_timestamp(timestamp)
+            status_color = get_status_color(entry_status)
+
+            print(f"[{formatted_time}] [{status_color}{entry_status:<12}{Colors.RESET}] {entry_text}")
+
+    print()
+
+
+def _show_task_detail_single_file(state_file_path: str, task_id: str) -> None:
+    """Legacy single-file task detail mode for backward compatibility."""
+    js = JarvisState(Path(state_file_path))
+
+    try:
+        task_data = js.read_task(task_id)
+
+        if not task_data:
+            print(f"{Colors.RED}Task {task_id} not found{Colors.RESET}")
+            sys.exit(1)
+
+        _print_task_detail(task_id, task_data)
+
+    except Exception as e:
+        print(f"{Colors.RED}Error reading task: {e}{Colors.RESET}", file=sys.stderr)
+        sys.exit(1)
+
+
+def main():
+    """CLI entrypoint for OpenClaw L3 Monitor."""
+    parser = argparse.ArgumentParser(
+        description='OpenClaw L3 Monitor - Real-time visibility into L3 specialist activity',
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+
+    subparsers = parser.add_subparsers(dest='command', help='Command to run')
+
+    # tail command
+    tail_parser = subparsers.add_parser(
+        'tail',
+        help='Stream L3 activity in real-time'
+    )
+    tail_parser.add_argument(
+        '--interval',
+        type=float,
+        default=POLL_INTERVAL,
+        help=f'Polling interval in seconds (default: {POLL_INTERVAL})'
+    )
+    tail_parser.add_argument(
+        '--state-file',
+        type=str,
+        default=None,
+        help='Path to workspace-state.json (legacy single-file mode)'
+    )
+
+    # status command
+    status_parser = subparsers.add_parser(
+        'status',
+        help='Show current L3 status (one-shot)'
+    )
+    status_parser.add_argument(
+        '--state-file',
+        type=str,
+        default=None,
+        help='Path to workspace-state.json (legacy single-file mode)'
+    )
+
+    # task command
+    task_parser = subparsers.add_parser(
+        'task',
+        help='Show detailed task information'
+    )
+    task_parser.add_argument(
+        'task_id',
+        type=str,
+        help='Task ID to display'
+    )
+    task_parser.add_argument(
+        '--state-file',
+        type=str,
+        default=None,
+        help='Path to workspace-state.json (legacy single-file mode)'
+    )
+
+    # Add --project to all subcommands
+    for sub in [tail_parser, status_parser, task_parser]:
+        sub.add_argument(
+            '--project',
+            type=str,
+            default=None,
+            help='Filter output by project ID (default: show all projects)'
+        )
+
+    args = parser.parse_args()
+
+    if not args.command:
+        parser.print_help()
+        sys.exit(1)
+
+    # Legacy single-file fallback: if --state-file is explicitly set,
+    # pass it through for backward compat. Otherwise, use multi-project discovery.
+    state_file = getattr(args, 'state_file', None)
+
+    # Dispatch to appropriate function
+    if args.command == 'tail':
+        tail_state(
+            state_file_path=state_file,
+            interval=args.interval,
+            project_filter=args.project,
+        )
+    elif args.command == 'status':
+        show_status(
+            state_file_path=state_file,
+            project_filter=args.project,
+        )
+    elif args.command == 'task':
+        show_task_detail(
+            task_id=args.task_id,
+            state_file_path=state_file,
+            project_filter=args.project,
+        )
+
+
+if __name__ == '__main__':
+    main()

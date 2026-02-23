@@ -1,0 +1,20 @@
+{
+  "id": "spawn_specialist",
+  "name": "L3 Specialist Spawner",
+  "description": "Spawns isolated L3 specialist containers for task execution. Only L2 (PumplAI_PM) may invoke this skill.",
+  "owner": "pumplai_pm",
+  "commands": [
+    {
+      "name": "spawn",
+      "description": "Spawn an L3 specialist container for a task.",
+      "parameters": {
+        "task_id": { "type": "string", "required": true },
+        "skill_hint": { "type": "string", "enum": ["code", "test"], "required": true },
+        "task_description": { "type": "string", "required": true },
+        "requires_gpu": { "type": "boolean", "default": false },
+        "cli_runtime": { "type": "string", "default": "claude-code" }
+      },
+      "handler": "python3 spawn.py"
+    }
+  ]
+}

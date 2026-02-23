@@ -1,0 +1,13 @@
+{
+  "_template": "backend",
+  "tech_stack": {
+    "frontend": "",
+    "backend": "Python, FastAPI",
+    "infra": "Docker, PostgreSQL"
+  },
+  "l3_overrides": {
+    "mem_limit": "4g",
+    "cpu_quota": 100000,
+    "runtimes": ["claude-code", "codex", "gemini-cli"]
+  }
+}
