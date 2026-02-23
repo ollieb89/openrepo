@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 
 ## Current Position
 
-Phase: 16 of 17 (Integration Fixes)
+Phase: 17 of 17 (Formal Verification)
 Plan: 2 of 2 in current phase
 Status: Complete
-Last activity: 2026-02-23 — 16-02 complete: verify_phase16.py with 4 structural checks (all PASS, exit 0)
+Last activity: 2026-02-23 — 17-02 complete: Phase 12 VERIFICATION.md with CFG-04/CFG-05 evidence, all 7 CFG requirements marked complete in REQUIREMENTS.md
 
-Progress: [██░░░░░░░░] 20% (v1.1)
+Progress: [███░░░░░░░] 30% (v1.1)
 
 ## Performance Metrics
 
@@ -28,6 +28,8 @@ Progress: [██░░░░░░░░] 20% (v1.1)
 | 13    | 01   | 3 min    | 2     | 3     |
 | 16    | 01   | 3 min    | 3     | 7     |
 | 16    | 02   | 1 min    | 1     | 1     |
+| 17    | 01   | 4 min    | 1     | 1     |
+| 17    | 02   | 2 min    | 2     | 2     |
 
 *Updated after each plan completion*
 
@@ -49,6 +51,10 @@ Decisions logged in PROJECT.md Key Decisions table. Recent decisions relevant to
 - [Phase 16-01]: project_id is required with no default in snapshot functions — callers must pass explicitly (TypeError on omission)
 - [Phase 16-01]: project_id is available for soul-override.md but intentionally not consumed in soul-default.md body
 - [Phase 16-02]: Verification uses inspect.signature and inspect.getsource — structural checks without exercising git or filesystem side effects
+- [Phase 17-01]: CFG-01 marked VERIFIED based on path convention (not file pre-existence) — state file created lazily on first container run
+- [Phase 17-01]: CFG-02 and CFG-06 co-owned with Phase 16 — Phase 11 built API, Phase 16 completed call-site threading
+- [Phase 17-02]: Retroactive VERIFICATION.md valid when backed by existing verification script (verify_soul_golden.py exits 0) and source inspection
+- [Phase 17-02]: CFG-05 override path is projects/<id>/soul-override.md (not agents directory) — confirmed by soul_renderer.py:145
 
 ### Pending Todos
 
@@ -64,5 +70,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed 16-02-PLAN.md (Phase 16 verification script — all 4 CFG checks PASS)
+Stopped at: Completed 17-01-PLAN.md (Phase 11 VERIFICATION.md — 5/5 CFG requirements VERIFIED)
 Resume file: None
