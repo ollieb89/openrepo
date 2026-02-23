@@ -23,7 +23,7 @@ from spawn import (
     spawn_l3_specialist,
 )
 from orchestration.state_engine import JarvisState
-from orchestration.project_config import get_workspace_path
+from orchestration.project_config import get_workspace_path, get_state_path
 
 
 class L3ContainerPool:
@@ -47,7 +47,7 @@ class L3ContainerPool:
 
         # Get project root for state file
         self.project_root = Path(__file__).parent.parent.parent
-        self.state_file = self.project_root / "workspace" / ".openclaw" / "workspace-state.json"
+        self.state_file = get_state_path()
 
     async def spawn_and_monitor(
         self,
