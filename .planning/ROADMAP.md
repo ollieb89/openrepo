@@ -61,7 +61,10 @@ Plans:
   1. Running the SOUL renderer against the PumplAI project produces a file that diffs empty against the v1.0 hardcoded `agents/pumplai_pm/agent/SOUL.md` (golden baseline passes)
   2. A new project created without a soul-override.md receives a SOUL.md rendered entirely from the default template with `$project_name` and `$tech_stack_*` substitution points filled correctly
   3. A project that supplies a `projects/<id>/soul-override.md` gets a merged SOUL.md where the override sections replace their corresponding default sections without corrupting the rest of the file
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 12-01-PLAN.md — Core renderer module, default template, and PumplAI override
+- [ ] 12-02-PLAN.md — CLI entry point and golden baseline verification script
 
 ### Phase 13: Multi-Project Runtime
 **Goal**: L3 containers carry their project identity as a Docker label and env var; container names are namespaced per project preventing name collisions; the pool and monitor operate correctly in a multi-project environment
@@ -112,7 +115,7 @@ Plans:
 | 9. Integration Wiring | v1.0 | 2/2 | ✓ Complete | 2026-02-23 |
 | 10. Housekeeping & Docs | v1.0 | 2/2 | ✓ Complete | 2026-02-23 |
 | 11. Config Decoupling Foundation | v1.1 | 0/3 | Planned | - |
-| 12. SOUL Templating | v1.1 | 0/TBD | Not started | - |
+| 12. SOUL Templating | v1.1 | 0/2 | Planned | - |
 | 13. Multi-Project Runtime | v1.1 | 0/TBD | Not started | - |
 | 14. Project CLI | v1.1 | 0/TBD | Not started | - |
 | 15. Dashboard Project Switcher | v1.1 | 0/TBD | Not started | - |
