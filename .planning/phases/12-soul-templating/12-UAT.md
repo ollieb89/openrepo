@@ -1,9 +1,9 @@
 ---
-status: complete
+status: diagnosed
 phase: 12-soul-templating
 source: 12-01-SUMMARY.md, 12-02-SUMMARY.md
 started: 2026-02-23T00:00:00Z
-updated: 2026-02-23T00:05:00Z
+updated: 2026-02-23T00:06:00Z
 ---
 
 ## Current Test
@@ -25,6 +25,7 @@ expected: PumplAI's `soul-override.md` contains override sections (e.g. HIERARCH
 result: issue
 reported: "agents/pumplai_pm/agent/soul-override.md is missing, so there are no override sections (e.g. HIERARCHY) to test replacement against. Also couldn't locate the default template file at orchestration/templates/SOUL.md."
 severity: major
+diagnosis: "FALSE POSITIVE — files exist at correct paths (projects/pumplai/soul-override.md and agents/_templates/soul-default.md). User checked wrong paths. Golden baseline passing byte-for-byte confirms override mechanism works."
 
 ### 4. CLI --write Flag
 expected: Running `python3 orchestration/soul_renderer.py --project pumplai --write` writes the SOUL.md file to `agents/pumplai_pm/agent/SOUL.md` and prints the output path. The written file matches stdout output.
@@ -53,11 +54,15 @@ skipped: 0
 ## Gaps
 
 - truth: "PumplAI's soul-override.md contains override sections that replace corresponding default template sections while preserving non-overridden sections"
-  status: failed
+  status: false_positive
   reason: "User reported: agents/pumplai_pm/agent/soul-override.md is missing, so there are no override sections (e.g. HIERARCHY) to test replacement against. Also couldn't locate the default template file at orchestration/templates/SOUL.md."
   severity: major
   test: 3
-  root_cause: ""
-  artifacts: []
+  root_cause: "Path expectation mismatch. Override file exists at projects/pumplai/soul-override.md (not agents/pumplai_pm/agent/). Default template exists at agents/_templates/soul-default.md (not orchestration/templates/). Feature works correctly — golden baseline passes byte-for-byte."
+  artifacts:
+    - path: "projects/pumplai/soul-override.md"
+      issue: "User looked at wrong path (agents/pumplai_pm/agent/soul-override.md)"
+    - path: "agents/_templates/soul-default.md"
+      issue: "User looked at wrong path (orchestration/templates/SOUL.md)"
   missing: []
   debug_session: ""
