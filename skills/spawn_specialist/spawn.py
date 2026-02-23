@@ -18,12 +18,18 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 import docker
 from docker.types import DeviceRequest
 from orchestration.state_engine import JarvisState
-from orchestration.project_config import load_project_config, get_workspace_path, get_agent_mapping
+from orchestration.project_config import load_project_config, get_workspace_path, get_agent_mapping, get_state_path
 
 
 def load_l3_config(project_id: Optional[str] = None) -> Dict[str, Any]:
     """Load L3 specialist configuration, with optional project overrides."""
-    config_path = Path(__file__).parent.parent.parent / "agents" / "l3_specialist" / "config.json"
+    try:
+        agent_map = get_agent_mapping(project_id)
+        l3_agent_id = agent_map.get("l3_executor", "l3_specialist")
+    except (FileNotFoundError, ValueError):
+        l3_agent_id = "l3_specialist"
+
+    config_path = Path(__file__).parent.parent.parent / "agents" / l3_agent_id / "config.json"
     with open(config_path) as f:
         config = json.load(f)
 
@@ -136,6 +142,7 @@ def spawn_l3_specialist(
             "STAGING_BRANCH": staging_branch,
             "CLI_RUNTIME": cli_runtime,
             "TASK_DESCRIPTION": task_description,
+            "OPENCLAW_STATE_FILE": f"/workspace/.openclaw/{get_state_path().parent.name}/workspace-state.json",
         },
 
         # Security isolation (HIE-04 requirements)
@@ -174,7 +181,7 @@ def spawn_l3_specialist(
         ]
 
     # Create task entry in state.json before spawning
-    state_file = project_root / "workspace" / ".openclaw" / "workspace-state.json"
+    state_file = get_state_path()
     jarvis = JarvisState(state_file)
     jarvis.create_task(
         task_id=task_id,
