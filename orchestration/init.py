@@ -93,11 +93,32 @@ def initialize_workspace(project_root: Optional[Path] = None) -> Dict[str, Any]:
         print(f"{Colors.GREEN}✓{Colors.RESET} Created snapshots directory: {snapshots_dir}")
     else:
         print(f"{Colors.BLUE}ℹ{Colors.RESET} Snapshots directory already exists: {snapshots_dir}")
-    
+
+    # Generate SOUL.md for active project if not yet written (skip-if-exists, non-fatal)
+    soul_written = False
+    try:
+        from .project_config import get_active_project_id as _get_pid
+        project_id = _get_pid()
+    except (ImportError, ValueError, FileNotFoundError):
+        project_id = None
+
+    if project_id is not None:
+        try:
+            from .soul_renderer import write_soul
+            soul_path = write_soul(project_id, skip_if_exists=True)
+            if soul_path is not None:
+                print(f"{Colors.GREEN}✓{Colors.RESET} Generated SOUL.md: {soul_path}")
+                soul_written = True
+            else:
+                print(f"{Colors.BLUE}ℹ{Colors.RESET} SOUL.md already exists, skipped")
+        except Exception as e:
+            print(f"{Colors.YELLOW}⚠{Colors.RESET} SOUL.md generation failed (non-fatal): {e}")
+
     return {
         'snapshots_dir': str(snapshots_dir),
         'created': created,
-        'already_existed': already_existed
+        'already_existed': already_existed,
+        'soul_written': soul_written,
     }
 
 
