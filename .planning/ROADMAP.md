@@ -31,7 +31,7 @@ See: `.planning/milestones/v1.0-ROADMAP.md` for full phase details.
 
 - [ ] **Phase 11: Config Decoupling Foundation** - Decouple all state/snapshot paths from hardcoded single-project constants; establish per-project path resolution as the canonical pattern
 - [ ] **Phase 12: SOUL Templating** - Default SOUL template with substitution points and per-project override mechanism; renders coherent L2 agent identity at project init time
-- [ ] **Phase 13: Multi-Project Runtime** - Wire per-project context through spawn, pool, and monitor; project-labeled containers with namespaced naming and env injection
+- [x] **Phase 13: Multi-Project Runtime** - Wire per-project context through spawn, pool, and monitor; project-labeled containers with namespaced naming and env injection (completed 2026-02-23)
 - [ ] **Phase 14: Project CLI** - `openclaw project init/list/switch/remove` subcommand group with template scaffolding for fullstack, backend, and ml-pipeline stacks
 - [ ] **Phase 15: Dashboard Project Switcher** - Project selector in occc header; all API routes and SSE stream accept project scope; task/metrics views filter by selected project
 
@@ -75,7 +75,7 @@ Plans:
   2. `docker inspect <container>` shows `openclaw.project` label set to the correct project ID for every L3 container
   3. `monitor.py --project pumplai` displays only PumplAI tasks; `monitor.py --project <other>` displays only that project's tasks — no cross-project bleed in output
   4. Changing `active_project` in `openclaw.json` mid-execution does not redirect an in-flight L3 task to the wrong state file — the task completes in the project's state file it was spawned under
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 Plans:
 - [ ] 13-01-PLAN.md — Container identity threading (spawn, pool, entrypoint)
 - [ ] 13-02-PLAN.md — Multi-project monitoring and verification
@@ -119,6 +119,6 @@ Plans:
 | 10. Housekeeping & Docs | v1.0 | 2/2 | ✓ Complete | 2026-02-23 |
 | 11. Config Decoupling Foundation | v1.1 | 0/3 | Planned | - |
 | 12. SOUL Templating | v1.1 | 0/2 | Planned | - |
-| 13. Multi-Project Runtime | v1.1 | 0/2 | Planned | - |
+| 13. Multi-Project Runtime | 2/2 | Complete   | 2026-02-23 | - |
 | 14. Project CLI | v1.1 | 0/TBD | Not started | - |
 | 15. Dashboard Project Switcher | v1.1 | 0/TBD | Not started | - |
