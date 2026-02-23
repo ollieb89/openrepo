@@ -37,9 +37,9 @@ Requirements for milestone v1.1 Project Agnostic. Each maps to roadmap phases.
 
 ### Dashboard
 
-- [ ] **DSH-05**: Project selector dropdown in occc header showing all available projects
-- [ ] **DSH-06**: `/api/swarm` route accepts `?project=<id>` and returns project-scoped state
-- [ ] **DSH-07**: SSE stream route `/api/swarm/stream` accepts `?project=<id>` and streams project-scoped events
+- [x] **DSH-05**: Project selector dropdown in occc header showing all available projects
+- [x] **DSH-06**: `/api/swarm` route accepts `?project=<id>` and returns project-scoped state
+- [x] **DSH-07**: SSE stream route `/api/swarm/stream` accepts `?project=<id>` and streams project-scoped events
 - [ ] **DSH-08**: Task list, agent hierarchy, and metrics filter by selected project
 
 ## v1.2 Requirements
@@ -93,9 +93,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CLI-04 | Phase 14 | Complete |
 | CLI-05 | Phase 14 | Complete |
 | CLI-06 | Phase 14 | Complete |
-| DSH-05 | Phase 15 | Pending |
-| DSH-06 | Phase 15 | Pending |
-| DSH-07 | Phase 15 | Pending |
+| DSH-05 | Phase 15 | Complete |
+| DSH-06 | Phase 15 | Complete |
+| DSH-07 | Phase 15 | Complete |
 | DSH-08 | Phase 15 | Pending |
 
 **Coverage:**

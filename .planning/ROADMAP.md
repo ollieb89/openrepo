@@ -106,7 +106,7 @@ Plans:
   4. The task list, agent hierarchy panel, and metrics widgets all display data filtered to the selected project — no cross-project task bleed visible in any panel
 **Plans:** 2 plans
 Plans:
-- [ ] 15-01-PLAN.md — API layer: project discovery endpoint, project-scoped /api/swarm and /api/swarm/stream routes
+- [x] 15-01-PLAN.md — API layer: project discovery endpoint, project-scoped /api/swarm and /api/swarm/stream routes (completed 2026-02-23)
 - [ ] 15-02-PLAN.md — UI layer: ProjectSelector dropdown, project-aware useSwarmState hook, page state management
 
 ### Phase 16: Phase 11/12 Integration Fixes

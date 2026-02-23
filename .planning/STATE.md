@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 
 ## Current Position
 
-Phase: 18 of 18 (Integration Hardening — Complete)
-Plan: 2 of 2 in current phase
-Status: All executed phases complete; Phase 15 remaining
-Last activity: 2026-02-23 — Phases 11-14, 16-18 complete. Phase 15 (Dashboard Project Switcher) not started.
+Phase: 15 of 18 (Dashboard Project Switcher — In Progress)
+Plan: 1 of 2 in current phase
+Status: Phase 15 in progress — Plan 01 complete, Plan 02 remaining
+Last activity: 2026-02-23 — Phase 15 Plan 01 complete: project-scoped API routes with /api/projects discovery endpoint.
 
-Progress: [████████░░] 88% (v1.1 — 7/8 phases complete, Phase 15 remaining)
+Progress: [████████░░] 90% (v1.1 — Phase 15 in progress, Plan 01/02 complete)
 
 ## Performance Metrics
 
@@ -37,6 +37,7 @@ Progress: [████████░░] 88% (v1.1 — 7/8 phases complete, Ph
 
 | 14    | 01   | 2 min    | 2     | 5     |
 | 14    | 02   | 3 min    | 1     | 1     |
+| 15    | 01   | 2 min    | 2     | 4     |
 
 ## Accumulated Context
 
@@ -69,6 +70,10 @@ Decisions logged in PROJECT.md Key Decisions table. Recent decisions relevant to
 - [Phase 14]: switch checks CURRENT active project for running L3 containers, not the target project
 - [Phase 14]: init auto-activates new project — reduces friction, operator can switch if needed
 - [Phase 14-project-cli]: Functional subprocess verification preferred over static code inspection for CLI requirements
+- [Phase 15-01]: Per-project stateCache Map (not singleton) prevents cross-project cache bleed in dashboard API
+- [Phase 15-01]: resolveStateFilePath(projectId) returns <OPENCLAW_ROOT>/workspace/.openclaw/<projectId>/workspace-state.json — mirrors Phase 11 Python convention
+- [Phase 15-01]: Missing state file returns empty-but-valid state (not 404) — project without tasks is valid
+- [Phase 15-01]: getDefaultProject() fallback ensures parameterless API calls don't crash — returns first alphabetically-sorted project with project.json
 
 ### Pending Todos
 
@@ -84,5 +89,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed 14-02-PLAN.md (verify_phase14.py confirming all 6 CLI requirements)
+Stopped at: Completed 15-01-PLAN.md (project-scoped API routes and /api/projects discovery endpoint)
 Resume file: None
