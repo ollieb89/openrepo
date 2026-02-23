@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-23)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.1 Project Agnostic — Phase 15: Dashboard Project Switcher (Next)
+**Current focus:** v1.1 Project Agnostic — All phases complete
 
 ## Current Position
 
-Phase: 15 of 18 (Dashboard Project Switcher — In Progress)
-Plan: 1 of 2 in current phase
-Status: Phase 15 in progress — Plan 01 complete, Plan 02 remaining
-Last activity: 2026-02-23 — Phase 15 Plan 01 complete: project-scoped API routes with /api/projects discovery endpoint.
+Phase: 15 of 18 (Dashboard Project Switcher — Complete)
+Plan: 2 of 2 in current phase
+Status: All v1.1 phases (11-18) complete
+Last activity: 2026-02-23 — Phase 15 Plan 02 complete: ProjectSelector component, project-scoped useSwarmState hook, localStorage persistence.
 
-Progress: [████████░░] 90% (v1.1 — Phase 15 in progress, Plan 01/02 complete)
+Progress: [██████████] 100% (v1.1 — all phases complete)
 
 ## Performance Metrics
 
@@ -38,6 +38,7 @@ Progress: [████████░░] 90% (v1.1 — Phase 15 in progress, P
 | 14    | 01   | 2 min    | 2     | 5     |
 | 14    | 02   | 3 min    | 1     | 1     |
 | 15    | 01   | 2 min    | 2     | 4     |
+| 15    | 02   | 20 min   | 3     | 4     |
 
 ## Accumulated Context
 
@@ -74,6 +75,10 @@ Decisions logged in PROJECT.md Key Decisions table. Recent decisions relevant to
 - [Phase 15-01]: resolveStateFilePath(projectId) returns <OPENCLAW_ROOT>/workspace/.openclaw/<projectId>/workspace-state.json — mirrors Phase 11 Python convention
 - [Phase 15-01]: Missing state file returns empty-but-valid state (not 404) — project without tasks is valid
 - [Phase 15-01]: getDefaultProject() fallback ensures parameterless API calls don't crash — returns first alphabetically-sorted project with project.json
+- [Phase 15-02]: Native <select> element styled with Tailwind — no new component library dependencies for project switcher
+- [Phase 15-02]: SWR URL includes ?project= query param — cache key change auto-invalidates cache without manual clearing
+- [Phase 15-02]: ProjectInfo interface defined inline in page.tsx — avoids importing lib/projects.ts (Node.js fs/path) in client component
+- [Phase 15-02]: isSwitching cleared on data arrival — ~200-500ms loading skeleton during project transitions without arbitrary timeouts
 
 ### Pending Todos
 
@@ -89,5 +94,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed 15-01-PLAN.md (project-scoped API routes and /api/projects discovery endpoint)
+Stopped at: Completed 15-02-PLAN.md (ProjectSelector component, project-scoped useSwarmState hook, dashboard project switching)
 Resume file: None

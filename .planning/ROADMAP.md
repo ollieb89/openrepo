@@ -33,7 +33,7 @@ See: `.planning/milestones/v1.0-ROADMAP.md` for full phase details.
 - [x] **Phase 12: SOUL Templating** - Default SOUL template with substitution points and per-project override mechanism; renders coherent L2 agent identity at project init time (completed 2026-02-23)
 - [x] **Phase 13: Multi-Project Runtime** - Wire per-project context through spawn, pool, and monitor; project-labeled containers with namespaced naming and env injection (completed 2026-02-23)
 - [x] **Phase 14: Project CLI** - `openclaw project init/list/switch/remove` subcommand group with template scaffolding for fullstack, backend, and ml-pipeline stacks (completed 2026-02-23)
-- [ ] **Phase 15: Dashboard Project Switcher** - Project selector in occc header; all API routes and SSE stream accept project scope; task/metrics views filter by selected project
+- [x] **Phase 15: Dashboard Project Switcher** - Project selector in occc header; all API routes and SSE stream accept project scope; task/metrics views filter by selected project (completed 2026-02-23)
 
 ## Phase Details
 
@@ -104,7 +104,7 @@ Plans:
   2. `GET /api/swarm?project=pumplai` returns only PumplAI state; `GET /api/swarm?project=<other>` returns only that project's state — the two responses contain distinct task lists
   3. The SSE stream at `/api/swarm/stream?project=<id>` emits only events for the specified project; switching projects in the UI reconnects to the correct stream within one SSE cycle
   4. The task list, agent hierarchy panel, and metrics widgets all display data filtered to the selected project — no cross-project task bleed visible in any panel
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 Plans:
 - [x] 15-01-PLAN.md — API layer: project discovery endpoint, project-scoped /api/swarm and /api/swarm/stream routes (completed 2026-02-23)
 - [ ] 15-02-PLAN.md — UI layer: ProjectSelector dropdown, project-aware useSwarmState hook, page state management
@@ -171,7 +171,7 @@ Plans:
 | 12. SOUL Templating | v1.1 | 2/2 | ✓ Complete | 2026-02-23 |
 | 13. Multi-Project Runtime | v1.1 | 2/2 | ✓ Complete | 2026-02-23 |
 | 14. Project CLI | v1.1 | 2/2 | ✓ Complete | 2026-02-23 |
-| 15. Dashboard Project Switcher | v1.1 | 0/2 | Not started | - |
+| 15. Dashboard Project Switcher | 2/2 | Complete   | 2026-02-23 | - |
 | 16. Phase 11/12 Integration Fixes | v1.1 | 2/2 | ✓ Complete | 2026-02-23 |
 | 17. Phase 11/12 Formal Verification | v1.1 | 2/2 | ✓ Complete | 2026-02-23 |
 | 18. Integration Hardening | v1.1 | 2/2 | ✓ Complete | 2026-02-23 |
