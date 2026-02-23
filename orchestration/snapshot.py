@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional, Tuple
 
 from .state_engine import JarvisState
-from .project_config import load_project_config
+from .project_config import load_project_config, get_snapshot_dir
 
 
 def _detect_default_branch(workspace: Path, project_id: Optional[str] = None) -> str:
@@ -197,7 +197,7 @@ def capture_semantic_snapshot(task_id: str, workspace_path: str) -> Tuple[Path, 
     """
     Generate git diff as semantic snapshot.
     
-    Captures diff against main and saves to .openclaw/snapshots/{task_id}.diff
+    Captures diff against default branch and saves to .openclaw/snapshots/{task_id}.diff
     with metadata header.
     
     Args:
@@ -213,11 +213,12 @@ def capture_semantic_snapshot(task_id: str, workspace_path: str) -> Tuple[Path, 
     """
     workspace = Path(workspace_path)
     branch_name = f"l3/task-{task_id}"
+    default_branch = _detect_default_branch(workspace)
     
-    # Generate diff against main
+    # Generate diff against default branch
     try:
         diff_result = subprocess.run(
-            ['git', '-C', str(workspace), 'diff', 'main...HEAD'],
+            ['git', '-C', str(workspace), 'diff', f'{default_branch}...HEAD'],
             check=True,
             capture_output=True,
             text=True
@@ -228,7 +229,7 @@ def capture_semantic_snapshot(task_id: str, workspace_path: str) -> Tuple[Path, 
     # Get diff stats
     try:
         stat_result = subprocess.run(
-            ['git', '-C', str(workspace), 'diff', '--stat', 'main...HEAD'],
+            ['git', '-C', str(workspace), 'diff', '--stat', f'{default_branch}...HEAD'],
             check=True,
             capture_output=True,
             text=True
@@ -256,7 +257,7 @@ def capture_semantic_snapshot(task_id: str, workspace_path: str) -> Tuple[Path, 
                     deletions = int(part.split()[0])
     
     # Create snapshots directory
-    snapshots_dir = workspace / '.openclaw' / 'snapshots'
+    snapshots_dir = get_snapshot_dir()
     snapshots_dir.mkdir(parents=True, exist_ok=True)
     
     # Create metadata header
@@ -304,11 +305,12 @@ def l2_review_diff(task_id: str, workspace_path: str) -> Dict[str, str]:
     """
     workspace = Path(workspace_path)
     branch_name = f"l3/task-{task_id}"
+    default_branch = _detect_default_branch(workspace)
     
     # Generate stat summary
     try:
         stat_result = subprocess.run(
-            ['git', '-C', str(workspace), 'diff', '--stat', f'main...{branch_name}'],
+            ['git', '-C', str(workspace), 'diff', '--stat', f'{default_branch}...{branch_name}'],
             check=True,
             capture_output=True,
             text=True
@@ -319,7 +321,7 @@ def l2_review_diff(task_id: str, workspace_path: str) -> Dict[str, str]:
     # Generate full diff
     try:
         diff_result = subprocess.run(
-            ['git', '-C', str(workspace), 'diff', f'main...{branch_name}'],
+            ['git', '-C', str(workspace), 'diff', f'{default_branch}...{branch_name}'],
             check=True,
             capture_output=True,
             text=True
@@ -335,7 +337,7 @@ def l2_review_diff(task_id: str, workspace_path: str) -> Dict[str, str]:
 
 def l2_merge_staging(task_id: str, workspace_path: str, state_file: Optional[Path] = None) -> Dict[str, Any]:
     """
-    Merge L3 staging branch into main with --no-ff.
+    Merge L3 staging branch into default branch with --no-ff.
     
     On conflict: aborts merge, returns conflict details, leaves branch intact.
     
@@ -352,22 +354,23 @@ def l2_merge_staging(task_id: str, workspace_path: str, state_file: Optional[Pat
     """
     workspace = Path(workspace_path)
     branch_name = f"l3/task-{task_id}"
+    default_branch = _detect_default_branch(workspace)
     
-    # Checkout main
+    # Checkout default branch
     try:
         subprocess.run(
-            ['git', '-C', str(workspace), 'checkout', 'main'],
+            ['git', '-C', str(workspace), 'checkout', default_branch],
             check=True,
             capture_output=True,
             text=True
         )
     except subprocess.CalledProcessError as e:
-        raise GitOperationError(f"Failed to checkout main: {e.stderr}")
+        raise GitOperationError(f"Failed to checkout {default_branch}: {e.stderr}")
     
     # Attempt merge with --no-ff
     merge_result = subprocess.run(
         ['git', '-C', str(workspace), 'merge', '--no-ff', branch_name, 
-         '-m', f'Merge L3 task {task_id} into main'],
+         '-m', f'Merge L3 task {task_id} into {default_branch}'],
         capture_output=True,
         text=True
     )
@@ -435,17 +438,18 @@ def l2_reject_staging(task_id: str, workspace_path: str, state_file: Optional[Pa
     """
     workspace = Path(workspace_path)
     branch_name = f"l3/task-{task_id}"
+    default_branch = _detect_default_branch(workspace)
     
     # Ensure we're not on the branch we're trying to delete
     try:
         subprocess.run(
-            ['git', '-C', str(workspace), 'checkout', 'main'],
+            ['git', '-C', str(workspace), 'checkout', default_branch],
             check=True,
             capture_output=True,
             text=True
         )
     except subprocess.CalledProcessError as e:
-        raise GitOperationError(f"Failed to checkout main: {e.stderr}")
+        raise GitOperationError(f"Failed to checkout {default_branch}: {e.stderr}")
     
     # Force delete the staging branch
     try:
@@ -483,14 +487,13 @@ def cleanup_old_snapshots(workspace_path: str, max_snapshots: int = 100) -> Dict
     Keep last N snapshots, delete oldest when exceeded.
     
     Args:
-        workspace_path: Path to the workspace
+        workspace_path: Path to the workspace (retained for API compatibility)
         max_snapshots: Maximum number of snapshots to retain (default: 100)
         
     Returns:
         Dictionary with 'deleted_count' and 'remaining_count'
     """
-    workspace = Path(workspace_path)
-    snapshots_dir = workspace / '.openclaw' / 'snapshots'
+    snapshots_dir = get_snapshot_dir()
     
     if not snapshots_dir.exists():
         return {'deleted_count': 0, 'remaining_count': 0}
