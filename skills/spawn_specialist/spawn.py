@@ -89,6 +89,10 @@ def spawn_l3_specialist(
     # Get project root for orchestration mount
     project_root = Path(__file__).parent.parent.parent
 
+    # Load L3 config for hierarchy metadata
+    l3_config = load_l3_config()
+    spawned_by = l3_config.get("spawned_by", "pumplai_pm")
+
     # Build container configuration
     container_config = {
         "image": "openclaw-l3-specialist:latest",
@@ -116,17 +120,17 @@ def spawn_l3_specialist(
         "cap_drop": ["ALL"],
 
         # Resource limits
-        "mem_limit": "4g",
-        "cpu_quota": 100000,  # 1 CPU
+        "mem_limit": l3_config.get("container", {}).get("mem_limit", "4g"),
+        "cpu_quota": l3_config.get("container", {}).get("cpu_quota", 100000),
 
         # Restart policy (L2 handles retries, not Docker)
         "restart_policy": {"Name": "no"},
 
-        # Labels for tracking
+        # Labels for tracking (sourced from agent config, not hardcoded)
         "labels": {
-            "openclaw.tier": "l3",
+            "openclaw.tier": f"l{l3_config.get('level', 3)}",
             "openclaw.task_id": task_id,
-            "openclaw.spawned_by": "pumplai_pm",
+            "openclaw.spawned_by": spawned_by,
             "openclaw.skill": skill_hint,
         },
 

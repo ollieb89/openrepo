@@ -3,6 +3,7 @@
   "name": "L3 Specialist Executor",
   "level": 3,
   "reports_to": "pumplai_pm",
+  "spawned_by": "pumplai_pm",
   "container": {
     "image": "openclaw-l3-specialist:latest",
     "lifecycle": "ephemeral",
