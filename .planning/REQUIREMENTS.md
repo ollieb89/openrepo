@@ -66,7 +66,7 @@
 | COM-03 | Phase 3 → Phase 6 | Pending |
 | COM-04 | Phase 3 → Phase 5, 6 | Pending |
 | DSH-01 | Phase 4 → Phase 7 | Pending |
-| DSH-02 | Phase 4 → Phase 7 | Pending |
+| DSH-02 | Phase 4 → Phase 7 | Complete |
 | DSH-03 | Phase 4 → Phase 7 | Pending |
 | DSH-04 | Phase 4 → Phase 7 | Pending |
 | SEC-01 | Phase 1 | Pending |

@@ -8,7 +8,7 @@
 - **Phase:** Phase 4: Monitoring Uplink
 - **Plan:** None yet
 - **Status:** CONTEXT_GATHERED
-- **Progress:** [░░░░░░░░░░░░░░░░░░░░] 0% (Phase 4)
+- **Progress:** [█████████░] 90%
 
 ## Performance Metrics
 - **Velocity:** 4 plans/session
@@ -26,6 +26,9 @@
 - Deployed semantic snapshot system with git staging branches.
 - Created CLI monitoring tool for real-time L3 activity visibility.
 - Registered L3 specialist in OpenClaw hierarchy with spawn authority.
+- [Phase 07-phase4-verification]: SSE stream must send initial data: event immediately on connect, not wait for first poll cycle
+- [Phase 07-phase4-verification]: getSwarmState exported from route.ts for shared use by stream endpoint
+- [Phase 07-phase4-verification]: SSE stream emits full state object on change, not bare notification events
 
 ### Todos
 - [x] Approve REQUIREMENTS.md
