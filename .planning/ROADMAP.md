@@ -119,7 +119,8 @@
   2. `agents/pumplai_pm/agent/config.json` exists with L2 role definition, skill_registry, and reports_to.
   3. COM-02 in REQUIREMENTS.md updated to reflect accepted CLI-routing deviation, marked SATISFIED.
   4. All 16/16 requirements satisfied. All 5/5 E2E flows complete.
-**Plans**: TBD
+**Plans**: 1 plan
+- [ ] 08-01-PLAN.md — Close all remaining gaps: SSE client fix (DSH-02), L2 config (HIE-02), COM-02 deviation acceptance
 
 ---
 
