@@ -149,7 +149,9 @@
   3. `redactWithReport()` is either wired to a consumer or removed from exports.
   4. `pumplai_pm` workspace path corrected to openclaw workspace.
   5. `snapshot.py` exported from `orchestration/__init__.py` `__all__`.
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] 10-01-PLAN.md — Retroactive VERIFICATION.md for Phases 5 and 8
+- [ ] 10-02-PLAN.md — Remove redactWithReport, fix workspace path, add snapshot exports
 
 ---
 
@@ -166,4 +168,4 @@
 | 7. Phase 4 Formal Verification | 2/3 | In Progress|  |
 | 8. Final Gap Closure | 0/0 | Planned | - |
 | 9. Integration Wiring Cleanup | 0/2 | Planned | - |
-| 10. Housekeeping & Documentation | 0/0 | Planned | - |
+| 10. Housekeeping & Documentation | 0/2 | Planned | - |
