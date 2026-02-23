@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-23)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.1 Project Agnostic — Phase 13: Multi-Project Runtime
+**Current focus:** v1.1 Project Agnostic — Phase 14: Project CLI
 
 ## Current Position
 
-Phase: 18 of 18 (Integration Hardening)
-Plan: 2 of 2 in current phase
-Status: Complete
-Last activity: 2026-02-23 — 18-02 complete: write_soul() skip_if_exists + Optional[Path] return, CLI --force flag, initialize_workspace() SOUL auto-init with non-fatal guard
+Phase: 14 of 18 (Project CLI)
+Plan: 1 of 2 in current phase
+Status: In Progress
+Last activity: 2026-02-23 — 14-01 complete: project_cli.py with init/list/switch/remove, template presets, project_config.py error message update
 
-Progress: [███░░░░░░░] 30% (v1.1)
+Progress: [████░░░░░░] 40% (v1.1)
 
 ## Performance Metrics
 
@@ -34,6 +34,8 @@ Progress: [███░░░░░░░] 30% (v1.1)
 | 18    | 02   | 2 min    | 2     | 2     |
 
 *Updated after each plan completion*
+
+| 14    | 01   | 2 min    | 2     | 5     |
 
 ## Accumulated Context
 
@@ -61,6 +63,10 @@ Decisions logged in PROJECT.md Key Decisions table. Recent decisions relevant to
 - [Phase 18-02]: SOUL generation failure in initialize_workspace() is non-fatal; deferred local import avoids circular import risk
 - [Phase 18]: DEFAULT_BRANCH injected via container environment dict — entrypoint uses :=main fallback for safety
 - [Phase 18]: orchestration __init__.py complete __all__ with categorized comments — full public API not minimal 3-symbol addition
+- [Phase 14]: Project CLI uses argparse subparsers — consistent with existing monitor.py/spawn.py pattern
+- [Phase 14]: remove preserves workspace directory — workspace data must not be deleted on project removal
+- [Phase 14]: switch checks CURRENT active project for running L3 containers, not the target project
+- [Phase 14]: init auto-activates new project — reduces friction, operator can switch if needed
 
 ### Pending Todos
 
@@ -76,5 +82,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed 18-01-PLAN.md (DEFAULT_BRANCH wiring, orchestration public API complete, geriai identity fix)
+Stopped at: Completed 14-01-PLAN.md (project_cli.py with init/list/switch/remove, template presets, project_config.py error message update)
 Resume file: None

@@ -90,7 +90,7 @@ Plans:
   3. `openclaw project switch <id>` updates `active_project` in `openclaw.json`; running `list` immediately after confirms the active marker moved; attempting to switch while L3 tasks are in-flight prints a warning and aborts
   4. `openclaw project remove <id>` deletes the project directory; attempting to remove the currently active project prints an error and exits without deleting anything
   5. `openclaw project init --template fullstack` scaffolds a project.json pre-populated with fullstack defaults; `--template backend` and `--template ml-pipeline` produce their respective presets from `projects/_templates/`
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
 - [ ] 14-01-PLAN.md — Template presets + CLI module with init/list/switch/remove subcommands
 - [ ] 14-02-PLAN.md — Phase 14 verification script (all 6 CLI requirements)
@@ -167,7 +167,7 @@ Plans:
 | 11. Config Decoupling Foundation | v1.1 | 0/3 | Planned | - |
 | 12. SOUL Templating | v1.1 | 0/2 | Planned | - |
 | 13. Multi-Project Runtime | 2/2 | Complete    | 2026-02-23 | - |
-| 14. Project CLI | v1.1 | 0/2 | Planned | - |
+| 14. Project CLI | 1/2 | In Progress|  | - |
 | 15. Dashboard Project Switcher | v1.1 | 0/TBD | Not started | - |
 | 16. Phase 11/12 Integration Fixes | 2/2 | Complete    | 2026-02-23 | - |
 | 17. Phase 11/12 Formal Verification | 2/2 | Complete    | 2026-02-23 | - |

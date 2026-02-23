@@ -28,12 +28,12 @@ Requirements for milestone v1.1 Project Agnostic. Each maps to roadmap phases.
 
 ### Project CLI
 
-- [ ] **CLI-01**: `openclaw project init` creates `projects/<id>/project.json` from prompts or flags
-- [ ] **CLI-02**: `openclaw project list` shows all projects with ID, name, workspace, active marker
-- [ ] **CLI-03**: `openclaw project switch <id>` updates `active_project` in `openclaw.json`
-- [ ] **CLI-04**: `openclaw project remove <id>` deletes project directory with guard against removing active project
-- [ ] **CLI-05**: `openclaw project init --template fullstack|backend|ml-pipeline` scaffolds from preset templates
-- [ ] **CLI-06**: Template presets stored in `projects/_templates/` with sensible defaults per stack type
+- [x] **CLI-01**: `openclaw project init` creates `projects/<id>/project.json` from prompts or flags
+- [x] **CLI-02**: `openclaw project list` shows all projects with ID, name, workspace, active marker
+- [x] **CLI-03**: `openclaw project switch <id>` updates `active_project` in `openclaw.json`
+- [x] **CLI-04**: `openclaw project remove <id>` deletes project directory with guard against removing active project
+- [x] **CLI-05**: `openclaw project init --template fullstack|backend|ml-pipeline` scaffolds from preset templates
+- [x] **CLI-06**: Template presets stored in `projects/_templates/` with sensible defaults per stack type
 
 ### Dashboard
 
@@ -87,12 +87,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MPR-04 | Phase 13 | Complete |
 | MPR-05 | Phase 13 | Complete |
 | MPR-06 | Phase 13 | Complete |
-| CLI-01 | Phase 14 | Pending |
-| CLI-02 | Phase 14 | Pending |
-| CLI-03 | Phase 14 | Pending |
-| CLI-04 | Phase 14 | Pending |
-| CLI-05 | Phase 14 | Pending |
-| CLI-06 | Phase 14 | Pending |
+| CLI-01 | Phase 14 | Complete |
+| CLI-02 | Phase 14 | Complete |
+| CLI-03 | Phase 14 | Complete |
+| CLI-04 | Phase 14 | Complete |
+| CLI-05 | Phase 14 | Complete |
+| CLI-06 | Phase 14 | Complete |
 | DSH-05 | Phase 15 | Pending |
 | DSH-06 | Phase 15 | Pending |
 | DSH-07 | Phase 15 | Pending |
