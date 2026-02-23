@@ -104,7 +104,10 @@ Plans:
   2. `GET /api/swarm?project=pumplai` returns only PumplAI state; `GET /api/swarm?project=<other>` returns only that project's state — the two responses contain distinct task lists
   3. The SSE stream at `/api/swarm/stream?project=<id>` emits only events for the specified project; switching projects in the UI reconnects to the correct stream within one SSE cycle
   4. The task list, agent hierarchy panel, and metrics widgets all display data filtered to the selected project — no cross-project task bleed visible in any panel
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 15-01-PLAN.md — API layer: project discovery endpoint, project-scoped /api/swarm and /api/swarm/stream routes
+- [ ] 15-02-PLAN.md — UI layer: ProjectSelector dropdown, project-aware useSwarmState hook, page state management
 
 ### Phase 16: Phase 11/12 Integration Fixes
 **Goal**: Fix the 3 cross-phase wiring issues identified by the v1.1 milestone audit — snapshot project_id threading, soul template variable consumption, and staging branch detection — plus remove deprecated constants
@@ -168,7 +171,7 @@ Plans:
 | 12. SOUL Templating | v1.1 | 2/2 | ✓ Complete | 2026-02-23 |
 | 13. Multi-Project Runtime | v1.1 | 2/2 | ✓ Complete | 2026-02-23 |
 | 14. Project CLI | v1.1 | 2/2 | ✓ Complete | 2026-02-23 |
-| 15. Dashboard Project Switcher | v1.1 | 0/TBD | Not started | - |
+| 15. Dashboard Project Switcher | v1.1 | 0/2 | Not started | - |
 | 16. Phase 11/12 Integration Fixes | v1.1 | 2/2 | ✓ Complete | 2026-02-23 |
 | 17. Phase 11/12 Formal Verification | v1.1 | 2/2 | ✓ Complete | 2026-02-23 |
 | 18. Integration Hardening | v1.1 | 2/2 | ✓ Complete | 2026-02-23 |
