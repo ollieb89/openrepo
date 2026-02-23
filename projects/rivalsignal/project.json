@@ -1,0 +1,20 @@
+{
+  "id": "rivalsignal",
+  "name": "RivalSignal",
+  "agent_display_name": "RivalSignal_PM",
+  "workspace": "/home/ollie/Development/Projects/rivalsignal",
+  "tech_stack": {
+    "frontend": "",
+    "backend": "",
+    "infra": "Turborepo monorepo, Docker"
+  },
+  "agents": {
+    "l2_pm": "rivalsignal_pm",
+    "l3_executor": "l3_specialist"
+  },
+  "l3_overrides": {
+    "mem_limit": "4g",
+    "cpu_quota": 100000,
+    "runtimes": ["claude-code", "codex", "gemini-cli"]
+  }
+}

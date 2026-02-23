@@ -1,0 +1,20 @@
+{
+  "id": "replyiq",
+  "name": "ReplyIQ",
+  "agent_display_name": "ReplyIQ_PM",
+  "workspace": "/home/ollie/Development/Projects/replyiq",
+  "tech_stack": {
+    "frontend": "",
+    "backend": "",
+    "infra": "Turborepo monorepo"
+  },
+  "agents": {
+    "l2_pm": "replyiq_pm",
+    "l3_executor": "l3_specialist"
+  },
+  "l3_overrides": {
+    "mem_limit": "4g",
+    "cpu_quota": 100000,
+    "runtimes": ["claude-code", "codex", "gemini-cli"]
+  }
+}

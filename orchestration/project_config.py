@@ -73,6 +73,15 @@ def load_project_config(project_id: Optional[str] = None) -> Dict[str, Any]:
         return json.load(f)
 
 
+def get_source_directories() -> list:
+    """Get the configured source directories from openclaw.json."""
+    root = _find_project_root()
+    config_path = root / "openclaw.json"
+    with open(config_path) as f:
+        config = json.load(f)
+    return config.get("source_directories", [])
+
+
 def get_workspace_path(project_id: Optional[str] = None) -> str:
     """Get the workspace path for a project."""
     config = load_project_config(project_id)

@@ -19,6 +19,10 @@
     }
   },
   "active_project": "pumplai",
+  "source_directories": [
+    "/home/ollie/Development/Projects",
+    "/home/ollie/Development/Tools"
+  ],
   "agents": {
     "defaults": {
       "model": {
@@ -71,7 +75,7 @@
         "name": "PumpLAI Project Manager",
         "level": 2,
         "reports_to": "clawdia_prime",
-        "workspace": "/home/ollie/Development/Projects/pumplai",
+        "project": "pumplai",
         "sandbox": {
           "mode": "all"
         }
@@ -81,7 +85,7 @@
         "name": "Frontend Architect",
         "level": 2,
         "reports_to": "clawdia_prime",
-        "workspace": "/home/ollie/Development/Projects/pumplai",
+        "project": "pumplai",
         "sandbox": {
           "mode": "off"
         }
@@ -91,7 +95,7 @@
         "name": "ML Pipeline Worker",
         "level": 3,
         "reports_to": "pumplai_pm",
-        "workspace": "/home/ollie/Development/Projects/pumplai",
+        "project": "pumplai",
         "sandbox": {
           "mode": "off"
         }
@@ -101,7 +105,6 @@
         "name": "L3 Specialist Executor",
         "level": 3,
         "reports_to": "pumplai_pm",
-        "workspace": "/home/ollie/Development/Projects/pumplai",
         "sandbox": {
           "mode": "all"
         }

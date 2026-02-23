@@ -1,0 +1,20 @@
+{
+  "id": "viflo",
+  "name": "Viflo",
+  "agent_display_name": "Viflo_PM",
+  "workspace": "/home/ollie/Development/Tools/viflo",
+  "tech_stack": {
+    "frontend": "",
+    "backend": "",
+    "infra": "pnpm monorepo"
+  },
+  "agents": {
+    "l2_pm": "viflo_pm",
+    "l3_executor": "l3_specialist"
+  },
+  "l3_overrides": {
+    "mem_limit": "4g",
+    "cpu_quota": 100000,
+    "runtimes": ["claude-code", "codex", "gemini-cli"]
+  }
+}

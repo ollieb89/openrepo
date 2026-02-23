@@ -66,7 +66,9 @@ docker build -t openclaw-dashboard workspace/occc/
 
 ## Configuration
 
-- `openclaw.json` — Root config: agent definitions, gateway (port 18789), sandbox modes, Telegram integration
+- `openclaw.json` — Root config: agent definitions, gateway (port 18789), sandbox modes, Telegram integration, `source_directories`
+- `openclaw.json:source_directories` — Lists where user code lives: `["/home/ollie/Development/Projects", "/home/ollie/Development/Tools"]`. Used by `project_cli.py init` for default workspace path and available to any tool that needs to discover projects.
+- `projects/<id>/project.json` — Per-project manifest with `workspace` path (points into source_directories), tech stack, agent mappings, L3 overrides
 - `agents/l3_specialist/config.json` — L3 container config: supported runtimes (claude-code, codex, gemini-cli), skill registry with timeouts (code: 600s, test: 300s), max 3 concurrent, retry once on failure
 - `orchestration/config.py` — State file path, lock timeout (5s), poll interval (1s), snapshot directory
 

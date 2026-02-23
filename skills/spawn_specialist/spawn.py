@@ -291,11 +291,11 @@ if __name__ == "__main__":
     parser.add_argument("task_id", help="Task identifier")
     parser.add_argument("skill_hint", choices=["code", "test"], help="Skill to use")
     parser.add_argument("task_description", help="Task description")
-    # Resolve default workspace from project config, fall back to legacy path
+    # Resolve default workspace from project config
     try:
         _default_workspace = get_workspace_path()
     except (FileNotFoundError, ValueError):
-        _default_workspace = "/home/ollie/.openclaw/workspace"
+        _default_workspace = None
 
     parser.add_argument("--workspace", default=_default_workspace, help="Workspace path")
     parser.add_argument("--project", default=None, help="Project ID (overrides active_project)")

@@ -1,0 +1,20 @@
+{
+  "id": "ugro-data",
+  "name": "Ugro Data",
+  "agent_display_name": "UgroData_PM",
+  "workspace": "/home/ollie/Development/Tools/ugro_data",
+  "tech_stack": {
+    "frontend": "",
+    "backend": "",
+    "infra": ""
+  },
+  "agents": {
+    "l2_pm": "ugro-data_pm",
+    "l3_executor": "l3_specialist"
+  },
+  "l3_overrides": {
+    "mem_limit": "4g",
+    "cpu_quota": 100000,
+    "runtimes": ["claude-code", "codex", "gemini-cli"]
+  }
+}

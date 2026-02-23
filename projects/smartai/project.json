@@ -1,0 +1,20 @@
+{
+  "id": "smartai",
+  "name": "SmartAI",
+  "agent_display_name": "SmartAI_PM",
+  "workspace": "/home/ollie/Development/Projects/smartai",
+  "tech_stack": {
+    "frontend": "Nuxt 3, Vue 3, Tailwind CSS, Drizzle ORM",
+    "backend": "",
+    "infra": ""
+  },
+  "agents": {
+    "l2_pm": "smartai_pm",
+    "l3_executor": "l3_specialist"
+  },
+  "l3_overrides": {
+    "mem_limit": "4g",
+    "cpu_quota": 100000,
+    "runtimes": ["claude-code", "codex", "gemini-cli"]
+  }
+}

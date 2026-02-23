@@ -1,0 +1,20 @@
+{
+  "id": "finai",
+  "name": "FinAI",
+  "agent_display_name": "FinAI_PM",
+  "workspace": "/home/ollie/Development/Projects/finai",
+  "tech_stack": {
+    "frontend": "Nuxt 3, Vue 3, Nuxt UI, Drizzle ORM",
+    "backend": "",
+    "infra": "Docker"
+  },
+  "agents": {
+    "l2_pm": "finai_pm",
+    "l3_executor": "l3_specialist"
+  },
+  "l3_overrides": {
+    "mem_limit": "4g",
+    "cpu_quota": 100000,
+    "runtimes": ["claude-code", "codex", "gemini-cli"]
+  }
+}

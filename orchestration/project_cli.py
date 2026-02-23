@@ -211,12 +211,21 @@ def cmd_init(args: argparse.Namespace) -> int:
             )
             return 1
 
-    # Build default workspace path
-    workspace_path = (
-        args.workspace
-        if args.workspace
-        else str(root / "workspace" / project_id) + "/"
-    )
+    # Build default workspace path — prefer first source_directories entry
+    if args.workspace:
+        workspace_path = args.workspace
+    else:
+        config_path = root / "openclaw.json"
+        try:
+            with open(config_path) as f:
+                _cfg = json.load(f)
+            source_dirs = _cfg.get("source_directories", [])
+            if source_dirs:
+                workspace_path = str(Path(source_dirs[0]) / project_id)
+            else:
+                workspace_path = str(root / "workspace" / project_id) + "/"
+        except (json.JSONDecodeError, OSError):
+            workspace_path = str(root / "workspace" / project_id) + "/"
 
     # Build default project config
     project_config: Dict[str, Any] = {

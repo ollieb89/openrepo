@@ -377,7 +377,10 @@ async def spawn_task(
         try:
             workspace_path = get_workspace_path()
         except (FileNotFoundError, ValueError):
-            workspace_path = "/home/ollie/.openclaw/workspace"
+            raise ValueError(
+                "No workspace path configured. Set active_project in openclaw.json "
+                "or pass --workspace explicitly."
+            )
 
     if project_id is None:
         try:
@@ -407,7 +410,7 @@ if __name__ == "__main__":
     try:
         _default_workspace = get_workspace_path()
     except (FileNotFoundError, ValueError):
-        _default_workspace = "/home/ollie/.openclaw/workspace"
+        _default_workspace = None
     parser.add_argument("--workspace", default=_default_workspace)
     parser.add_argument("--gpu", action="store_true")
     parser.add_argument("--runtime", default="claude-code")

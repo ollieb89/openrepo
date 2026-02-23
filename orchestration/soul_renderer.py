@@ -111,7 +111,7 @@ def build_variables(project_config: Dict[str, Any]) -> Dict[str, str]:
         "tech_stack_backend": tech_stack.get("backend", ""),
         "tech_stack_infra": tech_stack.get("infra", ""),
         # workspace: consumed in soul-default.md HIERARCHY section
-        "workspace": str(_find_project_root() / "workspace"),
+        "workspace": project_config.get("workspace", str(_find_project_root() / "workspace")),
     }
 
 
