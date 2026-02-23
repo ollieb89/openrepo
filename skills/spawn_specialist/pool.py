@@ -2,7 +2,8 @@
 L3 Container Pool Management
 
 Manages concurrent L3 specialist containers with semaphore-based limiting,
-auto-retry logic, and ephemeral container lifecycle.
+auto-retry logic, and ephemeral container lifecycle. Supports per-project
+pool isolation via PoolRegistry.
 """
 
 import asyncio
@@ -23,7 +24,7 @@ from spawn import (
     spawn_l3_specialist,
 )
 from orchestration.state_engine import JarvisState
-from orchestration.project_config import get_workspace_path, get_state_path
+from orchestration.project_config import get_active_project_id, get_workspace_path, get_state_path
 
 
 class L3ContainerPool:
@@ -32,22 +33,28 @@ class L3ContainerPool:
 
     Uses asyncio.Semaphore for concurrency control and implements auto-retry
     once on failure. Containers are ephemeral (removed after completion).
+
+    Each pool instance is scoped to a single project_id. State file access
+    is resolved per-call via get_state_path(self.project_id) — there is no
+    cached self.state_file attribute.
     """
 
-    def __init__(self, max_concurrent: int = 3):
+    def __init__(self, max_concurrent: int = 3, project_id: Optional[str] = None):
         """
         Initialize the container pool.
 
         Args:
             max_concurrent: Maximum number of concurrent containers (default 3)
+            project_id: Project scope for this pool. If None, resolved lazily
+                        from the active project at first use.
         """
         self.semaphore = asyncio.Semaphore(max_concurrent)
         self.active_containers: Dict[str, Any] = {}
         self.max_concurrent = max_concurrent
+        self.project_id = project_id
 
-        # Get project root for state file
+        # Get project root for reference
         self.project_root = Path(__file__).parent.parent.parent
-        self.state_file = get_state_path()
 
     async def spawn_and_monitor(
         self,
@@ -151,17 +158,19 @@ class L3ContainerPool:
         }
 
         try:
-            # Spawn container (sync operation in executor)
+            # Spawn container (sync operation in executor) — thread project_id explicitly
             loop = asyncio.get_event_loop()
             container = await loop.run_in_executor(
                 None,
-                spawn_l3_specialist,
-                task_id,
-                skill_hint,
-                task_description,
-                workspace_path,
-                requires_gpu,
-                cli_runtime,
+                lambda: spawn_l3_specialist(
+                    task_id=task_id,
+                    skill_hint=skill_hint,
+                    task_description=task_description,
+                    workspace_path=workspace_path,
+                    requires_gpu=requires_gpu,
+                    cli_runtime=cli_runtime,
+                    project_id=self.project_id,
+                ),
             )
 
             self.active_containers[task_id] = container
@@ -177,8 +186,8 @@ class L3ContainerPool:
             result["status"] = monitor_result["status"]
             result["exit_code"] = monitor_result["exit_code"]
 
-            # Update state based on result
-            jarvis = JarvisState(self.state_file)
+            # Update state based on result — resolve state path from project_id
+            jarvis = JarvisState(get_state_path(self.project_id))
             if result["status"] == "completed":
                 jarvis.update_task(
                     task_id=task_id,
@@ -207,7 +216,7 @@ class L3ContainerPool:
                     print(f"[pool] Error killing container on timeout: {e}")
 
             # Update state
-            jarvis = JarvisState(self.state_file)
+            jarvis = JarvisState(get_state_path(self.project_id))
             jarvis.update_task(
                 task_id=task_id,
                 status="timeout",
@@ -221,7 +230,7 @@ class L3ContainerPool:
             result["error"] = str(e)
 
             # Update state
-            jarvis = JarvisState(self.state_file)
+            jarvis = JarvisState(get_state_path(self.project_id))
             jarvis.update_task(
                 task_id=task_id,
                 status="failed",
@@ -266,7 +275,7 @@ class L3ContainerPool:
                     None,
                     lambda: container.logs(stream=True, follow=True, stdout=True, stderr=True),
                 )
-                
+
                 async for log_line in log_stream:
                     decoded = log_line.decode("utf-8", errors="replace").strip()
                     print(f"[L3-{task_id}] {decoded}")
@@ -315,6 +324,35 @@ class L3ContainerPool:
         return list(self.active_containers.keys())
 
 
+class PoolRegistry:
+    """Manages per-project L3ContainerPool instances.
+
+    Each project gets its own independent pool with its own semaphore,
+    preventing cross-project semaphore contention.
+    """
+
+    def __init__(self, max_per_project: int = 3):
+        self._pools: Dict[str, L3ContainerPool] = {}
+        self._max_per_project = max_per_project
+
+    def get_pool(self, project_id: str) -> L3ContainerPool:
+        """Get or create pool for a project.
+
+        Returns the same pool instance on repeated calls for the same project_id.
+        Different project IDs get independent pool instances with separate semaphores.
+        """
+        if project_id not in self._pools:
+            self._pools[project_id] = L3ContainerPool(
+                max_concurrent=self._max_per_project,
+                project_id=project_id,
+            )
+        return self._pools[project_id]
+
+    def active_count(self) -> Dict[str, int]:
+        """Return active container count per project."""
+        return {pid: pool.get_active_count() for pid, pool in self._pools.items()}
+
+
 # Convenience function for spawning a single task
 async def spawn_task(
     task_id: str,
@@ -323,12 +361,17 @@ async def spawn_task(
     workspace_path: Optional[str] = None,
     requires_gpu: bool = False,
     cli_runtime: str = "claude-code",
+    project_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Spawn a single L3 task with default pool settings.
 
     This is a convenience function that creates a pool and spawns one task.
     For multiple concurrent tasks, use the pool directly.
+    For persistent per-project pools across calls, use PoolRegistry.
+
+    Args:
+        project_id: Project scope. If None, resolved from active project.
     """
     if workspace_path is None:
         try:
@@ -336,7 +379,13 @@ async def spawn_task(
         except (FileNotFoundError, ValueError):
             workspace_path = "/home/ollie/.openclaw/workspace"
 
-    pool = L3ContainerPool(max_concurrent=3)
+    if project_id is None:
+        try:
+            project_id = get_active_project_id()
+        except (FileNotFoundError, ValueError):
+            project_id = None  # spawn_l3_specialist will resolve it
+
+    pool = L3ContainerPool(max_concurrent=3, project_id=project_id)
     return await pool.spawn_and_monitor(
         task_id=task_id,
         skill_hint=skill_hint,
@@ -362,6 +411,7 @@ if __name__ == "__main__":
     parser.add_argument("--workspace", default=_default_workspace)
     parser.add_argument("--gpu", action="store_true")
     parser.add_argument("--runtime", default="claude-code")
+    parser.add_argument("--project", default=None, help="Project ID (overrides active_project)")
 
     args = parser.parse_args()
 
@@ -372,6 +422,7 @@ if __name__ == "__main__":
         workspace_path=args.workspace,
         requires_gpu=args.gpu,
         cli_runtime=args.runtime,
+        project_id=args.project,
     ))
 
     print(f"\nResult: {result}")
