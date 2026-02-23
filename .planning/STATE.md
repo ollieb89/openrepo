@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 
 ## Current Position
 
-Phase: 13 of 15 (Multi-Project Runtime)
-Plan: 1 of TBD in current phase
+Phase: 16 of 17 (Integration Fixes)
+Plan: 1 of 1 in current phase
 Status: In progress
-Last activity: 2026-02-23 — 13-01 complete: project-scoped L3 container spawning, PoolRegistry, entrypoint.sh guard
+Last activity: 2026-02-23 — 16-01 complete: project_id threading (CFG-02), branch detection delegation (CFG-06), $project_name in soul template (CFG-04), deprecated constant removal
 
 Progress: [██░░░░░░░░] 20% (v1.1)
 
@@ -26,6 +26,7 @@ Progress: [██░░░░░░░░] 20% (v1.1)
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
 | 13    | 01   | 3 min    | 2     | 3     |
+| 16    | 01   | 3 min    | 3     | 7     |
 
 *Updated after each plan completion*
 
@@ -44,6 +45,8 @@ Decisions logged in PROJECT.md Key Decisions table. Recent decisions relevant to
 - [Phase 13-multi-project-runtime]: PoolRegistry gives each project independent L3ContainerPool with its own asyncio semaphore — no global cross-project cap
 - [Phase 13-02]: Always display PROJECT column in monitor.py regardless of --project filter for consistent format
 - [Phase 13-02]: Legacy --state-file preserved in monitor.py for backward compat; multi-project discovery is new default
+- [Phase 16-01]: project_id is required with no default in snapshot functions — callers must pass explicitly (TypeError on omission)
+- [Phase 16-01]: project_id is available for soul-override.md but intentionally not consumed in soul-default.md body
 
 ### Pending Todos
 
@@ -59,5 +62,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed 13-01-PLAN.md (spawn.py + pool.py + entrypoint.sh project-aware)
+Stopped at: Completed 16-01-PLAN.md (integration wiring fixes — CFG-02, CFG-04, CFG-06)
 Resume file: None

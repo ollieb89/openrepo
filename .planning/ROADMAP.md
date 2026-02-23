@@ -113,7 +113,7 @@ Plans:
   2. `soul-default.md` template body contains and renders `$project_name` correctly
   3. `create_staging_branch()` delegates to `_detect_default_branch()` instead of duplicate inline detection
   4. Deprecated `STATE_FILE` and `SNAPSHOT_DIR` constants removed from `config.py`; `monitor.py` no longer imports them
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
 - [ ] 16-01-PLAN.md — Fix snapshot project_id threading, branch detection delegation, soul template variable, deprecated constant removal
 - [ ] 16-02-PLAN.md — Phase 16 verification script
@@ -148,5 +148,5 @@ Plans:
 | 13. Multi-Project Runtime | 2/2 | Complete    | 2026-02-23 | - |
 | 14. Project CLI | v1.1 | 0/TBD | Not started | - |
 | 15. Dashboard Project Switcher | v1.1 | 0/TBD | Not started | - |
-| 16. Phase 11/12 Integration Fixes | v1.1 | 0/TBD | Not started | - |
+| 16. Phase 11/12 Integration Fixes | 1/2 | In Progress|  | - |
 | 17. Phase 11/12 Formal Verification | v1.1 | 0/TBD | Not started | - |

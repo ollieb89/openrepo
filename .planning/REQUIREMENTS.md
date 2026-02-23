@@ -10,11 +10,11 @@ Requirements for milestone v1.1 Project Agnostic. Each maps to roadmap phases.
 ### Config Decoupling
 
 - [ ] **CFG-01**: Per-project state file at `workspace/.openclaw/<project_id>/workspace-state.json`
-- [ ] **CFG-02**: Per-project snapshot directory at `workspace/.openclaw/<project_id>/snapshots/`
+- [x] **CFG-02**: Per-project snapshot directory at `workspace/.openclaw/<project_id>/snapshots/`
 - [ ] **CFG-03**: `project_config.py` exposes `get_state_path(project_id)` and `get_snapshot_dir(project_id)`
-- [ ] **CFG-04**: SOUL.md default template with `$project_name` and `$tech_stack_*` substitution points
+- [x] **CFG-04**: SOUL.md default template with `$project_name` and `$tech_stack_*` substitution points
 - [ ] **CFG-05**: Projects can override SOUL.md with a custom file in `projects/<id>/SOUL.md`
-- [ ] **CFG-06**: `snapshot.py` detects default branch dynamically instead of hardcoding `"main"`
+- [x] **CFG-06**: `snapshot.py` detects default branch dynamically instead of hardcoding `"main"`
 - [ ] **CFG-07**: Agent `config.json` hierarchy references resolve from project config, not hardcoded strings
 
 ### Multi-Project Runtime
@@ -75,11 +75,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | CFG-01 | Phase 11 | Pending |
-| CFG-02 | Phase 11, 16 | Pending |
+| CFG-02 | Phase 11, 16 | Complete |
 | CFG-03 | Phase 11 | Pending |
-| CFG-04 | Phase 12, 16 | Pending |
+| CFG-04 | Phase 12, 16 | Complete |
 | CFG-05 | Phase 12 | Pending |
-| CFG-06 | Phase 11, 16 | Pending |
+| CFG-06 | Phase 11, 16 | Complete |
 | CFG-07 | Phase 11 | Pending |
 | MPR-01 | Phase 13 | Complete |
 | MPR-02 | Phase 13 | Complete |
