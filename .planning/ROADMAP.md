@@ -47,7 +47,11 @@ See: `.planning/milestones/v1.0-ROADMAP.md` for full phase details.
   3. `snapshot.py` generates a non-empty diff for a repository whose default branch is not `main` (dynamic branch detection working)
   4. Agent config.json hierarchy references load from the project manifest rather than hardcoded strings — verified by pointing a test project at a custom agent ID and confirming it resolves
   5. The existing `workspace/.openclaw/workspace-state.json` is migrated to the new path convention with no task data lost and a guard preventing migration while tasks are in-flight
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 11-01-PLAN.md — Path API foundation (get_state_path, get_snapshot_dir, _detect_default_branch)
+- [ ] 11-02-PLAN.md — Update all hardcoded call sites across orchestration and spawn layers
+- [ ] 11-03-PLAN.md — Migration CLI script for PumplAI state file cutover
 
 ### Phase 12: SOUL Templating
 **Goal**: New projects get a coherent L2 agent identity from a default template at init time; existing PumplAI SOUL.md is reproducible from template + override with semantically identical output to the v1.0 hardcoded file
@@ -107,7 +111,7 @@ See: `.planning/milestones/v1.0-ROADMAP.md` for full phase details.
 | 8. Final Gap Closure | v1.0 | 1/1 | ✓ Complete | 2026-02-23 |
 | 9. Integration Wiring | v1.0 | 2/2 | ✓ Complete | 2026-02-23 |
 | 10. Housekeeping & Docs | v1.0 | 2/2 | ✓ Complete | 2026-02-23 |
-| 11. Config Decoupling Foundation | v1.1 | 0/TBD | Not started | - |
+| 11. Config Decoupling Foundation | v1.1 | 0/3 | Planned | - |
 | 12. SOUL Templating | v1.1 | 0/TBD | Not started | - |
 | 13. Multi-Project Runtime | v1.1 | 0/TBD | Not started | - |
 | 14. Project CLI | v1.1 | 0/TBD | Not started | - |
