@@ -126,12 +126,14 @@ def spawn_l3_specialist(
         # Restart policy (L2 handles retries, not Docker)
         "restart_policy": {"Name": "no"},
 
-        # Labels for tracking (sourced from agent config, not hardcoded)
+        # Labels for tracking (INT-03 fix: openclaw.managed=true is the primary filter key)
         "labels": {
-            "openclaw.tier": f"l{l3_config.get('level', 3)}",
+            "openclaw.managed": "true",
+            "openclaw.level": str(l3_config.get("level", 3)),
             "openclaw.task_id": task_id,
             "openclaw.spawned_by": spawned_by,
             "openclaw.skill": skill_hint,
+            "openclaw.tier": f"l{l3_config.get('level', 3)}",  # preserved for backward compat
         },
 
         # User matching (match host UID to avoid permission errors)
