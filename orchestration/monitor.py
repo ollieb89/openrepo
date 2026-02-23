@@ -21,11 +21,13 @@ from typing import Dict, Any, Set
 try:
     from .state_engine import JarvisState
     from .config import STATE_FILE, POLL_INTERVAL
+    from .project_config import get_state_path
 except ImportError:
     # Direct execution - add parent dir to path
     sys.path.insert(0, str(Path(__file__).parent.parent))
     from orchestration.state_engine import JarvisState
     from orchestration.config import STATE_FILE, POLL_INTERVAL
+    from orchestration.project_config import get_state_path
 
 
 # ANSI color codes
@@ -283,7 +285,7 @@ def main():
     tail_parser.add_argument(
         '--state-file',
         type=str,
-        default=str(STATE_FILE),
+        default=None,
         help='Path to workspace-state.json'
     )
     
@@ -295,7 +297,7 @@ def main():
     status_parser.add_argument(
         '--state-file',
         type=str,
-        default=str(STATE_FILE),
+        default=None,
         help='Path to workspace-state.json'
     )
     
@@ -312,11 +314,18 @@ def main():
     task_parser.add_argument(
         '--state-file',
         type=str,
-        default=str(STATE_FILE),
+        default=None,
         help='Path to workspace-state.json'
     )
     
     args = parser.parse_args()
+    
+    # Resolve default state file at parse time (not import time)
+    if args.state_file is None:
+        try:
+            args.state_file = str(get_state_path())
+        except Exception:
+            args.state_file = str(STATE_FILE)
     
     if not args.command:
         parser.print_help()
