@@ -75,7 +75,10 @@ Plans:
   2. `docker inspect <container>` shows `openclaw.project` label set to the correct project ID for every L3 container
   3. `monitor.py --project pumplai` displays only PumplAI tasks; `monitor.py --project <other>` displays only that project's tasks — no cross-project bleed in output
   4. Changing `active_project` in `openclaw.json` mid-execution does not redirect an in-flight L3 task to the wrong state file — the task completes in the project's state file it was spawned under
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 13-01-PLAN.md — Container identity threading (spawn, pool, entrypoint)
+- [ ] 13-02-PLAN.md — Multi-project monitoring and verification
 
 ### Phase 14: Project CLI
 **Goal**: Users can create, list, switch between, and remove projects using `openclaw project` subcommands without manually editing JSON files; template presets pre-populate sensible defaults for common stack types
@@ -116,6 +119,6 @@ Plans:
 | 10. Housekeeping & Docs | v1.0 | 2/2 | ✓ Complete | 2026-02-23 |
 | 11. Config Decoupling Foundation | v1.1 | 0/3 | Planned | - |
 | 12. SOUL Templating | v1.1 | 0/2 | Planned | - |
-| 13. Multi-Project Runtime | v1.1 | 0/TBD | Not started | - |
+| 13. Multi-Project Runtime | v1.1 | 0/2 | Planned | - |
 | 14. Project CLI | v1.1 | 0/TBD | Not started | - |
 | 15. Dashboard Project Switcher | v1.1 | 0/TBD | Not started | - |
