@@ -152,4 +152,4 @@ Plans:
 | 14. Project CLI | v1.1 | 0/TBD | Not started | - |
 | 15. Dashboard Project Switcher | v1.1 | 0/TBD | Not started | - |
 | 16. Phase 11/12 Integration Fixes | 2/2 | Complete    | 2026-02-23 | - |
-| 17. Phase 11/12 Formal Verification | 2/2 | Complete   | 2026-02-23 | - |
+| 17. Phase 11/12 Formal Verification | 2/2 | Complete    | 2026-02-23 | - |
