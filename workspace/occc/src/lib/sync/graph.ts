@@ -79,3 +79,46 @@ export function getNeighbors(nodeId: string) {
     db.close();
   }
 }
+
+/**
+ * Recursively finds all downstream nodes reachable from a starting node.
+ * Useful for "ripple effect" analysis (transitive dependencies).
+ */
+export function findRippleEffects(nodeId: string, maxDepth: number = 5) {
+  const db = getDb();
+  try {
+    const stmt = db.prepare(`
+      WITH RECURSIVE ripple(id, depth) AS (
+        -- Base case: the starting node
+        SELECT ? as id, 0 as depth
+        
+        UNION
+        
+        -- Recursive step: find targets of current nodes
+        SELECT e.target_id, r.depth + 1
+        FROM edges e
+        JOIN ripple r ON e.source_id = r.id
+        WHERE r.depth < ?
+      )
+      SELECT 
+        r.id,
+        MIN(r.depth) as depth,
+        v.content,
+        v.entity_type,
+        v.metadata
+      FROM ripple r
+      JOIN vector_cache v ON r.id = v.id
+      WHERE r.depth > 0 AND r.id != ? -- Only return downstream nodes, not the source itself
+      GROUP BY r.id
+      ORDER BY depth ASC
+    `);
+
+    const rows = stmt.all(nodeId, maxDepth, nodeId) as any[];
+    return rows.map(row => ({
+      ...row,
+      metadata: row.metadata ? JSON.parse(row.metadata) : {}
+    }));
+  } finally {
+    db.close();
+  }
+}
