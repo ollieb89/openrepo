@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** Phase 35: L3 In-Execution Memory Queries (complete)
+**Current focus:** Phase 36: Dashboard Memory Panel (complete)
 
 ## Current Position
 
 Phase: 36 of 36 (Dashboard Memory Panel)
-Plan: 2 of 3 (complete)
-Status: Phase 36 in progress — Plans 01 and 02 done
-Last activity: 2026-02-24 — Phase 36 Plan 02 executed (memory browse UI: page route, MemoryPanel, MemoryStatBar, MemoryFilters, MemoryTable, MemoryRow with sortable columns and accordion rows)
+Plan: 3 of 3 (complete)
+Status: Phase 36 complete — all 3 plans done. v1.3 memory milestone feature-complete.
+Last activity: 2026-02-24 — Phase 36 Plan 03 executed (MemorySearch component, ConfirmDialog component, search/delete wiring in MemoryPanel with optimistic UI and toast notifications)
 
 Progress: [██████████] 100% (v1.3 gap closure)
 
@@ -99,6 +99,12 @@ Phase 36 Plan 02 decisions:
 - formatDate uses epoch*1000 conversion for numeric timestamps from memU API
 - MemoryRow uses Set<string> for EXCLUDED_COLUMNS to filter extra metadata keys efficiently
 
+Phase 36 Plan 03 decisions:
+- DialogState discriminated union ({ type: 'none' | 'single' | 'bulk' }) used to share one ConfirmDialog for both single and bulk delete paths
+- Set spread replaced with Array.from() for TypeScript es5 target compatibility (TS2802 downlevelIteration)
+- 300ms DELETE_ANIMATION_MS constant: setDeletingIds -> await delay -> fetch DELETE -> optimistic mutate pattern
+- MemorySearch enter-key-only trigger (no debounce/as-you-type) per plan locked decision
+
 ### Pending Todos
 
 None.
@@ -110,5 +116,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 36-02-PLAN.md — memory browse UI: /memory page route, MemoryPanel, MemoryStatBar, MemoryFilters, MemoryTable, MemoryRow accordion
-Resume file: .planning/phases/36-dashboard-memory-panel/36-02-SUMMARY.md
+Stopped at: Completed 36-03-PLAN.md — MemorySearch, ConfirmDialog, search wiring, single/bulk delete with optimistic UI and toast notifications
+Resume file: .planning/phases/36-dashboard-memory-panel/36-03-SUMMARY.md

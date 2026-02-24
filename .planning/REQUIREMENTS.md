@@ -39,8 +39,8 @@ Requirements for Agent Memory milestone. Each maps to roadmap phases.
 ### Dashboard
 
 - [x] **DSH-11**: /memory page in occc displays project-scoped memory categories and items
-- [ ] **DSH-12**: Memory panel supports semantic search (vector-based) via retrieve endpoint
-- [ ] **DSH-13**: Memory panel supports delete action for individual memory items
+- [x] **DSH-12**: Memory panel supports semantic search (vector-based) via retrieve endpoint
+- [x] **DSH-13**: Memory panel supports delete action for individual memory items
 - [x] **DSH-14**: Memory panel displays memory item metadata (type, category, created_at, agent source)
 
 ## Future Requirements
@@ -93,8 +93,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RET-04 | Phase 29 | Complete |
 | RET-05 | Phase 35 | Complete |
 | DSH-11 | Phase 36 | Complete |
-| DSH-12 | Phase 36 | Pending |
-| DSH-13 | Phase 36 | Pending |
+| DSH-12 | Phase 36 | Complete |
+| DSH-13 | Phase 36 | Complete |
 | DSH-14 | Phase 36 | Complete |
 
 **Coverage:**

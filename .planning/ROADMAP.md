@@ -72,7 +72,7 @@ See: `.planning/milestones/v1.2-ROADMAP.md` for full phase details.
 - [x] **Phase 33: Integration Gap Closure** — Fix broken SOUL_FILE wiring in entrypoint.sh, correct MEMU_API_URL for in-container use, join L3 containers to openclaw-net, update requirement checkboxes (completed 2026-02-24)
 - [x] **Phase 34: Review Decision Category Fix** — Add missing `category` field to review decision memorize payload so _format_memory_context() routes to correct SOUL section (completed 2026-02-24)
 - [x] **Phase 35: L3 In-Execution Memory Queries** — Validate and wire L3 in-container memU HTTP queries during task execution (completed 2026-02-24)
-- [ ] **Phase 36: Dashboard Memory Panel** — /memory page in occc for browsing, semantic search, deletion, and metadata display of project-scoped memory items
+- [x] **Phase 36: Dashboard Memory Panel** — /memory page in occc for browsing, semantic search, deletion, and metadata display of project-scoped memory items (completed 2026-02-24)
 
 ## Phase Details
 
@@ -279,4 +279,4 @@ Plans:
 | 33. Integration Gap Closure | 2/2 | Complete    | 2026-02-24 | - |
 | 34. Review Decision Category Fix | 1/1 | Complete    | 2026-02-24 | - |
 | 35. L3 In-Execution Memory Queries | 1/1 | Complete    | 2026-02-24 | - |
-| 36. Dashboard Memory Panel | 2/3 | In Progress|  | - |
+| 36. Dashboard Memory Panel | 3/3 | Complete   | 2026-02-24 | - |
