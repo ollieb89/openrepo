@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.3 Agent Memory — Phase 30: L2 Review Memorization (next)
+**Current focus:** v1.3 Agent Memory — Phase 30: L2 Review Memorization (complete)
 
 ## Current Position
 
-Phase: 29 of 32 (Pre-Spawn Retrieval + SOUL Injection) — COMPLETE
+Phase: 30 of 32 (L2 Review Decision Memorization)
 Plan: 2 of 2 (complete)
-Status: Phase 29 complete, Phase 30 pending
-Last activity: 2026-02-24 — Phase 29 Plan 02 executed (12 unit tests for memory retrieval + SOUL injection helpers)
+Status: Phase 30 Plan 02 complete
+Last activity: 2026-02-24 — Phase 30 Plan 02 executed (two-section SOUL memory formatter + 7 new tests)
 
 Progress: [█████░░░░░] 50% (v1.3)
 
@@ -60,16 +60,21 @@ v1.3 decisions made (Phase 29 Plan 02):
 - 12 tests written (vs planned 10) — added dict response format and missing SOUL file tests for complete branch coverage
 - MagicMock (not AsyncMock) for httpx.Client — _retrieve_memories_sync is synchronous
 
+v1.3 decisions made (Phase 30 Plan 02):
+- Budget tracks bullet character counts, not total output length — section headers (~23 chars) are acceptable overhead above the 2,000-char cap
+- Dual-check for review_decision: category=='review_decision' OR agent_type=='l2_pm' — handles both new review_decision category and l2_pm agent items without a category field
+- Old tag suffixes ('(from memory)', '(from L2 review)') removed — section headers provide source context, bullets are cleaner
+
 ### Pending Todos
 
 None.
 
 ### Blockers/Concerns
 
-- Phase 30 research flag: L2 review call site unknown — must locate merge/reject decision point in codebase before planning
+None.
 
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 29-02-PLAN.md — 12 unit tests for memory retrieval + SOUL injection (1 task, 1 file)
-Resume file: .planning/phases/29-pre-spawn-retrieval-soul-injection/29-02-SUMMARY.md
+Stopped at: Completed 30-02-PLAN.md — two-section SOUL memory formatter + 7 new tests (2 tasks, 2 files)
+Resume file: .planning/phases/30-l2-review-decision-memorization/30-02-SUMMARY.md

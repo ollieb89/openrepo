@@ -66,7 +66,7 @@ See: `.planning/milestones/v1.2-ROADMAP.md` for full phase details.
 - [x] **Phase 27: Memory Client + Scoping** — MemoryClient wrapper in orchestration layer that makes per-project and per-agent scoping structurally mandatory (completed 2026-02-24)
 - [ ] **Phase 28: L3 Auto-Memorization** — L3 task outcomes fire-and-forget memorized after container exit; MEMU env vars injected at spawn time
 - [x] **Phase 29: Pre-Spawn Retrieval + SOUL Injection** — spawn.py retrieves relevant context before L3 creation; soul_renderer.py injects it under a hard 2,000-character budget (completed 2026-02-24)
-- [ ] **Phase 30: L2 Review Decision Memorization** — merge/reject decisions with reasoning are memorized after each L2 review cycle
+- [x] **Phase 30: L2 Review Decision Memorization** — merge/reject decisions with reasoning are memorized after each L2 review cycle (completed 2026-02-24)
 - [ ] **Phase 31: L3 In-Execution Memory Queries** — L3 containers can query memU via HTTP during task execution for on-demand lookups
 - [ ] **Phase 32: Dashboard Memory Panel** — /memory page in occc for browsing, searching, and deleting project-scoped memory items
 - [ ] **Phase 33: Integration Gap Closure** — Fix broken SOUL_FILE wiring in entrypoint.sh, correct MEMU_API_URL for in-container use, join L3 containers to openclaw-net, update requirement checkboxes
@@ -223,7 +223,7 @@ Plans:
 | 27. Memory Client + Scoping | 1/1 | Complete    | 2026-02-24 | - |
 | 28. L3 Auto-Memorization | v1.3 | 0/? | Not started | - |
 | 29. Pre-Spawn Retrieval + SOUL Injection | 2/2 | Complete    | 2026-02-24 | - |
-| 30. L2 Review Decision Memorization | v1.3 | 0/? | Not started | - |
+| 30. L2 Review Decision Memorization | 2/2 | Complete   | 2026-02-24 | - |
 | 31. L3 In-Execution Memory Queries | v1.3 | 0/? | Not started | - |
 | 32. Dashboard Memory Panel | v1.3 | 0/? | Not started | - |
 | 33. Integration Gap Closure | v1.3 | 0/? | Not started | - |
