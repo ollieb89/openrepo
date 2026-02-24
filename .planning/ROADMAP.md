@@ -204,7 +204,7 @@ Plans:
 | 26. memU Infrastructure | 2/2 | Complete    | 2026-02-24 | - |
 | 27. Memory Client + Scoping | 1/1 | Complete    | 2026-02-24 | - |
 | 28. L3 Auto-Memorization | v1.3 | 0/? | Not started | - |
-| 29. Pre-Spawn Retrieval + SOUL Injection | 2/2 | Complete   | 2026-02-24 | - |
+| 29. Pre-Spawn Retrieval + SOUL Injection | 2/2 | Complete    | 2026-02-24 | - |
 | 30. L2 Review Decision Memorization | v1.3 | 0/? | Not started | - |
 | 31. L3 In-Execution Memory Queries | v1.3 | 0/? | Not started | - |
 | 32. Dashboard Memory Panel | v1.3 | 0/? | Not started | - |
