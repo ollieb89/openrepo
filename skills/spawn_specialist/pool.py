@@ -26,10 +26,17 @@ from spawn import (
     spawn_l3_specialist,
 )
 from orchestration.state_engine import JarvisState
-from orchestration.project_config import get_active_project_id, get_workspace_path, get_state_path
+from orchestration.project_config import get_active_project_id, get_workspace_path, get_state_path, get_pool_config
 from orchestration.logging import get_logger
 
 logger = get_logger("pool")
+
+_POOL_DEFAULTS = {
+    "max_concurrent": 3,
+    "pool_mode": "shared",
+    "overflow_policy": "wait",
+    "queue_timeout_s": 300,
+}
 
 
 class L3ContainerPool:
@@ -49,7 +56,9 @@ class L3ContainerPool:
         Initialize the container pool.
 
         Args:
-            max_concurrent: Maximum number of concurrent containers (default 3)
+            max_concurrent: Maximum number of concurrent containers. Should be sourced
+                            from project.json l3_overrides.max_concurrent via get_pool_config().
+                            Defaults to 3 (matches _POOL_DEFAULTS["max_concurrent"]).
             project_id: Project scope for this pool. If None, resolved lazily
                         from the active project at first use.
         """
@@ -434,24 +443,77 @@ class PoolRegistry:
 
     Each project gets its own independent pool with its own semaphore,
     preventing cross-project semaphore contention.
+
+    Pool concurrency limits are read fresh from project.json l3_overrides on every
+    get_pool() call, enabling hot-reload when project.json is modified between spawns.
     """
 
-    def __init__(self, max_per_project: int = 3):
+    def __init__(self):
         self._pools: Dict[str, L3ContainerPool] = {}
-        self._max_per_project = max_per_project
 
     def get_pool(self, project_id: str) -> L3ContainerPool:
-        """Get or create pool for a project.
+        """Get or create pool for a project, reading config fresh on every call.
 
-        Returns the same pool instance on repeated calls for the same project_id.
-        Different project IDs get independent pool instances with separate semaphores.
+        On every call:
+        - Reads pool config from project.json l3_overrides via get_pool_config()
+        - If pool exists and max_concurrent changed: recreates semaphore in-place
+          without disrupting running containers
+        - If pool does not exist: creates a new L3ContainerPool with config values
+        - Attaches full pool config to pool._pool_config for use by overflow logic
+
+        Args:
+            project_id: Project ID to get or create pool for.
+
+        Returns:
+            L3ContainerPool instance for the project.
         """
+        # Read fresh pool config on every call (hot-reload support)
+        try:
+            cfg = get_pool_config(project_id)
+        except Exception as exc:
+            logger.warning(
+                "Failed to load pool config — using defaults",
+                extra={"project_id": project_id, "error": str(exc)},
+            )
+            cfg = _POOL_DEFAULTS.copy()
+
+        new_max = cfg["max_concurrent"]
+
         if project_id not in self._pools:
-            self._pools[project_id] = L3ContainerPool(
-                max_concurrent=self._max_per_project,
+            # Create new pool with config-driven max_concurrent
+            pool = L3ContainerPool(
+                max_concurrent=new_max,
                 project_id=project_id,
             )
-        return self._pools[project_id]
+            pool._pool_config = cfg
+            self._pools[project_id] = pool
+            logger.info(
+                "Created pool",
+                extra={"project_id": project_id, "max_concurrent": new_max},
+            )
+        else:
+            pool = self._pools[project_id]
+            old_max = pool.max_concurrent
+            if new_max != old_max:
+                # max_concurrent changed — recreate semaphore in-place
+                # Running containers are not disrupted: asyncio.Semaphore internal
+                # value is reset; in-flight acquires continue to completion
+                pool.semaphore = asyncio.Semaphore(new_max)
+                pool.max_concurrent = new_max
+                pool._pool_config = cfg
+                logger.info(
+                    "Pool config changed — semaphore recreated",
+                    extra={
+                        "project_id": project_id,
+                        "old_max_concurrent": old_max,
+                        "new_max_concurrent": new_max,
+                    },
+                )
+            else:
+                # Config unchanged — still update _pool_config in case other fields changed
+                pool._pool_config = cfg
+
+        return pool
 
     def active_count(self) -> Dict[str, int]:
         """Return active container count per project."""
@@ -502,7 +564,14 @@ async def spawn_task(
         except (FileNotFoundError, ValueError):
             project_id = None  # spawn_l3_specialist will resolve it
 
-    pool = L3ContainerPool(max_concurrent=3, project_id=project_id)
+    # Read pool config from project.json for config-driven max_concurrent
+    try:
+        pool_cfg = get_pool_config(project_id)
+        max_concurrent = pool_cfg["max_concurrent"]
+    except Exception:
+        max_concurrent = _POOL_DEFAULTS["max_concurrent"]
+
+    pool = L3ContainerPool(max_concurrent=max_concurrent, project_id=project_id)
     return await pool.spawn_and_monitor(
         task_id=task_id,
         skill_hint=skill_hint,
