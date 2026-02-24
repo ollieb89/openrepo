@@ -24,6 +24,24 @@ js.update_task('${TASK_ID}', '${status}', '${message}')
 "
 }
 
+# SIGTERM handler — graceful shutdown (REL-04, REL-05)
+_shutdown_requested=0
+
+_trap_sigterm() {
+    [[ $_shutdown_requested -eq 1 ]] && return  # idempotent — ignore duplicate signals
+    _shutdown_requested=1
+    local elapsed=$(( $(date +%s) - _task_start_time ))
+    echo "SIGTERM received after ${elapsed}s — writing interrupted state"
+    # update_state uses JarvisState with LOCK_TIMEOUT=5; || true ensures exit even on lock failure
+    update_state "interrupted" "SIGTERM received after ${elapsed}s. Container shutting down." || true
+    # Kill child process (CLI runtime) if running
+    [[ -n "${_child_pid:-}" ]] && kill "$_child_pid" 2>/dev/null || true
+    exit 143  # 128 + 15 (SIGTERM)
+}
+
+trap '_trap_sigterm' TERM
+_task_start_time=$(date +%s)
+
 # Configure git for commits
 git config --global user.name "L3 Specialist"
 git config --global user.email "l3@openclaw.local"
@@ -73,8 +91,10 @@ fi
 update_state "in_progress" "Executing task with ${CLI_RUNTIME}..."
 
 if command -v "${CLI_RUNTIME}" &>/dev/null; then
-  "${CLI_RUNTIME}" "${SOUL_ARGS[@]}" --task "${TASK_DESCRIPTION}" 2>&1 | tee /tmp/task-output.log || true
-  EXIT_CODE=${PIPESTATUS[0]}
+  "${CLI_RUNTIME}" "${SOUL_ARGS[@]}" --task "${TASK_DESCRIPTION}" 2>&1 | tee /tmp/task-output.log &
+  _child_pid=$!
+  wait $_child_pid || true
+  EXIT_CODE=$?
 else
   echo "WARNING: CLI runtime '${CLI_RUNTIME}' not found. Running in dry-run mode."
   # In dry-run mode, simulate success
