@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.4 Operational Maturity — Phase 40: Memory Health Monitor COMPLETE, Phase 41 next
+**Current focus:** v1.4 Operational Maturity — Phase 41: L1 Strategic Suggestions (in progress — Plan 01 complete)
 
 ## Current Position
 
-Phase: 40 of 42 (Memory Health Monitor) — COMPLETE
-Plan: 4 of 4 in current phase
-Status: Plan 04 complete — Fixed handleArchiveMemory PUT body schema (HTTP 422 bug), added regression test
-Last activity: 2026-02-24 — Phase 40 Plan 04 complete: archive body schema fix, test_archive_body_requires_content
+Phase: 41 of 42 (L1 Strategic Suggestions) — in progress
+Plan: 1 of 3 complete in current phase
+Status: Plan 01 complete — Pattern extraction engine (suggest.py) + 11 unit tests
+Last activity: 2026-02-24 — Phase 41 Plan 01 complete: suggest.py pattern extraction engine, test_suggest.py
 
-Progress: [█████░░░░░] 50% (v1.4)
+Progress: [█████░░░░░] 55% (v1.4)
 
 ## Performance Metrics
 
@@ -24,7 +24,7 @@ Progress: [█████░░░░░] 50% (v1.4)
 - v1.2: 7 phases, 14 plans in ~1 day
 - v1.3: 11 phases, 19 plans in 7 days
 
-**v1.4:** 4 phases, TBD plans — 8 plans complete (Phase 39 Plans 01-04, Phase 40 Plans 01-04)
+**v1.4:** 4 phases, TBD plans — 9 plans complete (Phase 39 Plans 01-04, Phase 40 Plans 01-04, Phase 41 Plan 01)
 
 ## Accumulated Context
 
@@ -84,6 +84,13 @@ v1.4 research flags to carry into planning:
 - items array from useMemory hook used directly (hook exposes items already unwrapped, not data?.items)
 - Regression test uses stdlib dict validator not pydantic (pydantic not installed in root test env)
 
+**Phase 41 Plan 01 decisions:**
+- Activity log (workspace-state.json) used as primary corpus; memU as supplementary — engine works even when memU is empty or down
+- keyword frequency clustering (stdlib) chosen over embedding-based — no live memU dependency, works on plain text
+- sys.path guard added before asyncio import to prevent orchestration/logging.py shadowing stdlib logging in Python 3.14
+- suggest.py has zero imports of soul_renderer write functions — structural approval gate enforced at module boundary (ADV-06)
+- Suppression fingerprint derived from md5 of keyword so rejected suggestions are matched even after evidence count changes
+
 ### Pending Todos
 
 None.
@@ -97,5 +104,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 40-04-PLAN.md — Fixed handleArchiveMemory PUT body schema (HTTP 422), added regression test
-Resume: Phase 41 (L1 Strategic Suggestions — build approval gate first)
+Stopped at: Completed 41-01-PLAN.md — Pattern extraction engine (suggest.py), 11 unit tests
+Resume: Phase 41 Plan 02 (API routes — approval gate + GET/POST suggestions endpoints)
