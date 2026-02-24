@@ -14,12 +14,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 
 
-try:
-    from .project_config import get_state_path, get_snapshot_dir
-except ImportError:
-    import sys
-    sys.path.insert(0, str(Path(__file__).parent.parent))
-    from orchestration.project_config import get_state_path, get_snapshot_dir
+from .project_config import get_state_path, get_snapshot_dir
 
 
 class Colors:
@@ -147,12 +142,9 @@ def verify_workspace(project_root: Optional[Path] = None) -> Dict[str, bool]:
     results['state_file_dir'] = state_file_dir.exists() and state_file_dir.is_dir()
     
     try:
-        import sys
-        if str(project_root) not in sys.path:
-            sys.path.insert(0, str(project_root))
-        import orchestration.config
-        import orchestration.snapshot
-        import orchestration.state_engine
+        import openclaw.config
+        import openclaw.snapshot
+        import openclaw.state_engine
         results['orchestration_importable'] = True
     except ImportError:
         results['orchestration_importable'] = False

@@ -30,7 +30,7 @@ def verify_snapshot_project_id_threading() -> bool:
     - project_id has no default value (inspect._empty)
     - Both function bodies contain get_snapshot_dir(project_id)
     """
-    from orchestration.snapshot import capture_semantic_snapshot, cleanup_old_snapshots
+    from openclaw.snapshot import capture_semantic_snapshot, cleanup_old_snapshots
 
     ok = True
 
@@ -77,7 +77,7 @@ def verify_staging_branch_delegates_to_detect() -> bool:
     - Source contains _detect_default_branch
     - Source does NOT contain symbolic-ref (no inline duplication)
     """
-    from orchestration.snapshot import create_staging_branch
+    from openclaw.snapshot import create_staging_branch
 
     src = inspect.getsource(create_staging_branch)
     ok = True
@@ -105,7 +105,7 @@ def verify_template_variable_consumption() -> bool:
     - Rendered output contains the substituted test value
     - No unresolved $project_name remains in rendered output
     """
-    from orchestration.soul_renderer import _find_project_root
+    from openclaw.soul_renderer import _find_project_root
 
     root = _find_project_root()
     template_path = root / "agents" / "_templates" / "soul-default.md"
@@ -161,7 +161,7 @@ def verify_deprecated_constants_removed() -> bool:
     - hasattr(config, 'POLL_INTERVAL') is True
     - config.py source has no 'import os' or 'from pathlib' lines
     """
-    import orchestration.config as config
+    import openclaw.config as config
 
     ok = True
 

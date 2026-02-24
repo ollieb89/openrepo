@@ -8,16 +8,14 @@ Validates all four requirements:
   RET-04: Graceful degradation on network failure
 """
 
-import sys
 import os
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from skills.spawn_specialist.spawn import (
+# conftest.py adds skills/spawn_specialist to sys.path
+from spawn import (
     _retrieve_memories_sync,
     _format_memory_context,
     _build_augmented_soul,

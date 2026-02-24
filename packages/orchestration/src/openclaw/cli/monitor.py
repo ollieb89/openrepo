@@ -17,19 +17,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
 
-# Handle both module import and direct execution
-try:
-    from .state_engine import JarvisState
-    from .config import POLL_INTERVAL
-    from .logging import get_logger
-    from .project_config import get_pool_config
-except ImportError:
-    # Direct execution - add parent dir to path
-    sys.path.insert(0, str(Path(__file__).parent.parent))
-    from orchestration.state_engine import JarvisState
-    from orchestration.config import POLL_INTERVAL
-    from orchestration.logging import get_logger
-    from orchestration.project_config import get_pool_config
+from openclaw.state_engine import JarvisState
+from openclaw.config import POLL_INTERVAL
+from openclaw.logging import get_logger
+from openclaw.project_config import get_pool_config
 
 
 logger = get_logger('monitor')

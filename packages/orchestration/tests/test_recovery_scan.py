@@ -16,16 +16,13 @@ All tests are pure async/mock — no Docker daemon needed.
 """
 
 import asyncio
-import sys
 import time
 from pathlib import Path
 from unittest.mock import MagicMock, patch, AsyncMock, call
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "skills" / "spawn_specialist"))
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
+# conftest.py adds skills/spawn_specialist to sys.path
 from pool import L3ContainerPool
 
 
@@ -299,11 +296,7 @@ async def test_recovery_scan_logs_startup_summary():
 @pytest.mark.asyncio
 async def test_spawn_task_calls_recovery_scan():
     """spawn_task() calls run_recovery_scan() once, before spawn_and_monitor()."""
-    import sys
-    from pathlib import Path as _Path
-
-    sys.path.insert(0, str(_Path(__file__).parent.parent / "skills" / "spawn_specialist"))
-
+    # conftest.py adds skills/spawn_specialist to sys.path
     from pool import spawn_task
 
     call_order = []
@@ -357,7 +350,7 @@ def test_project_config_recovery_policy_validation():
     import tempfile
     from pathlib import Path as _Path
 
-    from orchestration.project_config import get_pool_config
+    from openclaw.project_config import get_pool_config
 
     # Build a minimal project.json with l3_overrides
     def _make_project_json(overrides: dict) -> dict:

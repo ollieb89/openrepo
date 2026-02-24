@@ -5,20 +5,15 @@ All tests are pure unit tests:
 - No asyncio / pytest-asyncio required
 - No live memU connection
 - No filesystem writes (pure in-memory)
-- Import functions directly from orchestration.suggest
+- Import functions directly from openclaw.cli.suggest
 
 Run with:
     python3 -m pytest tests/test_suggest.py -v
 """
 
-import sys
 import time
-from pathlib import Path
 
-# Ensure project root is on sys.path for direct invocation
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from orchestration.suggest import (
+from openclaw.cli.suggest import (
     _build_suggestion,
     _cluster_memories,
     _extract_keywords,

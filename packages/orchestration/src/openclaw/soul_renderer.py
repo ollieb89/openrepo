@@ -11,10 +11,7 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-# Add parent directory to path for imports when run as script
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from orchestration.project_config import load_project_config, _find_project_root
+from .project_config import load_project_config, _find_project_root
 
 
 def parse_sections(text: str) -> Tuple[Dict[str, str], List[str]]:

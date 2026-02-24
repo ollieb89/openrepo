@@ -5,14 +5,11 @@ Validates that successful task completions trigger non-blocking memorization
 via MemoryClient, with correct agent type selection and graceful degradation.
 """
 
-import sys
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-sys.path.insert(0, "/home/ollie/.openclaw")
-sys.path.insert(0, "/home/ollie/.openclaw/skills/spawn_specialist")
-
+# conftest.py adds skills/spawn_specialist to sys.path
 from pool import L3ContainerPool
 
 

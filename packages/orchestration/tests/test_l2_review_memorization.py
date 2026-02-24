@@ -9,15 +9,11 @@ Validates all requirements for MEM-02:
   - Call-site wiring: l2_merge_staging and l2_reject_staging invoke _memorize_review_decision
 """
 
-import sys
-from pathlib import Path
 from unittest.mock import MagicMock, call, patch
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from orchestration.snapshot import (
+from openclaw.snapshot import (
     _memorize_review_decision,
     l2_merge_staging,
     l2_reject_staging,

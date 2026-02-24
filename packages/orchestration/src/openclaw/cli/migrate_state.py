@@ -14,9 +14,8 @@ import shutil
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from orchestration.state_engine import JarvisState
-from orchestration.project_config import get_state_path, get_snapshot_dir, _find_project_root
+from openclaw.state_engine import JarvisState
+from openclaw.project_config import get_state_path, get_snapshot_dir, _find_project_root
 
 IN_FLIGHT_STATUSES = {'spawned', 'running', 'in_progress', 'starting', 'testing'}
 

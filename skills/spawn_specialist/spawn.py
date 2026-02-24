@@ -17,13 +17,10 @@ from typing import Any, Dict, Optional
 
 import httpx
 
-# Add orchestration to path for state engine import
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
 import docker
 from docker.types import DeviceRequest
-from orchestration.state_engine import JarvisState
-from orchestration.project_config import (
+from openclaw.state_engine import JarvisState
+from openclaw.project_config import (
     get_active_project_id,
     load_project_config,
     get_workspace_path,
@@ -31,8 +28,8 @@ from orchestration.project_config import (
     get_state_path,
     get_memu_config,
 )
-from orchestration.snapshot import _detect_default_branch
-from orchestration.logging import get_logger
+from openclaw.snapshot import _detect_default_branch
+from openclaw.logging import get_logger
 
 logger = get_logger("spawn")
 
@@ -454,7 +451,7 @@ def spawn_l3_specialist(
         # Volume mounts
         "volumes": {
             workspace_path: {"bind": "/workspace", "mode": "rw"},
-            str(project_root / "orchestration"): {"bind": "/orchestration", "mode": "ro"},
+            str(project_root / "packages" / "orchestration" / "src" / "openclaw"): {"bind": "/openclaw", "mode": "ro"},
             str(project_root / "workspace" / ".openclaw"): {"bind": "/workspace/.openclaw", "mode": "rw"},
         },
 

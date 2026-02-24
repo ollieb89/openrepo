@@ -23,10 +23,6 @@ import time
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-# Add paths for imports
-sys.path.insert(0, str(Path(__file__).parent))
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
 import docker
 from spawn import (
     cleanup_container,
@@ -36,9 +32,9 @@ from spawn import (
     load_l3_config,
     spawn_l3_specialist,
 )
-from orchestration.state_engine import JarvisState
-from orchestration.project_config import get_active_project_id, get_workspace_path, get_state_path, get_pool_config, get_memu_config, get_snapshot_dir
-from orchestration.logging import get_logger
+from openclaw.state_engine import JarvisState
+from openclaw.project_config import get_active_project_id, get_workspace_path, get_state_path, get_pool_config, get_memu_config, get_snapshot_dir
+from openclaw.logging import get_logger
 
 logger = get_logger("pool")
 
@@ -523,7 +519,7 @@ class L3ContainerPool:
         Called via asyncio.create_task() -- exceptions are caught and logged,
         never raised. Memorization failure is completely non-blocking.
         """
-        from orchestration.memory_client import MemoryClient, AgentType
+        from openclaw.memory_client import MemoryClient, AgentType
 
         memu_cfg = get_memu_config()
         base_url = memu_cfg.get("memu_api_url", "").strip()

@@ -14,8 +14,8 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from orchestration.soul_renderer import render_soul, build_variables
-from orchestration.project_config import load_project_config
+from openclaw.soul_renderer import render_soul, build_variables
+from openclaw.project_config import load_project_config
 
 
 def verify_pumplai_golden() -> bool:
@@ -61,7 +61,7 @@ def verify_new_project_without_override() -> bool:
 
     # Import render internals to test without file I/O
     import string
-    from orchestration.soul_renderer import parse_sections, merge_sections, _find_project_root
+    from openclaw.soul_renderer import parse_sections, merge_sections, _find_project_root
 
     # Load and substitute default template
     template_path = _find_project_root() / "agents" / "_templates" / "soul-default.md"

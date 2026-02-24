@@ -87,7 +87,7 @@ def stage_directory_existence() -> Tuple[bool, Path]:
         
         try:
             sys.path.insert(0, str(project_root))
-            from orchestration.init import initialize_workspace
+            from openclaw.init import initialize_workspace
             print_stage('Directory Existence', 'info', 'Attempting to create directory...')
             initialize_workspace(project_root)
             
@@ -109,7 +109,7 @@ def stage_snapshot_module_import(project_root: Path) -> Tuple[bool, Any, Any]:
     """Stage 2: Verify orchestration.snapshot is importable"""
     try:
         sys.path.insert(0, str(project_root))
-        from orchestration.snapshot import capture_semantic_snapshot, create_staging_branch
+        from openclaw.snapshot import capture_semantic_snapshot, create_staging_branch
         print_stage('Snapshot Module Import', 'pass', 'Successfully imported snapshot functions')
         return True, capture_semantic_snapshot, create_staging_branch
     except ImportError as e:
@@ -295,7 +295,7 @@ def stage_config_consistency(project_root: Path, snapshots_dir: Path) -> bool:
     """Stage 4: Verify orchestration/config.py SNAPSHOT_DIR matches actual directory"""
     try:
         sys.path.insert(0, str(project_root))
-        from orchestration.config import SNAPSHOT_DIR
+        from openclaw.config import SNAPSHOT_DIR
         
         configured_path = project_root / SNAPSHOT_DIR
         actual_path = snapshots_dir

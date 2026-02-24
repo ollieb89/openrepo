@@ -15,15 +15,11 @@ All tests are pure asyncio — no Docker daemon needed.
 
 import asyncio
 import signal
-import sys
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "skills" / "spawn_specialist"))
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
+# conftest.py adds skills/spawn_specialist to sys.path
 from pool import L3ContainerPool, register_shutdown_handler
 
 

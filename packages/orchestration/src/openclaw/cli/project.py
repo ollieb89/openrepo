@@ -19,13 +19,7 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-# Handle both module import and direct execution
-try:
-    from .project_config import _find_project_root, get_active_project_id
-except ImportError:
-    # Direct execution — add parent dir to path
-    sys.path.insert(0, str(Path(__file__).parent.parent))
-    from orchestration.project_config import _find_project_root, get_active_project_id
+from openclaw.project_config import _find_project_root, get_active_project_id
 
 
 # ANSI color codes — same as monitor.py and init.py
@@ -280,7 +274,7 @@ def cmd_init(args: argparse.Namespace) -> int:
 
     # Generate SOUL.md (lazy import to avoid circular import risk — Phase 18 pattern)
     try:
-        from orchestration.soul_renderer import write_soul
+        from openclaw.soul_renderer import write_soul
         soul_path = write_soul(project_id, skip_if_exists=not args.force)
         if soul_path is not None:
             print(f"SOUL.md written to: {soul_path}")

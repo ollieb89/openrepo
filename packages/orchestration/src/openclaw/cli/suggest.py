@@ -12,29 +12,6 @@ CLI usage:
     python3 orchestration/suggest.py --project pumplai [--dry-run] [--lookback-days 30]
 """
 
-# ---------------------------------------------------------------------------
-# sys.path guard — must run before ANY stdlib imports
-#
-# When executed directly as `python3 orchestration/suggest.py`, Python inserts
-# the script's parent directory (`orchestration/`) into sys.path[0]. This
-# shadows the stdlib `logging` module with our local `orchestration/logging.py`,
-# which breaks asyncio (asyncio → concurrent.futures → logging).
-#
-# Fix: replace orchestration/ on sys.path with the project root so stdlib
-# names are resolved correctly and `import orchestration.*` still works.
-# ---------------------------------------------------------------------------
-import sys as _sys
-import os as _os
-
-_this_dir = _os.path.dirname(_os.path.abspath(__file__))
-_project_root = _os.path.dirname(_this_dir)
-# Replace orchestration/ with project root at the front of sys.path
-if _this_dir in _sys.path:
-    _idx = _sys.path.index(_this_dir)
-    _sys.path[_idx] = _project_root
-elif _project_root not in _sys.path:
-    _sys.path.insert(0, _project_root)
-
 import asyncio
 import hashlib
 import json
@@ -73,7 +50,7 @@ def _suggestions_path(project_id: str) -> Path:
     Lazy import of _find_project_root so this module is testable without
     the full orchestration stack loaded.
     """
-    from orchestration.project_config import _find_project_root  # lazy import
+    from openclaw.project_config import _find_project_root  # lazy import
     root = _find_project_root()
     return root / "workspace" / ".openclaw" / project_id / "soul-suggestions.json"
 
@@ -305,7 +282,7 @@ def _load_activity_memories(project_id: str) -> List[dict]:
     Per RESEARCH.md: activity log is the primary corpus; memU is supplementary.
     """
     try:
-        from orchestration.project_config import get_state_path  # lazy import
+        from openclaw.project_config import get_state_path  # lazy import
         state_path = get_state_path(project_id)
         with open(state_path) as f:
             state = json.load(f)
@@ -368,7 +345,7 @@ async def run_extraction(
     5. Apply suppression check against existing suggestions.
     6. Return list of NEW suggestion dicts (not including already-stored ones).
     """
-    from orchestration.memory_client import MemoryClient, AgentType  # lazy import
+    from openclaw.memory_client import MemoryClient, AgentType  # lazy import
 
     # --- memU memories (supplementary) ---
     try:
@@ -401,14 +378,12 @@ async def run_extraction(
 # CLI entry point
 # ---------------------------------------------------------------------------
 
-if __name__ == "__main__":
+def main():
+    """CLI entrypoint for SOUL suggestion extraction."""
     import argparse
     import sys
 
-    # Ensure parent directory is on path for direct invocation
-    sys.path.insert(0, str(Path(__file__).parent.parent))
-
-    from orchestration.project_config import get_active_project_id, get_memu_config
+    from openclaw.project_config import get_active_project_id, get_memu_config
 
     parser = argparse.ArgumentParser(
         description="Generate SOUL amendment suggestions from task failure patterns"
@@ -455,3 +430,7 @@ if __name__ == "__main__":
         )
     else:
         print(f"Saved {len(suggestions)} suggestion(s) to soul-suggestions.json")
+
+
+if __name__ == "__main__":
+    main()

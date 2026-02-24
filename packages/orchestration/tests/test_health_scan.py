@@ -15,7 +15,6 @@ Run from project root:
 from __future__ import annotations
 
 import math
-import sys
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from typing import Any
@@ -23,10 +22,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-sys.path.insert(0, "/home/ollie/.openclaw")
-sys.path.insert(0, "/home/ollie/.openclaw/docker/memory")
-
 # Import the pure-Python scan engine (no pydantic/memu deps at import time)
+# conftest.py adds docker/memory to sys.path
 from memory_service.scan_engine import _check_staleness, _find_conflicts
 
 

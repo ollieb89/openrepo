@@ -17,7 +17,7 @@ update_state() {
   local status="$1"
   local message="$2"
   python3 -c "
-import sys; sys.path.insert(0, '/orchestration')
+import sys; sys.path.insert(0, '/openclaw')
 from state_engine import JarvisState
 js = JarvisState('${STATE_FILE}')
 js.update_task('${TASK_ID}', '${status}', '${message}')

@@ -8,16 +8,12 @@ Run from project root:
     python3 -m pytest tests/test_memory_client.py -v
 """
 
-import sys
 import json
 import pytest
 import httpx
 import respx
 
-# Ensure orchestration package is importable when running from project root
-sys.path.insert(0, "/home/ollie/.openclaw")
-
-from orchestration.memory_client import MemoryClient, AgentType, MemorizeResult
+from openclaw.memory_client import MemoryClient, AgentType, MemorizeResult
 
 
 MEMU_BASE = "http://memu-server:18791"

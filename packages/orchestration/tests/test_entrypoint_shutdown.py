@@ -8,7 +8,8 @@ requiring a running Docker daemon or container. All checks are file-content base
 import pytest
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).parent.parent
+# Navigate from packages/orchestration/tests/ up to the repo root
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 
 
 @pytest.fixture

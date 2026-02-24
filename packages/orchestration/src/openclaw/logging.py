@@ -6,7 +6,7 @@ to stderr. All fields are consistent across components to enable log aggregation
 and structured querying.
 
 Usage:
-    from orchestration.logging import get_logger
+    from openclaw.logging import get_logger
     logger = get_logger("my_component")
     logger.info("Task started", extra={"task_id": "T-001", "project_id": "pumplai"})
 """

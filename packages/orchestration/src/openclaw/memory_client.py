@@ -5,7 +5,7 @@ All memory operations are structurally scoped: project_id and agent_type are
 required at construction time, making it impossible to issue unscoped requests.
 
 Usage:
-    from orchestration.memory_client import MemoryClient, AgentType
+    from openclaw.memory_client import MemoryClient, AgentType
 
     async with MemoryClient("http://localhost:18791", "pumplai", AgentType.L3_CODE) as client:
         await client.memorize("task T-001 completed successfully")

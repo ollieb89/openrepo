@@ -270,8 +270,8 @@ def verify_com03_jarvis_protocol(project_root: Path) -> Dict[str, Any]:
     sys.path.insert(0, str(project_root))
 
     try:
-        from orchestration.state_engine import JarvisState
-        from orchestration.config import STATE_FILE
+        from openclaw.state_engine import JarvisState
+        from openclaw.config import STATE_FILE
 
         state_file_path = project_root / STATE_FILE
         js = JarvisState(state_file_path)
@@ -368,7 +368,7 @@ def verify_com04_semantic_snapshots(project_root: Path) -> Dict[str, Any]:
     sys.path.insert(0, str(project_root))
 
     try:
-        from orchestration.config import SNAPSHOT_DIR
+        from openclaw.config import SNAPSHOT_DIR
 
         snapshot_dir = Path(SNAPSHOT_DIR)
         if not snapshot_dir.is_absolute():
@@ -419,7 +419,7 @@ def verify_com04_semantic_snapshots(project_root: Path) -> Dict[str, Any]:
 
     # Check capture_semantic_snapshot is importable
     try:
-        from orchestration.snapshot import capture_semantic_snapshot
+        from openclaw.snapshot import capture_semantic_snapshot
         result["function_importable"] = True
         print_check("PASS", "COM-04: capture_semantic_snapshot function is importable")
     except ImportError as e:

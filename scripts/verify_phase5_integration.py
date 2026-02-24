@@ -122,7 +122,7 @@ def resolve_snapshot_dir(project_root: Path) -> Tuple[Optional[Path], Optional[s
         if str(project_root) not in sys.path:
             sys.path.insert(0, str(project_root))
 
-        config_module = importlib.import_module("orchestration.config")
+        config_module = importlib.import_module("openclaw.config")
         snapshot_dir = getattr(config_module, "SNAPSHOT_DIR", None)
         if snapshot_dir is None:
             return None, "SNAPSHOT_DIR not defined in orchestration.config"
@@ -244,7 +244,7 @@ def verify_startup_sequence(project_root: Path) -> Dict[str, Any]:
         if str(project_root) not in sys.path:
             sys.path.insert(0, str(project_root))
 
-        init_module = importlib.import_module("orchestration.init")
+        init_module = importlib.import_module("openclaw.init")
         initialize_workspace = getattr(init_module, "initialize_workspace")
     except (ImportError, AttributeError) as exc:
         print_check("FAIL", f"Failed to load initialize_workspace from orchestration.init: {exc}")

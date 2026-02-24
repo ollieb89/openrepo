@@ -6,7 +6,7 @@ git snapshot workflow, SOUL renderer, and workspace initialization.
 
 External consumers (L3 containers, CLI tools, dashboard) should import
 from this package root. Internal cross-module code should use direct
-submodule imports (e.g., `from orchestration.config import X`).
+submodule imports (e.g., `from openclaw.config import X`).
 """
 
 from .state_engine import JarvisState
