@@ -1093,9 +1093,12 @@ async def spawn_task(
         pool_cfg = get_pool_config(project_id)
         max_concurrent = pool_cfg["max_concurrent"]
     except Exception:
+        pool_cfg = _POOL_DEFAULTS.copy()
         max_concurrent = _POOL_DEFAULTS["max_concurrent"]
 
     pool = L3ContainerPool(max_concurrent=max_concurrent, project_id=project_id)
+    pool._pool_config = pool_cfg
+    await pool.run_recovery_scan()
     return await pool.spawn_and_monitor(
         task_id=task_id,
         skill_hint=skill_hint,

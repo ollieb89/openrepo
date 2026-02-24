@@ -296,6 +296,60 @@ async def test_recovery_scan_logs_startup_summary():
     assert any("recovery scan complete" in c.lower() or "Pool startup" in c for c in info_calls)
 
 
+@pytest.mark.asyncio
+async def test_spawn_task_calls_recovery_scan():
+    """spawn_task() calls run_recovery_scan() once, before spawn_and_monitor()."""
+    import sys
+    from pathlib import Path as _Path
+
+    sys.path.insert(0, str(_Path(__file__).parent.parent / "skills" / "spawn_specialist"))
+
+    from pool import spawn_task
+
+    call_order = []
+
+    async def mock_recovery_scan(self):
+        call_order.append("run_recovery_scan")
+        return {"scanned": 0, "mark_failed": 0, "retried": 0, "manual": 0}
+
+    async def mock_spawn_and_monitor(self, **kwargs):
+        call_order.append("spawn_and_monitor")
+        return {"status": "success", "task_id": kwargs.get("task_id", "task-1")}
+
+    mock_pool_config = {
+        "max_concurrent": 3,
+        "pool_mode": "shared",
+        "overflow_policy": "wait",
+        "queue_timeout_s": 300,
+        "recovery_policy": "mark_failed",
+    }
+
+    with patch("pool.get_pool_config", return_value=mock_pool_config), \
+         patch("pool.get_workspace_path", return_value="/tmp/test"), \
+         patch("pool.get_active_project_id", return_value="test-project"), \
+         patch.object(L3ContainerPool, "run_recovery_scan", mock_recovery_scan), \
+         patch.object(L3ContainerPool, "spawn_and_monitor", mock_spawn_and_monitor):
+
+        result = await spawn_task(
+            task_id="task-1",
+            skill_hint="code",
+            task_description="test description",
+            workspace_path="/tmp/test",
+            project_id="test-project",
+        )
+
+    # run_recovery_scan must be called exactly once
+    assert call_order.count("run_recovery_scan") == 1, \
+        f"Expected run_recovery_scan called once, got: {call_order}"
+
+    # run_recovery_scan must be called BEFORE spawn_and_monitor
+    assert call_order.index("run_recovery_scan") < call_order.index("spawn_and_monitor"), \
+        f"run_recovery_scan must precede spawn_and_monitor, got order: {call_order}"
+
+    # spawn_and_monitor should also be called once
+    assert call_order.count("spawn_and_monitor") == 1
+
+
 def test_project_config_recovery_policy_validation():
     """get_pool_config() correctly validates and falls back for recovery_policy."""
     import json
