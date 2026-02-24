@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 40 of 42 (Memory Health Monitor) — COMPLETE
-Plan: 3 of 3 in current phase
-Status: Plan 03 complete — ConflictPanel with LCS word-diff, SettingsPanel with 5 thresholds, MemoryPanel integration (QUAL-06)
-Last activity: 2026-02-24 — Phase 40 Plan 03 complete: ConflictPanel, SettingsPanel, HealthTab archive action
+Plan: 4 of 4 in current phase
+Status: Plan 04 complete — Fixed handleArchiveMemory PUT body schema (HTTP 422 bug), added regression test
+Last activity: 2026-02-24 — Phase 40 Plan 04 complete: archive body schema fix, test_archive_body_requires_content
 
 Progress: [█████░░░░░] 50% (v1.4)
 
@@ -24,7 +24,7 @@ Progress: [█████░░░░░] 50% (v1.4)
 - v1.2: 7 phases, 14 plans in ~1 day
 - v1.3: 11 phases, 19 plans in 7 days
 
-**v1.4:** 4 phases, TBD plans — 7 plans complete (Phase 39 Plans 01-04, Phase 40 Plans 01-03)
+**v1.4:** 4 phases, TBD plans — 8 plans complete (Phase 39 Plans 01-04, Phase 40 Plans 01-04)
 
 ## Accumulated Context
 
@@ -79,6 +79,11 @@ v1.4 research flags to carry into planning:
 - onArchiveMemory is optional prop on HealthTab for backward compatibility
 - handleAdvanceNext sequences conflict flags only — stale flags use dismiss/archive independently
 
+**Phase 40 Plan 04 decisions:**
+- Archive uses content prefix [ARCHIVED <timestamp>] as soft-delete marker — recoverable, no backend changes needed
+- items array from useMemory hook used directly (hook exposes items already unwrapped, not data?.items)
+- Regression test uses stdlib dict validator not pydantic (pydantic not installed in root test env)
+
 ### Pending Todos
 
 None.
@@ -92,5 +97,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 40-03-PLAN.md — ConflictPanel with LCS word-diff, SettingsPanel, MemoryPanel integration (QUAL-06)
+Stopped at: Completed 40-04-PLAN.md — Fixed handleArchiveMemory PUT body schema (HTTP 422), added regression test
 Resume: Phase 41 (L1 Strategic Suggestions — build approval gate first)

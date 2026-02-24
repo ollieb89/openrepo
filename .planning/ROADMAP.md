@@ -117,7 +117,7 @@ Plans:
   2. The `/memory` dashboard page shows health badges on flagged memories — stale and conflict indicators are visible at a glance without navigating away
   3. Clicking a conflict badge opens a side panel showing both conflicting memories, their similarity score, and three actions: edit, delete, or dismiss flag
   4. A `PUT /memories/:id` endpoint in the memory service accepts updated content and persists the change without creating a duplicate record
-**Plans:** 3/3 plans complete
+**Plans:** 4/4 plans complete
 
 Plans:
 - [ ] 40-01-PLAN.md — Health scan engine + PUT endpoint in memory service (QUAL-01, QUAL-02, QUAL-03, QUAL-04)
@@ -156,6 +156,6 @@ Plans:
 | 19-25 | v1.2 | 14/14 | ✓ Complete | 2026-02-24 |
 | 26-38 | v1.3 | 19/19 | ✓ Complete | 2026-02-24 |
 | 39. Graceful Sentinel | 4/4 | Complete    | 2026-02-24 | - |
-| 40. Memory Health Monitor | 3/3 | Complete   | 2026-02-24 | - |
+| 40. Memory Health Monitor | 4/4 | Complete   | 2026-02-24 | - |
 | 41. L1 Strategic Suggestions | v1.4 | 0/TBD | Not started | - |
 | 42. Delta Snapshots | v1.4 | 0/TBD | Not started | - |
