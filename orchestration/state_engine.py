@@ -245,6 +245,11 @@ class JarvisState:
         f.flush()
         # Backup after successful write so .bak always holds the last known-good state
         self._create_backup()
+        # Write-through: update cache so next read_state() returns from memory
+        self._cache = copy.deepcopy(state)
+        self._cache_mtime = os.path.getmtime(self.state_file)
+        self._cache_time = time.time()
+        logger.debug("Cache updated via write-through")
 
     def update_task(self, task_id: str, status: str, activity_entry: str) -> None:
         """
