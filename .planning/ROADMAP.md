@@ -142,10 +142,11 @@ Plans:
   2. After an L2 reject decision, a memory item attributed to l2_pm with the rejection reason appears in memU
   3. A rejected task's future L3 spawn (Phase 29 retrieval) can surface the prior rejection as context in its SOUL
   4. If memU is unavailable, the L2 review cycle completes and the state file is updated — memorization failure does not block the decision
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 30-01: TBD
+- [ ] 30-01-PLAN.md — Fire-and-forget review decision memorization in snapshot.py + unit tests
+- [ ] 30-02-PLAN.md — SOUL memory context section split (Past Work Context vs Past Review Outcomes) + tests
 
 ### Phase 31: L3 In-Execution Memory Queries
 **Goal**: L3 containers can query memU for task-specific context during execution — not just at spawn time — via HTTP calls that are independent of SOUL injection
