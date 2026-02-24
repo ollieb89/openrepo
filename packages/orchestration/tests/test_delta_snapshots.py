@@ -9,12 +9,18 @@ Validates all four PERF requirements:
 """
 
 import json
+import sys
 import time
 import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+
+# Docker memory service router on path — needed for _filter_after import in PERF-07 tests
+sys.path.insert(0, "/home/ollie/.openclaw/docker/memory/memory_service")
+# Skills on path — needed for spawn module imports in PERF-06 tests
+sys.path.insert(0, "/home/ollie/.openclaw")
 
 from openclaw.state_engine import JarvisState
 
