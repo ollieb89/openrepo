@@ -10,9 +10,12 @@ import json
 import os
 import re
 import sys
+import tempfile
 import time
 from pathlib import Path
 from typing import Any, Dict, Optional
+
+import httpx
 
 # Add orchestration to path for state engine import
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -37,6 +40,12 @@ _PROJECT_ID_PATTERN = re.compile(r'^[a-zA-Z0-9-]{1,20}$')
 
 # Module-level Docker client singleton for connection reuse across spawns
 _docker_client: Optional[docker.DockerClient] = None
+
+# Memory retrieval + SOUL injection constants
+MEMORY_CONTEXT_BUDGET = 2000  # Hard cap in characters for injected memory section
+_RETRIEVE_TIMEOUT = httpx.Timeout(3.0, connect=2.0)  # Match memory_client.py pattern
+_RETRIEVE_LIMIT = 10  # Max items to request from memU
+SOUL_CONTAINER_PATH = "/run/openclaw/soul.md"  # Container-side path for augmented SOUL
 
 
 def get_docker_client() -> docker.DockerClient:
@@ -121,6 +130,143 @@ def get_skill_timeout(skill_hint: str) -> int:
     skill_registry = config.get("skill_registry", {})
     skill_config = skill_registry.get(skill_hint, {})
     return skill_config.get("timeout_seconds", 600)
+
+
+def _retrieve_memories_sync(base_url: str, project_id: str, query: str) -> list:
+    """Retrieve memories from memU synchronously using httpx.Client.
+
+    Uses a sync HTTP client (not MemoryClient which is async) to avoid event-loop
+    conflicts when spawn.py is called from pool.py's async context.
+
+    Args:
+        base_url:   Root URL of the memU service, e.g. "http://localhost:18791".
+        project_id: Project ID used as the memU user_id scope key.
+        query:      Natural-language query for semantic retrieval.
+
+    Returns:
+        List of memory dicts on success, [] on any error (graceful degradation).
+    """
+    if not base_url or not project_id:
+        return []
+    payload = {
+        "queries": [{"role": "user", "content": query}],
+        "where": {"user_id": project_id},
+    }
+    try:
+        with httpx.Client(base_url=base_url, timeout=_RETRIEVE_TIMEOUT) as client:
+            response = client.post("/retrieve", json=payload)
+            response.raise_for_status()
+            data = response.json()
+            if isinstance(data, list):
+                return data[:_RETRIEVE_LIMIT]
+            if isinstance(data, dict) and "items" in data:
+                return data["items"][:_RETRIEVE_LIMIT]
+            return []
+    except Exception as exc:
+        logger.warning(
+            "Pre-spawn memory retrieval failed (non-blocking)",
+            extra={"project_id": project_id, "error": str(exc)},
+        )
+        return []
+
+
+def _format_memory_context(memories: list) -> str:
+    """Format retrieved memories as a markdown ## Memory Context section.
+
+    Budget-aware: adds items one at a time (in rank order from memU) and stops
+    before any bullet that would exceed MEMORY_CONTEXT_BUDGET. Whole items are
+    dropped rather than truncated — a missing bullet is honest; a truncated one
+    is misleading.
+
+    Args:
+        memories: List of memory dicts from memU /retrieve response.
+
+    Returns:
+        Formatted section string (including "## Memory Context" header) when at
+        least one item fits within the budget, otherwise "" (empty string — no
+        header, no placeholder, guaranteed by the locked decision).
+    """
+    if not memories:
+        return ""
+
+    bullets = []
+    total_chars = 0
+
+    for item in memories:
+        # Extract content — memU stores text in resource_url field
+        text = item.get("resource_url", "") or item.get("content", "") or ""
+        if not text:
+            continue
+
+        # Build source tag
+        category = item.get("category", "")
+        if category == "l2_review":
+            tag = "(from L2 review)"
+        else:
+            tag = "(from memory)"
+
+        bullet = f"- {text} {tag}"
+        candidate = total_chars + len(bullet) + 1  # +1 for \n separator
+        if candidate > MEMORY_CONTEXT_BUDGET:
+            break  # drop remaining items rather than truncating
+
+        bullets.append(bullet)
+        total_chars += len(bullet) + 1
+
+    if not bullets:
+        return ""
+
+    return "## Memory Context\n\n" + "\n".join(bullets)
+
+
+def _build_augmented_soul(project_root: Path, memory_context: str) -> str:
+    """Read the L3 SOUL.md base and append the memory context section.
+
+    Reads the L3 specialist SOUL directly (NOT render_soul() which produces L2
+    agent content). The L3 SOUL has no template variables, so it can be read
+    as plain text.
+
+    Args:
+        project_root:   Root directory of the openclaw project.
+        memory_context: Formatted ## Memory Context section, or "" for none.
+
+    Returns:
+        Augmented SOUL string, or "" if the L3 SOUL file is missing.
+        When memory_context is empty, returns the base SOUL unchanged.
+    """
+    soul_path = project_root / "agents" / "l3_specialist" / "agent" / "SOUL.md"
+    if not soul_path.exists():
+        return ""
+    base = soul_path.read_text(encoding="utf-8")
+    if not memory_context:
+        return base
+    return base.rstrip("\n") + "\n\n" + memory_context + "\n"
+
+
+def _write_soul_tempfile(content: str) -> Path:
+    """Write SOUL content to a named temporary file.
+
+    Uses delete=False so the file path can be passed to Docker volumes dict and
+    the file remains on disk until the caller explicitly unlinks it. Docker
+    bind-mounts by inode — the host can unlink after containers.run() returns
+    and the container retains read access.
+
+    Args:
+        content: Full text content to write to the temp file.
+
+    Returns:
+        Path to the created temp file (caller is responsible for cleanup).
+    """
+    tmp = tempfile.NamedTemporaryFile(
+        mode="w",
+        suffix=".soul.md",
+        prefix="openclaw-",
+        delete=False,
+    )
+    tmp.write(content)
+    tmp.flush()
+    tmp.close()
+    return Path(tmp.name)
 
 
 def spawn_l3_specialist(
