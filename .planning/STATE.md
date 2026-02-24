@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 40 of 42 (Memory Health Monitor) — IN PROGRESS
-Plan: 1 of N in current phase
-Status: Plan 01 complete — health scan backend API (QUAL-01..QUAL-04)
-Last activity: 2026-02-24 — Phase 40 Plan 01 complete: health scan engine, three endpoints, 19 tests
+Plan: 2 of N in current phase
+Status: Plan 02 complete — dashboard health UI (QUAL-04 PUT proxy, QUAL-05 badges + Health tab)
+Last activity: 2026-02-24 — Phase 40 Plan 02 complete: health-scan proxy, PUT proxy, HealthTab, health badges, scan trigger
 
 Progress: [████░░░░░░] 40% (v1.4)
 
@@ -24,7 +24,7 @@ Progress: [████░░░░░░] 40% (v1.4)
 - v1.2: 7 phases, 14 plans in ~1 day
 - v1.3: 11 phases, 19 plans in 7 days
 
-**v1.4:** 4 phases, TBD plans — 5 plans complete (Phase 39 Plans 01-04, Phase 40 Plan 01)
+**v1.4:** 4 phases, TBD plans — 6 plans complete (Phase 39 Plans 01-04, Phase 40 Plans 01-02)
 
 ## Accumulated Context
 
@@ -65,6 +65,13 @@ v1.4 research flags to carry into planning:
 - last_reinforced_at absence treated as 'fresh' if created_at within retrieval_window — avoids false-positive stale flags
 - Conflict pair deduplication via tuple(sorted([id_a, id_b])) seen-set
 
+**Phase 40 Plan 02 decisions:**
+- HealthFlag interface exported from HealthTab.tsx as single source of truth — Panel, Row, Table import from one location
+- healthFlags Map<string, HealthFlag> keyed by memory_id for O(1) row-level badge lookup
+- runHealthScan wrapped in useCallback with healthSettings dep — prevents stale closure in scheduled interval
+- handleOpenConflict and handleOpenSettings use toast.info placeholders — modals deferred (out of QUAL-04/05 scope)
+- Scheduled interval guards on activeTab === health AND projectId non-null
+
 ### Pending Todos
 
 None.
@@ -78,5 +85,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 40-01-PLAN.md — health scan engine + REST endpoints (QUAL-01..QUAL-04)
-Resume: Phase 40 Plan 02 — dashboard health UI (QUAL-05, QUAL-06)
+Stopped at: Completed 40-02-PLAN.md — dashboard health UI (QUAL-04 PUT proxy, QUAL-05 badges + Health tab)
+Resume: Phase 40 Plan 03 (if exists) or Phase 41
