@@ -5,13 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** Planning next milestone
+**Current focus:** v1.4 Operational Maturity — defining requirements
 
 ## Current Position
 
-Milestone: v1.3 Agent Memory — SHIPPED 2026-02-24
-Status: All milestones complete (v1.0, v1.1, v1.2, v1.3). No active milestone.
-Last activity: 2026-02-24 — v1.3 milestone archived
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-24 — Milestone v1.4 Operational Maturity started
 
 ## Performance Metrics
 
@@ -39,5 +40,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: v1.3 milestone complete and archived
-Resume: `/gsd:new-milestone` to start next milestone
+Stopped at: v1.4 milestone initialization
+Resume: Continue requirements definition

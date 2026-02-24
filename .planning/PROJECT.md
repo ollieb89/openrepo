@@ -17,9 +17,15 @@ Hierarchical AI orchestration with physical isolation — enabling autonomous, s
 - **Container:** Debian bookworm-slim L3 images, Nvidia Container Toolkit
 - **OS:** Ubuntu 24.04 LTS
 
-## Current Milestone: None (planning next)
+## Current Milestone: v1.4 Operational Maturity
 
-**Last shipped:** v1.3 Agent Memory (2026-02-24)
+**Goal:** Harden the swarm for production-grade autonomy — graceful shutdown with task recovery, memory health monitoring, L1 proactive SOUL suggestions, and delta-based snapshot optimization.
+
+**Target features:**
+- Graceful SIGTERM handling with task state dehydration/rehydration and automated recovery loops
+- Memory health monitor detecting stale/conflicting memories with manual override UI
+- L1 strategic SOUL template suggestions based on recurring task failure/success patterns
+- Delta-based memory snapshots to reduce I/O during deep context injection
 
 ## Current State
 
@@ -103,7 +109,7 @@ Known limitations:
 
 ### Active
 
-(None — start next milestone to define requirements)
+(Defining requirements for v1.4 Operational Maturity)
 
 ### Out of Scope
 
@@ -159,4 +165,4 @@ Known limitations:
 - DEV_WF_FINDINGS.md
 
 ---
-*Last updated: 2026-02-24 after v1.3 milestone*
+*Last updated: 2026-02-24 after v1.4 milestone start*
