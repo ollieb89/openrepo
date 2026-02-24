@@ -1,535 +1,729 @@
 # Architecture Research
 
-**Domain:** Multi-project AI Swarm Orchestration Framework (v1.1)
-**Researched:** 2026-02-23
-**Confidence:** HIGH — based on direct analysis of existing codebase
+**Domain:** memU Memory Integration for OpenClaw AI Swarm Orchestration
+**Researched:** 2026-02-24
+**Confidence:** HIGH — based on direct codebase analysis + memU-server source/docs
 
 ---
 
-## Context: What Already Exists (v1.0)
+## Context: What Already Exists (v1.2)
 
-The v1.0 foundation is operational. This document focuses exclusively on how v1.1 features
-integrate with the existing architecture, what components need modification, and what is new.
+This document is scoped exclusively to v1.3 memU integration. It describes how a standalone
+memU service fits into the existing operational architecture, which integration points require
+modification, and what is entirely new.
 
 ### Existing Components (Do Not Rewrite)
 
-| Component | File | v1.1 Status |
+| Component | File | v1.3 Status |
 |-----------|------|-------------|
-| JarvisState | `orchestration/state_engine.py` | Unchanged — accepts any path via constructor |
-| Snapshot system | `orchestration/snapshot.py` | Unchanged — workspace-agnostic |
-| CLI monitor | `orchestration/monitor.py` | Modify: add `--project` flag, derive state-file from project |
-| project_config.py | `orchestration/project_config.py` | Extend: add `list_projects()`, `create_project()`, `remove_project()` |
-| config.py | `orchestration/config.py` | Unchanged — env var overrides already support per-project injection |
-| spawn.py | `skills/spawn_specialist/spawn.py` | Modify: add `pool_isolated` label, pass project_id env to container |
-| pool.py | `skills/spawn_specialist/pool.py` | Modify: accept `pool_mode` param; use per-project semaphore when isolated |
-| swarm API | `workspace/occc/src/app/api/swarm/route.ts` | Modify: accept `?project=<id>` query param |
-| SSE stream | `workspace/occc/src/app/api/swarm/stream/route.ts` | Modify: scope state-file path to active project |
-| jarvis.ts | `workspace/occc/src/lib/jarvis.ts` | Unchanged — schema is valid regardless of which state file is read |
-| openclaw.json | Root config | Modify: `active_project` already exists; no schema changes needed |
-| projects/pumplai/project.json | Project manifest | Reference — new projects follow this schema |
+| JarvisState | `orchestration/state_engine.py` | Unchanged — file-lock state sync untouched |
+| spawn_specialist | `skills/spawn_specialist/spawn.py` | Modify: add pre-spawn retrieve + env injection |
+| pool.py | `skills/spawn_specialist/pool.py` | Unchanged |
+| soul_renderer.py | `orchestration/soul_renderer.py` | Modify: add `$memory_context` variable slot |
+| entrypoint.sh | `docker/l3-specialist/entrypoint.sh` | Modify: add post-task memorize call |
+| snapshot.py | `orchestration/snapshot.py` | Modify: expose git diff output for memorize payload |
+| occc API routes | `workspace/occc/src/app/api/` | Add: new `/api/memory/*` routes |
+| occc dashboard pages | `workspace/occc/src/app/` | Add: new memory panel page |
 
 ---
 
-## System Overview: v1.1 Architecture
+## System Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                        User / Telegram / occc                            │
-├─────────────────────────────────────────────────────────────────────────┤
-│                     openclaw project CLI (NEW)                           │
-│         init / switch / list / remove  +  templates                      │
-├─────────────────────────────────────────────────────────────────────────┤
-│               Project Registry Layer (EXTENDED)                          │
-│  openclaw.json: active_project  ←→  projects/<id>/project.json          │
-│  orchestration/project_config.py: resolver + CRUD                        │
-├────────────────────┬────────────────────────────────────────────────────┤
-│  Per-Project State │  Per-Project Snapshots  │  Per-Project Pool         │
-│  workspace/.openclaw/            │  (isolated opt-in)                    │
-│   <project-id>-state.json (NEW)  │  asyncio.Semaphore per project (MOD)  │
-├────────────────────┴────────────────────────────────────────────────────┤
-│              SOUL Templating Layer (NEW)                                 │
-│  agents/templates/soul-defaults.md  +  projects/<id>/soul-override.md   │
-│  Rendered at agent startup → final SOUL injected as CLAUDE.md           │
-├─────────────────────────────────────────────────────────────────────────┤
-│              L3 Container Pool (MODIFIED)                                │
-│  spawn.py — passes OPENCLAW_PROJECT env var into container               │
-│  pool.py  — shared (default) or per-project semaphore (isolated mode)   │
-├─────────────────────────────────────────────────────────────────────────┤
-│              occc Dashboard (MODIFIED)                                   │
-│  Project switcher dropdown → writes active_project → SSE re-scopes      │
-│  /api/swarm?project=<id>  /api/swarm/stream?project=<id>                │
-└─────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         OPENCLAW HOST (Ubuntu 24.04)                         │
+│                                                                               │
+│  ┌──────────────┐   ┌────────────────────────────────────────────────────┐  │
+│  │  L1          │   │  OpenClaw Docker Bridge Network (openclaw-net)      │  │
+│  │  ClawdiaPrime│   │                                                      │  │
+│  │  (L1 agent)  │   │  ┌─────────────────┐    ┌──────────────────────┐   │  │
+│  └──────┬───────┘   │  │  memU-server    │    │  PostgreSQL+pgvector │   │  │
+│         │ CLI call  │  │  FastAPI :8765  │◄──►│  :5432               │   │  │
+│  ┌──────▼───────┐   │  │  (nevamindai/   │    │  (pgvector/pgvector: │   │  │
+│  │  L2          │   │  │  memu-server)   │    │   pg16)              │   │  │
+│  │  PumplAI_PM  │   │  └────────▲────────┘    └──────────────────────┘   │  │
+│  │  (L2 agent)  │   │           │                                          │  │
+│  └──────┬───────┘   │           │ HTTP REST (host → container via port)    │  │
+│         │           │           │                                           │  │
+│  spawn_specialist.py│   ┌───────┴──────┐                                   │  │
+│  (pre-spawn: GET)   │   │  memory_     │                                    │  │
+│  (post-review: POST)│   │  client.py   │                                    │  │
+│         │           │   │  (new)       │                                    │  │
+│  ┌──────▼───────┐   │   └──────────────┘                                   │  │
+│  │  L3          │   │                                                        │  │
+│  │  Ephemeral   │   │  ┌─────────────────────────────────────────────────┐ │  │
+│  │  Container   │───┼─►│  L3 Container (openclaw-{project}-l3-{task_id}) │ │  │
+│  │  (spawned)   │   │  │  - MEMU_SERVICE_URL env var injected            │ │  │
+│  └──────────────┘   │  │  - entrypoint.sh: POST /memorize on completion  │ │  │
+│                      │  │  - optional mid-task GET /retrieve              │ │  │
+│  ┌──────────────┐   │  └─────────────────────────────────────────────────┘ │  │
+│  │  occc        │   │                                                        │  │
+│  │  Next.js     │───┼─► HTTP → memU-server :8765 (via /api/memory/* proxy) │  │
+│  │  :6987       │   │                                                        │  │
+│  └──────────────┘   └────────────────────────────────────────────────────┘  │  │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Component Responsibilities: New vs Modified
+## Component Boundaries
 
 ### New Components
 
-| Component | File | Responsibility |
-|-----------|------|----------------|
-| Project CLI | `orchestration/cli/project.py` | `openclaw project init/switch/list/remove` subcommands |
-| CLI entry point | `orchestration/cli/__init__.py` or update existing openclaw entry | Wire `project` subcommand group |
-| SOUL template engine | `orchestration/soul_template.py` | Merge `soul-defaults.md` with per-project override; output rendered SOUL |
-| Default SOUL template | `agents/templates/soul-defaults.md` | Canonical defaults: hierarchy, quality gate, escalation rules |
-| Project switch API | `workspace/occc/src/app/api/projects/route.ts` | GET list of projects; PATCH to switch active project |
+| Component | Responsibility | Location |
+|-----------|---------------|----------|
+| memU-server container | FastAPI wrapper: memorize/retrieve/categories REST API | Docker container via `nevamindai/memu-server:latest` |
+| PostgreSQL+pgvector container | Persistent vector store for memory items | Docker container via `pgvector/pgvector:pg16` |
+| `orchestration/memory_client.py` | Python client for memU-server (memorize, retrieve, health) | New file |
+| `docker/memory/docker-compose.yml` | Bring up memU-server + PostgreSQL together | New file |
+| `workspace/occc/src/app/api/memory/route.ts` | Proxy endpoint: list categories + items | New file |
+| `workspace/occc/src/app/api/memory/search/route.ts` | Proxy endpoint: semantic search | New file |
+| Memory Panel page | Dashboard UI for browsing/searching agent memories | New Next.js page |
 
 ### Modified Components
 
-| Component | File | What Changes |
-|-----------|------|-------------|
-| `project_config.py` | `orchestration/project_config.py` | Add `list_projects()`, `create_project(id, template)`, `remove_project(id)`, `switch_active_project(id)` |
-| `spawn.py` | `skills/spawn_specialist/spawn.py` | Inject `OPENCLAW_PROJECT` env var into container environment; add `openclaw.project` Docker label |
-| `pool.py` | `skills/spawn_specialist/pool.py` | Accept `pool_mode: str = "shared"` param on `L3ContainerPool`; if `"isolated"`, create per-project semaphore key |
-| `monitor.py` | `orchestration/monitor.py` | Add `--project <id>` flag; resolve `state_file` from `project_config.get_state_file(project_id)` |
-| Swarm API route | `workspace/occc/src/app/api/swarm/route.ts` | Read `project` query param; resolve correct state-file path per project |
-| SSE stream route | `workspace/occc/src/app/api/swarm/stream/route.ts` | Watch correct state-file path based on `project` query param |
-| `openclaw.json` | Root config | No schema change; `active_project` field already present |
-| SOUL files (per agent) | `agents/<id>/agent/SOUL.md` | Long-term: replace project-specific content with template references; keep format |
+| Component | What Changes | Why |
+|-----------|-------------|-----|
+| `skills/spawn_specialist/spawn.py` | 1. Call `memory_client.retrieve()` before container spawn. 2. Inject `MEMU_SERVICE_URL` + `MEMU_AGENT_ID` env vars into container config. | Pre-spawn context retrieval + L3 access to memU |
+| `orchestration/soul_renderer.py` `build_variables()` | Add `memory_context` key with retrieved text (may be empty string). | Inject retrieved memories into SOUL prompt |
+| `agents/_templates/soul-default.md` | Add `## Memory Context` section consuming `$memory_context`. | Surface pre-retrieved memories to L2 agent |
+| `docker/l3-specialist/entrypoint.sh` | After task completes, POST git diff + task log to `/memorize`. | Automated L3 outcome memorization |
+| `orchestration/snapshot.py` | Expose git diff text as return value (currently writes to disk only). | Feed diff into memorize payload without re-reading file |
+| `openclaw.json` | Add `memory_service` config block (url, agent scoping, enabled flag). | Central config for memory feature toggle |
 
 ---
 
-## State File Isolation Pattern
+## Docker Networking
 
-The current architecture has one global state file at `workspace/.openclaw/workspace-state.json`.
-v1.1 needs per-project state so tasks from different projects do not intermingle.
+### Approach: Shared Bridge Network (not per-project networks)
 
-**Approach: per-project state file under OpenClaw root `.openclaw/` directory**
+PROJECT.md explicitly records "Per-project Docker networks — no inter-container networking
+needed" as out of scope. The correct approach is a **single named bridge network** shared by
+all OpenClaw-managed containers.
 
-```
-.openclaw/                         ← OpenClaw root-level hidden dir (new)
-  pumplai-state.json               ← per-project Jarvis state
-  myapp-state.json                 ← per-project Jarvis state
-  snapshots/
-    pumplai/                       ← per-project snapshots
-    myapp/
+```bash
+# Create once during setup
+docker network create openclaw-net
 ```
 
-The existing `workspace/.openclaw/workspace-state.json` path was workspace-scoped.
-v1.1 moves state files to the OpenClaw root scope so multiple projects with different
-workspaces can all be tracked by one running system.
+The following containers join `openclaw-net`:
+- `memu-server` (FastAPI, :8765)
+- `memu-postgres` (PostgreSQL, :5432 internal only)
+- L3 specialist containers (ephemeral, need outbound access to memu-server)
 
-**Resolution function to add to `project_config.py`:**
+**L3 access pattern:** L3 containers call memU-server via the Docker bridge IP or container
+hostname. Because L3 containers are ephemeral and spawned dynamically, the simplest approach
+is to inject `MEMU_SERVICE_URL=http://memu-server:8765` as an env var. Docker's built-in DNS
+resolves `memu-server` within `openclaw-net`.
 
+**L2/orchestration access pattern:** The host-side Python process (spawn.py, pool.py) calls
+memU-server via `http://localhost:8765` (port mapped to host). No network config changes
+needed for host-side calls.
+
+**occc dashboard access pattern:** Next.js API routes run server-side and call
+`http://localhost:8765` (same host). Client-side browser calls go to `/api/memory/*` which
+proxies to memU-server — browser never calls memU-server directly.
+
+### docker-compose for Memory Service
+
+```yaml
+# docker/memory/docker-compose.yml
+version: "3.9"
+services:
+  memu-postgres:
+    image: pgvector/pgvector:pg16
+    container_name: memu-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: memu
+    volumes:
+      - memu-pgdata:/var/lib/postgresql/data
+    networks:
+      - openclaw-net
+    restart: unless-stopped
+
+  memu-server:
+    image: nevamindai/memu-server:latest
+    container_name: memu-server
+    ports:
+      - "8765:8000"
+    environment:
+      OPENAI_API_KEY: "${OPENAI_API_KEY}"
+      DATABASE_URL: "postgresql://postgres:postgres@memu-postgres:5432/memu"
+    depends_on:
+      - memu-postgres
+    networks:
+      - openclaw-net
+    restart: unless-stopped
+
+networks:
+  openclaw-net:
+    external: true
+
+volumes:
+  memu-pgdata:
+```
+
+**Port choice:** 8765 avoids collision with existing ports (gateway: 18789, dashboard: 6987,
+dashboard container: 18795).
+
+---
+
+## Memory Scoping Model
+
+memU supports `user_id` and `agent_id__in` for filtering. OpenClaw maps these fields as:
+
+| memU field | OpenClaw value | Example |
+|------------|---------------|---------|
+| `user_id` | `project_id` | `"pumplai"` |
+| `agent_id` | Agent tier + ID | `"l2:pumplai_pm"`, `"l3:l3_specialist"` |
+
+This gives per-project isolation (all memories for project `pumplai` share `user_id=pumplai`)
+and per-agent sub-scoping for attribution (L2 decisions vs L3 outcomes are separately
+queryable).
+
+**Retrieve filter for pre-spawn L3 context:**
 ```python
-def get_state_file(project_id: Optional[str] = None) -> Path:
-    """Return per-project state file path under OpenClaw root .openclaw/."""
-    if project_id is None:
-        project_id = get_active_project_id()
-    root = _find_project_root()
-    state_dir = root / ".openclaw"
-    state_dir.mkdir(parents=True, exist_ok=True)
-    return state_dir / f"{project_id}-state.json"
-
-
-def get_snapshot_dir(project_id: Optional[str] = None) -> Path:
-    """Return per-project snapshot directory."""
-    if project_id is None:
-        project_id = get_active_project_id()
-    root = _find_project_root()
-    snap_dir = root / ".openclaw" / "snapshots" / project_id
-    snap_dir.mkdir(parents=True, exist_ok=True)
-    return snap_dir
+where={"user_id": project_id, "agent_id__in": ["l2:pumplai_pm", "l3:l3_specialist"]}
 ```
 
-**Migration:** The existing `workspace/.openclaw/workspace-state.json` becomes legacy.
-Rename/copy to `.openclaw/pumplai-state.json` in a migration step during `openclaw project init pumplai`.
-
----
-
-## SOUL Templating Pattern
-
-The problem: `agents/pumplai_pm/agent/SOUL.md` hardcodes PumplAI-specific tech stack and workspace paths.
-Adding a second project would require duplicating and maintaining a separate agent directory.
-
-**Approach: Default template + project override merging**
-
-```
-agents/
-  templates/
-    soul-defaults.md          ← canonical tier behaviors, quality gates, escalation
-    l2-soul-template.md       ← L2-specific defaults (hierarchy section, delegate rules)
-    l1-soul-template.md       ← L1-specific defaults
-projects/
-  pumplai/
-    soul-override.md          ← project-specific overrides (tech stack, workspace path)
-  myapp/
-    soul-override.md
-```
-
-**`soul_template.py` merging rules:**
-
+**Retrieve filter for L2 decision context (similar tasks only):**
 ```python
-def render_soul(agent_tier: str, project_id: str) -> str:
-    """
-    Merge tier-level default template with project-specific overrides.
-    Sections marked ##OVERRIDE in defaults are replaced by project overrides.
-    Missing override sections fall back to defaults.
-    Returns rendered SOUL as markdown string.
-    """
-```
-
-The merge is section-based: the override file replaces named sections
-(e.g., `## TECH STACK`, `## WORKSPACE`) while inheriting all other sections from the template.
-This avoids full-file duplication while letting each project define what's different.
-
-**Rendered output:** Written to `agents/<id>/agent/SOUL.md` at `openclaw project init` time,
-and re-renderable with `openclaw project sync-souls <id>`. Not auto-rendered at runtime — avoids
-agent startup latency and keeps SOUL files inspectable.
-
----
-
-## Pool Isolation Pattern
-
-Current `pool.py` uses one global `asyncio.Semaphore(max_concurrent=3)` shared across all tasks.
-With multiple projects, a slow project's tasks could block another project's containers.
-
-**Approach: configurable pool mode per project**
-
-```
-project.json:
-{
-  "pool_isolation": "shared"   // default: all projects share the 3-slot semaphore
-                               // "isolated": project gets its own semaphore with its own max_concurrent
-}
-```
-
-**`pool.py` modification — per-project semaphore registry:**
-
-```python
-_project_semaphores: Dict[str, asyncio.Semaphore] = {}
-
-def get_project_semaphore(project_id: str, max_concurrent: int) -> asyncio.Semaphore:
-    key = project_id
-    if key not in _project_semaphores:
-        _project_semaphores[key] = asyncio.Semaphore(max_concurrent)
-    return _project_semaphores[key]
-```
-
-`L3ContainerPool.__init__` gains a `project_id` param. When `pool_isolation == "isolated"`,
-it uses `get_project_semaphore(project_id, max_concurrent)` instead of the shared semaphore.
-
-The `openclaw.project` Docker label already exists in `spawn.py` labels — extend it to include
-the project ID so Docker filters can scope container listing per project.
-
----
-
-## Project CLI Integration Pattern
-
-The CLI entry point is the `openclaw` command. The new `project` subcommand group routes to
-`orchestration/cli/project.py`. This matches the existing pattern in `orchestration/monitor.py`
-which has its own argparse `main()`.
-
-**Command structure:**
-
-```
-openclaw project init <id> [--template fullstack|backend|ml-pipeline] [--workspace <path>]
-openclaw project switch <id>
-openclaw project list
-openclaw project remove <id> [--force]
-```
-
-**`init` creates:**
-- `projects/<id>/project.json` from template
-- `projects/<id>/soul-override.md` from template
-- `.openclaw/<id>-state.json` (empty Jarvis state scaffold)
-- Optional: renders SOUL files into `agents/` if agent identity files don't exist
-
-**Templates live at:** `projects/templates/fullstack/`, `projects/templates/backend/`, `projects/templates/ml-pipeline/`
-Each template is a directory with `project.json` and `soul-override.md` with placeholder values.
-
-**`switch` modifies:** `openclaw.json` `active_project` field (atomic JSON write).
-
----
-
-## Dashboard Project Switcher Integration
-
-The existing `workspace/occc/src/app/api/swarm/route.ts` hardcodes state file paths.
-The SSE stream route also hardcodes the same path.
-
-**Approach: query param scoping + new projects API**
-
-```
-GET /api/projects          → list all projects (reads projects/ dir)
-PATCH /api/projects/active → { project_id: "myapp" } → writes openclaw.json active_project
-GET /api/swarm?project=<id>          → scoped swarm state
-GET /api/swarm/stream?project=<id>   → scoped SSE stream
-```
-
-The `readStateFile()` function in `route.ts` needs to resolve path from project_id:
-
-```typescript
-function getStateFilePath(projectId?: string): string {
-  if (projectId) {
-    return path.join(OPENCLAW_ROOT, '.openclaw', `${projectId}-state.json`);
-  }
-  // fallback to env var or active project
-  return process.env.STATE_FILE || resolveActiveProjectStatePath();
-}
-```
-
-The dashboard UI adds a `<ProjectSwitcher>` dropdown component to the top nav that:
-1. Calls `GET /api/projects` on mount (or SWR polling)
-2. Shows current `active_project` as selected
-3. On selection change: calls `PATCH /api/projects/active` then re-fetches swarm state
-
-The SSE stream URL changes from `/api/swarm/stream` to `/api/swarm/stream?project=<id>`.
-The `useSwarmState` hook needs to include the active project in the query.
-
----
-
-## Data Flow Changes
-
-### Before (v1.0)
-
-```
-openclaw project init (does not exist)
-spawn.py → workspace/.openclaw/workspace-state.json
-pool.py  → single semaphore (global)
-swarm API → hardcoded state file path
-SSE stream → hardcoded state file path
-monitor.py → config.STATE_FILE (global)
-```
-
-### After (v1.1)
-
-```
-openclaw project init <id>
-  → writes projects/<id>/project.json
-  → creates .openclaw/<id>-state.json
-  → renders SOUL from template + override
-
-openclaw project switch <id>
-  → updates openclaw.json active_project
-
-spawn.py
-  → gets project_id (from arg or active project)
-  → sets OPENCLAW_PROJECT env var in container
-  → sets openclaw.project label on container
-  → JarvisState path = .openclaw/<id>-state.json
-
-pool.py
-  → if pool_isolation=="isolated": per-project semaphore
-  → else: shared semaphore (existing behavior)
-
-swarm API (?project=pumplai)
-  → reads .openclaw/pumplai-state.json
-  → reads openclaw.json agents list (unchanged)
-
-SSE stream (?project=pumplai)
-  → watches .openclaw/pumplai-state.json
-
-monitor.py --project pumplai
-  → reads .openclaw/pumplai-state.json
-
-occc dashboard
-  → ProjectSwitcher → PATCH /api/projects/active
-  → SSE re-connects with new project query param
+where={"user_id": project_id, "agent_id__in": ["l2:pumplai_pm"]}
 ```
 
 ---
 
-## File Structure Changes
+## Data Flows
+
+### Flow 1: Pre-Spawn Retrieve (L2 calls memU before spawning L3)
 
 ```
-.openclaw/                         ← NEW: root-level state directory
-  pumplai-state.json               ← migrated from workspace/.openclaw/workspace-state.json
-  <project-id>-state.json          ← new projects
-  snapshots/
-    pumplai/                       ← migrated from workspace/.openclaw/snapshots/
-    <project-id>/
+L2 agent decides to spawn L3
+    ↓
+spawn_l3_specialist() called in spawn.py
+    ↓
+memory_client.retrieve(
+    query=task_description,
+    method="rag",
+    where={"user_id": project_id}
+) → memory_context: str
+    ↓
+soul_renderer.build_variables() receives memory_context
+    ↓
+string.Template substitutes $memory_context in soul-default.md
+    ↓
+SOUL.md rendered with relevant past outcomes injected
+    ↓
+L3 container spawned with enriched task context
+```
 
-projects/
-  pumplai/
-    project.json                   ← existing (no change)
-    soul-override.md               ← NEW: project-specific SOUL overrides
-  templates/                       ← NEW: project scaffold templates
-    fullstack/
-      project.json
-      soul-override.md
-    backend/
-      project.json
-      soul-override.md
-    ml-pipeline/
-      project.json
-      soul-override.md
+**Timing constraint:** retrieve must complete before container spawn. Use a short timeout
+(3s default, configurable) — if memU-server is unreachable, log warning and spawn with empty
+context (graceful degradation).
 
-agents/
-  templates/                       ← NEW: canonical SOUL templates
-    soul-defaults.md
-    l1-soul-template.md
-    l2-soul-template.md
+### Flow 2: Post-Task Memorize (L3 auto-memorization on completion)
 
+```
+L3 entrypoint.sh task execution completes
+    ↓
+git diff --cached captured → /tmp/task-diff.patch
+update_state "completed" called (existing)
+    ↓
+[NEW] curl POST http://memu-server:8765/memorize \
+  -d '{"messages": [{"role": "system", "content": "Task: {desc}"},
+                     {"role": "assistant", "content": "Outcome: {diff}"}],
+       "user_id": "{project_id}",
+       "agent_id": "l3:{agent_id}"}'
+    ↓
+memU-server processes async — L3 exits immediately after POST
+(fire-and-forget: memorize is async pipeline in memU-server)
+```
+
+**Why fire-and-forget:** memU-server memorize is a pipeline operation (extract → embed →
+store) that takes seconds. L3 containers should not block on it. The POST returns a `task_id`
+immediately; actual processing is async. L3 just needs to fire the POST before exiting.
+
+### Flow 3: L2 Post-Review Memorize (decision logging)
+
+```
+L2 reviews snapshot diff
+    ↓
+Decision: merge (approved) or reject
+    ↓
+[NEW] memory_client.memorize(
+    messages=[
+        {"role": "system", "content": "Review task {task_id}: {description}"},
+        {"role": "assistant", "content": "Decision: {merge|reject}. Reasoning: {rationale}"}
+    ],
+    user_id=project_id,
+    agent_id=f"l2:{l2_agent_id}"
+)
+    ↓
+Fire-and-forget (async) — L2 continues workflow
+```
+
+This is called from wherever L2 implements the merge/reject decision logic. In the current
+architecture that is an L2 agent action, not a Python file — the call site will be in
+`snapshot.py` or a new `orchestration/review.py` helper depending on how L2 invokes review.
+
+### Flow 4: L3 Mid-Task Retrieve (optional, on-demand)
+
+```
+L3 container executing task via CLI runtime
+    ↓
+CLI runtime calls: curl -s "http://memu-server:8765/retrieve" \
+  -d '{"queries": ["how to fix X"], "method": "rag",
+       "where": {"user_id": "{project_id}"}}'
+    ↓
+memU-server returns relevant memory items as JSON
+    ↓
+CLI runtime injects into its context window
+```
+
+This is the L3 direct access path. The CLI runtime (claude-code, codex, gemini-cli) can
+make HTTP calls during execution. The `MEMU_SERVICE_URL` and `MEMU_AGENT_ID` env vars are
+always injected so L3 containers can query memU regardless of whether L2 pre-fetched context.
+
+### Flow 5: Dashboard Memory Browse (occc reads memU)
+
+```
+User navigates to /memory page in occc
+    ↓
+Browser → GET /api/memory?project=pumplai&category=all
+    ↓
+Next.js API route: GET http://localhost:8765/categories
+  (with user_id=project_id filter)
+    ↓
+Returns category list + item counts
+    ↓
+Browser → GET /api/memory/search?q=docker+error&project=pumplai
+    ↓
+Next.js API route: POST http://localhost:8765/retrieve
+  (with query + user_id filter)
+    ↓
+Returns matching memory items
+```
+
+---
+
+## New File Structure
+
+```
 orchestration/
-  project_config.py                ← EXTEND: add CRUD + get_state_file() + get_snapshot_dir()
-  soul_template.py                 ← NEW: SOUL merge logic
-  cli/                             ← NEW: CLI subcommand modules
-    __init__.py
-    project.py                     ← project init/switch/list/remove
+└── memory_client.py         # Python HTTP client for memU-server (new)
 
-workspace/occc/src/
-  app/api/
-    projects/
-      route.ts                     ← NEW: list projects + switch active project
-    swarm/
-      route.ts                     ← MODIFY: accept ?project= query param
-      stream/
-        route.ts                   ← MODIFY: accept ?project= query param
-  components/
-    ProjectSwitcher.tsx            ← NEW: dropdown UI component
-  hooks/
-    useSwarmState.ts               ← MODIFY: include active project in query
+docker/
+└── memory/
+    ├── docker-compose.yml   # memU-server + PostgreSQL services (new)
+    └── .env.example         # OPENAI_API_KEY placeholder (new)
+
+workspace/occc/src/app/
+├── api/
+│   └── memory/
+│       ├── route.ts         # GET categories + items (new)
+│       └── search/
+│           └── route.ts     # POST retrieve / semantic search (new)
+└── memory/
+    └── page.tsx             # Memory browser page (new)
+
+workspace/occc/src/lib/
+└── memory.ts                # useMemory() SWR hook (new)
 ```
+
+---
+
+## `memory_client.py` Design
+
+```python
+# orchestration/memory_client.py
+import httpx
+from typing import Optional
+
+class MemoryClient:
+    """Thin HTTP client for memU-server REST API.
+
+    Raises MemoryServiceUnavailable on connection errors — callers
+    should catch and degrade gracefully (log + continue without memory).
+    """
+
+    def __init__(self, base_url: str, timeout: float = 3.0):
+        self.base_url = base_url.rstrip("/")
+        self.timeout = timeout
+
+    def memorize(
+        self,
+        messages: list[dict],
+        user_id: str,
+        agent_id: str,
+    ) -> dict:
+        """Fire-and-forget memorize. Returns task_id from memU-server."""
+        resp = httpx.post(
+            f"{self.base_url}/memorize",
+            json={"messages": messages, "user_id": user_id, "agent_id": agent_id},
+            timeout=self.timeout,
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    def retrieve(
+        self,
+        queries: list[str],
+        user_id: str,
+        method: str = "rag",
+        agent_id_filter: Optional[list[str]] = None,
+    ) -> str:
+        """Retrieve relevant memory context as formatted string."""
+        where: dict = {"user_id": user_id}
+        if agent_id_filter:
+            where["agent_id__in"] = agent_id_filter
+        resp = httpx.post(
+            f"{self.base_url}/retrieve",
+            json={"queries": queries, "method": method, "where": where},
+            timeout=self.timeout,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        # Flatten categories + items into prompt-injectable text
+        return _format_memory_context(data)
+
+    def health(self) -> bool:
+        """Returns True if memU-server is reachable."""
+        try:
+            resp = httpx.get(f"{self.base_url}/health", timeout=1.0)
+            return resp.status_code == 200
+        except Exception:
+            return False
+
+
+def get_memory_client() -> MemoryClient:
+    """Create MemoryClient from openclaw.json memory_service config."""
+    from orchestration.project_config import _find_project_root
+    import json, os
+    root = _find_project_root()
+    config = json.loads((root / "openclaw.json").read_text())
+    svc = config.get("memory_service", {})
+    url = svc.get("url", os.environ.get("MEMU_SERVICE_URL", "http://localhost:8765"))
+    timeout = svc.get("timeout_s", 3.0)
+    return MemoryClient(base_url=url, timeout=timeout)
+```
+
+**Dependency:** `httpx` (sync client, no new async complexity). Add to orchestration
+dependencies. Alternative: use stdlib `urllib.request` to maintain zero-external-deps
+policy — acceptable since this is an optional feature path with graceful degradation.
+
+**Decision point:** `httpx` vs stdlib. Prefer `httpx` for cleaner timeout handling and
+JSON support. Add to `docker/l3-specialist/requirements.txt` as well since L3 entrypoint
+needs it for curl-equivalent calls (or use bash `curl` in entrypoint.sh directly).
+
+---
+
+## SOUL Template Injection
+
+The existing `soul_renderer.py` `build_variables()` already returns a dict of template
+variables. Adding memory context requires:
+
+1. Add `memory_context` key to the dict (empty string default)
+2. Populate it by calling `MemoryClient.retrieve()` at render time or pass it in as a
+   parameter from spawn.py (preferred — avoids memory_client import inside soul_renderer)
+
+**Preferred pattern: parameter injection**
+
+```python
+# spawn.py (modified)
+memory_context = ""
+try:
+    client = get_memory_client()
+    memory_context = client.retrieve(
+        queries=[task_description],
+        user_id=project_id,
+    )
+except Exception as e:
+    logger.warning("Memory retrieve failed, spawning without context", extra={"error": str(e)})
+
+soul_content = render_soul(project_id, extra_vars={"memory_context": memory_context})
+```
+
+```python
+# soul_renderer.py (modified)
+def build_variables(project_config, extra_vars=None) -> dict:
+    base = { ...existing vars... }
+    base["memory_context"] = ""  # default empty
+    if extra_vars:
+        base.update(extra_vars)
+    return base
+```
+
+```markdown
+<!-- soul-default.md — new section added -->
+## Memory Context
+
+$memory_context
+```
+
+If `$memory_context` is empty, the section renders as an empty `## Memory Context` heading
+which is harmless. Alternatively, use a conditional marker and strip the section in
+`merge_sections()` when the value is empty.
+
+---
+
+## L3 Container Environment Variables (New)
+
+Added to `container_config["environment"]` in `spawn.py`:
+
+| Variable | Value | Purpose |
+|----------|-------|---------|
+| `MEMU_SERVICE_URL` | `http://memu-server:8765` | memU-server address inside Docker net |
+| `MEMU_AGENT_ID` | `l3:{l3_agent_id}` | Agent attribution for stored memories |
+| `MEMU_PROJECT_ID` | `{project_id}` | Memory scoping (user_id in memU terms) |
+| `MEMU_ENABLED` | `"true"` / `"false"` | Feature toggle — skip memorize if false |
+
+The L3 entrypoint uses these to POST to memU-server without needing Python — curl is
+sufficient for the fire-and-forget memorize POST.
+
+---
+
+## openclaw.json Config Block (New)
+
+```json
+{
+  "memory_service": {
+    "enabled": true,
+    "url": "http://localhost:8765",
+    "timeout_s": 3,
+    "retrieve_method": "rag",
+    "memorize_on_l3_complete": true,
+    "memorize_on_l2_review": true,
+    "inject_into_soul": true
+  }
+}
+```
+
+The `enabled` flag gates all memory operations system-wide. When `false`, spawn.py skips
+the retrieve call, entrypoint.sh skips the memorize POST, and dashboard API routes return
+empty responses. This is the feature-toggle pattern used throughout OpenClaw.
+
+---
+
+## Dashboard API Routes
+
+### GET `/api/memory?project={id}`
+
+Returns categories + item counts for the project. Calls:
+```
+GET http://localhost:8765/categories  (with user_id filter)
+```
+
+Response shape:
+```typescript
+interface MemoryCategory {
+  name: string
+  itemCount: number
+  lastUpdated: string
+}
+interface MemoryResponse {
+  categories: MemoryCategory[]
+  projectId: string
+}
+```
+
+### POST `/api/memory/search`
+
+Semantic search over memories. Calls:
+```
+POST http://localhost:8765/retrieve  (with query + user_id filter)
+```
+
+Request body: `{ query: string, project: string, method?: "rag" | "llm" }`
+
+Response shape:
+```typescript
+interface MemoryItem {
+  id: string
+  content: string
+  category: string
+  agentId: string
+  createdAt: string
+  score?: number
+}
+interface SearchResponse {
+  items: MemoryItem[]
+  query: string
+}
+```
+
+### Dashboard Memory Panel Page
+
+`/memory` page in occc with:
+- Project-scoped display (inherits current project from `ProjectProvider`)
+- Category list sidebar (SWR polling, 30s interval — memory changes slowly)
+- Item table for selected category
+- Search bar that hits `/api/memory/search`
+- Agent attribution column (shows L2 vs L3 source)
 
 ---
 
 ## Architectural Patterns
 
-### Pattern 1: Convention-Over-Configuration SOUL Inheritance
+### Pattern 1: Graceful Degradation on Memory Unavailability
 
-**What:** A default template provides canonical behaviors for each tier. Project overrides replace only named sections.
-**When to use:** Any time a new project-specific agent identity needs to be created.
-**Trade-offs:** Merging complexity is low (section-based replace), but requires templates to use stable section headings. Projects that need fully custom SOUL can still write complete override files.
+**What:** All memory operations wrapped in try/except. On failure, log warning and continue
+without memory context.
+**When to use:** Always — memU-server is a non-critical auxiliary service.
+**Implementation:** `MemoryClient` raises `MemoryServiceUnavailable`. Callers catch it,
+log at WARNING level, and proceed with `memory_context = ""`.
 
-### Pattern 2: Path-Scoped JarvisState
+### Pattern 2: Fire-and-Forget Memorize
 
-**What:** `JarvisState` already accepts any path. Per-project state is achieved by passing `.openclaw/<id>-state.json` instead of the legacy path.
-**When to use:** Always, for all state reads/writes in v1.1.
-**Trade-offs:** No code change needed in `state_engine.py`. Path resolution is centralized in `project_config.py`. Legacy state files in `workspace/.openclaw/` need a one-time migration.
+**What:** POST to `/memorize` without waiting for processing to complete. memU-server returns
+`task_id` immediately; actual extraction/embedding is async in its Temporal workflow.
+**When to use:** All memorize calls from L3 entrypoint.sh and L2 review decisions.
+**Why:** Memorize pipeline takes 2-10 seconds (LLM extraction + embed + store). Blocking
+L3 container exit or L2 review flow on this is unacceptable.
 
-### Pattern 3: Opt-In Pool Isolation
+### Pattern 3: Config-Gated Feature
 
-**What:** Default pool is shared (max 3 containers globally). Projects that set `"pool_isolation": "isolated"` in `project.json` get their own semaphore with their own `max_concurrent` value.
-**When to use:** High-priority or resource-intensive projects that should not queue behind other projects' containers.
-**Trade-offs:** Isolated mode can exceed the physical 3-container limit if multiple projects each get their own semaphore. Document this as expected behavior — `max_concurrent` in `project.json` becomes the ceiling per project when isolated.
+**What:** `memory_service.enabled` in `openclaw.json` gates all memory operations.
+**When to use:** All new memory code paths check `enabled` before doing anything.
+**Why:** Allows v1.3 to ship with memory disabled by default for projects that don't need it,
+and for testing without a running memU-server.
+
+### Pattern 4: Host-Port Access for L2, Container-DNS for L3
+
+**What:** L2/orchestration (host Python) calls `http://localhost:8765`. L3 containers call
+`http://memu-server:8765` via Docker DNS on `openclaw-net`.
+**Why:** L3 containers are inside Docker network; they cannot use `localhost` to reach the
+host. L2 is a host process; it cannot use Docker DNS names.
+**Implementation:** `MEMU_SERVICE_URL` env var in L3 container always set to
+`http://memu-server:8765`. `memory_client.py` reads from `openclaw.json` which specifies
+`http://localhost:8765` for host-side access.
 
 ---
 
 ## Anti-Patterns
 
-### Anti-Pattern 1: Agent Directories Per Project
+### Anti-Pattern 1: Blocking L3 Container Exit on Memorize
 
-**What people might do:** Create `agents/myapp_pm/` with full identity, SOUL, config, skills for each new project.
-**Why it's wrong:** Duplicates 80% of identical content. Configuration drift between projects. Scaling to 10 projects means 10 near-identical directories.
-**Do this instead:** One `agents/l2_pm/` directory with SOUL templating. Project identity lives in `projects/<id>/soul-override.md`. Only fork the full agent directory if an agent truly has different skills (different skill_registry).
+**What people do:** `curl -s ... /memorize && wait_for_task_id` in entrypoint.sh
+**Why it's wrong:** memU memorize pipeline is async (Temporal workflow). Blocking adds 2-10s
+to every L3 container lifecycle with no benefit.
+**Do this instead:** Fire the POST, check for HTTP 200/202, log the returned task_id, exit.
 
-### Anti-Pattern 2: Global State File with Project Tags
+### Anti-Pattern 2: Storing Full Git Diffs as Raw Memory
 
-**What people might do:** Keep one `workspace-state.json` and add a `project_id` field to each task.
-**Why it's wrong:** Shared state file becomes a cross-project lock contention point. Dashboard cannot scope SSE stream to one project without filtering on the client. State file grows unboundedly.
-**Do this instead:** Per-project state files at `.openclaw/<id>-state.json`. Each project's Jarvis state is completely independent. State file sizes stay bounded per project.
+**What people do:** `content = open("task.diff").read()` → memorize entire diff verbatim
+**Why it's wrong:** Large diffs (thousands of lines) hit token limits in LLM extraction step
+and store noisy/irrelevant content. Vector retrieval matches patch syntax not semantics.
+**Do this instead:** Summarize: task description + changed file names + exit code + key log
+lines. Diffs > 200 lines should be truncated or summarized before memorize POST.
 
-### Anti-Pattern 3: Dashboard Re-Architecting for Multi-Project
+### Anti-Pattern 3: Per-Request L2 Memory Retrieve During Monitoring
 
-**What people might do:** Redesign the entire dashboard data model to support multiple projects in parallel.
-**Why it's wrong:** Over-engineering for a switcher use case. The user looks at one project at a time.
-**Do this instead:** Project switcher changes `active_project` and the dashboard re-fetches. One active project at a time is the mental model. The API accepts `?project=<id>` but the UI only ever passes the active project.
+**What people do:** Call `memory_client.retrieve()` inside the monitor poll loop
+**Why it's wrong:** Monitor polls every 1s. Memory retrieval is 50-200ms per call.
+This adds 5-20% overhead to monitoring with zero benefit (monitoring doesn't need memory).
+**Do this instead:** Only retrieve at spawn time (pre-spawn). Never in monitor/status paths.
 
----
+### Anti-Pattern 4: Using localhost in L3 Container
 
-## Integration Points
-
-### Internal Boundaries
-
-| Boundary | Communication | Notes |
-|----------|---------------|-------|
-| `project_config.py` ↔ `spawn.py` | Direct import | `get_state_file(project_id)` replaces hardcoded path in spawn.py |
-| `project_config.py` ↔ `pool.py` | Direct import | `load_project_config(project_id).get("pool_isolation")` determines semaphore mode |
-| `project_config.py` ↔ `monitor.py` | Direct import | `get_state_file(project_id)` replaces `STATE_FILE` global |
-| `project_config.py` ↔ `cli/project.py` | Direct import | CRUD operations, template scaffolding |
-| `soul_template.py` ↔ `cli/project.py` | Direct import | Called during `openclaw project init` to render SOUL files |
-| `projects/ dir` ↔ `occc /api/projects/route.ts` | Filesystem read | API reads `projects/` directory to list available projects |
-| `openclaw.json` ↔ `occc /api/projects/route.ts` | Filesystem read/write | API reads/writes `active_project` field |
-| `occc ProjectSwitcher` ↔ `/api/projects` | HTTP REST | GET list, PATCH active |
-| `occc useSwarmState` ↔ `/api/swarm/stream` | SSE | Query param carries active project ID |
-
-### External Services
-
-| Service | Integration Pattern | Notes |
-|---------|---------------------|-------|
-| Docker | Existing via `docker-py` | Add `openclaw.project` label to containers in spawn.py |
-| Git | Existing via subprocess | No change — snapshot.py operates on workspace path, not state path |
+**What people do:** `MEMU_SERVICE_URL=http://localhost:8765` in L3 container environment
+**Why it's wrong:** Inside a Docker container, `localhost` resolves to the container itself,
+not the host. The call fails silently or hangs.
+**Do this instead:** `MEMU_SERVICE_URL=http://memu-server:8765` — Docker DNS resolves
+`memu-server` via `openclaw-net` bridge network.
 
 ---
 
-## Build Order
+## Build Order (Component Dependencies)
 
-Build order is determined by dependency direction. Nothing in the dashboard or pool can be tested
-until the state file path resolution works. The CLI is a delivery mechanism, not a dependency.
+The following order respects dependency relationships. Each phase is a logical build unit.
 
 ```
-1. project_config.py extensions
-   (get_state_file, get_snapshot_dir, list_projects, create_project, remove_project, switch_active_project)
-   → Zero dependencies on new code. Everything else depends on this.
+Phase 1: Infrastructure (no code deps)
+  - docker/memory/docker-compose.yml
+  - docker network create openclaw-net
+  - Add L3 containers to openclaw-net in spawn.py (network= param)
+  - Verify: docker compose up → memu-server health check passes
 
-2. SOUL template engine
-   (soul_template.py + agents/templates/ + projects/<id>/soul-override.md)
-   → Depends only on filesystem layout. No runtime dependencies.
-   → Can be built in parallel with step 1 after templates exist.
+Phase 2: Python Client (depends on Phase 1)
+  - orchestration/memory_client.py
+  - Add httpx to L3 requirements (or confirm curl sufficient)
+  - Add memory_service block to openclaw.json (enabled: false initially)
+  - Verify: memory_client.health() returns True
 
-3. spawn.py + pool.py modifications
-   (inject OPENCLAW_PROJECT, per-project semaphore, openclaw.project label)
-   → Depends on project_config.py get_state_file().
+Phase 3: L3 Memorize (depends on Phase 2)
+  - entrypoint.sh: add post-task memorize POST
+  - MEMU_* env vars injected in spawn.py
+  - Verify: spawn test task → memory item appears in memU-server
 
-4. monitor.py modification
-   (--project flag, derive state-file from project_config)
-   → Depends on project_config.py get_state_file().
-   → Can be built in parallel with step 3.
+Phase 4: L2 Pre-Spawn Retrieve + SOUL Injection (depends on Phase 3)
+  - spawn.py: retrieve call before container creation
+  - soul_renderer.py: extra_vars support + memory_context variable
+  - soul-default.md: Memory Context section
+  - Verify: spawned task SOUL.md contains retrieved context from Phase 3
 
-5. Project CLI (orchestration/cli/project.py)
-   (init, switch, list, remove + template scaffolding)
-   → Depends on project_config.py CRUD + soul_template.py.
-   → Depends on steps 1 and 2 being complete.
+Phase 5: L2 Review Memorize (depends on Phase 2)
+  - orchestration/memory_client.py used from review logic
+  - Verify: merge/reject decision stored, retrievable in Phase 4
 
-6. Migration: .openclaw/ root dir, migrate pumplai state
-   (create .openclaw/, copy workspace/.openclaw/workspace-state.json → .openclaw/pumplai-state.json)
-   → Run as part of step 5 init, or as standalone migration step.
-
-7. occc dashboard changes
-   (projects API route, ProjectSwitcher component, swarm route ?project= scoping)
-   → Depends on project_config.py layout being stable (step 1).
-   → Can be built in parallel with steps 3-5 once step 1 is done.
-
-8. End-to-end verification
-   (create a second project, spawn L3 tasks, confirm state isolation, confirm dashboard switching)
-   → Depends on all above steps.
+Phase 6: Dashboard (depends on Phase 1)
+  - workspace/occc/src/app/api/memory/route.ts
+  - workspace/occc/src/app/api/memory/search/route.ts
+  - workspace/occc/src/app/memory/page.tsx
+  - workspace/occc/src/lib/memory.ts
+  - Verify: dashboard /memory page shows categories + search works
 ```
-
-**Critical path:** steps 1 → 3 → 8. Steps 2, 4, 5, 6, 7 can proceed in parallel once step 1 is done.
 
 ---
 
-## Confidence Assessment
+## Integration Points: New vs Modified
 
-| Area | Confidence | Notes |
-|------|------------|-------|
-| Existing code analysis | HIGH | Read all relevant files directly |
-| State file scoping approach | HIGH | JarvisState path-agnostic; pattern is clean |
-| SOUL template merging | MEDIUM | Section-based merge is straightforward; edge cases in malformed overrides need defensive coding |
-| Pool isolation semaphore | HIGH | asyncio.Semaphore pattern is straightforward; per-project dict is standard |
-| CLI subcommand pattern | HIGH | Python argparse subparsers pattern matches existing monitor.py |
-| Dashboard query param scoping | HIGH | Next.js route handler URL params are trivial; SWR re-fetch on project change is standard |
-| Migration from legacy state path | MEDIUM | Existing workspace may have in-flight tasks; migration needs to be idempotent |
+### New (create from scratch)
+
+| Artifact | Type | Purpose |
+|----------|------|---------|
+| `docker/memory/docker-compose.yml` | Config | memU-server + PostgreSQL services |
+| `orchestration/memory_client.py` | Python | HTTP client for memU-server |
+| `workspace/occc/src/app/api/memory/route.ts` | API route | Categories endpoint |
+| `workspace/occc/src/app/api/memory/search/route.ts` | API route | Search endpoint |
+| `workspace/occc/src/app/memory/page.tsx` | UI | Memory browser page |
+| `workspace/occc/src/lib/memory.ts` | Hook | `useMemory()` SWR hook |
+
+### Modified (surgical changes only)
+
+| Artifact | Change | Risk |
+|----------|--------|------|
+| `skills/spawn_specialist/spawn.py` | +retrieve call +env vars | LOW — wrapped in try/except, graceful degradation |
+| `orchestration/soul_renderer.py` | +extra_vars param | LOW — additive, backward compat |
+| `agents/_templates/soul-default.md` | +Memory Context section | LOW — empty renders harmlessly |
+| `docker/l3-specialist/entrypoint.sh` | +memorize POST after completion | LOW — fire-and-forget, not on critical path |
+| `openclaw.json` | +memory_service block | LOW — new key, existing code ignores unknown keys |
+
+---
+
+## Scaling Considerations
+
+This is a single-host system. Scaling concerns are operational, not distributed:
+
+| Concern | At current scale (3 concurrent L3) | Notes |
+|---------|-------------------------------------|-------|
+| memU-server throughput | Not a bottleneck — 3 memorize calls/task-completion cycle | Async pipeline absorbs bursts |
+| PostgreSQL storage | pgvector indexes grow with usage — acceptable indefinitely on SSD | Add pg_partman if > 1M items |
+| Retrieve latency | RAG: ~50ms, LLM: ~2s — set retrieve_method="rag" for pre-spawn | LLM method only for dashboard search |
+| Memory disk usage | pgvector embedding (1536 dims × 4 bytes = 6KB/item) — 1M items ≈ 6GB | Monitor with pg_database_size() |
 
 ---
 
 ## Sources
 
-- Direct analysis: `/home/ollie/.openclaw/orchestration/state_engine.py`
-- Direct analysis: `/home/ollie/.openclaw/orchestration/project_config.py`
-- Direct analysis: `/home/ollie/.openclaw/orchestration/config.py`
-- Direct analysis: `/home/ollie/.openclaw/skills/spawn_specialist/spawn.py`
-- Direct analysis: `/home/ollie/.openclaw/skills/spawn_specialist/pool.py`
-- Direct analysis: `/home/ollie/.openclaw/workspace/occc/src/app/api/swarm/route.ts`
-- Direct analysis: `/home/ollie/.openclaw/workspace/occc/src/app/api/swarm/stream/route.ts`
-- Direct analysis: `/home/ollie/.openclaw/projects/pumplai/project.json`
-- Direct analysis: `/home/ollie/.openclaw/openclaw.json`
-- Direct analysis: `/home/ollie/.openclaw/agents/pumplai_pm/agent/SOUL.md`
-- Direct analysis: `/home/ollie/.openclaw/.planning/PROJECT.md`
-- Direct analysis: `/home/ollie/.openclaw/.planning/STATE.md`
+- memU GitHub README: https://github.com/NevaMind-AI/memU/blob/main/README.md
+- memU-server GitHub (backend wrapper): https://github.com/NevaMind-AI/memU-server
+- memu-py PyPI: https://pypi.org/project/memu-py/
+- pgvector Docker image: https://hub.docker.com/r/pgvector/pgvector
+- OpenClaw codebase: `skills/spawn_specialist/spawn.py`, `orchestration/soul_renderer.py`, `orchestration/state_engine.py`, `docker/l3-specialist/entrypoint.sh`
 
 ---
 
-*Architecture research for: OpenClaw v1.1 — Project Agnostic Multi-Project Support*
-*Researched: 2026-02-23*
+*Architecture research for: memU integration into OpenClaw v1.3*
+*Researched: 2026-02-24*
