@@ -431,10 +431,39 @@ def spawn_l3_specialist(
     except docker.errors.NotFound:
         pass  # Container doesn't exist, which is fine
 
+    # --- Pre-spawn memory retrieval and SOUL injection ---
+    memu_cfg = get_memu_config()
+    memu_url = memu_cfg.get("memu_api_url", "")
+    query = f"{task_description} skill:{skill_hint}"
+    memories = _retrieve_memories_sync(memu_url, project_id, query)
+    memory_context = _format_memory_context(memories)
+
+    if memory_context:
+        bullet_count = sum(1 for line in memory_context.splitlines() if line.startswith("-"))
+        logger.info(
+            f"Injected {bullet_count} memories ({len(memory_context)} chars) into SOUL",
+            extra={"task_id": task_id, "project_id": project_id},
+        )
+
+    soul_content = _build_augmented_soul(project_root, memory_context)
+    soul_tempfile = None
+    if soul_content:
+        soul_tempfile = _write_soul_tempfile(soul_content)
+        container_config["volumes"][str(soul_tempfile)] = {
+            "bind": SOUL_CONTAINER_PATH,
+            "mode": "ro",
+        }
+        container_config["environment"]["SOUL_FILE"] = SOUL_CONTAINER_PATH
+
     # Spawn container
     logger.info("Spawning L3 container", extra={"task_id": task_id, "project_id": project_id, "container_name": container_name, "skill": skill_hint, "gpu": requires_gpu})
 
-    container = client.containers.run(**container_config)
+    try:
+        container = client.containers.run(**container_config)
+    finally:
+        if soul_tempfile:
+            soul_tempfile.unlink(missing_ok=True)
+
     return container
 
 
