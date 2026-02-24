@@ -69,7 +69,7 @@ See: `.planning/milestones/v1.2-ROADMAP.md` for full phase details.
 - [x] **Phase 30: L2 Review Decision Memorization** — merge/reject decisions with reasoning are memorized after each L2 review cycle (completed 2026-02-24)
 - [ ] **Phase 31: L3 In-Execution Memory Queries** — L3 containers can query memU via HTTP during task execution for on-demand lookups
 - [ ] **Phase 32: Dashboard Memory Panel** — /memory page in occc for browsing, searching, and deleting project-scoped memory items
-- [ ] **Phase 33: Integration Gap Closure** — Fix broken SOUL_FILE wiring in entrypoint.sh, correct MEMU_API_URL for in-container use, join L3 containers to openclaw-net, update requirement checkboxes
+- [x] **Phase 33: Integration Gap Closure** — Fix broken SOUL_FILE wiring in entrypoint.sh, correct MEMU_API_URL for in-container use, join L3 containers to openclaw-net, update requirement checkboxes (completed 2026-02-24)
 
 ## Phase Details
 
@@ -227,4 +227,4 @@ Plans:
 | 30. L2 Review Decision Memorization | 2/2 | Complete    | 2026-02-24 | - |
 | 31. L3 In-Execution Memory Queries | v1.3 | 0/? | Not started | - |
 | 32. Dashboard Memory Panel | v1.3 | 0/? | Not started | - |
-| 33. Integration Gap Closure | 1/2 | In Progress|  | - |
+| 33. Integration Gap Closure | 2/2 | Complete   | 2026-02-24 | - |
