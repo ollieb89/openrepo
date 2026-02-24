@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.2 Orchestration Hardening — Phase 25: Monitor Cache Fix
+**Current focus:** v1.2 Orchestration Hardening — Phase 23: Pool Config
 
 ## Current Position
 
-Phase: 25 of 25 (Monitor Cache Fix)
-Plan: 1 of 1 in current phase (phase complete)
-Status: Phase 25 complete — v1.2 all phases done
-Last activity: 2026-02-24 — 25-01-PLAN.md complete (PERF-04: JarvisState session-scoped reuse in monitor tail)
+Phase: 23 of 25 (Pool Config)
+Plan: 2 of 2 in current phase (23-01 complete, 23-02 pending)
+Status: Phase 23 in progress — 23-01-PLAN.md complete (POOL-01: config-driven PoolRegistry)
+Last activity: 2026-02-24 — 23-01-PLAN.md complete (POOL-01: get_pool_config + hot-reload PoolRegistry)
 
 Progress: [██░░░░░░░░░░░░░░░░░░] 10% (v1.2)
 
@@ -35,6 +35,7 @@ Progress: [██░░░░░░░░░░░░░░░░░░] 10% (v1
 | 21-state-engine-performance P03 | 1 | 1 task | 2 files |
 | 22-observability-metrics P01 | 1 | 2 tasks | 4 files |
 | 22-observability-metrics P02 | 1 | 2 tasks | 2 files |
+| 23-pool-config P01 | 1 | 2 tasks | 4 files |
 | 25-monitor-cache-fix P01 | 1 | 2 tasks | 1 file |
 
 *Updated after each plan completion*
@@ -60,6 +61,9 @@ Recent decisions affecting current work:
 - [Phase 22-observability-metrics]: Saturation detection via semaphore._value==0 before async with — no side effects, no additional synchronization
 - [Phase 22-observability-metrics]: Monitor pool subcommand computes aggregates on-the-fly from state file — works when pool process is not running, consistent with CONTEXT.md
 - [Phase 25-monitor-cache-fix]: js_instances is function-local to tail_state() (not module-level) — implicit teardown on exit; evict on any read exception for resilient mid-session recovery
+- [Phase 23-pool-config]: Pool config reads project.json fresh on every get_pool() call — supports hot-reload without restart
+- [Phase 23-pool-config]: Invalid pool config values log a warning and fall back to defaults — never raise, never block spawns
+- [Phase 23-pool-config]: max_per_project removed from PoolRegistry; config-driven via get_pool_config() with _POOL_DEFAULTS fallback; _pool_config attached to pool instances for Plan 02 overflow policy
 
 ### Pending Todos
 
@@ -72,5 +76,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 25-01-PLAN.md (JarvisState session-scoped reuse in monitor tail; PERF-04 complete; Phase 25 done)
+Stopped at: Completed 23-01-PLAN.md (config-driven PoolRegistry with hot-reload; POOL-01 complete; Phase 23 Plan 1 of 2 done)
 Resume file: None

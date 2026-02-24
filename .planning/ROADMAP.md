@@ -177,6 +177,6 @@ Plans:
 | 20. Reliability Hardening | 2/2 | Complete    | 2026-02-24 | - |
 | 21. State Engine Performance | 3/3 | Complete    | 2026-02-24 | - |
 | 22. Observability Metrics | 2/2 | Complete    | 2026-02-24 | - |
-| 23. Per-Project Pool Config | v1.2 | 0/TBD | Not started | - |
+| 23. Per-Project Pool Config | 1/2 | In Progress|  | - |
 | 24. Dashboard Metrics | v1.2 | 0/TBD | Not started | - |
 | 25. Monitor Cache Fix | 1/1 | Complete    | 2026-02-24 | - |
