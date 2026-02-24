@@ -136,7 +136,10 @@ Plans:
   2. The usage metrics panel displays task completion times (last N tasks), pool utilization percentage, and container lifecycle counts for the selected project
   3. The metrics panel updates without a page reload when task state changes (SWR polling or SSE)
   4. An empty-state is shown (not a broken chart) when a project has no completed tasks yet
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 24-01-PLAN.md — Metrics API route, recharts visualizations (bar chart, gauge, stat cards), /metrics page
+- [ ] 24-02-PLAN.md — Agent hierarchy global/project split with status indicator dots
 
 ### Phase 25: Monitor Cache Fix
 **Goal**: Multi-project monitor tail reuses JarvisState across poll cycles so the in-memory cache provides hits instead of cold-starting every iteration
