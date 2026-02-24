@@ -134,7 +134,12 @@ Plans:
   3. The dashboard surfaces pending suggestions with accept and reject actions; accepting appends the suggestion to soul-override.md and re-renders the SOUL; rejecting memorizes the rejection reason
   4. Suggestions are only generated when ≥3 similar rejections are found within the lookback window — the engine produces no output on insufficient data rather than generating noise
   5. The suggestion apply API route validates the diff before writing (rejects payloads containing safety constraint removal, shell commands, or exceeding 100 lines) — structural injection is prevented at the API layer
-**Plans**: TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 41-01-PLAN.md — Pattern extraction engine + soul-suggestions.json schema + unit tests (ADV-01, ADV-02, ADV-03)
+- [ ] 41-02-PLAN.md — Next.js API routes: GET/POST suggestions + accept/reject action with approval gate validation (ADV-04, ADV-06)
+- [ ] 41-03-PLAN.md — Suggestions dashboard page + SuggestionCard + DismissedTab + Sidebar badge (ADV-05)
 
 ### Phase 42: Delta Snapshots
 **Goal**: Pre-spawn memory retrieval fetches only new memories since the last retrieval, and snapshot history is bounded by a configurable limit per project
