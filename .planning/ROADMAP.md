@@ -82,10 +82,11 @@ See: `.planning/milestones/v1.2-ROADMAP.md` for full phase details.
   3. POST /memorize and POST /retrieve succeed from the host with a sample payload, returning expected JSON
   4. After deleting the postgres volume and restarting, the pgvector extension is present in `pg_extension` (verifying init ordering is correct)
   5. L3 containers joined to openclaw-net can reach memu-server by Docker DNS name (verified via docker exec curl)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 26-01: TBD
+- [ ] 26-01-PLAN.md — Docker infrastructure (Compose, Dockerfile, pgvector init, requirements)
+- [ ] 26-02-PLAN.md — FastAPI application code + full stack build & verification
 
 ### Phase 27: Memory Client + Scoping
 **Goal**: A MemoryClient wrapper in the orchestration layer makes it structurally impossible to call memorize or retrieve without a project_id; per-agent scoping is supported via agent_type parameter
