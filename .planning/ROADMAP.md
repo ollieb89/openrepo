@@ -97,10 +97,10 @@ Plans:
   2. A two-project isolation test passes: memories written for project A return zero results when retrieved for project B
   3. `memory_client.health()` returns True when the service is up and False (not an exception) when it is down
   4. memorize and retrieve calls include agent_type in the request payload, enabling per-agent scoping at the API level
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 27-01: TBD
+- [ ] 27-01-PLAN.md — MemoryClient module with enforced scoping + comprehensive test suite
 
 ### Phase 28: L3 Auto-Memorization
 **Goal**: After a successful L3 task completes, its semantic snapshot is memorized in memU via a fire-and-forget HTTP call that does not delay container exit or hold the pool slot
