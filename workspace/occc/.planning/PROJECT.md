@@ -4,7 +4,7 @@
 Nexus-Sync is an intelligent context bridge for knowledge workers who operate across chat and project tools. It creates a unified project context layer that links conversations, tickets, and decisions so teams stop losing time to tab switching. 
 
 ## Current State
-**v1.0 Shipped (2026-02-24)**
+**v1.4 Shipped (2026-02-24)**
 - **Privacy-First Core:** Local-first processing with automated PII redaction and explicit consent guards.
 - **Source Connectivity:** Incremental sync for Slack, GitHub, and Linear with unified health monitoring.
 - **Decision Intelligence:** Autonomous decision extraction and "smoking gun" citations from chat threads.
@@ -35,11 +35,11 @@ A user can ask one question and reliably understand what changed across communic
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Build local-first middleware rather than cloud-only service | Privacy and latency are core product constraints | Shipped v1.0 |
-| Start with Slack + GitHub/Linear integrations | Highest leverage workflow pair for MVP validation | Shipped v1.0 |
-| Prioritize "Catch Me Up" as primary user-facing capability | Directly targets tab-switching tax and context loss | Shipped v1.0 |
+| Build local-first middleware rather than cloud-only service | Privacy and latency are core product constraints | Shipped v1.4 |
+| Start with Slack + GitHub/Linear integrations | Highest leverage workflow pair for MVP validation | Shipped v1.4 |
+| Prioritize "Catch Me Up" as primary user-facing capability | Directly targets tab-switching tax and context loss | Shipped v1.4 |
 
 </details>
 
 ---
-*Last updated: 2026-02-24 after v1.0 Shipped*
+*Last updated: 2026-02-24 after v1.4 Shipped*
