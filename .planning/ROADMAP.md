@@ -49,7 +49,7 @@ See: `.planning/milestones/v1.1-ROADMAP.md` for full phase details.
 - [x] **Phase 19: Structured Logging** - Establish structured JSON logging foundation across all orchestration components (completed 2026-02-24)
 - [x] **Phase 20: Reliability Hardening** - State backup/recovery and config schema validation with fast-fail error reporting (completed 2026-02-24)
 - [x] **Phase 21: State Engine Performance** - Docker client pooling, in-memory state caching, incremental updates, shared-lock reads (completed 2026-02-24)
-- [ ] **Phase 22: Observability Metrics** - Task lifecycle metrics, pool utilization tracking, and activity log rotation
+- [x] **Phase 22: Observability Metrics** - Task lifecycle metrics, pool utilization tracking, and activity log rotation (completed 2026-02-24)
 - [ ] **Phase 23: Per-Project Pool Config** - Configurable concurrency limits, isolated/shared pool modes, queue overflow policies
 - [ ] **Phase 24: Dashboard Metrics** - Agent hierarchy filtering per project and usage metrics visualization panel
 - [ ] **Phase 25: Monitor Cache Fix** - Fix JarvisState cache reuse in multi-project monitor path (PERF-04 integration gap)
@@ -171,7 +171,7 @@ Plans:
 | 19. Structured Logging | 2/2 | Complete    | 2026-02-24 | - |
 | 20. Reliability Hardening | 2/2 | Complete    | 2026-02-24 | - |
 | 21. State Engine Performance | 3/3 | Complete    | 2026-02-24 | - |
-| 22. Observability Metrics | 1/2 | In Progress|  | - |
+| 22. Observability Metrics | 2/2 | Complete   | 2026-02-24 | - |
 | 23. Per-Project Pool Config | v1.2 | 0/TBD | Not started | - |
 | 24. Dashboard Metrics | v1.2 | 0/TBD | Not started | - |
 | 25. Monitor Cache Fix | v1.2 | 0/TBD | Not started | - |

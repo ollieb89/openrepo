@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 22 of 24 (Observability Metrics)
-Plan: 1 of TBD in current phase
-Status: In progress
-Last activity: 2026-02-24 — 22-01-PLAN.md complete (OBS-02/OBS-04: task lifecycle timestamps, lock-wait metrics, activity log rotation)
+Plan: 2 of 2 in current phase (phase complete)
+Status: Phase 22 complete — moving to Phase 23
+Last activity: 2026-02-24 — 22-02-PLAN.md complete (OBS-03: pool utilization tracking + saturation event logging)
 
-Progress: [█░░░░░░░░░░░░░░░░░░░] 5% (v1.2)
+Progress: [██░░░░░░░░░░░░░░░░░░] 10% (v1.2)
 
 ## Performance Metrics
 
@@ -34,6 +34,7 @@ Progress: [█░░░░░░░░░░░░░░░░░░░] 5% (v1.
 | 21-state-engine-performance P02 | 1 | 2 tasks | 2 files |
 | 21-state-engine-performance P03 | 1 | 1 task | 2 files |
 | 22-observability-metrics P01 | 1 | 2 tasks | 4 files |
+| 22-observability-metrics P02 | 1 | 2 tasks | 2 files |
 
 *Updated after each plan completion*
 
@@ -55,6 +56,8 @@ Recent decisions affecting current work:
 - [Phase 21-03]: PERF-03 requirement updated to describe write-through cache semantics — JSON requires atomic full rewrites; the real performance gain is cache elimination of redundant re-reads after writes (no code changes needed, requirement text was the gap)
 - [Phase 22-observability-metrics]: rotate_activity_log acquires its own lock separate from update_task — fast-path cache check avoids lock when within threshold, break replaces return in update_task retry loop to enable post-write rotation
 - [Phase 22-observability-metrics]: lock_wait_ms tracked by pool.py as wall-clock time around state engine calls (not internal fcntl spin) — practical proxy without changing _acquire_lock return type
+- [Phase 22-observability-metrics]: Saturation detection via semaphore._value==0 before async with — no side effects, no additional synchronization
+- [Phase 22-observability-metrics]: Monitor pool subcommand computes aggregates on-the-fly from state file — works when pool process is not running, consistent with CONTEXT.md
 
 ### Pending Todos
 
@@ -67,5 +70,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 22-01-PLAN.md (task lifecycle timestamps + activity log rotation; OBS-02, OBS-04 complete)
+Stopped at: Completed 22-02-PLAN.md (pool utilization tracking + saturation logging; OBS-03 complete; Phase 22 done)
 Resume file: None

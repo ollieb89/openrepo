@@ -24,7 +24,7 @@ Requirements for Orchestration Hardening milestone. Each maps to roadmap phases.
 
 - [x] **OBS-01**: All orchestration components use Python logging with structured JSON formatter and configurable log levels
 - [x] **OBS-02**: Task lifecycle metrics are tracked: spawn-to-complete duration, lock wait times, retry counts per task
-- [ ] **OBS-03**: Pool utilization is tracked: active/queued/completed container counts per project, semaphore saturation
+- [x] **OBS-03**: Pool utilization is tracked: active/queued/completed container counts per project, semaphore saturation
 - [x] **OBS-04**: Activity log entries are rotated when exceeding configurable threshold, with old entries archived
 
 ### Pool Config
@@ -84,7 +84,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PERF-04 | Phase 21 | Complete |
 | OBS-01 | Phase 19 | Complete |
 | OBS-02 | Phase 22 | Complete |
-| OBS-03 | Phase 22 | Pending |
+| OBS-03 | Phase 22 | Complete |
 | OBS-04 | Phase 22 | Complete |
 | POOL-01 | Phase 23 | Pending |
 | POOL-02 | Phase 23 | Pending |
