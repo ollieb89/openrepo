@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 22 of 24 (Observability Metrics)
-Plan: 0 of TBD in current phase
+Plan: 1 of TBD in current phase
 Status: In progress
-Last activity: 2026-02-24 — 21-03-PLAN.md complete (gap closure: PERF-03 requirement aligned with write-through cache implementation)
+Last activity: 2026-02-24 — 22-01-PLAN.md complete (OBS-02/OBS-04: task lifecycle timestamps, lock-wait metrics, activity log rotation)
 
 Progress: [█░░░░░░░░░░░░░░░░░░░] 5% (v1.2)
 
@@ -33,6 +33,7 @@ Progress: [█░░░░░░░░░░░░░░░░░░░] 5% (v1.
 | 21-state-engine-performance P01 | 1 | 2 tasks | 2 files |
 | 21-state-engine-performance P02 | 1 | 2 tasks | 2 files |
 | 21-state-engine-performance P03 | 1 | 1 task | 2 files |
+| 22-observability-metrics P01 | 1 | 2 tasks | 4 files |
 
 *Updated after each plan completion*
 
@@ -52,6 +53,8 @@ Recent decisions affecting current work:
 - [Phase 21-01]: No threading locks on Docker client singleton — docker.DockerClient is thread-safe; ping-on-reuse pattern for transparent daemon restart recovery
 - [Phase 21-02]: mtime is primary cache invalidation signal; TTL (5s) is safety net only. Deep copy on both cache store and retrieval. Cache check before any lock acquisition — zero contention on cache hits.
 - [Phase 21-03]: PERF-03 requirement updated to describe write-through cache semantics — JSON requires atomic full rewrites; the real performance gain is cache elimination of redundant re-reads after writes (no code changes needed, requirement text was the gap)
+- [Phase 22-observability-metrics]: rotate_activity_log acquires its own lock separate from update_task — fast-path cache check avoids lock when within threshold, break replaces return in update_task retry loop to enable post-write rotation
+- [Phase 22-observability-metrics]: lock_wait_ms tracked by pool.py as wall-clock time around state engine calls (not internal fcntl spin) — practical proxy without changing _acquire_lock return type
 
 ### Pending Todos
 
@@ -64,5 +67,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 21-03-PLAN.md (Phase 21 all 3 plans complete, Phase 22 is next)
+Stopped at: Completed 22-01-PLAN.md (task lifecycle timestamps + activity log rotation; OBS-02, OBS-04 complete)
 Resume file: None
