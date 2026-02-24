@@ -19,10 +19,14 @@ if str(_skills_spawn_dir) not in sys.path:
 
 # Allow imports from docker/memory/ (e.g., `from memory_service.scan_engine import ...`)
 _docker_memory_dir = PROJECT_ROOT / "docker" / "memory"
-if str(_docker_memory_dir) not in sys.path:
-    sys.path.insert(0, str(_docker_memory_dir))
+_packages_memory_dir = PROJECT_ROOT / "packages" / "memory"
+for _d in (_docker_memory_dir, _packages_memory_dir):
+    if _d.exists() and str(_d) not in sys.path:
+        sys.path.insert(0, str(_d))
 
-# Allow imports from docker/memory/memory_service/ (e.g., `from routers.retrieve import _filter_after`)
+# Allow imports from docker/memory/memory_service/ or packages/memory equivalent
 _docker_memory_service_dir = PROJECT_ROOT / "docker" / "memory" / "memory_service"
-if str(_docker_memory_service_dir) not in sys.path:
-    sys.path.insert(0, str(_docker_memory_service_dir))
+_packages_memory_service_dir = PROJECT_ROOT / "packages" / "memory" / "memory_service"
+for _d in (_docker_memory_service_dir, _packages_memory_service_dir):
+    if _d.exists() and str(_d) not in sys.path:
+        sys.path.insert(0, str(_d))
