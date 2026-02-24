@@ -109,6 +109,14 @@ None - no external service configuration required.
 - All retrieval requirements (RET-01 through RET-05) and memorization requirements (MEM-01 through MEM-05) are satisfied.
 - 63 tests passing with 0.20s average runtime.
 
+## Self-Check: PASSED
+
+- FOUND: agents/l3_specialist/agent/SOUL.md (Memory Queries section present)
+- FOUND: tests/test_l3_memory_query.py (239 lines, 5 tests)
+- FOUND: .planning/phases/35-l3-in-execution-memory-queries/35-01-SUMMARY.md
+- FOUND commit a129bbb (Task 1: SOUL.md Memory Queries section)
+- FOUND commit 9218740 (Task 2: integration tests)
+
 ---
 *Phase: 35-l3-in-execution-memory-queries*
 *Completed: 2026-02-24*
