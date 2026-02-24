@@ -49,6 +49,21 @@ export function initVectorStore() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       UNIQUE(decision_id, issue_id)
     );
+
+    CREATE TABLE IF NOT EXISTS edges (
+      source_id TEXT NOT NULL,
+      target_id TEXT NOT NULL,
+      relationship_type TEXT NOT NULL,
+      weight REAL DEFAULT 1.0,
+      metadata JSON,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (source_id, target_id, relationship_type),
+      FOREIGN KEY (source_id) REFERENCES vector_cache(id),
+      FOREIGN KEY (target_id) REFERENCES vector_cache(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_edges_source ON edges(source_id);
+    CREATE INDEX IF NOT EXISTS idx_edges_target ON edges(target_id);
   `);
 
   return db;
