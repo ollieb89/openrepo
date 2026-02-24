@@ -171,25 +171,32 @@ def _retrieve_memories_sync(base_url: str, project_id: str, query: str) -> list:
 
 
 def _format_memory_context(memories: list) -> str:
-    """Format retrieved memories as a markdown ## Memory Context section.
+    """Format retrieved memories into two distinct markdown sections by category.
 
-    Budget-aware: adds items one at a time (in rank order from memU) and stops
-    before any bullet that would exceed MEMORY_CONTEXT_BUDGET. Whole items are
-    dropped rather than truncated — a missing bullet is honest; a truncated one
-    is misleading.
+    Splits memories into:
+    - "## Past Work Context" — L3 task outcomes (category == "l3_outcome" or
+      no special category)
+    - "## Past Review Outcomes" — L2 review decisions (category ==
+      "review_decision" OR agent_type == "l2_pm" as fallback)
+
+    Both sections share the MEMORY_CONTEXT_BUDGET (2,000 chars). Items are
+    added in rank order from memU and the shared counter stops as soon as a
+    bullet would exceed the budget (whole-item drop, not truncation). Empty
+    sections are omitted — no empty headers, no placeholders. Empty input
+    returns "" (no headers at all).
 
     Args:
         memories: List of memory dicts from memU /retrieve response.
 
     Returns:
-        Formatted section string (including "## Memory Context" header) when at
-        least one item fits within the budget, otherwise "" (empty string — no
-        header, no placeholder, guaranteed by the locked decision).
+        One or two section strings joined by double newline, or "" when no
+        items fit within the budget or the input list is empty.
     """
     if not memories:
         return ""
 
-    bullets = []
+    work_bullets = []
+    review_bullets = []
     total_chars = 0
 
     for item in memories:
@@ -198,25 +205,30 @@ def _format_memory_context(memories: list) -> str:
         if not text:
             continue
 
-        # Build source tag
-        category = item.get("category", "")
-        if category == "l2_review":
-            tag = "(from L2 review)"
-        else:
-            tag = "(from memory)"
+        # Discriminate category: dual check (category field + agent_type fallback)
+        is_review = (
+            item.get("category", "") == "review_decision"
+            or item.get("agent_type", "") == "l2_pm"
+        )
 
-        bullet = f"- {text} {tag}"
+        bullet = f"- {text}"
         candidate = total_chars + len(bullet) + 1  # +1 for \n separator
         if candidate > MEMORY_CONTEXT_BUDGET:
             break  # drop remaining items rather than truncating
 
-        bullets.append(bullet)
+        if is_review:
+            review_bullets.append(bullet)
+        else:
+            work_bullets.append(bullet)
         total_chars += len(bullet) + 1
 
-    if not bullets:
-        return ""
+    sections = []
+    if work_bullets:
+        sections.append("## Past Work Context\n\n" + "\n".join(work_bullets))
+    if review_bullets:
+        sections.append("## Past Review Outcomes\n\n" + "\n".join(review_bullets))
 
-    return "## Memory Context\n\n" + "\n".join(bullets)
+    return "\n\n".join(sections) if sections else ""
 
 
 def _build_augmented_soul(project_root: Path, memory_context: str) -> str:
