@@ -117,7 +117,12 @@ Plans:
   2. The `/memory` dashboard page shows health badges on flagged memories — stale and conflict indicators are visible at a glance without navigating away
   3. Clicking a conflict badge opens a side panel showing both conflicting memories, their similarity score, and three actions: edit, delete, or dismiss flag
   4. A `PUT /memories/:id` endpoint in the memory service accepts updated content and persists the change without creating a duplicate record
-**Plans**: TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 40-01-PLAN.md — Health scan engine + PUT endpoint in memory service (QUAL-01, QUAL-02, QUAL-03, QUAL-04)
+- [ ] 40-02-PLAN.md — Next.js proxy routes + health badges + Health tab + scan trigger (QUAL-04, QUAL-05)
+- [ ] 40-03-PLAN.md — Conflict resolution side panel + settings panel + auto-advance (QUAL-06)
 
 ### Phase 41: L1 Strategic Suggestions
 **Goal**: L1 can identify recurring failure patterns in task history and produce reviewable SOUL amendments that an operator must explicitly approve before any SOUL file is modified
@@ -151,6 +156,6 @@ Plans:
 | 19-25 | v1.2 | 14/14 | ✓ Complete | 2026-02-24 |
 | 26-38 | v1.3 | 19/19 | ✓ Complete | 2026-02-24 |
 | 39. Graceful Sentinel | 4/4 | Complete    | 2026-02-24 | - |
-| 40. Memory Health Monitor | v1.4 | 0/TBD | Not started | - |
+| 40. Memory Health Monitor | v1.4 | 0/3 | Planned | - |
 | 41. L1 Strategic Suggestions | v1.4 | 0/TBD | Not started | - |
 | 42. Delta Snapshots | v1.4 | 0/TBD | Not started | - |
