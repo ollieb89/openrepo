@@ -19,6 +19,7 @@ import docker
 from spawn import (
     cleanup_container,
     get_container_logs,
+    get_docker_client,
     get_skill_timeout,
     load_l3_config,
     spawn_l3_specialist,
