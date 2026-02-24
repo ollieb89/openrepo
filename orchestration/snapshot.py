@@ -15,6 +15,9 @@ from typing import Dict, Any, Optional, Tuple
 
 from .state_engine import JarvisState
 from .project_config import load_project_config, get_snapshot_dir
+from .logging import get_logger
+
+logger = get_logger("snapshot")
 
 
 def _detect_default_branch(workspace: Path, project_id: Optional[str] = None) -> str:
@@ -62,7 +65,7 @@ def _detect_default_branch(workspace: Path, project_id: Optional[str] = None) ->
             return candidate
 
     # 5. Last-resort fallback
-    print(f"WARNING: Could not detect default branch for {workspace}, falling back to 'main'")
+    logger.warning("Could not detect default branch, falling back to main", extra={"workspace": str(workspace)})
     return "main"
 
 
@@ -117,7 +120,7 @@ def create_staging_branch(task_id: str, workspace_path: str, stash_if_needed: bo
                 capture_output=True,
                 text=True
             )
-            print(f"[snapshot] Stashed uncommitted changes for {branch_name}")
+            logger.info("Stashed uncommitted changes", extra={"task_id": task_id, "branch": branch_name})
         except subprocess.CalledProcessError as e:
             raise GitOperationError(f"Failed to stash uncommitted changes: {e.stderr}")
     elif has_changes:

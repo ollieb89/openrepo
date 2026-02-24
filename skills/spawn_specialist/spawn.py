@@ -27,7 +27,9 @@ from orchestration.project_config import (
     get_state_path,
 )
 from orchestration.snapshot import _detect_default_branch
+from orchestration.logging import get_logger
 
+logger = get_logger("spawn")
 
 _PROJECT_ID_PATTERN = re.compile(r'^[a-zA-Z0-9-]{1,20}$')
 
@@ -236,14 +238,13 @@ def spawn_l3_specialist(
     # Check for existing container with same name and remove if found
     try:
         old_container = client.containers.get(container_name)
-        print(f"[spawn] Removing existing container: {container_name}")
+        logger.info("Removing existing container", extra={"task_id": task_id, "project_id": project_id, "container_name": container_name})
         old_container.remove(force=True)
     except docker.errors.NotFound:
         pass  # Container doesn't exist, which is fine
 
     # Spawn container
-    print(f"[spawn] Spawning L3 container: {container_name} (project: {project_id})")
-    print(f"[spawn] Task: {task_id}, Skill: {skill_hint}, GPU: {requires_gpu}")
+    logger.info("Spawning L3 container", extra={"task_id": task_id, "project_id": project_id, "container_name": container_name, "skill": skill_hint, "gpu": requires_gpu})
 
     container = client.containers.run(**container_config)
     return container
@@ -258,11 +259,11 @@ def cleanup_container(container) -> None:
     """
     try:
         container.remove(force=True)
-        print(f"[cleanup] Removed container: {container.name}")
+        logger.info("Container removed", extra={"container_name": container.name})
     except docker.errors.NotFound:
-        print(f"[cleanup] Container already removed: {container.name}")
+        logger.debug("Container already removed", extra={"container_name": container.name})
     except Exception as e:
-        print(f"[cleanup] Error removing container: {e}")
+        logger.error("Error removing container", extra={"container_name": container.name, "error": str(e)})
 
 
 def get_container_logs(container, tail: int = 100) -> str:
