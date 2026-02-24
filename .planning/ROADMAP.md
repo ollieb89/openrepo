@@ -111,10 +111,11 @@ Plans:
   2. The L3 container exits and the pool slot is released before the memU memorize pipeline finishes (fire-and-forget confirmed by timing)
   3. When memU service is stopped, an L3 task still completes successfully — memorization failure is non-blocking
   4. MEMU_SERVICE_URL, MEMU_AGENT_ID, MEMU_PROJECT_ID, and MEMU_ENABLED are present in the L3 container environment at spawn time
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 28-01: TBD
+- [ ] 28-01-PLAN.md — Config + env injection (openclaw.json memory field, get_memu_config(), MEMU env vars in spawn.py)
+- [ ] 28-02-PLAN.md — Fire-and-forget memorization (pool.py _memorize_snapshot_fire_and_forget, asyncio.create_task on success, test suite)
 
 ### Phase 29: Pre-Spawn Retrieval + SOUL Injection
 **Goal**: Before an L3 container is created, relevant memories are retrieved and injected into the SOUL template so the agent starts with accumulated context from past tasks
