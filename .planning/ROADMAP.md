@@ -100,12 +100,13 @@ See: `.planning/milestones/v1.3-ROADMAP.md` for full phase details.
   2. Pool startup scans workspace-state.json for tasks stuck in `in_progress`, `interrupted`, or `starting` beyond the skill timeout and applies the configured recovery policy without manual intervention
   3. Recovery policy (`mark_failed` / `auto_retry` / `manual`) is settable per project in `l3_overrides.recovery_policy` in project.json and takes effect on the next pool startup
   4. Fire-and-forget memorize tasks in flight at shutdown are drained via `asyncio.gather` before the event loop stops — no pending task silently discarded
-**Plans:** 3/3 plans complete
+**Plans:** 4 plans (3 complete, 1 gap closure)
 
 Plans:
-- [ ] 39-01-PLAN.md — Entrypoint SIGTERM trap + spawn stop_timeout (REL-04, REL-05)
-- [ ] 39-02-PLAN.md — Pool shutdown drain for fire-and-forget memorize tasks (REL-08)
-- [ ] 39-03-PLAN.md — Recovery scan at startup + recovery_policy config (REL-06, REL-07)
+- [x] 39-01-PLAN.md — Entrypoint SIGTERM trap + spawn stop_timeout (REL-04, REL-05)
+- [x] 39-02-PLAN.md — Pool shutdown drain for fire-and-forget memorize tasks (REL-08)
+- [x] 39-03-PLAN.md — Recovery scan at startup + recovery_policy config (REL-06, REL-07)
+- [ ] 39-04-PLAN.md — Gap closure: wire run_recovery_scan() into spawn_task() startup path (REL-06)
 
 ### Phase 40: Memory Health Monitor
 **Goal**: Operators can detect and resolve stale and conflicting memories through a health scan and dashboard review UI
