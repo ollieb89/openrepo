@@ -12,6 +12,9 @@ import MemorySearch from './MemorySearch';
 import ConfirmDialog from './ConfirmDialog';
 import HealthTab from './HealthTab';
 import type { HealthFlag } from './HealthTab';
+import ConflictPanel from './ConflictPanel';
+import SettingsPanel from './SettingsPanel';
+import type { HealthSettings } from './SettingsPanel';
 
 const PAGE_SIZE = 25;
 // Fade-out animation duration in ms
@@ -20,14 +23,6 @@ const DELETE_ANIMATION_MS = 300;
 type SortField = 'type' | 'category' | 'agent_type' | 'created_at';
 type SortDirection = 'asc' | 'desc';
 type ActiveTab = 'list' | 'health';
-
-interface HealthSettings {
-  scan_interval_ms: number;
-  age_threshold_days: number;
-  retrieval_window_days: number;
-  similarity_min: number;
-  similarity_max: number;
-}
 
 const DEFAULT_HEALTH_SETTINGS: HealthSettings = {
   scan_interval_ms: 3600000,
@@ -61,6 +56,12 @@ type DialogState =
   | { type: 'single'; id: string }
   | { type: 'bulk'; ids: Set<string> };
 
+interface ConflictPanelState {
+  flaggedItem: MemoryItem;
+  conflictItem: MemoryItem;
+  similarityScore: number;
+}
+
 export default function MemoryPanel() {
   const { projectId } = useProject();
 
@@ -71,7 +72,13 @@ export default function MemoryPanel() {
   const [healthFlags, setHealthFlags] = useState<Map<string, HealthFlag>>(new Map());
   const [showOnlyFlagged, setShowOnlyFlagged] = useState(false);
   const [scanRunning, setScanRunning] = useState(false);
-  const [healthSettings] = useState<HealthSettings>(DEFAULT_HEALTH_SETTINGS);
+  const [healthSettings, setHealthSettings] = useState<HealthSettings>(DEFAULT_HEALTH_SETTINGS);
+
+  // Conflict panel state
+  const [conflictPanel, setConflictPanel] = useState<ConflictPanelState | null>(null);
+
+  // Settings panel state
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
@@ -106,6 +113,7 @@ export default function MemoryPanel() {
     setPage(1);
     setHealthFlags(new Map());
     setShowOnlyFlagged(false);
+    setConflictPanel(null);
   }, [projectId]);
 
   // Reset page when searchQuery changes
@@ -193,7 +201,7 @@ export default function MemoryPanel() {
     };
   }
 
-  // Handle dismiss flag (stale)
+  // Handle dismiss flag (stale or conflict)
   function handleDismissFlag(memoryId: string) {
     setHealthFlags(prev => {
       const next = new Map(prev);
@@ -202,14 +210,107 @@ export default function MemoryPanel() {
     });
   }
 
-  // Handle open conflict — placeholder (could open a modal later)
+  // Handle open conflict — opens ConflictPanel with both items
   function handleOpenConflict(flag: HealthFlag) {
-    toast.info(`Conflict: ${flag.memory_id} — ${flag.recommendation}`);
+    if (!flag.conflict_with) {
+      toast.error('Conflict partner not found in flag data.');
+      return;
+    }
+    const flaggedItem = items.find(i => i.id === flag.memory_id);
+    const conflictItem = items.find(i => i.id === flag.conflict_with);
+
+    if (!flaggedItem || !conflictItem) {
+      toast.error('Could not locate both memory items. Try re-running the scan.');
+      return;
+    }
+
+    setConflictPanel({
+      flaggedItem,
+      conflictItem,
+      similarityScore: flag.score,
+    });
   }
 
-  // Handle open settings — placeholder
+  // Edit memory via PUT proxy
+  async function handleEditMemory(id: string, content: string): Promise<void> {
+    const res = await fetch(`/api/memory/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    await mutate();
+  }
+
+  // Delete memory — remove from health flags and SWR cache
+  async function handleDeleteMemoryFromConflict(id: string): Promise<void> {
+    setDeletingIds(prev => new Set(Array.from(prev).concat([id])));
+    await new Promise(resolve => setTimeout(resolve, DELETE_ANIMATION_MS));
+
+    const res = await fetch(`/api/memory/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    // Remove from health flags
+    setHealthFlags(prev => {
+      const next = new Map(prev);
+      next.delete(id);
+      return next;
+    });
+
+    await mutate(
+      prev => prev ? { ...prev, items: prev.items.filter(i => i.id !== id), total: Math.max(0, prev.total - 1) } : prev,
+      false
+    );
+
+    setDeletingIds(prev => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  }
+
+  // Auto-advance to next conflict flag after resolution
+  function handleAdvanceNext() {
+    const conflictFlags = Array.from(healthFlags.values()).filter(f => f.flag_type === 'conflict');
+
+    if (!conflictPanel || conflictFlags.length === 0) {
+      setConflictPanel(null);
+      return;
+    }
+
+    const currentId = conflictPanel.flaggedItem.id;
+    const currentIdx = conflictFlags.findIndex(f => f.memory_id === currentId);
+    const nextFlag = conflictFlags[currentIdx + 1];
+
+    if (!nextFlag) {
+      setConflictPanel(null);
+      return;
+    }
+
+    handleOpenConflict(nextFlag);
+  }
+
+  // Archive stale memory (sets archived_at via PUT)
+  async function handleArchiveMemory(memoryId: string): Promise<void> {
+    const res = await fetch(`/api/memory/${memoryId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ archived_at: new Date().toISOString() }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    handleDismissFlag(memoryId);
+    await mutate();
+    toast.success('Memory archived.');
+  }
+
+  // Settings update
+  function handleSettingsUpdate(settings: HealthSettings) {
+    setHealthSettings(settings);
+  }
+
+  // Handle open settings
   function handleOpenSettings() {
-    toast.info('Scan settings coming soon.');
+    setSettingsOpen(true);
   }
 
   // --- Delete single item ---
@@ -389,6 +490,7 @@ export default function MemoryPanel() {
           onOpenConflict={handleOpenConflict}
           onDismissFlag={handleDismissFlag}
           onOpenSettings={handleOpenSettings}
+          onArchiveMemory={handleArchiveMemory}
         />
       ) : (
         <>
@@ -558,6 +660,29 @@ export default function MemoryPanel() {
         onConfirm={handleConfirm}
         onCancel={() => setDialog({ type: 'none' })}
       />
+
+      {/* Conflict resolution panel */}
+      {conflictPanel !== null && (
+        <ConflictPanel
+          flaggedItem={conflictPanel.flaggedItem}
+          conflictItem={conflictPanel.conflictItem}
+          similarityScore={conflictPanel.similarityScore}
+          onEdit={handleEditMemory}
+          onDelete={handleDeleteMemoryFromConflict}
+          onDismiss={() => handleDismissFlag(conflictPanel.flaggedItem.id)}
+          onClose={() => setConflictPanel(null)}
+          onAdvanceNext={handleAdvanceNext}
+        />
+      )}
+
+      {/* Settings panel */}
+      {settingsOpen && (
+        <SettingsPanel
+          settings={healthSettings}
+          onUpdate={handleSettingsUpdate}
+          onClose={() => setSettingsOpen(false)}
+        />
+      )}
     </div>
   );
 }

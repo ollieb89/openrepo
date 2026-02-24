@@ -15,6 +15,7 @@ interface HealthTabProps {
   onOpenConflict: (flag: HealthFlag) => void;
   onDismissFlag: (memoryId: string) => void;
   onOpenSettings: () => void;
+  onArchiveMemory?: (memoryId: string) => Promise<void>;
 }
 
 const pillClass = 'inline-block rounded-full px-2 py-0.5 text-xs font-medium';
@@ -41,6 +42,7 @@ export default function HealthTab({
   onOpenConflict,
   onDismissFlag,
   onOpenSettings,
+  onArchiveMemory,
 }: HealthTabProps) {
   const flagArray = Array.from(flags.values()).sort((a, b) => b.score - a.score);
   const staleCount = flagArray.filter(f => f.flag_type === 'stale').length;
@@ -134,7 +136,7 @@ export default function HealthTab({
                   </p>
                 )}
               </div>
-              <div className="shrink-0">
+              <div className="shrink-0 flex items-center gap-2">
                 {flag.flag_type === 'conflict' ? (
                   <button
                     type="button"
@@ -144,13 +146,24 @@ export default function HealthTab({
                     View Conflict
                   </button>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={() => onDismissFlag(flag.memory_id)}
-                    className="rounded px-2.5 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    Dismiss
-                  </button>
+                  <>
+                    {onArchiveMemory && (
+                      <button
+                        type="button"
+                        onClick={() => onArchiveMemory(flag.memory_id)}
+                        className="rounded px-2.5 py-1 text-xs font-medium text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
+                      >
+                        Archive
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => onDismissFlag(flag.memory_id)}
+                      className="rounded px-2.5 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      Dismiss
+                    </button>
+                  </>
                 )}
               </div>
             </div>
