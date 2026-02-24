@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** Phase 34: Review Decision Category Fix (complete)
+**Current focus:** Phase 35: L3 In-Execution Memory Queries (complete)
 
 ## Current Position
 
-Phase: 34 of 34 (Review Decision Category Fix)
+Phase: 35 of 35 (L3 In-Execution Memory Queries)
 Plan: 1 of 1 (complete)
-Status: Phase 34 complete — all plans done
-Last activity: 2026-02-24 — Phase 34 Plan 01 executed (MEM-02 and RET-02 closed: category field added to payload, 3 new tests, 58 tests passing)
+Status: Phase 35 complete — all plans done
+Last activity: 2026-02-24 — Phase 35 Plan 01 executed (RET-05 closed: Memory Queries section added to L3 SOUL template, 5 new integration tests, 63 tests passing)
 
 Progress: [██████████] 100% (v1.3 gap closure)
 
@@ -82,6 +82,11 @@ Phase 34 Plan 01 decisions:
 - Plain string literal 'review_decision' in payload — no constants or enums per prior user decision
 - Backward-compat test added explicitly alongside existing test_format_work_only_no_review_section — documents the contract
 
+Phase 35 Plan 01 decisions:
+- printf used for JSON payload construction in bash test commands — avoids single-quote escaping issues when env vars need expansion inside JSON strings
+- Project-only scoping (no global fallback) via OPENCLAW_PROJECT → where.user_id, consistent with memory_client.py and spawn.py
+- Advisory-only framing in SOUL: unreachable memU or empty results must not abort task execution
+
 ### Pending Todos
 
 None.
@@ -93,5 +98,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 34-01-PLAN.md — category field added to snapshot.py payload, 3 new tests, 58 tests passing
-Resume file: .planning/phases/34-review-decision-category-fix/34-01-SUMMARY.md
+Stopped at: Completed 35-01-PLAN.md — Memory Queries section added to L3 SOUL template, 5 new integration tests, 63 tests passing
+Resume file: .planning/phases/35-l3-in-execution-memory-queries/35-01-SUMMARY.md

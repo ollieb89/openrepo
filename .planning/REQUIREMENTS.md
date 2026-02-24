@@ -34,7 +34,7 @@ Requirements for Agent Memory milestone. Each maps to roadmap phases.
 - [x] **RET-02**: Retrieved memories are injected into SOUL template via soul_renderer.py with a memory context section
 - [x] **RET-03**: Retrieved memory injection has a hard 2,000-character budget cap to prevent SOUL template bloat
 - [x] **RET-04**: Pre-spawn retrieval degrades gracefully to empty context if memory service is unavailable
-- [ ] **RET-05**: L3 containers can query memU service during execution via HTTP for task-specific lookups
+- [x] **RET-05**: L3 containers can query memU service during execution via HTTP for task-specific lookups
 
 ### Dashboard
 
@@ -91,7 +91,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RET-02 | Phase 33 | Complete |
 | RET-03 | Phase 29 | Complete |
 | RET-04 | Phase 29 | Complete |
-| RET-05 | Phase 35 | Pending |
+| RET-05 | Phase 35 | Complete |
 | DSH-11 | Phase 36 | Pending |
 | DSH-12 | Phase 36 | Pending |
 | DSH-13 | Phase 36 | Pending |
