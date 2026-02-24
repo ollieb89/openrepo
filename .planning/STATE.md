@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.4 Operational Maturity — Phase 42: Delta Snapshots (in progress — Plan 01 done)
+**Current focus:** v1.4 Operational Maturity — Phase 42: Delta Snapshots (in progress — Plans 01–02 done)
 
 ## Current Position
 
 Phase: 42 of 42 (Delta Snapshots) — in progress
-Plan: 1 of 3 complete in current phase
-Status: Plan 01 complete — TDD RED scaffold (13 failing tests covering PERF-05..08)
-Last activity: 2026-02-24 — Phase 42 Plan 01 complete: tests/test_delta_snapshots.py with 13 failing tests for cursor helpers, spawn tuple return, _filter_after, and snapshot prune wiring
+Plan: 2 of 3 complete in current phase
+Status: Plan 02 complete — JarvisState cursor helpers (PERF-05), cursor-aware spawn retrieval (PERF-06), memU created_after filter (PERF-07) — 10/13 tests green
+Last activity: 2026-02-24 — Phase 42 Plan 02 complete: state_engine cursor helpers, spawn.py (list,bool) return, retrieve.py _filter_after
 
 Progress: [██████░░░░] 60% (v1.4)
 
@@ -104,6 +104,12 @@ v1.4 research flags to carry into planning:
 - PERF-08 tests patch four symbols in orchestration.snapshot (load_project_config, cleanup_old_snapshots, subprocess.run, get_snapshot_dir) — all four needed because capture_semantic_snapshot calls all of them
 - PERF-06 tests assert isinstance(result, tuple) before unpacking to (items, ok) — gives clear failure message when function returns bare list
 
+**Phase 42 Plan 02 decisions:**
+- retrieve.py uses try/except ImportError guards for fastapi and relative imports — _filter_after importable in test env where only docker/memory/memory_service is on sys.path
+- Naive datetime normalization: cutoff and item_dt both stripped to naive UTC before comparison — avoids TypeError on Python 3.11+ comparing TZ-aware vs TZ-naive datetimes
+- empty_url returns ([], True) not ([], False) — not a network error, cursor can advance
+- test_spawn_memory.py updated to unpack (list, bool) tuples — preserves test semantics after return type change
+
 ### Pending Todos
 
 None.
@@ -117,5 +123,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 42-01-PLAN.md — Delta Snapshots TDD RED scaffold (13 failing tests)
-Resume: Phase 42 Plan 02 (Delta Snapshots — JarvisState cursor helpers + spawn.py implementation)
+Stopped at: Completed 42-02-PLAN.md — cursor helpers + spawn tuple + _filter_after (PERF-05/06/07)
+Resume: Phase 42 Plan 03 (Delta Snapshots — snapshot pruning wiring, PERF-08)

@@ -150,7 +150,7 @@ Plans:
   2. A project that has run multiple tasks shows measurably fewer memories fetched on subsequent pre-spawn retrievals compared to the first (cursor filters out already-seen memories)
   3. The memU `/retrieve` endpoint accepts a `created_after` ISO timestamp parameter and returns only memories created after that timestamp
   4. Projects with `max_snapshots` configured in project.json automatically prune the oldest snapshots when the limit is exceeded — snapshot directory never grows beyond the configured count
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] 42-01-PLAN.md — Test scaffold: 13 tests covering PERF-05 through PERF-08 (RED state)
@@ -168,4 +168,4 @@ Plans:
 | 39. Graceful Sentinel | 4/4 | Complete    | 2026-02-24 | - |
 | 40. Memory Health Monitor | 4/4 | Complete    | 2026-02-24 | - |
 | 41. L1 Strategic Suggestions | 3/3 | Complete    | 2026-02-24 | - |
-| 42. Delta Snapshots | 1/3 | In Progress|  | - |
+| 42. Delta Snapshots | 2/3 | In Progress|  | - |
