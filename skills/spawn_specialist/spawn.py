@@ -33,6 +33,43 @@ logger = get_logger("spawn")
 
 _PROJECT_ID_PATTERN = re.compile(r'^[a-zA-Z0-9-]{1,20}$')
 
+# Module-level Docker client singleton for connection reuse across spawns
+_docker_client: Optional[docker.DockerClient] = None
+
+
+def get_docker_client() -> docker.DockerClient:
+    """Return a shared Docker client, creating or reconnecting as needed.
+
+    Lazily creates the client on first call (INFO log). Verifies liveness via
+    ping on every call; if the daemon has restarted the ping fails and a fresh
+    client is created (WARNING log). Subsequent reuses are logged at DEBUG.
+
+    No threading locks are used — docker.DockerClient is already thread-safe
+    for concurrent API calls.
+
+    Returns:
+        A live docker.DockerClient connected to the local Docker daemon.
+
+    Raises:
+        RuntimeError: If the Docker daemon is not reachable.
+    """
+    global _docker_client
+
+    if _docker_client is None:
+        _docker_client = docker.from_env()
+        logger.info("Docker client created")
+        return _docker_client
+
+    # Verify liveness; reconnect transparently if daemon restarted
+    try:
+        _docker_client.ping()
+        logger.debug("Docker client reused")
+    except Exception:
+        _docker_client = docker.from_env()
+        logger.warning("Docker client reconnected (daemon restart detected)")
+
+    return _docker_client
+
 
 def _validate_project_id(project_id: str) -> None:
     """Validate project ID format: 1-20 chars, alphanumeric and hyphens only.
@@ -118,11 +155,9 @@ def spawn_l3_specialist(
         project_id = get_active_project_id()
     _validate_project_id(project_id)
 
-    client = docker.from_env()
-
-    # Verify Docker daemon is running
+    # Get shared Docker client (creates or reconnects as needed)
     try:
-        client.ping()
+        client = get_docker_client()
     except Exception as e:
         raise RuntimeError(
             f"Docker daemon not running: {e}. Please start Docker and try again."
