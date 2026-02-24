@@ -72,8 +72,6 @@ fi
 # 3. Execute task based on skill hint
 update_state "in_progress" "Executing task with ${CLI_RUNTIME}..."
 
-# Placeholder: actual CLI invocation will depend on runtime
-# This is the hook point where Claude Code / Codex / Gemini CLI runs
 if command -v "${CLI_RUNTIME}" &>/dev/null; then
   "${CLI_RUNTIME}" "${SOUL_ARGS[@]}" --task "${TASK_DESCRIPTION}" 2>&1 | tee /tmp/task-output.log || true
   EXIT_CODE=${PIPESTATUS[0]}

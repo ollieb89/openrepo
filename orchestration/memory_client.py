@@ -7,12 +7,11 @@ required at construction time, making it impossible to issue unscoped requests.
 Usage:
     from orchestration.memory_client import MemoryClient, AgentType
 
-    async with MemoryClient(MEMU_SERVICE_URL, "pumplai", AgentType.L3_CODE) as client:
+    async with MemoryClient("http://localhost:18791", "pumplai", AgentType.L3_CODE) as client:
         await client.memorize("task T-001 completed successfully")
         memories = await client.retrieve("what happened with T-001?")
 """
 
-import os
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import List, Optional
@@ -24,9 +23,6 @@ from .logging import get_logger
 # ---------------------------------------------------------------------------
 # Module-level constants
 # ---------------------------------------------------------------------------
-
-#: Default memU service URL — override via environment variable.
-MEMU_SERVICE_URL = os.environ.get("MEMU_SERVICE_URL", "http://memu-server:18791")
 
 #: Retrieve timeout: 3s total, 2s connect — fast path, fail fast.
 TIMEOUT_RETRIEVE = httpx.Timeout(3.0, connect=2.0)
