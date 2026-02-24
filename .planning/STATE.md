@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.2 Orchestration Hardening — Phase 22: Observability Metrics
+**Current focus:** v1.2 Orchestration Hardening — Phase 25: Monitor Cache Fix
 
 ## Current Position
 
-Phase: 22 of 24 (Observability Metrics)
-Plan: 2 of 2 in current phase (phase complete)
-Status: Phase 22 complete — moving to Phase 23
-Last activity: 2026-02-24 — 22-02-PLAN.md complete (OBS-03: pool utilization tracking + saturation event logging)
+Phase: 25 of 25 (Monitor Cache Fix)
+Plan: 1 of 1 in current phase (phase complete)
+Status: Phase 25 complete — v1.2 all phases done
+Last activity: 2026-02-24 — 25-01-PLAN.md complete (PERF-04: JarvisState session-scoped reuse in monitor tail)
 
 Progress: [██░░░░░░░░░░░░░░░░░░] 10% (v1.2)
 
@@ -35,6 +35,7 @@ Progress: [██░░░░░░░░░░░░░░░░░░] 10% (v1
 | 21-state-engine-performance P03 | 1 | 1 task | 2 files |
 | 22-observability-metrics P01 | 1 | 2 tasks | 4 files |
 | 22-observability-metrics P02 | 1 | 2 tasks | 2 files |
+| 25-monitor-cache-fix P01 | 1 | 2 tasks | 1 file |
 
 *Updated after each plan completion*
 
@@ -58,6 +59,7 @@ Recent decisions affecting current work:
 - [Phase 22-observability-metrics]: lock_wait_ms tracked by pool.py as wall-clock time around state engine calls (not internal fcntl spin) — practical proxy without changing _acquire_lock return type
 - [Phase 22-observability-metrics]: Saturation detection via semaphore._value==0 before async with — no side effects, no additional synchronization
 - [Phase 22-observability-metrics]: Monitor pool subcommand computes aggregates on-the-fly from state file — works when pool process is not running, consistent with CONTEXT.md
+- [Phase 25-monitor-cache-fix]: js_instances is function-local to tail_state() (not module-level) — implicit teardown on exit; evict on any read exception for resilient mid-session recovery
 
 ### Pending Todos
 
@@ -70,5 +72,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 22-02-PLAN.md (pool utilization tracking + saturation logging; OBS-03 complete; Phase 22 done)
+Stopped at: Completed 25-01-PLAN.md (JarvisState session-scoped reuse in monitor tail; PERF-04 complete; Phase 25 done)
 Resume file: None

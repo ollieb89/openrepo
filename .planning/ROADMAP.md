@@ -52,7 +52,7 @@ See: `.planning/milestones/v1.1-ROADMAP.md` for full phase details.
 - [x] **Phase 22: Observability Metrics** - Task lifecycle metrics, pool utilization tracking, and activity log rotation (completed 2026-02-24)
 - [ ] **Phase 23: Per-Project Pool Config** - Configurable concurrency limits, isolated/shared pool modes, queue overflow policies
 - [ ] **Phase 24: Dashboard Metrics** - Agent hierarchy filtering per project and usage metrics visualization panel
-- [ ] **Phase 25: Monitor Cache Fix** - Fix JarvisState cache reuse in multi-project monitor path (PERF-04 integration gap)
+- [x] **Phase 25: Monitor Cache Fix** - Fix JarvisState cache reuse in multi-project monitor path (PERF-04 integration gap) (completed 2026-02-24)
 
 ## Phase Details
 
@@ -176,4 +176,4 @@ Plans:
 | 22. Observability Metrics | 2/2 | Complete    | 2026-02-24 | - |
 | 23. Per-Project Pool Config | v1.2 | 0/TBD | Not started | - |
 | 24. Dashboard Metrics | v1.2 | 0/TBD | Not started | - |
-| 25. Monitor Cache Fix | v1.2 | 0/1 | Not started | - |
+| 25. Monitor Cache Fix | 1/1 | Complete   | 2026-02-24 | - |
