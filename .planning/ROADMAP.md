@@ -267,10 +267,10 @@ Plans:
   1. Phase 28 VERIFICATION.md exists with evidence from existing test suite (5 tests pass) and cross-references from Phase 33
   2. Dead `MEMU_SERVICE_URL` constant removed from `memory_client.py`
   3. Stale placeholder comment removed from `entrypoint.sh` line 75
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 38-01: TBD
+- [ ] 38-01-PLAN.md — Dead code removal (MEMU_SERVICE_URL, stale comment) + Phase 28 VERIFICATION.md + REQUIREMENTS.md traceability update
 
 ## Progress
 
