@@ -36,7 +36,7 @@ Requirements for Orchestration Hardening milestone. Each maps to roadmap phases.
 ### Dashboard
 
 - [x] **DSH-09**: Agent hierarchy view filters by selected project, showing only relevant L2/L3 agents
-- [ ] **DSH-10**: Usage metrics panel shows task completion times, pool utilization, and container lifecycle stats
+- [x] **DSH-10**: Usage metrics panel shows task completion times, pool utilization, and container lifecycle stats
 
 ## Future Requirements
 
@@ -90,7 +90,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | POOL-02 | Phase 23 | Complete |
 | POOL-03 | Phase 23 | Complete |
 | DSH-09 | Phase 24 | Complete |
-| DSH-10 | Phase 24 | Pending |
+| DSH-10 | Phase 24 | Complete |
 | PERF-04 (integration) | Phase 25 | Complete |
 
 **Coverage:**

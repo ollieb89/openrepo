@@ -51,7 +51,7 @@ See: `.planning/milestones/v1.1-ROADMAP.md` for full phase details.
 - [x] **Phase 21: State Engine Performance** - Docker client pooling, in-memory state caching, incremental updates, shared-lock reads (completed 2026-02-24)
 - [x] **Phase 22: Observability Metrics** - Task lifecycle metrics, pool utilization tracking, and activity log rotation (completed 2026-02-24)
 - [x] **Phase 23: Per-Project Pool Config** - Configurable concurrency limits, isolated/shared pool modes, queue overflow policies (completed 2026-02-24)
-- [ ] **Phase 24: Dashboard Metrics** - Agent hierarchy filtering per project and usage metrics visualization panel
+- [x] **Phase 24: Dashboard Metrics** - Agent hierarchy filtering per project and usage metrics visualization panel (completed 2026-02-24)
 - [x] **Phase 25: Monitor Cache Fix** - Fix JarvisState cache reuse in multi-project monitor path (PERF-04 integration gap) (completed 2026-02-24)
 
 ## Phase Details
@@ -181,5 +181,5 @@ Plans:
 | 21. State Engine Performance | 3/3 | Complete    | 2026-02-24 | - |
 | 22. Observability Metrics | 2/2 | Complete    | 2026-02-24 | - |
 | 23. Per-Project Pool Config | 2/2 | Complete    | 2026-02-24 | - |
-| 24. Dashboard Metrics | 1/2 | In Progress|  | - |
+| 24. Dashboard Metrics | 2/2 | Complete   | 2026-02-24 | - |
 | 25. Monitor Cache Fix | 1/1 | Complete    | 2026-02-24 | - |
