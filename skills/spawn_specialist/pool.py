@@ -100,6 +100,9 @@ class L3ContainerPool:
         # Entries: (priority_num, task_id). Lower number = higher priority.
         self._priority_queue: asyncio.PriorityQueue = asyncio.PriorityQueue()
 
+        # Fire-and-forget memorize task tracking (REL-08)
+        self._pending_memorize_tasks: list = []
+
         # Get project root for reference
         self.project_root = Path(__file__).parent.parent.parent
 
@@ -288,6 +291,9 @@ class L3ContainerPool:
             # Increment completed count for any terminal state
             self.completed_count += 1
 
+            # Prune completed memorize tasks to prevent unbounded list growth
+            self._pending_memorize_tasks = [t for t in self._pending_memorize_tasks if not t.done()]
+
             logger.info("Task final result", extra={"task_id": task_id, "status": result["status"]})
             return result
 
@@ -424,9 +430,11 @@ class L3ContainerPool:
                 # Fire-and-forget memorization (MEM-01): non-blocking, runs concurrently after slot release
                 snapshot_path = get_snapshot_dir(self.project_id) / f"{task_id}.diff"
                 snapshot_content = snapshot_path.read_text() if snapshot_path.exists() else f"Task {task_id} completed (no snapshot available)"
-                asyncio.create_task(
+                # Fire-and-forget memorization — track for shutdown drain (REL-08)
+                mem_task = asyncio.create_task(
                     self._memorize_snapshot_fire_and_forget(task_id, snapshot_content, skill_hint)
                 )
+                self._pending_memorize_tasks.append(mem_task)
             else:
                 # Get error context
                 last_logs = get_container_logs(container, tail=50)
@@ -636,6 +644,39 @@ class L3ContainerPool:
             "saturated": self._saturated,
         }
 
+    async def drain_pending_memorize_tasks(self, timeout: float = 30.0) -> dict:
+        """Drain pending fire-and-forget memorize tasks before shutdown.
+
+        Called on SIGTERM to ensure in-flight memorizations complete.
+        Returns a summary dict with counts of drained/timed-out tasks.
+
+        Args:
+            timeout: Maximum seconds to wait for pending tasks to complete.
+        """
+        pending = [t for t in self._pending_memorize_tasks if not t.done()]
+        if not pending:
+            logger.info("No pending memorize tasks to drain")
+            return {"pending": 0, "drained": 0, "timed_out": False}
+
+        logger.info(
+            "Draining pending memorize tasks",
+            extra={"pending_count": len(pending), "timeout": timeout},
+        )
+        try:
+            await asyncio.wait_for(
+                asyncio.gather(*pending, return_exceptions=True),
+                timeout=timeout,
+            )
+            logger.info("Memorize drain complete", extra={"drained": len(pending)})
+            return {"pending": len(pending), "drained": len(pending), "timed_out": False}
+        except asyncio.TimeoutError:
+            done_count = sum(1 for t in pending if t.done())
+            logger.warning(
+                "Memorize drain timed out — discarding remaining tasks",
+                extra={"timeout": timeout, "drained": done_count, "remaining": len(pending) - done_count},
+            )
+            return {"pending": len(pending), "drained": done_count, "timed_out": True}
+
 
 class PoolRegistry:
     """Manages per-project L3ContainerPool instances.
@@ -795,6 +836,39 @@ class PoolRegistry:
             L3ContainerPool.get_pool_stats()).
         """
         return {pid: pool.get_pool_stats() for pid, pool in self._pools.items()}
+
+
+def register_shutdown_handler(loop: asyncio.AbstractEventLoop, pool: "L3ContainerPool") -> None:
+    """Register SIGTERM handler for graceful pool shutdown.
+
+    Uses loop.add_signal_handler() — NOT signal.signal() — to avoid fcntl deadlock
+    when the signal fires while a state engine lock is held.
+
+    Must be called from within the asyncio event loop context (i.e., inside an
+    async function run via asyncio.run()).
+    """
+    import signal
+
+    _fired = {"flag": False}  # mutable closure for idempotency guard
+
+    def _on_sigterm() -> None:
+        if _fired["flag"]:
+            return  # idempotent — ignore subsequent SIGTERMs
+        _fired["flag"] = True
+        logger.info("Pool SIGTERM received — scheduling memorize drain")
+        loop.create_task(_drain_and_stop(loop, pool))
+
+    loop.add_signal_handler(signal.SIGTERM, _on_sigterm)
+
+
+async def _drain_and_stop(loop: asyncio.AbstractEventLoop, pool: "L3ContainerPool") -> None:
+    """Drain pending memorize tasks then stop the event loop."""
+    result = await pool.drain_pending_memorize_tasks(timeout=30.0)
+    logger.info(
+        "Pool shutdown drain complete",
+        extra={"drain_result": result},
+    )
+    loop.stop()
 
 
 # Convenience function for spawning a single task
