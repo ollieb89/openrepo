@@ -108,7 +108,10 @@ Plans:
   2. Pool utilization for a project (active containers, queued tasks, completed count, semaphore saturation) is queryable via the monitor CLI
   3. When the activity log exceeds its configured threshold, old entries are archived and the active log is trimmed — the log file does not grow unbounded
   4. Pool saturation events (all slots occupied, task queued) appear as structured log entries with project and task context
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 22-01-PLAN.md — Task lifecycle metrics (timestamps, lock wait, retry count) and activity log rotation
+- [ ] 22-02-PLAN.md — Pool utilization tracking (CLI subcommand, saturation event logging)
 
 ### Phase 23: Per-Project Pool Config
 **Goal**: Each project can declare its own concurrency limit, pool isolation mode, and overflow behavior in project.json — no code changes required to adjust
