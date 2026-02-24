@@ -24,3 +24,26 @@ export async function DELETE(
     return Response.json({ error: 'Failed to delete memory item' }, { status: 500 });
   }
 }
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const memuUrl = await getMemuUrl();
+    const body = await request.json();
+    const res = await fetch(`${memuUrl}/memories/${params.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      return Response.json({ error: 'Update failed' }, { status: res.status });
+    }
+    const data = await res.json();
+    return Response.json(data);
+  } catch (error) {
+    console.error('Error updating memory:', error);
+    return Response.json({ error: 'Failed to update memory item' }, { status: 500 });
+  }
+}
