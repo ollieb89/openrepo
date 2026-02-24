@@ -14,7 +14,7 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from .config import LOCK_TIMEOUT, LOCK_RETRY_ATTEMPTS, CACHE_TTL_SECONDS
+from .config import LOCK_TIMEOUT, LOCK_RETRY_ATTEMPTS, CACHE_TTL_SECONDS, ACTIVITY_LOG_MAX_ENTRIES
 from .logging import get_logger
 
 logger = get_logger("state_engine")
@@ -81,9 +81,13 @@ class JarvisState:
             while True:
                 try:
                     fcntl.flock(fd, lock_type | fcntl.LOCK_NB)
+                    lock_wait_ms = (time.time() - start_time) * 1000
                     logger.debug(
                         "Lock acquired",
-                        extra={"lock_type": "exclusive" if lock_type == fcntl.LOCK_EX else "shared"},
+                        extra={
+                            "lock_type": "exclusive" if lock_type == fcntl.LOCK_EX else "shared",
+                            "lock_wait_ms": round(lock_wait_ms, 2),
+                        },
                     )
                     return True
                 except BlockingIOError:
@@ -96,7 +100,10 @@ class JarvisState:
                 fcntl.flock(fd, lock_type | fcntl.LOCK_NB)
                 logger.debug(
                     "Lock acquired",
-                    extra={"lock_type": "exclusive" if lock_type == fcntl.LOCK_EX else "shared"},
+                    extra={
+                        "lock_type": "exclusive" if lock_type == fcntl.LOCK_EX else "shared",
+                        "lock_wait_ms": 0.0,
+                    },
                 )
                 return True
             except BlockingIOError:
@@ -304,7 +311,8 @@ class JarvisState:
                         # Atomic write
                         self._write_state_locked(f, state)
                         logger.info("Task updated", extra={"task_id": task_id, "status": status})
-                        return
+                        # Break out of retry loop on success; rotation runs after
+                        break
 
                     finally:
                         self._release_lock(f.fileno())
@@ -313,6 +321,9 @@ class JarvisState:
                 if attempt == self.lock_retry_attempts - 1:
                     raise
                 time.sleep(0.5 * (attempt + 1))  # Exponential backoff
+
+        # Trigger rotation check outside lock context (rotate_activity_log acquires its own lock)
+        self.rotate_activity_log(task_id)
 
     def create_task(self, task_id: str, skill_hint: str, metadata: Optional[Dict[str, Any]] = None) -> None:
         """
@@ -346,6 +357,120 @@ class JarvisState:
 
                         self._write_state_locked(f, state)
                         logger.info("Task created", extra={"task_id": task_id, "skill_hint": skill_hint})
+                        return
+
+                    finally:
+                        self._release_lock(f.fileno())
+
+            except TimeoutError:
+                if attempt == self.lock_retry_attempts - 1:
+                    raise
+                time.sleep(0.5 * (attempt + 1))
+
+    def set_task_metric(self, task_id: str, key: str, value: Any) -> None:
+        """
+        Stamp an arbitrary metric key onto a task entry.
+
+        Uses LOCK_EX for atomic read-modify-write. Intended for pool.py to record
+        timing and counter metrics (container_started_at, completed_at, lock_wait_ms,
+        retry_count) without requiring a full update_task call.
+
+        Args:
+            task_id: The task identifier
+            key: Metric key to set on the task entry
+            value: Metric value (any JSON-serialisable type)
+
+        Raises:
+            TimeoutError: If lock cannot be acquired
+        """
+        self._ensure_state_file()
+
+        for attempt in range(self.lock_retry_attempts):
+            try:
+                with self.state_file.open('r+') as f:
+                    self._acquire_lock(f.fileno(), fcntl.LOCK_EX)
+                    try:
+                        state = self._read_state_locked(f)
+
+                        if 'tasks' not in state:
+                            state['tasks'] = {}
+
+                        if task_id not in state['tasks']:
+                            state['tasks'][task_id] = {
+                                'status': 'pending',
+                                'activity_log': [],
+                                'created_at': time.time(),
+                            }
+
+                        state['tasks'][task_id][key] = value
+                        self._write_state_locked(f, state)
+                        logger.debug(
+                            "Task metric set",
+                            extra={"task_id": task_id, "key": key},
+                        )
+                        return
+
+                    finally:
+                        self._release_lock(f.fileno())
+
+            except TimeoutError:
+                if attempt == self.lock_retry_attempts - 1:
+                    raise
+                time.sleep(0.5 * (attempt + 1))
+
+    def rotate_activity_log(self, task_id: str) -> None:
+        """
+        Trim activity log when it exceeds ACTIVITY_LOG_MAX_ENTRIES.
+
+        Oldest entries are discarded; a running count of discarded entries is
+        preserved in ``archived_activity_count`` on the task entry. This keeps
+        state files from growing unbounded (OBS-04).
+
+        If the log is within the threshold this method returns immediately
+        without acquiring any lock.
+
+        Args:
+            task_id: The task identifier
+        """
+        # Fast-path: read current log length from cache before acquiring any lock
+        state = self.read_state()
+        task = state.get('tasks', {}).get(task_id)
+        if task is None:
+            return
+        activity_log = task.get('activity_log', [])
+        if len(activity_log) <= ACTIVITY_LOG_MAX_ENTRIES:
+            return  # Within threshold — no-op
+
+        # Log exceeds threshold; acquire LOCK_EX and trim
+        for attempt in range(self.lock_retry_attempts):
+            try:
+                with self.state_file.open('r+') as f:
+                    self._acquire_lock(f.fileno(), fcntl.LOCK_EX)
+                    try:
+                        state = self._read_state_locked(f)
+
+                        if 'tasks' not in state or task_id not in state['tasks']:
+                            return
+
+                        log = state['tasks'][task_id].get('activity_log', [])
+                        if len(log) <= ACTIVITY_LOG_MAX_ENTRIES:
+                            # Another writer already trimmed between our check and lock
+                            return
+
+                        entries_to_archive = len(log) - ACTIVITY_LOG_MAX_ENTRIES
+                        existing_archived = state['tasks'][task_id].get('archived_activity_count', 0)
+                        state['tasks'][task_id]['archived_activity_count'] = existing_archived + entries_to_archive
+                        state['tasks'][task_id]['activity_log'] = log[-ACTIVITY_LOG_MAX_ENTRIES:]
+
+                        self._write_state_locked(f, state)
+                        logger.info(
+                            "Activity log rotated",
+                            extra={
+                                "task_id": task_id,
+                                "entries_archived": entries_to_archive,
+                                "remaining": ACTIVITY_LOG_MAX_ENTRIES,
+                            },
+                        )
                         return
 
                     finally:

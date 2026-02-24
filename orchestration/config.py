@@ -12,3 +12,6 @@ CACHE_TTL_SECONDS = 5.0  # Max age before forced re-read (safety net; mtime is p
 
 # Logging configuration
 LOG_LEVEL = os.environ.get("OPENCLAW_LOG_LEVEL", "INFO").upper()
+
+# Activity log rotation — trim when log exceeds this many entries
+ACTIVITY_LOG_MAX_ENTRIES = int(os.environ.get("OPENCLAW_ACTIVITY_LOG_MAX", "100"))
