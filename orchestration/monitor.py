@@ -21,11 +21,16 @@ from typing import Dict, Any, List, Optional, Tuple
 try:
     from .state_engine import JarvisState
     from .config import POLL_INTERVAL
+    from .logging import get_logger
 except ImportError:
     # Direct execution - add parent dir to path
     sys.path.insert(0, str(Path(__file__).parent.parent))
     from orchestration.state_engine import JarvisState
     from orchestration.config import POLL_INTERVAL
+    from orchestration.logging import get_logger
+
+
+logger = get_logger('monitor')
 
 
 # ANSI color codes
@@ -137,17 +142,29 @@ def tail_state(
     seen_entries: Dict[str, Dict[str, int]] = {}
     last_statuses: Dict[str, Dict[str, str]] = {}
 
+    # Session-scoped JarvisState instances keyed by project_id.
+    # Created once per project so the Phase 21 mtime-based in-memory cache
+    # provides hits between poll cycles instead of cold-starting every iteration.
+    js_instances: Dict[str, JarvisState] = {}
+    for proj_id, state_file in projects:
+        if state_file.exists():
+            js_instances[proj_id] = JarvisState(state_file)
+
     try:
         while True:
             for proj_id, state_file in projects:
-                if not state_file.exists():
-                    continue
+                # Lazy creation: handle projects whose state file did not exist
+                # at tail start but appeared later, or were previously removed.
+                if proj_id not in js_instances:
+                    if not state_file.exists():
+                        continue
+                    js_instances[proj_id] = JarvisState(state_file)
+                js = js_instances[proj_id]
 
                 project_color = get_project_color(proj_id, project_ids)
                 proj_prefix = f"{project_color}{proj_id}{Colors.RESET}"
 
                 try:
-                    js = JarvisState(state_file)
                     state = js.read_state()
                     tasks = state.get('tasks', {})
 
@@ -199,7 +216,14 @@ def tail_state(
                         f"[{proj_prefix}] {Colors.RED}Error reading state: {e}{Colors.RESET}",
                         file=sys.stderr,
                     )
+                    # Evict the cached instance so it will be re-created if the
+                    # state file comes back (e.g., after project re-initialisation).
+                    js_instances.pop(proj_id, None)
 
+            logger.debug(
+                "poll cycle complete",
+                extra={"projects_polled": len(projects), "instances_cached": len(js_instances)},
+            )
             time.sleep(interval)
 
     except KeyboardInterrupt:
@@ -298,6 +322,7 @@ def show_status(
         if not state_file.exists():
             continue
         try:
+            # One-shot call — JarvisState created per project per invocation (no cross-call cache needed)
             js = JarvisState(state_file)
             state = js.read_state()
             tasks = state.get('tasks', {})
@@ -459,6 +484,7 @@ def show_task_detail(
         if not state_file.exists():
             continue
         try:
+            # One-shot call — JarvisState created per project per invocation (no cross-call cache needed)
             js = JarvisState(state_file)
             task_data = js.read_task(task_id)
             if task_data:
@@ -588,6 +614,7 @@ def show_pool_utilization(project_filter: Optional[str] = None) -> None:
             continue
 
         try:
+            # One-shot call — JarvisState created per project per invocation (no cross-call cache needed)
             js = JarvisState(state_file)
             state = js.read_state()
             tasks = state.get('tasks', {})
