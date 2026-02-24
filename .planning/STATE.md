@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 
 ## Current Position
 
-Phase: 35 of 35 (L3 In-Execution Memory Queries)
-Plan: 1 of 1 (complete)
-Status: Phase 35 complete — all plans done
-Last activity: 2026-02-24 — Phase 35 Plan 01 executed (RET-05 closed: Memory Queries section added to L3 SOUL template, 5 new integration tests, 63 tests passing)
+Phase: 36 of 36 (Dashboard Memory Panel)
+Plan: 1 of 3 (complete)
+Status: Phase 36 in progress — Plan 01 done
+Last activity: 2026-02-24 — Phase 36 Plan 01 executed (DSH-11, DSH-14: API proxy routes, MemoryItem types, useMemory SWR hook, Memory sidebar nav, ToastContainer mounted globally)
 
 Progress: [██████████] 100% (v1.3 gap closure)
 
@@ -87,6 +87,12 @@ Phase 35 Plan 01 decisions:
 - Project-only scoping (no global fallback) via OPENCLAW_PROJECT → where.user_id, consistent with memory_client.py and spawn.py
 - Advisory-only framing in SOUL: unreachable memU or empty results must not abort task execution
 
+Phase 36 Plan 01 decisions:
+- memU response normalization: Array.isArray(data) ? data : (data.items ?? []) applied to both GET /memories (plain array) and POST /retrieve (array or object)
+- useMemory uses revalidateOnFocus: false and no refreshInterval — memory items are not real-time data
+- ToastContainer placed after ProjectProvider but inside ThemeProvider for dark mode support
+- Brain/nerve Heroicons outline SVG used for Memory sidebar nav item
+
 ### Pending Todos
 
 None.
@@ -98,5 +104,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 35-01-PLAN.md — Memory Queries section added to L3 SOUL template, 5 new integration tests, 63 tests passing
-Resume file: .planning/phases/35-l3-in-execution-memory-queries/35-01-SUMMARY.md
+Stopped at: Completed 36-01-PLAN.md — API proxy routes, MemoryItem types, useMemory SWR hook, Memory sidebar nav, ToastContainer mounted globally
+Resume file: .planning/phases/36-dashboard-memory-panel/36-01-SUMMARY.md
