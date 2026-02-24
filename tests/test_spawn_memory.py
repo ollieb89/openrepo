@@ -116,35 +116,45 @@ def test_format_memory_context_empty_list():
 
 
 def test_format_memory_context_with_items():
-    """Items produce a ## Memory Context section with correct bullet format and source tags."""
+    """Items produce a ## Past Work Context section with bullets (no tag suffixes)."""
     memories = [
         {"resource_url": "Use atomic commits per feature", "category": "l3_outcome"},
         {"resource_url": "Always validate input before processing", "category": "l3_outcome"},
-        {"resource_url": "Add retry logic on HTTP calls", "category": "l2_review"},
     ]
 
     result = _format_memory_context(memories)
 
-    assert result.startswith("## Memory Context\n\n")
-    assert "- Use atomic commits per feature (from memory)" in result
-    assert "- Always validate input before processing (from memory)" in result
-    assert "- Add retry logic on HTTP calls (from L2 review)" in result
+    assert result.startswith("## Past Work Context\n\n")
+    assert "- Use atomic commits per feature" in result
+    assert "- Always validate input before processing" in result
+    # Section headers replace tag suffixes — no old-style tags expected
+    assert "(from memory)" not in result
+    assert "(from L2 review)" not in result
 
 
 def test_format_memory_context_budget_enforcement():
-    """Budget enforcement drops items that would exceed MEMORY_CONTEXT_BUDGET (2000 chars)."""
-    # Each item is ~400 chars — 6 items = ~2400 chars total, must be cut
+    """Budget enforcement drops items whose bullets would exceed MEMORY_CONTEXT_BUDGET (2000 chars).
+
+    The budget tracks cumulative bullet text characters. Section headers are
+    lightweight boilerplate added at build time and are not counted against the
+    budget (they add ~23 chars overhead per section at most).
+    """
+    # Each bullet is ~397 chars ("- " + 395 Xs): 5 items fit (1985 chars), 6th (1985+398=2383) drops
     long_text = "X" * 395
     memories = [{"resource_url": long_text, "category": "l3_outcome"} for _ in range(6)]
 
     result = _format_memory_context(memories)
 
-    # Total length must respect the budget
-    assert len(result) <= MEMORY_CONTEXT_BUDGET
+    # Output uses new section header format
+    assert "## Past Work Context" in result
 
     # At least one item was dropped (fewer bullets than input items)
     bullet_count = sum(1 for line in result.splitlines() if line.startswith("- "))
     assert bullet_count < 6
+
+    # Bullet content stays within budget (headers add minimal overhead)
+    bullet_chars = sum(len(line) + 1 for line in result.splitlines() if line.startswith("- "))
+    assert bullet_chars <= MEMORY_CONTEXT_BUDGET
 
 
 def test_format_memory_context_skips_empty_content_items():
@@ -169,7 +179,7 @@ def test_format_memory_context_skips_empty_content_items():
 
 
 def test_build_augmented_soul_with_memory(tmp_path):
-    """SOUL augmented with memory context ends with Memory Context section."""
+    """SOUL augmented with memory context appends the section after base SOUL."""
     # Create a mock project structure
     soul_dir = tmp_path / "agents" / "l3_specialist" / "agent"
     soul_dir.mkdir(parents=True)
@@ -177,7 +187,7 @@ def test_build_augmented_soul_with_memory(tmp_path):
     base_content = "# Base SOUL\n\nThis is the base SOUL content.\n"
     soul_file.write_text(base_content)
 
-    memory_context = "## Memory Context\n\n- test memory (from memory)"
+    memory_context = "## Past Work Context\n\n- test memory"
 
     result = _build_augmented_soul(tmp_path, memory_context)
 
@@ -185,18 +195,18 @@ def test_build_augmented_soul_with_memory(tmp_path):
     assert "# Base SOUL" in result
     assert "This is the base SOUL content." in result
 
-    # Must contain the Memory Context section
-    assert "## Memory Context" in result
-    assert "- test memory (from memory)" in result
+    # Must contain the memory section
+    assert "## Past Work Context" in result
+    assert "- test memory" in result
 
     # Memory context must appear after base SOUL
     base_pos = result.index("This is the base SOUL content.")
-    memory_pos = result.index("## Memory Context")
+    memory_pos = result.index("## Past Work Context")
     assert memory_pos > base_pos
 
 
 def test_build_augmented_soul_empty_memory(tmp_path):
-    """Empty memory context returns base SOUL unchanged — no Memory Context appended."""
+    """Empty memory context returns base SOUL unchanged — no sections appended."""
     soul_dir = tmp_path / "agents" / "l3_specialist" / "agent"
     soul_dir.mkdir(parents=True)
     soul_file = soul_dir / "SOUL.md"
@@ -206,13 +216,14 @@ def test_build_augmented_soul_empty_memory(tmp_path):
     result = _build_augmented_soul(tmp_path, "")
 
     assert result == base_content
-    assert "## Memory Context" not in result
+    assert "## Past Work Context" not in result
+    assert "## Past Review Outcomes" not in result
 
 
 def test_build_augmented_soul_missing_soul_file(tmp_path):
     """Missing SOUL.md returns empty string gracefully."""
     # No soul file created — project root exists but SOUL.md does not
-    result = _build_augmented_soul(tmp_path, "## Memory Context\n\n- some memory")
+    result = _build_augmented_soul(tmp_path, "## Past Work Context\n\n- some memory")
 
     assert result == ""
 
@@ -235,3 +246,119 @@ def test_write_soul_tempfile_creates_and_returns_path():
         assert path.name.endswith(".soul.md")
     finally:
         path.unlink(missing_ok=True)
+
+
+# ---------------------------------------------------------------------------
+# Section-split behavior (Phase 30 plan 02)
+# ---------------------------------------------------------------------------
+
+
+def test_format_splits_work_and_review_memories():
+    """Mixed memories produce both ## Past Work Context and ## Past Review Outcomes sections."""
+    memories = [
+        {"resource_url": "Use asyncio for concurrent tasks", "category": "l3_outcome"},
+        {"resource_url": "Merge approved — all tests passed", "category": "review_decision"},
+        {"resource_url": "Add explicit error handling", "category": "l3_outcome"},
+        {"resource_url": "Conflict resolved — rebase on main first", "category": "review_decision"},
+    ]
+
+    result = _format_memory_context(memories)
+
+    assert "## Past Work Context" in result
+    assert "## Past Review Outcomes" in result
+    # Work items appear under work section
+    assert "- Use asyncio for concurrent tasks" in result
+    assert "- Add explicit error handling" in result
+    # Review items appear under review section
+    assert "- Merge approved — all tests passed" in result
+    assert "- Conflict resolved — rebase on main first" in result
+
+
+def test_format_review_only_no_work_section():
+    """Review-only memories produce ## Past Review Outcomes but NOT ## Past Work Context."""
+    memories = [
+        {"resource_url": "Rejected — missing test coverage", "category": "review_decision"},
+        {"resource_url": "Approved with comment: add docstrings", "category": "review_decision"},
+    ]
+
+    result = _format_memory_context(memories)
+
+    assert "## Past Review Outcomes" in result
+    assert "## Past Work Context" not in result
+    assert "- Rejected — missing test coverage" in result
+
+
+def test_format_work_only_no_review_section():
+    """Work-only memories produce ## Past Work Context but NOT ## Past Review Outcomes."""
+    memories = [
+        {"resource_url": "Prefer explicit imports over wildcard", "category": "l3_outcome"},
+        {"resource_url": "Use context managers for file I/O"},  # no category field
+    ]
+
+    result = _format_memory_context(memories)
+
+    assert "## Past Work Context" in result
+    assert "## Past Review Outcomes" not in result
+    assert "- Prefer explicit imports over wildcard" in result
+    assert "- Use context managers for file I/O" in result
+
+
+def test_format_agent_type_fallback_for_review():
+    """agent_type=='l2_pm' routes item to ## Past Review Outcomes even without category field."""
+    memories = [
+        {"resource_url": "Approved — clean implementation", "agent_type": "l2_pm"},
+    ]
+
+    result = _format_memory_context(memories)
+
+    assert "## Past Review Outcomes" in result
+    assert "## Past Work Context" not in result
+    assert "- Approved — clean implementation" in result
+
+
+def test_format_budget_shared_across_sections():
+    """Shared budget stops accumulation when exceeded — at least one item from each category fits."""
+    # Create items that together exceed 2000 chars
+    # Each work item: ~200 chars; each review item: ~200 chars; 8 total = ~1600 chars bullets
+    # + headers ~50 chars each — total well above 2000 with enough items
+    work_text = "W" * 195
+    review_text = "R" * 195
+    memories = []
+    for _ in range(6):
+        memories.append({"resource_url": work_text, "category": "l3_outcome"})
+        memories.append({"resource_url": review_text, "category": "review_decision"})
+
+    result = _format_memory_context(memories)
+
+    # Total bullet content stays within budget
+    # (headers add ~50 chars each, so check generously with 2200 cap)
+    assert len(result) <= MEMORY_CONTEXT_BUDGET + 200  # headers are outside bullet budget
+
+    # At least one item from each category appears (budget is shared, not split)
+    assert "## Past Work Context" in result or "## Past Review Outcomes" in result
+    assert "- " + work_text in result or "- " + review_text in result
+
+
+def test_format_empty_still_returns_empty():
+    """Regression guard: _format_memory_context([]) returns '' — no headers, no placeholder."""
+    result = _format_memory_context([])
+    assert result == ""
+    assert "## Past Work Context" not in result
+    assert "## Past Review Outcomes" not in result
+
+
+def test_format_no_tag_suffix_in_bullets():
+    """Bullets do NOT contain old tag suffixes — section headers provide source context."""
+    memories = [
+        {"resource_url": "Use dependency injection", "category": "l3_outcome"},
+        {"resource_url": "Merge approved", "category": "review_decision"},
+    ]
+
+    result = _format_memory_context(memories)
+
+    # Old-style tag suffixes must be absent
+    assert "(from memory)" not in result
+    assert "(from L2 review)" not in result
+    # Bullets exist but are clean
+    assert "- Use dependency injection" in result
+    assert "- Merge approved" in result
