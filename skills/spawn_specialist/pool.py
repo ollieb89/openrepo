@@ -58,6 +58,11 @@ class L3ContainerPool:
         self.max_concurrent = max_concurrent
         self.project_id = project_id
 
+        # Aggregate counters (in-memory, not persisted)
+        self.completed_count: int = 0
+        self.queued_count: int = 0
+        self._saturated: bool = False
+
         # Get project root for reference
         self.project_root = Path(__file__).parent.parent.parent
 
@@ -87,8 +92,38 @@ class L3ContainerPool:
         # Get timeout for this skill
         timeout_seconds = get_skill_timeout(skill_hint)
 
+        # Track queued tasks and detect saturation onset
+        self.queued_count += 1
+        was_saturated = self.semaphore._value == 0  # All slots occupied
+        if was_saturated and not self._saturated:
+            self._saturated = True
+            logger.warning(
+                "Pool saturation onset",
+                extra={
+                    "project_id": self.project_id,
+                    "queued_task_id": task_id,
+                    "queue_depth": self.queued_count,
+                    "active_task_ids": self.list_active(),
+                },
+            )
+
         # Acquire semaphore (blocks if max concurrent containers already running)
         async with self.semaphore:
+            # Slot acquired — no longer queued
+            self.queued_count -= 1
+
+            # Log saturation resolution if we were saturated
+            if self._saturated:
+                self._saturated = False
+                logger.info(
+                    "Pool saturation resolved",
+                    extra={
+                        "project_id": self.project_id,
+                        "task_id": task_id,
+                        "queue_depth": self.queued_count,
+                    },
+                )
+
             logger.info("Acquired pool slot", extra={"task_id": task_id})
 
             # First attempt
@@ -123,6 +158,9 @@ class L3ContainerPool:
                     timeout_seconds=timeout_seconds,
                     retry_count=1,
                 )
+
+            # Increment completed count for any terminal state
+            self.completed_count += 1
 
             logger.info("Task final result", extra={"task_id": task_id, "status": result["status"]})
             return result
@@ -372,6 +410,24 @@ class L3ContainerPool:
         """Return list of active task IDs."""
         return list(self.active_containers.keys())
 
+    def get_pool_stats(self) -> Dict[str, Any]:
+        """Return live utilization snapshot for this pool.
+
+        Returns:
+            Dict with active, queued, completed, max_concurrent, saturation_pct,
+            saturated, and project_id fields.
+        """
+        active = self.get_active_count()
+        return {
+            "project_id": self.project_id,
+            "active": active,
+            "queued": self.queued_count,
+            "completed": self.completed_count,
+            "max_concurrent": self.max_concurrent,
+            "saturation_pct": round((active / self.max_concurrent) * 100, 1),
+            "saturated": self._saturated,
+        }
+
 
 class PoolRegistry:
     """Manages per-project L3ContainerPool instances.
@@ -400,6 +456,15 @@ class PoolRegistry:
     def active_count(self) -> Dict[str, int]:
         """Return active container count per project."""
         return {pid: pool.get_active_count() for pid, pool in self._pools.items()}
+
+    def get_all_stats(self) -> Dict[str, Dict[str, Any]]:
+        """Return pool utilization stats for all projects.
+
+        Returns:
+            Dict mapping project_id to pool stats dict (same format as
+            L3ContainerPool.get_pool_stats()).
+        """
+        return {pid: pool.get_pool_stats() for pid, pool in self._pools.items()}
 
 
 # Convenience function for spawning a single task
