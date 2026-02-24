@@ -1,8 +1,10 @@
 import "./globals.css";
+import "react-toastify/dist/ReactToastify.css";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { ProjectProvider } from "@/context/ProjectContext";
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
+import { ToastContainer } from "react-toastify";
 
 export const metadata = {
   title: "OCCC - OpenClaw Control Center",
@@ -29,6 +31,7 @@ export default function RootLayout({
               </div>
             </div>
           </ProjectProvider>
+          <ToastContainer position="bottom-right" autoClose={3000} theme="colored" />
         </ThemeProvider>
       </body>
     </html>
