@@ -477,6 +477,11 @@ def spawn_l3_specialist(
         # Restart policy (L2 handles retries, not Docker)
         "restart_policy": {"Name": "no"},
 
+        # Grace period before Docker escalates SIGTERM → SIGKILL (REL-05)
+        # Must be ≥ JarvisState LOCK_TIMEOUT (5s) + update_state overhead.
+        # 30s matches drain timeout defined in phase 39 CONTEXT.md.
+        "stop_timeout": 30,
+
         # Labels for tracking and project-scoped filtering
         "labels": {
             "openclaw.managed": "true",
