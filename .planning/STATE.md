@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 39 of 42 (Graceful Sentinel)
-Plan: 1 of TBD in current phase
-Status: In progress
-Last activity: 2026-02-24 — Phase 39 Plan 01 complete: SIGTERM trap + stop_timeout
+Plan: 2 of 2 in current phase
+Status: Phase 39 complete — ready for Phase 40
+Last activity: 2026-02-24 — Phase 39 Plan 02 complete: pool memorize drain on SIGTERM (REL-08)
 
-Progress: [█░░░░░░░░░] 10% (v1.4)
+Progress: [██░░░░░░░░] 20% (v1.4)
 
 ## Performance Metrics
 
@@ -24,7 +24,7 @@ Progress: [█░░░░░░░░░] 10% (v1.4)
 - v1.2: 7 phases, 14 plans in ~1 day
 - v1.3: 11 phases, 19 plans in 7 days
 
-**v1.4:** 4 phases, TBD plans — 1 plan complete (Phase 39 Plan 01, 69s)
+**v1.4:** 4 phases, TBD plans — 2 plans complete (Phase 39 Plans 01-02)
 
 ## Accumulated Context
 
@@ -41,6 +41,12 @@ v1.4 research flags to carry into planning:
 - _child_pid captures tee PID (last pipeline stage); killing tee sends SIGPIPE to CLI runtime — acceptable shutdown path
 - stop_timeout=30 in spawn.py matches drain window from CONTEXT.md; exceeds JarvisState LOCK_TIMEOUT (5s) plus overhead
 
+**Phase 39 Plan 02 decisions:**
+- Use loop.add_signal_handler() not signal.signal() — prevents fcntl deadlock if state engine holds lock at signal time
+- Idempotency guard via mutable closure dict {"flag": False} — double SIGTERM silently ignored
+- drain_pending_memorize_tasks() returns summary dict not raises — caller decides action
+- 30s drain timeout matches stop_timeout=30 set in plan 01
+
 ### Pending Todos
 
 None.
@@ -54,5 +60,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 39-01-PLAN.md — SIGTERM trap in entrypoint.sh + stop_timeout=30 in spawn.py
-Resume: Run next plan in Phase 39
+Stopped at: Completed 39-02-PLAN.md — pool memorize drain on SIGTERM (REL-08)
+Resume: Phase 39 complete — run Phase 40 (Memory Health Monitor, QUAL-01..06)
