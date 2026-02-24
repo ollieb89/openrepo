@@ -290,12 +290,15 @@ export default function MemoryPanel() {
     handleOpenConflict(nextFlag);
   }
 
-  // Archive stale memory (sets archived_at via PUT)
+  // Archive stale memory — sends { content: "[ARCHIVED <timestamp>] <original>" } via PUT
+  // Uses the existing content-update pipeline; MemoryUpdateRequest requires content (non-optional).
   async function handleArchiveMemory(memoryId: string): Promise<void> {
+    const item = items.find((m: MemoryItem) => m.id === memoryId);
+    const currentContent = item?.content ?? '';
     const res = await fetch(`/api/memory/${memoryId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ archived_at: new Date().toISOString() }),
+      body: JSON.stringify({ content: `[ARCHIVED ${new Date().toISOString()}] ${currentContent}` }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     handleDismissFlag(memoryId);
