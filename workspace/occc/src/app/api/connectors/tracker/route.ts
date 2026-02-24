@@ -82,6 +82,7 @@ export async function POST(request: Request) {
   try {
     const body = validateRequest(await request.json());
 
+    const now = new Date().toISOString();
     const connectorCandidate = {
       id: TRACKER_CONNECTOR_ID,
       provider: body.provider,
@@ -91,6 +92,8 @@ export async function POST(request: Request) {
       metadata: {
         config: body.config,
       },
+      createdAt: now,
+      updatedAt: now,
     };
 
     const config = readTrackerConnectorConfig(connectorCandidate);

@@ -8,6 +8,7 @@ import {
 import { loadCheckpoint, saveCheckpoint } from './checkpoints';
 import { saveSyncRecords } from './storage';
 import { processNewRecords } from './summarizer';
+import { indexEntity } from './indexer';
 import { classifyConnectorHealth } from './health';
 import type {
   ConnectorCheckpoint,
@@ -220,6 +221,26 @@ export async function runIncrementalSync(input: {
           records: batch.records,
         });
         counters.upserted += upserted;
+
+        // Index issues for semantic search (Phase 4)
+        if (connector.provider === 'github' || connector.provider === 'linear') {
+          for (const record of batch.records) {
+            // For trackers, we expect title and body in the payload
+            const title = record.payload.title as string || '';
+            const body = record.payload.body as string || '';
+            const indexContent = `${title}\n\n${body}`.trim();
+
+            if (indexContent) {
+              indexEntity(record.id, 'issue', indexContent, {
+                connectorId: connector.id,
+                sourceId: source.sourceId,
+                provider: connector.provider,
+              }).catch(err => {
+                console.error(`[Engine] Failed to index issue ${record.id}:`, err);
+              });
+            }
+          }
+        }
 
         // Persist records locally for summarization (Phase 3)
         await saveSyncRecords(connector.id, source.sourceId, batch.records);

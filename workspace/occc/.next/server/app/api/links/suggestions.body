@@ -1,0 +1,1 @@
+[{"id":"s1","decision_id":"d1","issue_id":"i1","score":0.85,"status":"pending","reasons":["semantic_similarity"],"created_at":"2026-02-24 16:30:48","decision_content":"Decision to use SQLite for vector storage","decision_metadata":{"projectId":"p1"},"issue_content":"Implement vector storage backend","issue_metadata":{"title":"Vector Storage","projectId":"p1"}}]

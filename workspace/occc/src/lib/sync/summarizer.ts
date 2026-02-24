@@ -1,6 +1,8 @@
 import { generateCompletion } from '../ollama';
 import type { ThreadRecord, Decision } from '../types/decisions';
 import { loadSyncRecords, loadDecisions, saveDecisions } from './storage';
+import { indexEntity } from './indexer';
+import { generateSuggestions } from './suggestions';
 
 /**
  * Extracts decisions from a single Slack thread using Phi-3.
@@ -131,6 +133,22 @@ export async function processNewRecords(connectorId: string, sourceId: string): 
   if (allNewDecisions.length > 0) {
     await saveDecisions(connectorId, allNewDecisions);
     console.log(`[Summarizer] Saved ${allNewDecisions.length} new decisions for ${connectorId}`);
+
+    // 5. Index decisions for semantic search (Phase 4)
+    for (const decision of allNewDecisions) {
+      // Content for indexing is the outcome + citation
+      const indexContent = `${decision.outcome}\n\nCitation: ${decision.citation}`;
+      indexEntity(decision.id, 'decision', indexContent, {
+        connectorId: decision.connectorId,
+        sourceId: decision.sourceId,
+        threadId: decision.threadId,
+      }).then(() => {
+        // Trigger suggestion generation after indexing is done
+        return generateSuggestions(decision.id);
+      }).catch(err => {
+        console.error(`[Summarizer] Failed to index or suggest for decision ${decision.id}:`, err);
+      });
+    }
   } else {
     console.log(`[Summarizer] No decisions extracted from ${newThreads.length} threads.`);
   }

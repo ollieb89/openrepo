@@ -10,14 +10,18 @@
     "test": "bun test"
   },
   "dependencies": {
+    "@tailwindcss/typography": "^0.5.19",
     "autoprefixer": "^10.4.0",
     "better-sqlite3": "^12.6.2",
+    "chrono-node": "^2.9.0",
     "dockerode": "^4.0.2",
+    "lucide-react": "^0.575.0",
     "next": "14.2.5",
     "ollama": "^0.6.3",
     "postcss": "^8.4.0",
     "react": "^18",
     "react-dom": "^18",
+    "react-markdown": "^10.1.0",
     "react-toastify": "^10.0.5",
     "recharts": "^3.7.0",
     "swr": "^2.4.0",
@@ -25,11 +29,13 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/dockerode": "^4.0.1",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "eslint": "^8",
-    "eslint-config-next": "14.2.5"
+    "eslint-config-next": "14.2.5",
+    "typescript": "^5"
   }
 }

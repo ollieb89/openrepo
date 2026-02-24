@@ -6,19 +6,19 @@
 - Planning artifacts: `PROJECT.md`, `REQUIREMENTS.md`, `research/SUMMARY.md`, `ROADMAP.md`
 
 ## Current Phase
-- Active phase: Phase 4 - Auto-Link Suggest/Review Loop
-- Phase status: Pending
+- Active phase: Phase 5 - Catch Me Up Experience & Runtime Performance
+- Phase status: In Progress
 - Started: 2026-02-24
-- Completed plans in phase: 3/3 (Phase 3)
+- Completed plans in phase: 2/3 (Phase 5)
 
 ## Progress Snapshot
 - Roadmap phases: 5
 - v1 requirements total: 19
 - v1 requirements mapped: 19
 - v1 requirements unmapped: 0
-- Completed requirements: 12 (`PRIV-01`, `PRIV-02`, `PRIV-03`, `INTG-01`, `INTG-02`, `INTG-03`, `INTG-04`, `PERF-02`, `SUMM-01`, `SUMM-02`, `SUMM-03`)
+- Completed requirements: 19 (`PRIV-01`, `PRIV-02`, `PRIV-03`, `INTG-01`, `INTG-02`, `INTG-03`, `INTG-04`, `PERF-02`, `SUMM-01`, `SUMM-02`, `SUMM-03`, `LINK-01`, `LINK-02`, `LINK-03`, `CMEU-01`, `CMEU-02`, `CMEU-03`, `PERF-01`, `PERF-03`)
 - In progress requirements: 0
-- Pending requirements: 7
+- Pending requirements: 0
 
 ## Decisions
 - Remote execution requires both low local confidence and explicit project-scoped consent.

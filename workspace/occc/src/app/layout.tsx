@@ -6,6 +6,7 @@ import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
 import { ToastContainer } from "react-toastify";
 import BackgroundSyncTrigger from "@/components/sync/BackgroundSyncTrigger";
+import SuggestionToast from "@/components/sync/SuggestionToast";
 
 export const metadata = {
   title: "OCCC - OpenClaw Control Center",
@@ -22,6 +23,7 @@ export default function RootLayout({
       <body className="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
         <ThemeProvider>
           <BackgroundSyncTrigger />
+          <SuggestionToast />
           <ProjectProvider>
             <div className="flex h-screen overflow-hidden">
               <Sidebar />

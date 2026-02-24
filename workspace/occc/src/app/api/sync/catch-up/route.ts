@@ -1,0 +1,67 @@
+import { NextRequest } from 'next/server';
+import { parseIntent } from '@/lib/sync/intent';
+import { searchContext } from '@/lib/sync/vector-store';
+import { synthesizeTimeline } from '@/lib/sync/synthesis';
+import { generateEmbedding } from '@/lib/ollama';
+
+export const dynamic = 'force-dynamic';
+
+export async function POST(req: NextRequest) {
+  try {
+    const { query, activeProjectId } = await req.json();
+
+    // 1. Parse Intent
+    const intent = parseIntent(query, activeProjectId);
+
+    // 2. Generate Query Embedding
+    const queryEmbedding = await generateEmbedding(intent.query);
+
+    // 3. Search Context
+    const records = await searchContext(intent, queryEmbedding);
+
+    // 4. Synthesize
+    const { stream, confidence, context } = await synthesizeTimeline(query, records);
+
+    if (confidence === 'low') {
+      return Response.json({
+        confidence: 'low',
+        suggestions: context.slice(0, 3).map(r => ({
+          id: r.id,
+          content: r.content.substring(0, 100) + '...',
+          type: r.entity_type
+        }))
+      });
+    }
+
+    // 5. Stream response
+    const encoder = new TextEncoder();
+    const readableStream = new ReadableStream({
+      async start(controller) {
+        // Send initial metadata
+        const metadata = JSON.stringify({ 
+          type: 'metadata', 
+          context: context.map(r => ({ id: r.id, type: r.entity_type })) 
+        });
+        controller.enqueue(encoder.encode(metadata + '\n'));
+
+        for await (const token of stream) {
+          const chunk = JSON.stringify({ type: 'token', token });
+          controller.enqueue(encoder.encode(chunk + '\n'));
+        }
+        controller.close();
+      }
+    });
+
+    return new Response(readableStream, {
+      headers: {
+        'Content-Type': 'application/x-ndjson',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    });
+
+  } catch (error) {
+    console.error('[CatchUp] API Error:', error);
+    return Response.json({ error: 'Failed to process catch-up query' }, { status: 500 });
+  }
+}

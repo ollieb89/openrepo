@@ -45,16 +45,13 @@
 - [x] 03-02-PLAN.md — Local Decision Extraction Engine
 - [x] 03-03-PLAN.md — Decision Log UI and Correction Loop
 
-## Phase 4: Auto-Link Suggest/Review Loop
+**Phase 4: Auto-Link & Review Loop**
 
-**Goal:** Add human-reviewed linking between conversations and work items.
-
-**Mapped requirements:** LINK-01, LINK-02, LINK-03
-
-**Success criteria:**
-- System generates link suggestions when thread-to-issue relevance is detected.
-- User can explicitly accept or reject each suggestion.
-- Accepted links are visible from both chat context and issue context views.
+**Plans:** 4 plans
+- [x] 04-01-PLAN.md — Vector Store Initialization
+- [x] 04-02-PLAN.md — Issue Indexer
+- [x] 04-03-PLAN.md — Relevance Engine
+- [x] 04-04-PLAN.md — Link UI & Review Loop
 
 ## Phase 5: Catch Me Up Experience & Runtime Performance
 
@@ -68,6 +65,11 @@
 - Responses include citation links to original sources for verifiability.
 - Idle/background listening and sync remain low-overhead for desktop usage.
 - Catch-up responses return quickly enough to support interactive workflows.
+
+**Plans:** 3 plans
+- [x] 05-01-PLAN.md — The Intent & Temporal Engine
+- [x] 05-02-PLAN.md — Streaming RAG & Synthesis
+- [ ] 05-03-PLAN.md — The "Catch Me Up" UI
 
 ## Requirement-to-Phase Index
 
@@ -98,9 +100,11 @@
 - Scope intentionally excludes v2 and out-of-scope items from `REQUIREMENTS.md`.
 - Each v1 requirement maps to exactly one phase.
 - Sequence follows privacy-first foundation, then connectivity, then user-facing intelligence.
-- Progress sync (2026-02-24): Phase 1 is complete (`01-01` through `01-04`) with verification passed.
-- Progress sync (2026-02-24): Phase 2 is complete (`02-01` through `02-05`) with verification passed.
-- Next execution target: Phase 3 Decision Summaries with Provenance.
+- Progress sync (2026-02-24): Phase 1 is complete (`01-01` through `01-04`).
+- Progress sync (2026-02-24): Phase 2 is complete (`02-01` through `02-05`).
+- Progress sync (2026-02-24): Phase 3 is complete (`03-01` through `03-03`).
+- Progress sync (2026-02-24): Phase 4 is complete (`04-01` through `04-04`).
+- Next execution target: Phase 5 Catch Me Up Experience & Runtime Performance.
 
 ---
-*Last updated: 2026-02-24 after 03-03 planning*
+*Last updated: 2026-02-24 after 05 planning*

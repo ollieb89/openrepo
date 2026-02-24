@@ -48,6 +48,37 @@ export async function generateCompletion(
 }
 
 /**
+ * Generate a streaming completion from a prompt using Phi-3.
+ * Returns an AsyncGenerator that yields tokens.
+ */
+export async function* streamCompletion(
+  prompt: string,
+  options: { temperature?: number; model?: string } = {}
+): AsyncGenerator<string> {
+  if (!(await isOllamaAvailable())) {
+    throw new Error('Ollama service is not available');
+  }
+
+  try {
+    const stream = await ollama.generate({
+      model: options.model ?? DEFAULT_MODEL,
+      prompt,
+      options: {
+        temperature: options.temperature ?? 0,
+      },
+      stream: true,
+    });
+
+    for await (const part of stream) {
+      yield part.response;
+    }
+  } catch (error) {
+    console.error('[Ollama] Error in streaming completion:', error);
+    throw error;
+  }
+}
+
+/**
  * Generate a vector embedding for a string using a local model.
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
