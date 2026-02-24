@@ -22,6 +22,8 @@ from skills.spawn_specialist.spawn import (
     _format_memory_context,
     _build_augmented_soul,
     _write_soul_tempfile,
+    _write_soul_file,
+    _rewrite_memu_url_for_container,
     MEMORY_CONTEXT_BUDGET,
 )
 
@@ -362,3 +364,74 @@ def test_format_no_tag_suffix_in_bullets():
     # Bullets exist but are clean
     assert "- Use dependency injection" in result
     assert "- Merge approved" in result
+
+
+# ---------------------------------------------------------------------------
+# MEM-04: URL rewrite for container networking
+# ---------------------------------------------------------------------------
+
+
+def test_rewrite_memu_url_localhost_to_docker_dns():
+    """localhost is replaced with Docker DNS hostname."""
+    assert _rewrite_memu_url_for_container("http://localhost:18791") == "http://openclaw-memory:18791"
+
+
+def test_rewrite_memu_url_127_to_docker_dns():
+    """127.0.0.1 is replaced with Docker DNS hostname."""
+    assert _rewrite_memu_url_for_container("http://127.0.0.1:18791") == "http://openclaw-memory:18791"
+
+
+def test_rewrite_memu_url_preserves_path():
+    """Port and path are preserved after hostname swap."""
+    assert _rewrite_memu_url_for_container("http://localhost:18791/api/v1") == "http://openclaw-memory:18791/api/v1"
+
+
+def test_rewrite_memu_url_non_localhost_unchanged():
+    """Non-localhost URLs pass through unchanged."""
+    url = "http://memu.internal:18791"
+    assert _rewrite_memu_url_for_container(url) == url
+
+
+def test_rewrite_memu_url_https_unchanged():
+    """External HTTPS URLs pass through unchanged."""
+    url = "https://api.memu.io/v1"
+    assert _rewrite_memu_url_for_container(url) == url
+
+
+def test_rewrite_memu_url_empty_returns_empty():
+    """Empty URL returns empty string."""
+    assert _rewrite_memu_url_for_container("") == ""
+
+
+def test_rewrite_memu_url_custom_hostname():
+    """Custom DNS hostname parameter is used."""
+    assert _rewrite_memu_url_for_container("http://localhost:18791", dns_hostname="custom-host") == "http://custom-host:18791"
+
+
+# ---------------------------------------------------------------------------
+# RET-02 (gap closure): Persistent SOUL file path
+# ---------------------------------------------------------------------------
+
+
+def test_write_soul_file_creates_at_project_state_dir(tmp_path):
+    """SOUL file is created at workspace/.openclaw/<project>/soul-<task>.md."""
+    content = "# Augmented SOUL\n\nWith memory context.\n"
+    path = _write_soul_file(content, "testproj", "task-123", tmp_path)
+
+    assert path.exists()
+    assert path.read_text(encoding="utf-8") == content
+    assert path == tmp_path / ".openclaw" / "testproj" / "soul-task-123.md"
+
+
+def test_write_soul_file_creates_parent_dirs(tmp_path):
+    """Parent directories are created if they don't exist."""
+    path = _write_soul_file("content", "newproj", "t1", tmp_path)
+    assert path.exists()
+    assert (tmp_path / ".openclaw" / "newproj").is_dir()
+
+
+def test_write_soul_file_overwrites_existing(tmp_path):
+    """Writing to the same task_id overwrites the previous file."""
+    _write_soul_file("first", "proj", "t1", tmp_path)
+    path = _write_soul_file("second", "proj", "t1", tmp_path)
+    assert path.read_text(encoding="utf-8") == "second"
