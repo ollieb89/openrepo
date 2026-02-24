@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.3 Agent Memory — Phase 33: Integration Gap Closure (complete)
+**Current focus:** Phase 34: Review Decision Category Fix (complete)
 
 ## Current Position
 
-Phase: 33 of 33 (Integration Gap Closure)
-Plan: 2 of 2 (complete)
-Status: Phase 33 complete — all plans done
-Last activity: 2026-02-24 — Phase 33 Plan 02 executed (REQUIREMENTS.md verified: MEM-01, MEM-03, MEM-04, RET-02 all [x] with Complete traceability)
+Phase: 34 of 34 (Review Decision Category Fix)
+Plan: 1 of 1 (complete)
+Status: Phase 34 complete — all plans done
+Last activity: 2026-02-24 — Phase 34 Plan 01 executed (MEM-02 and RET-02 closed: category field added to payload, 3 new tests, 58 tests passing)
 
-Progress: [██████████] 100% (v1.3)
+Progress: [██████████] 100% (v1.3 gap closure)
 
 ## Performance Metrics
 
@@ -78,6 +78,10 @@ v1.3 decisions made (Phase 33 Plan 01):
 - PIPESTATUS[0] replaces $? to correctly capture CLI exit code from piped tee invocation
 - Empty SOUL_ARGS array expands to nothing — safe no-op when no SOUL file mounted
 
+Phase 34 Plan 01 decisions:
+- Plain string literal 'review_decision' in payload — no constants or enums per prior user decision
+- Backward-compat test added explicitly alongside existing test_format_work_only_no_review_section — documents the contract
+
 ### Pending Todos
 
 None.
@@ -89,5 +93,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 33-02-PLAN.md — REQUIREMENTS.md verification (MEM-01, MEM-03, MEM-04, RET-02 all [x], traceability Complete, 34 tests passing)
-Resume file: .planning/phases/33-integration-gap-closure/33-02-SUMMARY.md
+Stopped at: Completed 34-01-PLAN.md — category field added to snapshot.py payload, 3 new tests, 58 tests passing
+Resume file: .planning/phases/34-review-decision-category-fix/34-01-SUMMARY.md
