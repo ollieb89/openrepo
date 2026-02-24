@@ -17,7 +17,7 @@ Requirements for Orchestration Hardening milestone. Each maps to roadmap phases.
 
 - [x] **PERF-01**: Docker client connections are reused across spawns via a shared client instance per pool
 - [x] **PERF-02**: State engine caches state in memory, only reading from disk on cache miss or external modification
-- [x] **PERF-03**: State engine supports incremental task updates without reading/rewriting the entire state file
+- [x] **PERF-03**: State engine uses write-through caching so that task updates immediately populate the in-memory cache, eliminating redundant disk re-reads after writes
 - [x] **PERF-04**: Monitor and dashboard polling use cached state reads (shared locks) without competing with spawn writes
 
 ### Observability

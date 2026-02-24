@@ -90,7 +90,7 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Spawning three L3 containers in sequence reuses a single Docker client connection — confirmed by absence of repeated connection setup in logs
   2. Monitor polling and dashboard API reads acquire shared locks only and do not block concurrent spawn writes
-  3. Updating a single task's status writes only that task's fields to disk, not the entire state file
+  3. After updating a single task's status, the write-through cache ensures subsequent reads are served from memory without re-reading disk
   4. Cache hit rate for state reads is observable in structured logs; disk reads only occur on cache miss or detected external modification
 **Plans**: 3 plans
 Plans:
