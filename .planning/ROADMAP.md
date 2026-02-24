@@ -122,7 +122,10 @@ Plans:
   2. A project configured for isolated pool mode runs containers exclusively against its own pool; shared-mode projects share the global semaphore
   3. A project configured with overflow policy "reject" returns an immediate error when the queue is full; "wait" queues the task; "priority" elevates it above standard-priority queued tasks
   4. Changing pool config in project.json takes effect on next spawn without restarting the orchestration layer
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 23-01-PLAN.md — Pool config loader, validation, and config-driven PoolRegistry with hot-reload
+- [ ] 23-02-PLAN.md — Pool isolation modes (shared/isolated), overflow policies (reject/wait/priority), monitor update
 
 ### Phase 24: Dashboard Metrics
 **Goal**: The occc dashboard shows which agents belong to the selected project and surfaces task performance and pool utilization as visual metrics
