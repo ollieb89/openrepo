@@ -252,10 +252,11 @@ Plans:
   2. `MemoryClient.memorize()` includes `category` in POST payload when provided
   3. A memorized item with `category="review_decision"` returns that category on retrieval
   4. `_format_memory_context()` routes `category=="review_decision"` items to "Past Review Outcomes" via primary path (not agent_type fallback)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 37-01: TBD
+- [ ] 37-01-PLAN.md — MemorizeRequest category field + router injection + MemoryClient payload wiring
+- [ ] 37-02-PLAN.md — _format_memory_context() three-bucket routing + CATEGORY_SECTION_MAP + tests
 
 ### Phase 38: Phase 28 Verification + Dead Code Cleanup
 **Goal**: Phase 28 has formal verification (the only milestone phase without it), and accumulated dead code from the memory subsystem is removed
@@ -311,5 +312,5 @@ Plans:
 | 34. Review Decision Category Fix | 1/1 | Complete    | 2026-02-24 | - |
 | 35. L3 In-Execution Memory Queries | 1/1 | Complete    | 2026-02-24 | - |
 | 36. Dashboard Memory Panel | 3/3 | Complete    | 2026-02-24 | - |
-| 37. Category Field E2E Fix | v1.3 | 0/? | Not started | - |
+| 37. Category Field E2E Fix | v1.3 | 0/2 | Not started | - |
 | 38. Phase 28 Verification + Cleanup | v1.3 | 0/? | Not started | - |
