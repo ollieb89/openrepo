@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.4 Operational Maturity — Phase 42: Delta Snapshots (in progress — Plans 01–02 done)
+**Current focus:** v1.4 Operational Maturity — Phase 42: Delta Snapshots (COMPLETE — all 3 plans done)
 
 ## Current Position
 
-Phase: 42 of 42 (Delta Snapshots) — in progress
-Plan: 2 of 3 complete in current phase
-Status: Plan 02 complete — JarvisState cursor helpers (PERF-05), cursor-aware spawn retrieval (PERF-06), memU created_after filter (PERF-07) — 10/13 tests green
-Last activity: 2026-02-24 — Phase 42 Plan 02 complete: state_engine cursor helpers, spawn.py (list,bool) return, retrieve.py _filter_after
+Phase: 42 of 42 (Delta Snapshots) — COMPLETE
+Plan: 3 of 3 complete in current phase
+Status: Plan 03 complete — snapshot pruning wired (PERF-08), 13/13 tests green, phase 42 done
+Last activity: 2026-02-25 — Phase 42 Plan 03 complete: capture_semantic_snapshot prune wiring + package rename fixes
 
-Progress: [██████░░░░] 60% (v1.4)
+Progress: [██████████] 100% (v1.4 COMPLETE)
 
 ## Performance Metrics
 
@@ -110,6 +110,12 @@ v1.4 research flags to carry into planning:
 - empty_url returns ([], True) not ([], False) — not a network error, cursor can advance
 - test_spawn_memory.py updated to unpack (list, bool) tuples — preserves test semantics after return type change
 
+**Phase 42 Plan 03 decisions:**
+- Prune block placed AFTER snapshot_path.write_text() — new snapshot counted before pruning enforces the limit (Pitfall 4 from RESEARCH.md)
+- Pruning wrapped in bare except Exception — config load failures, OS errors, any unexpected errors caught and logged, never raised
+- load_project_config called fresh inside try block — follows get_pool_config() pattern of reading at call time rather than caching
+- PERF-08 test scaffold fixes: mock_branch_detect added as 1st subprocess mock; patch targets updated from orchestration.snapshot.* to openclaw.snapshot.*; sys.path restored for PERF-07 router imports
+
 ### Pending Todos
 
 None.
@@ -122,6 +128,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-24
-Stopped at: Completed 42-02-PLAN.md — cursor helpers + spawn tuple + _filter_after (PERF-05/06/07)
-Resume: Phase 42 Plan 03 (Delta Snapshots — snapshot pruning wiring, PERF-08)
+Last session: 2026-02-25
+Stopped at: Completed 42-03-PLAN.md — snapshot pruning wiring (PERF-08), phase 42 complete, v1.4 done
+Resume: N/A — v1.4 Operational Maturity milestone complete (all 4 phases, 42 total phases)

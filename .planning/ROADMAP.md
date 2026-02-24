@@ -87,7 +87,7 @@ See: `.planning/milestones/v1.3-ROADMAP.md` for full phase details.
 - [x] **Phase 39: Graceful Sentinel** - SIGTERM handling, task dehydration, interrupted task recovery loop, and fire-and-forget drain on shutdown (completed 2026-02-24)
 - [x] **Phase 40: Memory Health Monitor** - Batch staleness and conflict detection with dashboard review UI and memory edit endpoint (completed 2026-02-24)
 - [x] **Phase 41: L1 Strategic Suggestions** - Pattern extraction engine producing reviewable SOUL amendments with mandatory human approval gate (completed 2026-02-24)
-- [ ] **Phase 42: Delta Snapshots** - Cursor-based memory retrieval and configurable snapshot pruning to reduce I/O at scale
+- [x] **Phase 42: Delta Snapshots** - Cursor-based memory retrieval and configurable snapshot pruning to reduce I/O at scale (completed 2026-02-24)
 
 ## Phase Details
 
@@ -150,7 +150,7 @@ Plans:
   2. A project that has run multiple tasks shows measurably fewer memories fetched on subsequent pre-spawn retrievals compared to the first (cursor filters out already-seen memories)
   3. The memU `/retrieve` endpoint accepts a `created_after` ISO timestamp parameter and returns only memories created after that timestamp
   4. Projects with `max_snapshots` configured in project.json automatically prune the oldest snapshots when the limit is exceeded — snapshot directory never grows beyond the configured count
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 42-01-PLAN.md — Test scaffold: 13 tests covering PERF-05 through PERF-08 (RED state)
@@ -168,4 +168,4 @@ Plans:
 | 39. Graceful Sentinel | 4/4 | Complete    | 2026-02-24 | - |
 | 40. Memory Health Monitor | 4/4 | Complete    | 2026-02-24 | - |
 | 41. L1 Strategic Suggestions | 3/3 | Complete    | 2026-02-24 | - |
-| 42. Delta Snapshots | 2/3 | In Progress|  | - |
+| 42. Delta Snapshots | 3/3 | Complete   | 2026-02-24 | - |
