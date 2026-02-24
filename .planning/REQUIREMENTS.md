@@ -75,28 +75,28 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| REL-01 | — | Pending |
-| REL-02 | — | Pending |
-| REL-03 | — | Pending |
-| PERF-01 | — | Pending |
-| PERF-02 | — | Pending |
-| PERF-03 | — | Pending |
-| PERF-04 | — | Pending |
-| OBS-01 | — | Pending |
-| OBS-02 | — | Pending |
-| OBS-03 | — | Pending |
-| OBS-04 | — | Pending |
-| POOL-01 | — | Pending |
-| POOL-02 | — | Pending |
-| POOL-03 | — | Pending |
-| DSH-09 | — | Pending |
-| DSH-10 | — | Pending |
+| REL-01 | Phase 20 | Pending |
+| REL-02 | Phase 20 | Pending |
+| REL-03 | Phase 20 | Pending |
+| PERF-01 | Phase 21 | Pending |
+| PERF-02 | Phase 21 | Pending |
+| PERF-03 | Phase 21 | Pending |
+| PERF-04 | Phase 21 | Pending |
+| OBS-01 | Phase 19 | Pending |
+| OBS-02 | Phase 22 | Pending |
+| OBS-03 | Phase 22 | Pending |
+| OBS-04 | Phase 22 | Pending |
+| POOL-01 | Phase 23 | Pending |
+| POOL-02 | Phase 23 | Pending |
+| POOL-03 | Phase 23 | Pending |
+| DSH-09 | Phase 24 | Pending |
+| DSH-10 | Phase 24 | Pending |
 
 **Coverage:**
 - v1.2 requirements: 16 total
-- Mapped to phases: 0
-- Unmapped: 16 ⚠️
+- Mapped to phases: 16
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-02-24*
-*Last updated: 2026-02-24 after initial definition*
+*Last updated: 2026-02-24 after roadmap creation*

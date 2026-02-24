@@ -4,6 +4,7 @@
 
 - ✅ **v1.0 Grand Architect Protocol Foundation** — Phases 1-10 (shipped 2026-02-23)
 - ✅ **v1.1 Project Agnostic** — Phases 11-18 (shipped 2026-02-23)
+- 🚧 **v1.2 Orchestration Hardening** — Phases 19-24 (in progress)
 
 ## Phases
 
@@ -41,6 +42,85 @@ See: `.planning/milestones/v1.1-ROADMAP.md` for full phase details.
 
 </details>
 
+### 🚧 v1.2 Orchestration Hardening (In Progress)
+
+**Milestone Goal:** Make the orchestration layer production-grade — structured observability, state reliability, performance under concurrency, per-project pool configuration, and dashboard metrics.
+
+- [ ] **Phase 19: Structured Logging** - Establish structured JSON logging foundation across all orchestration components
+- [ ] **Phase 20: Reliability Hardening** - State backup/recovery and config schema validation with fast-fail error reporting
+- [ ] **Phase 21: State Engine Performance** - Docker client pooling, in-memory state caching, incremental updates, shared-lock reads
+- [ ] **Phase 22: Observability Metrics** - Task lifecycle metrics, pool utilization tracking, and activity log rotation
+- [ ] **Phase 23: Per-Project Pool Config** - Configurable concurrency limits, isolated/shared pool modes, queue overflow policies
+- [ ] **Phase 24: Dashboard Metrics** - Agent hierarchy filtering per project and usage metrics visualization panel
+
+## Phase Details
+
+### Phase 19: Structured Logging
+**Goal**: All orchestration components emit structured JSON logs with configurable levels, giving operators a consistent, machine-readable audit trail
+**Depends on**: Phase 18
+**Requirements**: OBS-01
+**Success Criteria** (what must be TRUE):
+  1. Every orchestration module (state_engine, spawn, monitor, snapshot, pool) emits log lines as JSON objects with timestamp, level, component, and message fields
+  2. Log level is configurable at startup without code changes (env var or config)
+  3. A log grep for a task ID returns structured entries from every component that touched that task
+  4. Existing stdout prints and ad-hoc logging replaced — no mixed plain-text/JSON output from orchestration layer
+**Plans**: TBD
+
+### Phase 20: Reliability Hardening
+**Goal**: The system never loses state to JSON corruption and catches misconfigured projects at load time with clear, actionable errors
+**Depends on**: Phase 19
+**Requirements**: REL-01, REL-02, REL-03
+**Success Criteria** (what must be TRUE):
+  1. Truncating or corrupting workspace-state.json then restarting the state engine restores the last valid state from backup rather than reinitializing empty
+  2. A project.json missing a required field (e.g. workspace) causes openclaw to exit immediately with a message identifying the missing field — not a KeyError traceback
+  3. An openclaw.json with a broken reports_to chain causes startup to fail fast with the specific agent ID and constraint violated
+  4. State writes always leave a recoverable backup; no write path skips the backup step
+**Plans**: TBD
+
+### Phase 21: State Engine Performance
+**Goal**: Orchestration throughput improves under concurrent spawns — Docker connections reused, state reads served from memory, and file writes minimized to changed fields only
+**Depends on**: Phase 20
+**Requirements**: PERF-01, PERF-02, PERF-03, PERF-04
+**Success Criteria** (what must be TRUE):
+  1. Spawning three L3 containers in sequence reuses a single Docker client connection — confirmed by absence of repeated connection setup in logs
+  2. Monitor polling and dashboard API reads acquire shared locks only and do not block concurrent spawn writes
+  3. Updating a single task's status writes only that task's fields to disk, not the entire state file
+  4. Cache hit rate for state reads is observable in structured logs; disk reads only occur on cache miss or detected external modification
+**Plans**: TBD
+
+### Phase 22: Observability Metrics
+**Goal**: Operators can see how long tasks take, how saturated each project's pool is, and the activity log stays bounded in size
+**Depends on**: Phase 21
+**Requirements**: OBS-02, OBS-03, OBS-04
+**Success Criteria** (what must be TRUE):
+  1. After a task completes, its spawn-to-complete duration, lock wait time, and retry count are retrievable from structured logs or state
+  2. Pool utilization for a project (active containers, queued tasks, completed count, semaphore saturation) is queryable via the monitor CLI
+  3. When the activity log exceeds its configured threshold, old entries are archived and the active log is trimmed — the log file does not grow unbounded
+  4. Pool saturation events (all slots occupied, task queued) appear as structured log entries with project and task context
+**Plans**: TBD
+
+### Phase 23: Per-Project Pool Config
+**Goal**: Each project can declare its own concurrency limit, pool isolation mode, and overflow behavior in project.json — no code changes required to adjust
+**Depends on**: Phase 22
+**Requirements**: POOL-01, POOL-02, POOL-03
+**Success Criteria** (what must be TRUE):
+  1. Setting l3_overrides.max_concurrent = 1 in a project's project.json limits that project to one active L3 container at a time, regardless of global pool size
+  2. A project configured for isolated pool mode runs containers exclusively against its own pool; shared-mode projects share the global semaphore
+  3. A project configured with overflow policy "reject" returns an immediate error when the queue is full; "wait" queues the task; "priority" elevates it above standard-priority queued tasks
+  4. Changing pool config in project.json takes effect on next spawn without restarting the orchestration layer
+**Plans**: TBD
+
+### Phase 24: Dashboard Metrics
+**Goal**: The occc dashboard shows which agents belong to the selected project and surfaces task performance and pool utilization as visual metrics
+**Depends on**: Phase 23
+**Requirements**: DSH-09, DSH-10
+**Success Criteria** (what must be TRUE):
+  1. Switching projects in the dashboard updates the agent hierarchy view to show only L2/L3 agents associated with that project — global agents remain visible
+  2. The usage metrics panel displays task completion times (last N tasks), pool utilization percentage, and container lifecycle counts for the selected project
+  3. The metrics panel updates without a page reload when task state changes (SWR polling or SSE)
+  4. An empty-state is shown (not a broken chart) when a project has no completed tasks yet
+**Plans**: TBD
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -63,3 +143,9 @@ See: `.planning/milestones/v1.1-ROADMAP.md` for full phase details.
 | 16. Phase 11/12 Integration Fixes | v1.1 | 2/2 | ✓ Complete | 2026-02-23 |
 | 17. Phase 11/12 Formal Verification | v1.1 | 2/2 | ✓ Complete | 2026-02-23 |
 | 18. Integration Hardening | v1.1 | 2/2 | ✓ Complete | 2026-02-23 |
+| 19. Structured Logging | v1.2 | 0/TBD | Not started | - |
+| 20. Reliability Hardening | v1.2 | 0/TBD | Not started | - |
+| 21. State Engine Performance | v1.2 | 0/TBD | Not started | - |
+| 22. Observability Metrics | v1.2 | 0/TBD | Not started | - |
+| 23. Per-Project Pool Config | v1.2 | 0/TBD | Not started | - |
+| 24. Dashboard Metrics | v1.2 | 0/TBD | Not started | - |
