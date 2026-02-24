@@ -53,7 +53,11 @@ def test_retrieve_memories_sync_success():
     with patch("skills.spawn_specialist.spawn.httpx.Client", return_value=mock_client_instance):
         result = _retrieve_memories_sync("http://localhost:18791", "test-project", "auth module")
 
-    assert result == mock_items
+    # _retrieve_memories_sync now returns (list, bool)
+    assert isinstance(result, tuple), f"Expected (list, bool) tuple, got {type(result)}"
+    items, ok = result
+    assert ok is True
+    assert items == mock_items
     mock_client_instance.post.assert_called_once_with(
         "/retrieve",
         json={
@@ -75,7 +79,11 @@ def test_retrieve_memories_sync_graceful_on_network_error():
     with patch("skills.spawn_specialist.spawn.httpx.Client", return_value=mock_client_instance):
         result = _retrieve_memories_sync("http://localhost:18791", "test-project", "query")
 
-    assert result == []
+    # _retrieve_memories_sync now returns (list, bool); ok=False on network error
+    assert isinstance(result, tuple), f"Expected (list, bool) tuple, got {type(result)}"
+    items, ok = result
+    assert ok is False
+    assert items == []
 
 
 def test_retrieve_memories_sync_empty_url_returns_empty():
@@ -83,7 +91,10 @@ def test_retrieve_memories_sync_empty_url_returns_empty():
     with patch("skills.spawn_specialist.spawn.httpx.Client") as MockClient:
         result = _retrieve_memories_sync("", "test-project", "query")
 
-    assert result == []
+    # _retrieve_memories_sync now returns (list, bool)
+    assert isinstance(result, tuple), f"Expected (list, bool) tuple, got {type(result)}"
+    items, ok = result
+    assert items == []
     MockClient.assert_not_called()
 
 
@@ -104,7 +115,11 @@ def test_retrieve_memories_sync_dict_response_with_items_key():
     with patch("skills.spawn_specialist.spawn.httpx.Client", return_value=mock_client_instance):
         result = _retrieve_memories_sync("http://localhost:18791", "proj", "query")
 
-    assert result == inner_items
+    # _retrieve_memories_sync now returns (list, bool)
+    assert isinstance(result, tuple), f"Expected (list, bool) tuple, got {type(result)}"
+    items, ok = result
+    assert ok is True
+    assert items == inner_items
 
 
 # ---------------------------------------------------------------------------

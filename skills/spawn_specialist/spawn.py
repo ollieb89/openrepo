@@ -160,42 +160,53 @@ def get_skill_timeout(skill_hint: str) -> int:
     return skill_config.get("timeout_seconds", 600)
 
 
-def _retrieve_memories_sync(base_url: str, project_id: str, query: str) -> list:
+def _retrieve_memories_sync(
+    base_url: str,
+    project_id: str,
+    query: str,
+    created_after: Optional[str] = None,
+) -> tuple:
     """Retrieve memories from memU synchronously using httpx.Client.
 
     Uses a sync HTTP client (not MemoryClient which is async) to avoid event-loop
     conflicts when spawn.py is called from pool.py's async context.
 
     Args:
-        base_url:   Root URL of the memU service, e.g. "http://localhost:18791".
-        project_id: Project ID used as the memU user_id scope key.
-        query:      Natural-language query for semantic retrieval.
+        base_url:      Root URL of the memU service, e.g. "http://localhost:18791".
+        project_id:    Project ID used as the memU user_id scope key.
+        query:         Natural-language query for semantic retrieval.
+        created_after: Optional ISO timestamp cursor. When set, sent in the payload
+                       so the router returns only newer items. Pass None for a full
+                       fetch (first spawn or cursor fallback).
 
     Returns:
-        List of memory dicts on success, [] on any error (graceful degradation).
+        (list, bool) tuple — bool=True on success, bool=False on any network error.
+        Callers must only advance the cursor when bool is True.
     """
     if not base_url or not project_id:
-        return []
+        return [], True  # Not a network error — treat as success with empty result
     payload = {
         "queries": [{"role": "user", "content": query}],
         "where": {"user_id": project_id},
     }
+    if created_after:
+        payload["created_after"] = created_after
     try:
         with httpx.Client(base_url=base_url, timeout=_RETRIEVE_TIMEOUT) as client:
             response = client.post("/retrieve", json=payload)
             response.raise_for_status()
             data = response.json()
             if isinstance(data, list):
-                return data[:_RETRIEVE_LIMIT]
+                return data[:_RETRIEVE_LIMIT], True
             if isinstance(data, dict) and "items" in data:
-                return data["items"][:_RETRIEVE_LIMIT]
-            return []
+                return data["items"][:_RETRIEVE_LIMIT], True
+            return [], True
     except Exception as exc:
         logger.warning(
             "Pre-spawn memory retrieval failed (non-blocking)",
             extra={"project_id": project_id, "error": str(exc)},
         )
-        return []
+        return [], False
 
 
 # Category-to-section mapping for primary routing in _format_memory_context().
@@ -531,11 +542,21 @@ def spawn_l3_specialist(
     except docker.errors.NotFound:
         pass  # Container doesn't exist, which is fine
 
-    # --- Pre-spawn memory retrieval and SOUL injection ---
+    # --- Pre-spawn memory retrieval and SOUL injection (cursor-based delta fetch) ---
     memu_cfg = get_memu_config()
     memu_url = memu_cfg.get("memu_api_url", "")
     query = f"{task_description} skill:{skill_hint}"
-    memories = _retrieve_memories_sync(memu_url, project_id, query)
+
+    # Read cursor from state — None on first spawn or if cursor is corrupt/absent
+    cursor = jarvis.get_memory_cursor(project_id)
+
+    memories, fetch_ok = _retrieve_memories_sync(memu_url, project_id, query, created_after=cursor)
+
+    # Advance cursor only when fetch succeeded — failed fetches must not skip the window
+    if fetch_ok:
+        from datetime import datetime, timezone
+        jarvis.update_memory_cursor(project_id, datetime.now(timezone.utc).isoformat())
+
     memory_context = _format_memory_context(memories)
 
     if memory_context:

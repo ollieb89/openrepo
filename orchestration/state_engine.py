@@ -502,3 +502,68 @@ class JarvisState:
         """
         state = self.read_state()
         return state.get('tasks', {})
+
+    def get_memory_cursor(self, project_id: str) -> Optional[str]:
+        """Return the ISO timestamp cursor for project_id, or None if not set.
+
+        Reads from state.json under metadata.memory_cursors[project_id].
+        Validates the value is a parseable ISO timestamp before returning.
+
+        Returns None (not raises) on any read error — callers fall back to full fetch.
+        Logs a warning when cursor is present but unparseable (corrupt cursor case).
+        """
+        try:
+            state = self.read_state()
+            cursors = state.get("metadata", {}).get("memory_cursors", {})
+            value = cursors.get(project_id)
+            if not isinstance(value, str) or not value:
+                return None
+            # Validate parseable as ISO datetime (import inside to avoid circular import risk)
+            from datetime import datetime
+            datetime.fromisoformat(value.rstrip("Z"))
+            return value
+        except Exception as exc:
+            logger.warning(
+                "Failed to read memory cursor — will do full fetch",
+                extra={"project_id": project_id, "error": str(exc)},
+            )
+            return None
+
+    def update_memory_cursor(self, project_id: str, iso_timestamp: str) -> None:
+        """Persist the ISO timestamp cursor for project_id under metadata.memory_cursors.
+
+        Uses LOCK_EX read-modify-write pattern (same as existing write methods).
+        Creates metadata.memory_cursors dict if absent.
+
+        Logs and swallows all exceptions — cursor write failure must never abort
+        the spawn flow. Does NOT raise.
+        """
+        try:
+            for attempt in range(self.lock_retry_attempts):
+                try:
+                    with self.state_file.open("r+") as f:
+                        self._acquire_lock(f.fileno(), fcntl.LOCK_EX)
+                        try:
+                            state = self._read_state_locked(f)
+                            if "metadata" not in state:
+                                state["metadata"] = {}
+                            if "memory_cursors" not in state["metadata"]:
+                                state["metadata"]["memory_cursors"] = {}
+                            state["metadata"]["memory_cursors"][project_id] = iso_timestamp
+                            self._write_state_locked(f, state)
+                            logger.debug(
+                                "Memory cursor updated",
+                                extra={"project_id": project_id, "cursor": iso_timestamp},
+                            )
+                            return
+                        finally:
+                            self._release_lock(f.fileno())
+                except TimeoutError:
+                    if attempt == self.lock_retry_attempts - 1:
+                        raise
+                    time.sleep(0.5 * (attempt + 1))
+        except Exception as exc:
+            logger.warning(
+                "Failed to persist memory cursor — cursor lost for this spawn",
+                extra={"project_id": project_id, "error": str(exc)},
+            )
