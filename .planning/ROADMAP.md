@@ -176,4 +176,4 @@ Plans:
 | 22. Observability Metrics | 2/2 | Complete    | 2026-02-24 | - |
 | 23. Per-Project Pool Config | v1.2 | 0/TBD | Not started | - |
 | 24. Dashboard Metrics | v1.2 | 0/TBD | Not started | - |
-| 25. Monitor Cache Fix | 1/1 | Complete   | 2026-02-24 | - |
+| 25. Monitor Cache Fix | 1/1 | Complete    | 2026-02-24 | - |
