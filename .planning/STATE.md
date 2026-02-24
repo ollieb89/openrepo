@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 36 of 36 (Dashboard Memory Panel)
-Plan: 1 of 3 (complete)
-Status: Phase 36 in progress — Plan 01 done
-Last activity: 2026-02-24 — Phase 36 Plan 01 executed (DSH-11, DSH-14: API proxy routes, MemoryItem types, useMemory SWR hook, Memory sidebar nav, ToastContainer mounted globally)
+Plan: 2 of 3 (complete)
+Status: Phase 36 in progress — Plans 01 and 02 done
+Last activity: 2026-02-24 — Phase 36 Plan 02 executed (memory browse UI: page route, MemoryPanel, MemoryStatBar, MemoryFilters, MemoryTable, MemoryRow with sortable columns and accordion rows)
 
 Progress: [██████████] 100% (v1.3 gap closure)
 
@@ -93,6 +93,12 @@ Phase 36 Plan 01 decisions:
 - ToastContainer placed after ProjectProvider but inside ThemeProvider for dark mode support
 - Brain/nerve Heroicons outline SVG used for Memory sidebar nav item
 
+Phase 36 Plan 02 decisions:
+- Array.from(new Set(...)) used instead of spread operator for Set to avoid TS2802 downlevelIteration error
+- All sorting and filtering done client-side in MemoryPanel — data set is small (memory items per project)
+- formatDate uses epoch*1000 conversion for numeric timestamps from memU API
+- MemoryRow uses Set<string> for EXCLUDED_COLUMNS to filter extra metadata keys efficiently
+
 ### Pending Todos
 
 None.
@@ -104,5 +110,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 36-01-PLAN.md — API proxy routes, MemoryItem types, useMemory SWR hook, Memory sidebar nav, ToastContainer mounted globally
-Resume file: .planning/phases/36-dashboard-memory-panel/36-01-SUMMARY.md
+Stopped at: Completed 36-02-PLAN.md — memory browse UI: /memory page route, MemoryPanel, MemoryStatBar, MemoryFilters, MemoryTable, MemoryRow accordion
+Resume file: .planning/phases/36-dashboard-memory-panel/36-02-SUMMARY.md
