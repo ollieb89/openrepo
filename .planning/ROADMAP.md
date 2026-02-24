@@ -275,6 +275,6 @@ Plans:
 | 31. L3 In-Execution Memory Queries | v1.3 | 0/? | Not started | - |
 | 32. Dashboard Memory Panel | v1.3 | 0/? | Not started | - |
 | 33. Integration Gap Closure | 2/2 | Complete    | 2026-02-24 | - |
-| 34. Review Decision Category Fix | 1/1 | Complete   | 2026-02-24 | - |
+| 34. Review Decision Category Fix | 1/1 | Complete    | 2026-02-24 | - |
 | 35. L3 In-Execution Memory Queries | v1.3 | 0/? | Not started | - |
 | 36. Dashboard Memory Panel | v1.3 | 0/? | Not started | - |
