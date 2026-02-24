@@ -1,18 +1,35 @@
-# Planning State: Nexus-Sync
+# Planning State: Nexus-Sync v1.1
 
 ## Project Reference
 - Project: Nexus-Sync
-- Shipped version: v1.4
-- Shipped date: 2026-02-24
+- Core value: Global Project Brain with cross-project risk intelligence.
+- Planning artifacts: `PROJECT.md`, `REQUIREMENTS.md`, `ROADMAP.md`
 
-## Current Status
-- Milestone v1.4 is COMPLETE and ARCHIVED.
-- Ready for next milestone initialization.
+## Current Milestone: v1.1
+- Theme: Intelligence Depth (Risk Drift & Dependencies)
+- Active phase: Phase 6 - Global Context Graph
+- Phase status: Planned
+- Started: 2026-02-24
+- Completed plans in milestone: 0/11
 
-## Stats (v1.4)
-- Phases: 5
-- Plans: 19
-- Requirements: 19/19 (100%)
+## Progress Snapshot
+- Roadmap phases: 4 (Milestone v1.1)
+- v1.1 requirements total: 12
+- v1.1 requirements mapped: 12
+- v1.1 requirements unmapped: 0
+- Completed requirements: 0
+- In progress requirements: 0
+- Pending requirements: 12
+
+## Decisions
+- [v1.1] Use Adjacency List + Recursive CTEs for local graph representation.
+- [v1.1] Structured Prompt Chaining for contradiction/risk detection between chat and tickets.
+- [v1.1] Microsoft Graph Delta Queries for performant Teams ingestion.
+- [v1.1] Default 7-day look-back for risk auditing to prevent stale alerts.
+
+## Immediate Focus
+- Initialize Phase 6 (Global Context Graph) schema and persistence.
+- Map bidirectional relationships between existing Slack decisions and GitHub/Linear issues.
 
 ---
-*Last updated: 2026-02-24 after v1.4 archiving*
+*Last updated: 2026-02-24 for v1.1 initialization*
