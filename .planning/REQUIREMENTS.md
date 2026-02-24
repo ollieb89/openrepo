@@ -13,7 +13,7 @@ Requirements for v1.4 Operational Maturity. Each maps to roadmap phases.
 - [x] **REL-05**: L3 container handles SIGTERM via bash trap, writes `interrupted` status to Jarvis state before exit
 - [x] **REL-06**: Pool scans for orphaned tasks (in_progress/interrupted/starting beyond skill timeout) on startup and applies configurable recovery policy (mark_failed / auto_retry / manual)
 - [x] **REL-07**: Recovery policy is configurable per-project via `l3_overrides.recovery_policy` in project.json
-- [x] **REL-08**: Pending fire-and-forget asyncio memorization tasks are drained (gathered) on pool shutdown instead of silently lost
+- [ ] **REL-08**: Pending fire-and-forget asyncio memorization tasks are drained (gathered) on pool shutdown instead of silently lost
 
 ### Quality (Memory Health Monitor)
 
@@ -26,10 +26,10 @@ Requirements for v1.4 Operational Maturity. Each maps to roadmap phases.
 
 ### Advanced (L1 Strategic Suggestions)
 
-- [x] **ADV-01**: Pattern extraction engine queries memU for rejection clusters and identifies recurring failure patterns via frequency counting (threshold: ≥3 similar rejections within lookback window)
-- [x] **ADV-02**: Suggestion generator produces concrete diff-style SOUL amendments with pattern description, evidence count, and exact text to add to soul-override.md
-- [x] **ADV-03**: Pending suggestions stored in `workspace/.openclaw/<project_id>/soul-suggestions.json`
-- [x] **ADV-04**: L2 acceptance flow reads pending suggestions and accepts (appends to soul-override.md, re-renders SOUL) or rejects (memorizes rejection reason)
+- [ ] **ADV-01**: Pattern extraction engine queries memU for rejection clusters and identifies recurring failure patterns via frequency counting (threshold: ≥3 similar rejections within lookback window)
+- [ ] **ADV-02**: Suggestion generator produces concrete diff-style SOUL amendments with pattern description, evidence count, and exact text to add to soul-override.md
+- [ ] **ADV-03**: Pending suggestions stored in `workspace/.openclaw/<project_id>/soul-suggestions.json`
+- [ ] **ADV-04**: L2 acceptance flow reads pending suggestions and accepts (appends to soul-override.md, re-renders SOUL) or rejects (memorizes rejection reason)
 - [x] **ADV-05**: Dashboard surfaces pending SOUL suggestions with accept/reject actions for operator review
 - [x] **ADV-06**: Auto-apply of suggestions without human approval is structurally prevented (mandatory approval gate)
 
@@ -74,17 +74,17 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REL-05 | Phase 39 | Complete |
 | REL-06 | Phase 39 | Complete |
 | REL-07 | Phase 39 | Complete |
-| REL-08 | Phase 39 | Complete |
+| REL-08 | Phase 43 | Pending |
 | QUAL-01 | Phase 40 | Complete |
 | QUAL-02 | Phase 40 | Complete |
 | QUAL-03 | Phase 40 | Complete |
 | QUAL-04 | Phase 40 | Complete |
 | QUAL-05 | Phase 40 | Complete |
 | QUAL-06 | Phase 40 | Complete |
-| ADV-01 | Phase 41 | Complete |
-| ADV-02 | Phase 41 | Complete |
-| ADV-03 | Phase 41 | Complete |
-| ADV-04 | Phase 41 | Complete |
+| ADV-01 | Phase 43 | Pending |
+| ADV-02 | Phase 43 | Pending |
+| ADV-03 | Phase 43 | Pending |
+| ADV-04 | Phase 43 | Pending |
 | ADV-05 | Phase 41 | Complete |
 | ADV-06 | Phase 41 | Complete |
 | PERF-05 | Phase 42 | Complete |
@@ -96,6 +96,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 - v1.4 requirements: 21 total
 - Mapped to phases: 21
 - Unmapped: 0 ✓
+- Pending (gap closure): 5 (ADV-01, ADV-02, ADV-03, ADV-04, REL-08 → Phase 43)
 
 ---
 *Requirements defined: 2026-02-24*
