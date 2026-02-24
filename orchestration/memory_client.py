@@ -168,7 +168,7 @@ class MemoryClient:
     async def memorize(
         self,
         content: str,
-        category: str = "general",
+        category: Optional[str] = None,
     ) -> Optional[MemorizeResult]:
         """
         Store a memory entry scoped to this client's project and agent.
@@ -178,8 +178,10 @@ class MemoryClient:
 
         Args:
             content:  The text to memorize (stored as resource_url per memU API).
-            category: Optional category label (currently unused in payload but
-                      kept for future metadata extensions).
+            category: Optional category label sent at the top level of the POST
+                      payload. FastAPI validates it against CategoryValue; the
+                      router then injects it into the memu-py user dict for storage.
+                      Pass None (default) to omit the field entirely.
 
         Returns:
             MemorizeResult(accepted=True, ...) on HTTP 202
@@ -194,6 +196,8 @@ class MemoryClient:
                 "agent_type": self.agent_type.value,
             },
         }
+        if category is not None:
+            payload["category"] = category
         try:
             response = await client.post(
                 "/memorize",

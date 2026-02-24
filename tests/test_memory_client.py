@@ -106,6 +106,49 @@ async def test_memorize_returns_none_on_failure(respx_mock):
     assert result is None
 
 
+@respx.mock(base_url=MEMU_BASE)
+async def test_memorize_includes_category_in_payload(respx_mock):
+    """memorize() sends category at the top level of the POST payload when provided."""
+    mock_route = respx_mock.post("/memorize").mock(
+        return_value=httpx.Response(
+            202,
+            json={"status": "accepted", "message": "Memorization queued"},
+        )
+    )
+
+    async with MemoryClient(MEMU_BASE, "pumplai", AgentType.L2_PM) as client:
+        result = await client.memorize("review decision made", category="review_decision")
+
+    assert result == MemorizeResult(accepted=True, message="accepted")
+    assert mock_route.called, "POST /memorize was not called"
+    sent_body = json.loads(mock_route.calls.last.request.content)
+    assert "category" in sent_body, "category must be present in payload when provided"
+    assert sent_body["category"] == "review_decision", (
+        f"Expected category='review_decision', got {sent_body.get('category')}"
+    )
+
+
+@respx.mock(base_url=MEMU_BASE)
+async def test_memorize_omits_category_when_none(respx_mock):
+    """memorize() does not include category in payload when not provided (default None)."""
+    mock_route = respx_mock.post("/memorize").mock(
+        return_value=httpx.Response(
+            202,
+            json={"status": "accepted", "message": "Memorization queued"},
+        )
+    )
+
+    async with MemoryClient(MEMU_BASE, "pumplai", AgentType.L3_CODE) as client:
+        result = await client.memorize("some content")
+
+    assert result == MemorizeResult(accepted=True, message="accepted")
+    assert mock_route.called, "POST /memorize was not called"
+    sent_body = json.loads(mock_route.calls.last.request.content)
+    assert "category" not in sent_body, (
+        f"category must NOT be in payload when not provided, got keys: {list(sent_body.keys())}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # retrieve() tests
 # ---------------------------------------------------------------------------
