@@ -21,6 +21,7 @@ from .project_config import (
     get_active_project_id,
     get_state_path,
     get_snapshot_dir,
+    get_pool_config,
     ProjectNotFoundError,
 )
 from .config_validator import validate_project_config, validate_agent_hierarchy, ConfigValidationError
@@ -53,7 +54,7 @@ __all__ = [
     'load_project_config', 'load_and_validate_openclaw_config',
     'get_workspace_path', 'get_tech_stack',
     'get_agent_mapping', 'get_active_project_id',
-    'get_state_path', 'get_snapshot_dir', 'ProjectNotFoundError',
+    'get_state_path', 'get_snapshot_dir', 'get_pool_config', 'ProjectNotFoundError',
 
     # Config validation
     'validate_project_config', 'validate_agent_hierarchy', 'ConfigValidationError',

@@ -12,6 +12,20 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from .config_validator import validate_project_config, validate_agent_hierarchy, ConfigValidationError  # noqa: F401
+from .logging import get_logger
+
+_logger = get_logger("project_config")
+
+# Pool config defaults — also used by pool.py as fallback reference
+_POOL_CONFIG_DEFAULTS: Dict[str, Any] = {
+    "max_concurrent": 3,
+    "pool_mode": "shared",
+    "overflow_policy": "wait",
+    "queue_timeout_s": 300,
+}
+
+_VALID_POOL_MODES = {"shared", "isolated"}
+_VALID_OVERFLOW_POLICIES = {"reject", "wait", "priority"}
 
 
 def _find_project_root() -> Path:
@@ -116,6 +130,110 @@ def get_agent_mapping(project_id: Optional[str] = None) -> Dict[str, str]:
     """Get the agent role -> ID mapping for a project."""
     config = load_project_config(project_id)
     return config.get("agents", {})
+
+
+def get_pool_config(project_id: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Load and validate pool configuration from a project's l3_overrides.
+
+    Reads project.json fresh on every call (supports hot-reload when project.json
+    is modified between spawn calls).
+
+    Returns a dict with all pool keys resolved to safe defaults:
+        {
+            "max_concurrent": int,       # default 3
+            "pool_mode": str,            # default "shared" — values: "shared", "isolated"
+            "overflow_policy": str,      # default "wait" — values: "reject", "wait", "priority"
+            "queue_timeout_s": int,      # default 300
+        }
+
+    Invalid values produce a warning log and fall back to defaults.
+    This function NEVER raises on bad pool config — callers should always
+    receive a usable config dict.
+
+    Args:
+        project_id: Explicit project ID. If None, uses the active project.
+
+    Returns:
+        Dict with resolved pool configuration.
+    """
+    defaults = _POOL_CONFIG_DEFAULTS.copy()
+
+    try:
+        config = load_project_config(project_id)
+    except Exception as exc:
+        _logger.warning(
+            "Failed to load project config for pool — using defaults",
+            extra={"project_id": project_id, "error": str(exc)},
+        )
+        return defaults
+
+    overrides = config.get("l3_overrides", {})
+    result = defaults.copy()
+
+    # max_concurrent: must be a positive int
+    if "max_concurrent" in overrides:
+        val = overrides["max_concurrent"]
+        if isinstance(val, int) and val > 0:
+            result["max_concurrent"] = val
+        else:
+            _logger.warning(
+                "Invalid pool config: max_concurrent must be a positive integer — using default",
+                extra={
+                    "project_id": project_id,
+                    "got": val,
+                    "default": defaults["max_concurrent"],
+                },
+            )
+
+    # pool_mode: must be one of the known modes
+    if "pool_mode" in overrides:
+        val = overrides["pool_mode"]
+        if isinstance(val, str) and val in _VALID_POOL_MODES:
+            result["pool_mode"] = val
+        else:
+            _logger.warning(
+                "Invalid pool config: pool_mode must be one of %s — using default",
+                sorted(_VALID_POOL_MODES),
+                extra={
+                    "project_id": project_id,
+                    "got": val,
+                    "default": defaults["pool_mode"],
+                },
+            )
+
+    # overflow_policy: must be one of the known policies
+    if "overflow_policy" in overrides:
+        val = overrides["overflow_policy"]
+        if isinstance(val, str) and val in _VALID_OVERFLOW_POLICIES:
+            result["overflow_policy"] = val
+        else:
+            _logger.warning(
+                "Invalid pool config: overflow_policy must be one of %s — using default",
+                sorted(_VALID_OVERFLOW_POLICIES),
+                extra={
+                    "project_id": project_id,
+                    "got": val,
+                    "default": defaults["overflow_policy"],
+                },
+            )
+
+    # queue_timeout_s: must be a positive int
+    if "queue_timeout_s" in overrides:
+        val = overrides["queue_timeout_s"]
+        if isinstance(val, int) and val > 0:
+            result["queue_timeout_s"] = val
+        else:
+            _logger.warning(
+                "Invalid pool config: queue_timeout_s must be a positive integer — using default",
+                extra={
+                    "project_id": project_id,
+                    "got": val,
+                    "default": defaults["queue_timeout_s"],
+                },
+            )
+
+    return result
 
 
 class ProjectNotFoundError(Exception):

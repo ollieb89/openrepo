@@ -84,6 +84,66 @@ def validate_project_config(config: Dict[str, Any], manifest_path: str) -> None:
             logger.error("Project config validation error", extra={"error": err, "manifest_path": manifest_path})
         raise ConfigValidationError(errors)
 
+    # Advisory pool config validation (non-fatal warnings only)
+    l3_overrides = config.get("l3_overrides", {})
+    if l3_overrides:
+        _validate_pool_config(l3_overrides, manifest_path)
+
+
+_VALID_POOL_MODES = {"shared", "isolated"}
+_VALID_OVERFLOW_POLICIES = {"reject", "wait", "priority"}
+
+
+def _validate_pool_config(l3_overrides: Dict[str, Any], manifest_path: str) -> None:
+    """
+    Validate pool-specific keys within l3_overrides.
+
+    Non-fatal: all issues produce warnings rather than raising ConfigValidationError.
+    This matches the locked decision: "Invalid config values log a warning and fall
+    back to defaults — don't crash or block spawns."
+
+    Args:
+        l3_overrides: The l3_overrides dict from project.json.
+        manifest_path: Filesystem path (used in warning messages).
+    """
+    # max_concurrent: must be a positive int if present
+    if "max_concurrent" in l3_overrides:
+        val = l3_overrides["max_concurrent"]
+        if not isinstance(val, int) or val <= 0:
+            logger.warning(
+                "project.json pool config warning: max_concurrent must be a positive integer — will use default (3)",
+                extra={"manifest_path": manifest_path, "got": val},
+            )
+
+    # pool_mode: must be a known string if present
+    if "pool_mode" in l3_overrides:
+        val = l3_overrides["pool_mode"]
+        if not isinstance(val, str) or val not in _VALID_POOL_MODES:
+            logger.warning(
+                "project.json pool config warning: pool_mode must be one of %s — will use default (shared)",
+                sorted(_VALID_POOL_MODES),
+                extra={"manifest_path": manifest_path, "got": val},
+            )
+
+    # overflow_policy: must be a known string if present
+    if "overflow_policy" in l3_overrides:
+        val = l3_overrides["overflow_policy"]
+        if not isinstance(val, str) or val not in _VALID_OVERFLOW_POLICIES:
+            logger.warning(
+                "project.json pool config warning: overflow_policy must be one of %s — will use default (wait)",
+                sorted(_VALID_OVERFLOW_POLICIES),
+                extra={"manifest_path": manifest_path, "got": val},
+            )
+
+    # queue_timeout_s: must be a positive int if present
+    if "queue_timeout_s" in l3_overrides:
+        val = l3_overrides["queue_timeout_s"]
+        if not isinstance(val, int) or val <= 0:
+            logger.warning(
+                "project.json pool config warning: queue_timeout_s must be a positive integer — will use default (300)",
+                extra={"manifest_path": manifest_path, "got": val},
+            )
+
 
 def validate_agent_hierarchy(config: Dict[str, Any], config_path: str) -> None:
     """
