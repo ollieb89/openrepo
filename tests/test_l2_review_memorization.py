@@ -364,3 +364,43 @@ def test_diff_summary_truncated_to_500(mock_cfg):
         # The diff_summary is sliced to [:500] before embedding
         assert "x" * 501 not in content
         assert "x" * 500 in content or "x" * 499 in content  # truncated portion present
+
+
+# ---------------------------------------------------------------------------
+# 12. category field is present at top level of payload (MEM-02)
+# ---------------------------------------------------------------------------
+
+
+@patch("orchestration.project_config.get_memu_config", return_value=_MEMU_CFG_ENABLED)
+def test_memorize_review_decision_sends_category_field(mock_cfg):
+    """_memorize_review_decision() sends category='review_decision' at top level of payload."""
+    payload_captured = []
+
+    def fake_thread_factory(target=None, daemon=None, name=None):
+        # Run target synchronously to capture payload
+        with patch("httpx.Client") as MockClient:
+            mock_client = MagicMock()
+            MockClient.return_value.__enter__ = MagicMock(return_value=mock_client)
+            MockClient.return_value.__exit__ = MagicMock(return_value=False)
+            mock_client.post = MagicMock()
+            target()
+            if mock_client.post.called:
+                payload_captured.append(mock_client.post.call_args[1]["json"])
+        m = MagicMock()
+        m.start = MagicMock()
+        return m
+
+    with patch("orchestration.snapshot.threading.Thread", side_effect=fake_thread_factory):
+        _memorize_review_decision(
+            project_id="proj",
+            task_id="T-001",
+            verdict="merge",
+            reasoning="all tests pass",
+        )
+
+    assert payload_captured, "No payload was captured — thread target was not called"
+    payload = payload_captured[0]
+
+    # category is at the top level of the dict (not nested under "user")
+    assert payload["category"] == "review_decision"
+    assert "category" not in payload.get("user", {})  # not nested under user

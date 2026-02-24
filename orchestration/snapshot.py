@@ -74,6 +74,7 @@ def _memorize_review_decision(
         payload = {
             "resource_url": content,
             "modality": "conversation",
+            "category": "review_decision",
             "user": {
                 "user_id": project_id,
                 "agent_type": AgentType.L2_PM.value,
