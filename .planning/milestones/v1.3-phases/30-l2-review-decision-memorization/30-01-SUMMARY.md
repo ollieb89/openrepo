@@ -112,3 +112,11 @@ None - no external service configuration required.
 ---
 *Phase: 30-l2-review-decision-memorization*
 *Completed: 2026-02-24*
+
+## Self-Check: PASSED
+
+- FOUND: orchestration/snapshot.py
+- FOUND: tests/test_l2_review_memorization.py
+- FOUND: 30-01-SUMMARY.md
+- FOUND: commit 8e03810 (feat: _memorize_review_decision + call-site wiring)
+- FOUND: commit 5fbaba3 (test: 11 unit tests)
