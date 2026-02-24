@@ -199,7 +199,7 @@ Plans:
 | 23. Per-Project Pool Config | v1.2 | 2/2 | ✓ Complete | 2026-02-24 |
 | 24. Dashboard Metrics | v1.2 | 2/2 | ✓ Complete | 2026-02-24 |
 | 25. Monitor Cache Fix | v1.2 | 1/1 | ✓ Complete | 2026-02-24 |
-| 26. memU Infrastructure | 2/2 | Complete   | 2026-02-24 | - |
+| 26. memU Infrastructure | 2/2 | Complete    | 2026-02-24 | - |
 | 27. Memory Client + Scoping | v1.3 | 0/? | Not started | - |
 | 28. L3 Auto-Memorization | v1.3 | 0/? | Not started | - |
 | 29. Pre-Spawn Retrieval + SOUL Injection | v1.3 | 0/? | Not started | - |
