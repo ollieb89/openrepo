@@ -13,7 +13,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 
 # Allow imports from skills/spawn_specialist/ (e.g., `from spawn import ...`, `from pool import ...`)
-_skills_spawn_dir = PROJECT_ROOT / "skills" / "spawn_specialist"
+_skills_spawn_dir = PROJECT_ROOT / "skills" / "spawn"
 if str(_skills_spawn_dir) not in sys.path:
     sys.path.insert(0, str(_skills_spawn_dir))
 

@@ -13,7 +13,7 @@
       "name": "Hub-and-Spoke Router (CLI)",
       "description": "Delegates tasks to L2 project managers via the OpenClaw CLI",
       "timeout_seconds": 120,
-      "skill_path": "skills/router_skill"
+      "skill_path": "skills/router"
     }
   },
   "subordinates": ["pumplai_pm"],
