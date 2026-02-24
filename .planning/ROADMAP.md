@@ -92,7 +92,10 @@ Plans:
   2. Monitor polling and dashboard API reads acquire shared locks only and do not block concurrent spawn writes
   3. Updating a single task's status writes only that task's fields to disk, not the entire state file
   4. Cache hit rate for state reads is observable in structured logs; disk reads only occur on cache miss or detected external modification
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 21-01-PLAN.md — Docker client pooling (shared singleton with lazy init and reconnect)
+- [ ] 21-02-PLAN.md — State engine caching, write-through updates, and cached shared-lock reads
 
 ### Phase 22: Observability Metrics
 **Goal**: Operators can see how long tasks take, how saturated each project's pool is, and the activity log stays bounded in size
@@ -151,7 +154,7 @@ Plans:
 | 18. Integration Hardening | v1.1 | 2/2 | ✓ Complete | 2026-02-23 |
 | 19. Structured Logging | 2/2 | Complete    | 2026-02-24 | - |
 | 20. Reliability Hardening | 2/2 | Complete    | 2026-02-24 | - |
-| 21. State Engine Performance | v1.2 | 0/TBD | Not started | - |
+| 21. State Engine Performance | v1.2 | 0/2 | Planned | - |
 | 22. Observability Metrics | v1.2 | 0/TBD | Not started | - |
 | 23. Per-Project Pool Config | v1.2 | 0/TBD | Not started | - |
 | 24. Dashboard Metrics | v1.2 | 0/TBD | Not started | - |
