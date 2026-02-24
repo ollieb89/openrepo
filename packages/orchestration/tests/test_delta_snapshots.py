@@ -9,7 +9,6 @@ Validates all four PERF requirements:
 """
 
 import json
-import sys
 import time
 import tempfile
 from pathlib import Path
@@ -17,13 +16,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-# Project root on path — matches pattern in test_spawn_memory.py and test_health_scan.py
-sys.path.insert(0, "/home/ollie/.openclaw")
-
-# Docker memory service router on path — needed for _filter_after import
-sys.path.insert(0, "/home/ollie/.openclaw/docker/memory/memory_service")
-
-from orchestration.state_engine import JarvisState
+from openclaw.state_engine import JarvisState
 
 
 # ---------------------------------------------------------------------------
@@ -271,13 +264,13 @@ def test_filter_after_bad_cursor_passthrough():
 
 def test_prune_called_when_configured(tmp_path):
     """capture_semantic_snapshot calls cleanup_old_snapshots when max_snapshots is set."""
-    from orchestration.snapshot import capture_semantic_snapshot
+    from openclaw.snapshot import capture_semantic_snapshot
 
     with (
-        patch("orchestration.snapshot.load_project_config") as mock_load_cfg,
-        patch("orchestration.snapshot.cleanup_old_snapshots") as mock_cleanup,
-        patch("orchestration.snapshot.subprocess.run") as mock_run,
-        patch("orchestration.snapshot.get_snapshot_dir") as mock_snapdir,
+        patch("openclaw.snapshot.load_project_config") as mock_load_cfg,
+        patch("openclaw.snapshot.cleanup_old_snapshots") as mock_cleanup,
+        patch("openclaw.snapshot.subprocess.run") as mock_run,
+        patch("openclaw.snapshot.get_snapshot_dir") as mock_snapdir,
     ):
         # Provide a valid max_snapshots in l3_overrides
         mock_load_cfg.return_value = {"l3_overrides": {"max_snapshots": 5}}
@@ -313,13 +306,13 @@ def test_prune_called_when_configured(tmp_path):
 
 def test_prune_not_called_when_unconfigured(tmp_path):
     """capture_semantic_snapshot does NOT call cleanup_old_snapshots when max_snapshots absent."""
-    from orchestration.snapshot import capture_semantic_snapshot
+    from openclaw.snapshot import capture_semantic_snapshot
 
     with (
-        patch("orchestration.snapshot.load_project_config") as mock_load_cfg,
-        patch("orchestration.snapshot.cleanup_old_snapshots") as mock_cleanup,
-        patch("orchestration.snapshot.subprocess.run") as mock_run,
-        patch("orchestration.snapshot.get_snapshot_dir") as mock_snapdir,
+        patch("openclaw.snapshot.load_project_config") as mock_load_cfg,
+        patch("openclaw.snapshot.cleanup_old_snapshots") as mock_cleanup,
+        patch("openclaw.snapshot.subprocess.run") as mock_run,
+        patch("openclaw.snapshot.get_snapshot_dir") as mock_snapdir,
     ):
         # l3_overrides with no max_snapshots key
         mock_load_cfg.return_value = {"l3_overrides": {}}
@@ -350,13 +343,13 @@ def test_prune_not_called_when_unconfigured(tmp_path):
 
 def test_prune_failure_nonfatal(tmp_path):
     """capture_semantic_snapshot completes without raising when cleanup_old_snapshots raises OSError."""
-    from orchestration.snapshot import capture_semantic_snapshot
+    from openclaw.snapshot import capture_semantic_snapshot
 
     with (
-        patch("orchestration.snapshot.load_project_config") as mock_load_cfg,
-        patch("orchestration.snapshot.cleanup_old_snapshots") as mock_cleanup,
-        patch("orchestration.snapshot.subprocess.run") as mock_run,
-        patch("orchestration.snapshot.get_snapshot_dir") as mock_snapdir,
+        patch("openclaw.snapshot.load_project_config") as mock_load_cfg,
+        patch("openclaw.snapshot.cleanup_old_snapshots") as mock_cleanup,
+        patch("openclaw.snapshot.subprocess.run") as mock_run,
+        patch("openclaw.snapshot.get_snapshot_dir") as mock_snapdir,
     ):
         mock_load_cfg.return_value = {"l3_overrides": {"max_snapshots": 10}}
 
