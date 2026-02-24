@@ -41,14 +41,42 @@ else
   update_state "in_progress" "Created new staging branch: ${STAGING_BRANCH}"
 fi
 
+# 2b. Read SOUL file if mounted — inject into CLI runtime as system prompt
+SOUL_ARGS=()
+if [[ -n "${SOUL_FILE:-}" && -f "${SOUL_FILE}" ]]; then
+  SOUL_CONTENT=$(cat "${SOUL_FILE}")
+  if [[ -n "${SOUL_CONTENT}" ]]; then
+    update_state "in_progress" "SOUL_FILE found (${#SOUL_CONTENT} chars), injecting into ${CLI_RUNTIME}"
+    case "${CLI_RUNTIME}" in
+      claude-code)
+        SOUL_ARGS=(--system-prompt "$SOUL_CONTENT")
+        ;;
+      gemini-cli)
+        # gemini-cli reads GEMINI.md from working directory as system context
+        echo "$SOUL_CONTENT" > /workspace/GEMINI.md
+        ;;
+      codex)
+        SOUL_ARGS=(--system-prompt "$SOUL_CONTENT")
+        ;;
+      *)
+        update_state "in_progress" "WARNING: Unknown runtime '${CLI_RUNTIME}' — SOUL_FILE not injected"
+        ;;
+    esac
+  else
+    update_state "in_progress" "WARNING: SOUL_FILE exists but is empty: ${SOUL_FILE}"
+  fi
+elif [[ -n "${SOUL_FILE:-}" ]]; then
+  update_state "in_progress" "WARNING: SOUL_FILE set but file not found: ${SOUL_FILE}"
+fi
+
 # 3. Execute task based on skill hint
 update_state "in_progress" "Executing task with ${CLI_RUNTIME}..."
 
 # Placeholder: actual CLI invocation will depend on runtime
 # This is the hook point where Claude Code / Codex / Gemini CLI runs
 if command -v "${CLI_RUNTIME}" &>/dev/null; then
-  ${CLI_RUNTIME} --task "${TASK_DESCRIPTION}" 2>&1 | tee /tmp/task-output.log || true
-  EXIT_CODE=$?
+  "${CLI_RUNTIME}" "${SOUL_ARGS[@]}" --task "${TASK_DESCRIPTION}" 2>&1 | tee /tmp/task-output.log || true
+  EXIT_CODE=${PIPESTATUS[0]}
 else
   echo "WARNING: CLI runtime '${CLI_RUNTIME}' not found. Running in dry-run mode."
   # In dry-run mode, simulate success
