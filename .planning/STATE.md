@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.4 Operational Maturity — Phase 41: L1 Strategic Suggestions (complete — all 3 plans done)
+**Current focus:** v1.4 Operational Maturity — Phase 42: Delta Snapshots (in progress — Plan 01 done)
 
 ## Current Position
 
-Phase: 41 of 42 (L1 Strategic Suggestions) — complete
-Plan: 3 of 3 complete in current phase
-Status: Plan 03 complete — Suggestions dashboard UI (SuggestionsPanel, SuggestionCard, DismissedTab, Sidebar badge)
-Last activity: 2026-02-24 — Phase 41 Plan 03 complete: /suggestions dashboard page, SuggestionCard accept/reject flows, Sidebar pending count badge
+Phase: 42 of 42 (Delta Snapshots) — in progress
+Plan: 1 of 3 complete in current phase
+Status: Plan 01 complete — TDD RED scaffold (13 failing tests covering PERF-05..08)
+Last activity: 2026-02-24 — Phase 42 Plan 01 complete: tests/test_delta_snapshots.py with 13 failing tests for cursor helpers, spawn tuple return, _filter_after, and snapshot prune wiring
 
-Progress: [█████░░░░░] 55% (v1.4)
+Progress: [██████░░░░] 60% (v1.4)
 
 ## Performance Metrics
 
@@ -99,6 +99,11 @@ v1.4 research flags to carry into planning:
 - [Phase 41]: SuggestionCard accepted state renders as green confirmation card (stays visible after accept for clear operator feedback)
 - [Phase 41]: Sidebar reads projectId from localStorage directly (not ProjectContext) to avoid React context dependency in layout component
 
+**Phase 42 Plan 01 decisions:**
+- Tests import _filter_after from 'routers.retrieve' with docker/memory/memory_service on sys.path — not a deep package path
+- PERF-08 tests patch four symbols in orchestration.snapshot (load_project_config, cleanup_old_snapshots, subprocess.run, get_snapshot_dir) — all four needed because capture_semantic_snapshot calls all of them
+- PERF-06 tests assert isinstance(result, tuple) before unpacking to (items, ok) — gives clear failure message when function returns bare list
+
 ### Pending Todos
 
 None.
@@ -112,5 +117,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 41-03-PLAN.md — Suggestions dashboard UI (SuggestionsPanel, SuggestionCard, DismissedTab, Sidebar badge)
-Resume: Phase 42 Plan 01 (Delta Snapshots)
+Stopped at: Completed 42-01-PLAN.md — Delta Snapshots TDD RED scaffold (13 failing tests)
+Resume: Phase 42 Plan 02 (Delta Snapshots — JarvisState cursor helpers + spawn.py implementation)

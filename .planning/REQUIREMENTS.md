@@ -35,10 +35,10 @@ Requirements for v1.4 Operational Maturity. Each maps to roadmap phases.
 
 ### Performance (Delta Snapshots)
 
-- [ ] **PERF-05**: Per-project `memory_cursors` tracked in state.json metadata with ISO timestamp of last successful retrieval
-- [ ] **PERF-06**: Pre-spawn retrieval fetches only memories newer than cursor; falls back to full fetch on any error
-- [ ] **PERF-07**: New `created_after` filter parameter on memU `/retrieve` endpoint supports cursor-based queries
-- [ ] **PERF-08**: Configurable `max_snapshots` per project with automatic pruning of oldest snapshots beyond the limit
+- [x] **PERF-05**: Per-project `memory_cursors` tracked in state.json metadata with ISO timestamp of last successful retrieval
+- [x] **PERF-06**: Pre-spawn retrieval fetches only memories newer than cursor; falls back to full fetch on any error
+- [x] **PERF-07**: New `created_after` filter parameter on memU `/retrieve` endpoint supports cursor-based queries
+- [x] **PERF-08**: Configurable `max_snapshots` per project with automatic pruning of oldest snapshots beyond the limit
 
 ## v2 Requirements
 
@@ -87,10 +87,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ADV-04 | Phase 41 | Complete |
 | ADV-05 | Phase 41 | Complete |
 | ADV-06 | Phase 41 | Complete |
-| PERF-05 | Phase 42 | Pending |
-| PERF-06 | Phase 42 | Pending |
-| PERF-07 | Phase 42 | Pending |
-| PERF-08 | Phase 42 | Pending |
+| PERF-05 | Phase 42 | Complete |
+| PERF-06 | Phase 42 | Complete |
+| PERF-07 | Phase 42 | Complete |
+| PERF-08 | Phase 42 | Complete |
 
 **Coverage:**
 - v1.4 requirements: 21 total
