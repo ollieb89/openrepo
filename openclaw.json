@@ -133,6 +133,9 @@
       "token": "c1701657cb4ba6739dcb5684bebf077384ce540c3c41e112"
     }
   },
+  "memory": {
+    "memu_api_url": "http://localhost:18791"
+  },
   "plugins": {
     "entries": {
       "telegram": {

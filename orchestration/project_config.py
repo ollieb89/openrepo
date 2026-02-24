@@ -236,6 +236,34 @@ def get_pool_config(project_id: Optional[str] = None) -> Dict[str, Any]:
     return result
 
 
+def get_memu_config() -> Dict[str, Any]:
+    """Read memory service config from openclaw.json.
+
+    Returns:
+        Dict with 'memu_api_url' and 'enabled' keys. Returns defaults on any error.
+        Never raises -- callers receive a usable (possibly empty) config.
+    """
+    defaults = {"memu_api_url": "", "enabled": True}
+    try:
+        root = _find_project_root()
+        config_path = root / "openclaw.json"
+        with open(config_path) as f:
+            cfg = json.load(f)
+        memory_cfg = cfg.get("memory", {})
+        result = defaults.copy()
+        if "memu_api_url" in memory_cfg:
+            result["memu_api_url"] = memory_cfg["memu_api_url"]
+        if "enabled" in memory_cfg:
+            result["enabled"] = bool(memory_cfg["enabled"])
+        return result
+    except Exception as exc:
+        _logger.warning(
+            "Failed to read memu config -- memorization disabled",
+            extra={"error": str(exc)},
+        )
+        return defaults
+
+
 class ProjectNotFoundError(Exception):
     """Raised when project manifest does not exist for a given project_id."""
     pass

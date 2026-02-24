@@ -26,6 +26,7 @@ from orchestration.project_config import (
     get_workspace_path,
     get_agent_mapping,
     get_state_path,
+    get_memu_config,
 )
 from orchestration.snapshot import _detect_default_branch
 from orchestration.logging import get_logger
@@ -218,6 +219,10 @@ def spawn_l3_specialist(
             "TASK_DESCRIPTION": task_description,
             "OPENCLAW_PROJECT": project_id,
             "OPENCLAW_STATE_FILE": f"/workspace/.openclaw/{project_id}/workspace-state.json",
+            "MEMU_API_URL": get_memu_config().get("memu_api_url", ""),
+            "MEMU_AGENT_ID": "l3_specialist",
+            "MEMU_PROJECT_ID": project_id,
+            "MEMU_ENABLED": "1",
         },
 
         # Security isolation (HIE-04 requirements)
