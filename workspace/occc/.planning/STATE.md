@@ -7,19 +7,19 @@
 
 ## Current Milestone: v1.1
 - Theme: Intelligence Depth (Risk Drift & Dependencies)
-- Active phase: Phase 6 - Global Context Graph
-- Phase status: Planned
+- Active phase: Phase 7 - Risk Drift Intelligence
+- Phase status: Pending
 - Started: 2026-02-24
-- Completed plans in milestone: 0/11
+- Completed plans in milestone: 3/11 (Phase 6 complete)
 
 ## Progress Snapshot
 - Roadmap phases: 4 (Milestone v1.1)
 - v1.1 requirements total: 12
 - v1.1 requirements mapped: 12
 - v1.1 requirements unmapped: 0
-- Completed requirements: 0
+- Completed requirements: 3 (`REAS-03`, `REAS-04`, `REAS-05`)
 - In progress requirements: 0
-- Pending requirements: 12
+- Pending requirements: 9
 
 ## Decisions
 - [v1.1] Use Adjacency List + Recursive CTEs for local graph representation.

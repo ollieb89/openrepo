@@ -11,6 +11,10 @@ Nexus-Sync is an intelligent context bridge for knowledge workers who operate ac
 - **Contextual Linking:** Multi-signal relevance engine for chat-to-issue matching.
 - **Catch Me Up:** Natural language streaming timelines with verifiable citations.
 
+**Active Milestone: v1.1 "Global Project Brain"**
+- **Theme:** Intelligence Depth (Risk Drift & Dependencies).
+- **Focus:** Cross-project mapping and proactive contradiction detection.
+
 ## Core Value
 A user can ask one question and reliably understand what changed across communication and project systems for a feature.
 
