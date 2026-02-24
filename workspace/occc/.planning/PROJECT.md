@@ -1,49 +1,45 @@
 # Nexus-Sync
 
 ## What This Is
+Nexus-Sync is an intelligent context bridge for knowledge workers who operate across chat and project tools. It creates a unified project context layer that links conversations, tickets, and decisions so teams stop losing time to tab switching. 
 
-Nexus-Sync is an intelligent context bridge for knowledge workers who operate across chat and project tools. It creates a unified project context layer that links conversations, tickets, and decisions so teams stop losing time to tab switching. The MVP focuses on Slack plus GitHub/Linear workflows with a local-first desktop agent.
+## Current State
+**v1.0 Shipped (2026-02-24)**
+- **Privacy-First Core:** Local-first processing with automated PII redaction and explicit consent guards.
+- **Source Connectivity:** Incremental sync for Slack, GitHub, and Linear with unified health monitoring.
+- **Decision Intelligence:** Autonomous decision extraction and "smoking gun" citations from chat threads.
+- **Contextual Linking:** Multi-signal relevance engine for chat-to-issue matching.
+- **Catch Me Up:** Natural language streaming timelines with verifiable citations.
 
 ## Core Value
-
 A user can ask one question and reliably understand what changed across communication and project systems for a feature.
 
-## Requirements
+## Requirements (Validated)
+- [x] Summarize key decisions from active chat threads into project context.
+- [x] Suggest bidirectional links between relevant chats and existing GitHub/Linear work items.
+- [x] Provide a natural-language catch-up query across integrated sources.
+- [x] Preserve privacy with local processing or encrypted transit only.
 
-### Validated
-
-(None yet — ship to validate)
-
-### Active
-
-- [ ] Summarize key decisions from active chat threads into project context.
-- [ ] Suggest bidirectional links between relevant chats and existing GitHub/Linear work items.
-- [ ] Provide a natural-language catch-up query across integrated sources.
-- [ ] Preserve privacy with local processing or encrypted transit only.
-
-### Out of Scope
-
-- Calendar, meeting transcription, and voice assistant workflows — not core to MVP context sync.
-- Broad multi-platform support beyond Slack + GitHub/Linear — defer until quality is proven on core integrations.
-
-## Context
-
-The current workflow pain is context fragmentation between Slack, email, Discord, and planning tools like Linear/Notion/Jira. The initial product direction is a lightweight middleware approach, not a full replacement UI. The first implementation target is a desktop agent using Rust/Tauri with low CPU overhead and strict privacy defaults.
+## Next Milestone Goals
+- **Multi-Platform Expansion:** Add support for Discord and Microsoft Teams ingestion.
+- **Risk Drift Alerts:** Proactive notifications for unresolved decision changes.
+- **Local Context Graph:** Map dependencies across multiple project tracker workspaces.
 
 ## Constraints
-
 - **Privacy**: No training on customer data — protect trust and meet enterprise expectations.
-- **Architecture**: Rust/Tauri desktop agent — low overhead and strong local execution model.
-- **Integration Scope**: Slack + GitHub/Linear first — keep MVP shippable and testable.
-- **Performance**: Continuous listening must stay unobtrusive — background CPU and memory usage must remain low.
+- **Architecture**: Desktop agent execution — low overhead and strong local execution model.
+- **Performance**: Sub-2s response time for interactive catch-up workflows.
 
-## Key Decisions
+<details>
+<summary>Historical Decisions & MVP Context</summary>
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Build local-first middleware rather than cloud-only service | Privacy and latency are core product constraints | — Pending |
-| Start with Slack + GitHub/Linear integrations | Highest leverage workflow pair for MVP validation | — Pending |
-| Prioritize "Catch Me Up" as primary user-facing capability | Directly targets tab-switching tax and context loss | — Pending |
+| Build local-first middleware rather than cloud-only service | Privacy and latency are core product constraints | Shipped v1.0 |
+| Start with Slack + GitHub/Linear integrations | Highest leverage workflow pair for MVP validation | Shipped v1.0 |
+| Prioritize "Catch Me Up" as primary user-facing capability | Directly targets tab-switching tax and context loss | Shipped v1.0 |
+
+</details>
 
 ---
-*Last updated: 2026-02-24 after initialization*
+*Last updated: 2026-02-24 after v1.0 Shipped*
