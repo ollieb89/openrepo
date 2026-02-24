@@ -16,6 +16,7 @@ export interface Project {
     mem_limit: string;
     cpu_quota: number;
     runtimes: string[];
+    max_concurrent?: number;
   };
 }
 
@@ -44,6 +45,15 @@ export interface Agent {
   reports_to: string | null;
   project?: string;
   sandbox?: { mode: string };
+}
+
+export interface MetricsResponse {
+  completionDurations: { id: string; durationS: number }[];
+  lifecycle: { pending: number; active: number; completed: number; failed: number };
+  poolUtilization: number;
+  poolMax: number;
+  poolActive: number;
+  projectId: string;
 }
 
 export interface Container {
