@@ -15,7 +15,7 @@ Requirements for Orchestration Hardening milestone. Each maps to roadmap phases.
 
 ### Performance
 
-- [ ] **PERF-01**: Docker client connections are reused across spawns via a shared client instance per pool
+- [x] **PERF-01**: Docker client connections are reused across spawns via a shared client instance per pool
 - [x] **PERF-02**: State engine caches state in memory, only reading from disk on cache miss or external modification
 - [x] **PERF-03**: State engine supports incremental task updates without reading/rewriting the entire state file
 - [x] **PERF-04**: Monitor and dashboard polling use cached state reads (shared locks) without competing with spawn writes
@@ -78,7 +78,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REL-01 | Phase 20 | Complete |
 | REL-02 | Phase 20 | Complete |
 | REL-03 | Phase 20 | Complete |
-| PERF-01 | Phase 21 | Pending |
+| PERF-01 | Phase 21 | Complete |
 | PERF-02 | Phase 21 | Complete |
 | PERF-03 | Phase 21 | Complete |
 | PERF-04 | Phase 21 | Complete |

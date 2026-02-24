@@ -30,6 +30,7 @@ Progress: [█░░░░░░░░░░░░░░░░░░░] 5% (v1.
 | 19-structured-logging P02 | 1 | 2 tasks | 3 files |
 | 20-reliability-hardening P01 | 1 | 2 tasks | 3 files |
 | 20-reliability-hardening P02 | 1 | 2 tasks | 3 files |
+| 21-state-engine-performance P01 | 1 | 2 tasks | 2 files |
 | 21-state-engine-performance P02 | 1 | 2 tasks | 2 files |
 
 *Updated after each plan completion*
@@ -47,6 +48,7 @@ Recent decisions affecting current work:
 - [Phase 19-02]: L3 container stdout relay logged at DEBUG with output field; log streaming errors downgraded to debug (expected on task end)
 - [Phase 20-01]: Post-write backup (not pre-write) is correct semantics for last-known-good state — _create_backup called after json.dump/f.flush in _write_state_locked
 - [Phase 20-02]: Collect-all strategy for both validators; validate_project_config wired into load_project_config; load_and_validate_openclaw_config added as explicit validated loader
+- [Phase 21-01]: No threading locks on Docker client singleton — docker.DockerClient is thread-safe; ping-on-reuse pattern for transparent daemon restart recovery
 - [Phase 21-02]: mtime is primary cache invalidation signal; TTL (5s) is safety net only. Deep copy on both cache store and retrieval. Cache check before any lock acquisition — zero contention on cache hits.
 
 ### Pending Todos
