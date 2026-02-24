@@ -22,12 +22,14 @@ try:
     from .state_engine import JarvisState
     from .config import POLL_INTERVAL
     from .logging import get_logger
+    from .project_config import get_pool_config
 except ImportError:
     # Direct execution - add parent dir to path
     sys.path.insert(0, str(Path(__file__).parent.parent))
     from orchestration.state_engine import JarvisState
     from orchestration.config import POLL_INTERVAL
     from orchestration.logging import get_logger
+    from orchestration.project_config import get_pool_config
 
 
 logger = get_logger('monitor')
@@ -585,9 +587,6 @@ def show_pool_utilization(project_filter: Optional[str] = None) -> None:
     """
     projects = _discover_projects(project_filter)
 
-    # Per CONTEXT.md: max_concurrent is 3; Phase 23 makes it configurable.
-    max_concurrent = 3
-
     active_statuses = {'in_progress', 'starting', 'testing'}
     pending_statuses = {'pending'}
     terminal_statuses = {'completed'}
@@ -600,6 +599,21 @@ def show_pool_utilization(project_filter: Optional[str] = None) -> None:
     total_failed = 0
 
     for proj_id, state_file in projects:
+        # Read per-project pool config (max_concurrent, pool_mode, overflow_policy)
+        logger.debug(
+            "Reading pool config for monitor display",
+            extra={"project_id": proj_id},
+        )
+        try:
+            pool_cfg = get_pool_config(proj_id)
+            proj_max_concurrent = pool_cfg["max_concurrent"]
+            proj_pool_mode = pool_cfg["pool_mode"]
+            proj_overflow_policy = pool_cfg["overflow_policy"]
+        except Exception:
+            proj_max_concurrent = 3  # fallback if config unavailable
+            proj_pool_mode = "shared"
+            proj_overflow_policy = "wait"
+
         if not state_file.exists():
             # Include project with zeroes — it exists but no tasks yet
             rows.append({
@@ -608,7 +622,9 @@ def show_pool_utilization(project_filter: Optional[str] = None) -> None:
                 "queued": 0,
                 "completed": 0,
                 "failed": 0,
-                "max_concurrent": max_concurrent,
+                "max_concurrent": proj_max_concurrent,
+                "pool_mode": proj_pool_mode,
+                "overflow_policy": proj_overflow_policy,
                 "saturation_pct": 0.0,
             })
             continue
@@ -623,7 +639,7 @@ def show_pool_utilization(project_filter: Optional[str] = None) -> None:
             queued = sum(1 for t in tasks.values() if t.get('status') in pending_statuses)
             completed = sum(1 for t in tasks.values() if t.get('status') in terminal_statuses)
             failed = sum(1 for t in tasks.values() if t.get('status') in failed_statuses)
-            saturation_pct = round((active / max_concurrent) * 100, 1)
+            saturation_pct = round((active / proj_max_concurrent) * 100, 1)
 
             rows.append({
                 "project_id": proj_id,
@@ -631,7 +647,9 @@ def show_pool_utilization(project_filter: Optional[str] = None) -> None:
                 "queued": queued,
                 "completed": completed,
                 "failed": failed,
-                "max_concurrent": max_concurrent,
+                "max_concurrent": proj_max_concurrent,
+                "pool_mode": proj_pool_mode,
+                "overflow_policy": proj_overflow_policy,
                 "saturation_pct": saturation_pct,
             })
 
@@ -663,11 +681,12 @@ def show_pool_utilization(project_filter: Optional[str] = None) -> None:
 
     header = (
         f"{Colors.BOLD}"
-        f"{'PROJECT':<18} {'ACTIVE':<8} {'QUEUED':<8} {'COMPLETED':<12} {'FAILED':<8} {'SATURATION'}"
+        f"{'PROJECT':<18} {'MAX':<5} {'MODE':<10} {'OVERFLOW':<10} "
+        f"{'ACTIVE':<8} {'QUEUED':<8} {'COMPLETED':<12} {'FAILED':<8} {'SATURATION'}"
         f"{Colors.RESET}"
     )
     print(header)
-    print("-" * 75)
+    print("-" * 105)
 
     for row in rows:
         pct = row["saturation_pct"]
@@ -676,6 +695,9 @@ def show_pool_utilization(project_filter: Optional[str] = None) -> None:
 
         print(
             f"{row['project_id']:<18} "
+            f"{row['max_concurrent']:<5} "
+            f"{row['pool_mode']:<10} "
+            f"{row['overflow_policy']:<10} "
             f"{row['active']:<8} "
             f"{row['queued']:<8} "
             f"{row['completed']:<12} "
@@ -685,12 +707,16 @@ def show_pool_utilization(project_filter: Optional[str] = None) -> None:
 
     # Summary line for multi-project view
     if project_filter is None and len(rows) > 1:
-        print("-" * 75)
-        total_pct = round((total_active / (len(rows) * max_concurrent)) * 100, 1)
+        print("-" * 105)
+        total_max = sum(r["max_concurrent"] for r in rows)
+        total_pct = round((total_active / total_max) * 100, 1) if total_max > 0 else 0.0
         sat_color = saturation_color(total_pct)
         total_saturation_str = f"{sat_color}{total_pct:>5.1f}%{Colors.RESET}"
         print(
             f"{'TOTAL':<18} "
+            f"{total_max:<5} "
+            f"{'—':<10} "
+            f"{'—':<10} "
             f"{total_active:<8} "
             f"{total_queued:<8} "
             f"{total_completed:<12} "
