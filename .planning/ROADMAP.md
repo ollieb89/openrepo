@@ -100,7 +100,7 @@ See: `.planning/milestones/v1.3-ROADMAP.md` for full phase details.
   2. Pool startup scans workspace-state.json for tasks stuck in `in_progress`, `interrupted`, or `starting` beyond the skill timeout and applies the configured recovery policy without manual intervention
   3. Recovery policy (`mark_failed` / `auto_retry` / `manual`) is settable per project in `l3_overrides.recovery_policy` in project.json and takes effect on the next pool startup
   4. Fire-and-forget memorize tasks in flight at shutdown are drained via `asyncio.gather` before the event loop stops — no pending task silently discarded
-**Plans:** 4 plans (3 complete, 1 gap closure)
+**Plans:** 4/4 plans complete
 
 Plans:
 - [x] 39-01-PLAN.md — Entrypoint SIGTERM trap + spawn stop_timeout (REL-04, REL-05)
@@ -150,7 +150,7 @@ Plans:
 | 11-18 | v1.1 | 17/17 | ✓ Complete | 2026-02-23 |
 | 19-25 | v1.2 | 14/14 | ✓ Complete | 2026-02-24 |
 | 26-38 | v1.3 | 19/19 | ✓ Complete | 2026-02-24 |
-| 39. Graceful Sentinel | 3/3 | Complete   | 2026-02-24 | - |
+| 39. Graceful Sentinel | 4/4 | Complete   | 2026-02-24 | - |
 | 40. Memory Health Monitor | v1.4 | 0/TBD | Not started | - |
 | 41. L1 Strategic Suggestions | v1.4 | 0/TBD | Not started | - |
 | 42. Delta Snapshots | v1.4 | 0/TBD | Not started | - |

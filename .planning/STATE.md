@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.4 Operational Maturity — Phase 39: Graceful Sentinel
+**Current focus:** v1.4 Operational Maturity — Phase 40: Memory Health Monitor
 
 ## Current Position
 
-Phase: 39 of 42 (Graceful Sentinel)
-Plan: 3 of 3 in current phase
-Status: Phase 39 complete — ready for Phase 40
-Last activity: 2026-02-24 — Phase 39 Plan 03 complete: pool startup recovery scan (REL-06, REL-07)
+Phase: 39 of 42 (Graceful Sentinel) — COMPLETE
+Plan: 4 of 4 in current phase (gap closure plan)
+Status: Phase 39 fully complete — ready for Phase 40
+Last activity: 2026-02-24 — Phase 39 Plan 04 complete: wired run_recovery_scan() into spawn_task() (REL-04..REL-08)
 
 Progress: [███░░░░░░░] 30% (v1.4)
 
@@ -24,7 +24,7 @@ Progress: [███░░░░░░░] 30% (v1.4)
 - v1.2: 7 phases, 14 plans in ~1 day
 - v1.3: 11 phases, 19 plans in 7 days
 
-**v1.4:** 4 phases, TBD plans — 3 plans complete (Phase 39 Plans 01-03)
+**v1.4:** 4 phases, TBD plans — 4 plans complete (Phase 39 Plans 01-04)
 
 ## Accumulated Context
 
@@ -53,6 +53,10 @@ v1.4 research flags to carry into planning:
 - Missing spawn_requested_at treated as expired with warning log — silently skipping could mask orphaned tasks
 - run_recovery_scan() always logs startup summary even when nothing recovered
 
+**Phase 39 Plan 04 decisions:**
+- pool_cfg set in both try and except paths so pool._pool_config is always a valid dict before run_recovery_scan() call
+- run_recovery_scan() called unconditionally in spawn_task() — no conditional guard needed (scan handles empty state gracefully)
+
 ### Pending Todos
 
 None.
@@ -66,5 +70,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 39-03-PLAN.md — pool startup recovery scan (REL-06, REL-07)
-Resume: Phase 39 complete (all 3 plans) — run Phase 40 (Memory Health Monitor, QUAL-01..06)
+Stopped at: Completed 39-04-PLAN.md — wired run_recovery_scan() into spawn_task() (REL-04..REL-08, gap closure)
+Resume: Phase 39 fully complete (all 4 plans) — run Phase 40 (Memory Health Monitor, QUAL-01..06)
