@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.3 Agent Memory — Phase 26: memU Infrastructure
+**Current focus:** v1.3 Agent Memory — Phase 27: Memory Client + Scoping
 
 ## Current Position
 
-Phase: 26 of 32 (memU Infrastructure)
-Plan: 2 of 3 complete
-Status: In progress
-Last activity: 2026-02-24 — Phase 26 Plan 02 complete (FastAPI memory_service application + full stack verified)
+Phase: 27 of 32 (Memory Client + Scoping)
+Plan: 0 of ? (context gathered, planning next)
+Status: Context gathered
+Last activity: 2026-02-24 — Phase 27 context gathered (discuss-phase complete)
 
 Progress: [█░░░░░░░░░] 5% (v1.3)
 
@@ -55,5 +55,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Phase 26 Plan 02 complete — FastAPI memory_service application + full stack verified
-Resume file: .planning/phases/26-memu-infrastructure/26-02-SUMMARY.md
+Stopped at: Phase 27 context gathered — discuss-phase complete
+Resume file: .planning/phases/27-memory-client-scoping/27-CONTEXT.md
