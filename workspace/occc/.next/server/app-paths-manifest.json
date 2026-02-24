@@ -2,8 +2,5 @@
   "/api/tasks/route": "app/api/tasks/route.js",
   "/tasks/page": "app/tasks/page.js",
   "/containers/page": "app/containers/page.js",
-  "/agents/page": "app/agents/page.js",
-  "/api/projects/route": "app/api/projects/route.js",
-  "/api/swarm/stream/route": "app/api/swarm/stream/route.js",
-  "/api/agents/route": "app/api/agents/route.js"
+  "/agents/page": "app/agents/page.js"
 }

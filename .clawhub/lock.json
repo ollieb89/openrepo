@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "frontend-design-ultimate": {
+      "version": "1.0.0",
+      "installedAt": 1771899250833
+    },
+    "self-improving-agent": {
+      "version": "1.0.11",
+      "installedAt": 1771899491128
+    },
+    "notion": {
+      "version": "1.0.0",
+      "installedAt": 1771899864324
+    }
+  }
+}
