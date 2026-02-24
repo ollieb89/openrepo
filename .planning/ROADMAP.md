@@ -185,10 +185,11 @@ Plans:
   3. L3 containers are joined to openclaw-net at spawn time, enabling Docker DNS resolution for memu-server
   4. Pre-spawn SOUL injection flow works end-to-end: spawn.py retrieves → renders SOUL → mounts file → entrypoint reads → CLI receives augmented SOUL
   5. MEM-01 and MEM-03 checkboxes in REQUIREMENTS.md reflect their actual satisfied status
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 33-01: TBD
+- [ ] 33-01-PLAN.md — Code fixes: spawn.py URL rewrite + network join + persistent SOUL path, entrypoint.sh SOUL_FILE handling, unit tests
+- [ ] 33-02-PLAN.md — Requirements audit: verify MEM-01/MEM-03 evidence, update MEM-04/RET-02 checkboxes
 
 ## Progress
 
