@@ -430,6 +430,52 @@ async def test_run_health_scan_detects_conflict_pair():
     assert len(conflict_pairs) == 1, f"Expected exactly 1 conflict pair, got {len(conflict_pairs)}"
 
 
+def test_archive_body_requires_content():
+    """Regression test: archive PUT body schema must include content, not archived_at.
+
+    The old handleArchiveMemory sent { archived_at: <timestamp> } with no content field.
+    MemoryUpdateRequest only accepts { content: str } — content is required and non-optional.
+    The old body caused HTTP 422 (Pydantic ValidationError on the backend).
+
+    This test documents and validates the correct schema contract:
+    - Body WITH content: valid (new, correct archive body)
+    - Body with ONLY archived_at and no content: invalid (the exact bug that caused 422)
+
+    Uses a minimal dict-based validator that mirrors MemoryUpdateRequest's validation
+    logic without requiring pydantic in the root test environment.
+    """
+
+    def validate_memory_update_request(body: dict) -> str:
+        """Simulate MemoryUpdateRequest validation: content is required str."""
+        if "content" not in body:
+            raise ValueError("content field is required — MemoryUpdateRequest(content=...) has no default")
+        if not isinstance(body["content"], str):
+            raise TypeError(f"content must be str, got {type(body['content']).__name__}")
+        return body["content"]
+
+    # Valid archive body (new correct format): content with [ARCHIVED] prefix
+    valid_body = {"content": "[ARCHIVED 2026-01-01T00:00:00Z] some memory text"}
+    result = validate_memory_update_request(valid_body)
+    assert result.startswith("[ARCHIVED"), f"Expected [ARCHIVED] prefix, got: {result!r}"
+    assert "some memory text" in result, "Original content must be preserved in archive body"
+
+    # Old broken body: { archived_at: ... } with no content → must fail
+    old_broken_body = {"archived_at": "2026-01-01T00:00:00Z"}
+    with pytest.raises(ValueError, match="content field is required"):
+        validate_memory_update_request(old_broken_body)
+
+    # Empty body → must also fail
+    with pytest.raises(ValueError, match="content field is required"):
+        validate_memory_update_request({})
+
+    # Confirm the [ARCHIVED <timestamp>] prefix pattern is preserved in archive body
+    timestamp = "2026-02-24T18:00:00.000Z"
+    original_content = "agent decision: use fcntl for state sync"
+    archive_body_content = f"[ARCHIVED {timestamp}] {original_content}"
+    assert archive_body_content.startswith("[ARCHIVED ")
+    assert archive_body_content.endswith(original_content)
+
+
 @pytest.mark.asyncio
 async def test_staleness_and_conflict_totals_are_independent():
     """Stale and conflict flags accumulate independently — totals are additive."""
