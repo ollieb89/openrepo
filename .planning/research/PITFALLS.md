@@ -1,188 +1,194 @@
 # Pitfalls Research
 
-**Domain:** Adding persistent agent memory (memU) to an existing multi-agent Docker orchestration system (OpenClaw v1.3)
+**Domain:** Adding Operational Maturity to an existing Docker-based AI swarm orchestration system (OpenClaw v1.4)
 **Researched:** 2026-02-24
-**Confidence:** HIGH — derived from direct codebase inspection of v1.2 implementation, memU-server architecture review, official pgvector documentation, and Docker networking documentation
+**Confidence:** HIGH — derived from direct codebase inspection of v1.3 implementation (state_engine.py, spawn.py, pool.py, snapshot.py, memory_client.py), targeted web research on Docker signal handling, pgvector production patterns, agentic AI security, and delta snapshot consistency
 
 ---
 
 ## Critical Pitfalls
 
-### Pitfall 1: L3 Containers Run Python 3.11 — memU Requires Python 3.13
+### Pitfall 1: SIGTERM Never Reaches Python — Shell Form Entrypoint Absorbs the Signal
 
 **What goes wrong:**
-The L3 Dockerfile (`docker/l3-specialist/Dockerfile`) is based on `debian:bookworm-slim` and installs Python via `apt-get install python3`. Debian bookworm's APT repository ships Python 3.11 as the default `python3` package. memU explicitly requires Python 3.13+. Any attempt to `pip install memu-py` inside the L3 container will either fail immediately due to version mismatch or install silently but fail at import time when memU exercises 3.13-specific syntax (notably, PEP 695 type aliases and PEP 702 deprecation warnings used internally by the framework).
+The L3 container `entrypoint.sh` is launched via the Docker `CMD` or `ENTRYPOINT` instruction. If these use **shell form** (e.g., `CMD entrypoint.sh`), Docker spawns `/bin/sh -c entrypoint.sh` as PID 1. The shell becomes PID 1 and receives SIGTERM. Bash does not automatically forward signals to child processes — it absorbs SIGTERM and either ignores it or handles it itself without propagating to the Python/Claude process running inside. The Claude Code subprocess running the agent task is never signalled. Docker times out after 10 seconds (the `docker stop` grace period) and sends SIGKILL, which tears down the container without any state dehydration.
 
-The memU service container (memU-server) also requires Python 3.13+. If the memU service Docker image is built from `debian:bookworm-slim` rather than `python:3.13-slim-bookworm`, the same version mismatch will block startup.
+The L2 pool manager (`pool.py`) also uses `asyncio.wait_for(loop.run_in_executor(None, container.wait), timeout=timeout_seconds)`. If the host process itself receives SIGTERM (e.g., when OpenClaw is restarted), the asyncio event loop does not automatically cancel in-flight `run_in_executor` threads because Python's default SIGTERM handling does not inject a CancellationError into the event loop. In-flight pool slots appear to still hold tasks, but the state file never gets updated to a clean terminal status.
 
 **Why it happens:**
-The default `python3` package on Debian bookworm resolves to 3.11 because Python 3.13 is not in the standard bookworm repository. Developers assume `python:3.13-slim-bookworm` (the official Docker Python image) and `debian:bookworm-slim` with `apt-get install python3` are equivalent — they are not. The official Docker Python images compile Python from source and bundle 3.13 themselves regardless of the Debian APT version.
+Docker's shell form is the path of least resistance and is used in most tutorials. The distinction between shell form (`CMD script.sh`) and exec form (`CMD ["script.sh"]`) is easily overlooked. Python signal handlers (`signal.signal(SIGTERM, handler)`) only work if the Python process is PID 1 or receives the forwarded signal — neither is guaranteed when wrapped in a shell. Developers test shutdown manually (`Ctrl+C` → SIGINT), which Python handles differently than SIGTERM, masking the problem.
 
 **How to avoid:**
-- For the memU-server service: base the Dockerfile on `python:3.13-slim-bookworm` from Docker Hub, not on `debian:bookworm-slim`
-- For the L3 specialist container: if L3 needs to call memU directly (in-execution queries), the call must go through the REST API to the standalone memU service, not via direct Python import — this eliminates any Python version requirement for L3 itself. The L3 entrypoint only needs `curl` or `python3 -c "import urllib"` to make HTTP calls.
-- If direct Python import is ever needed inside L3, the Dockerfile must switch to `python:3.13-slim-bookworm` as its base, which changes the image size, startup time, and rebuild cadence — a separate decision to plan explicitly.
+- Use **exec form** in the L3 Dockerfile: `ENTRYPOINT ["bash", "/entrypoint.sh"]` rather than `ENTRYPOINT /entrypoint.sh`. This makes bash PID 1 directly.
+- Inside `entrypoint.sh`, use `exec python3 ...` (or `exec claude-code ...`) for the final command. `exec` replaces the shell process with the child, making the Python/Claude process PID 1 and receiving signals directly.
+- Add a SIGTERM handler to the L2 Python pool manager using `loop.add_signal_handler(signal.SIGTERM, shutdown_callback)` — this is the asyncio-safe way to register signal handlers (not `signal.signal()`, which is not safe in async loops).
+- Verify signal delivery by testing with `docker stop <container>` and checking exit code — graceful shutdown produces exit code 0 or 143, SIGKILL produces exit code 137.
 
 **Warning signs:**
-- `pip install memu-py` succeeds but `import memu` raises `SyntaxError` or `ImportError` at runtime inside L3
-- `python3 --version` inside the L3 container returns 3.11.x
-- memU-server fails to start with `SyntaxError: invalid syntax` pointing at a memU source file
+- `docker stop <container>` takes exactly 10 seconds (the default grace period) before the container dies — this means SIGTERM was never processed and Docker fell back to SIGKILL
+- Exit code 137 in container exit records (137 = 128 + 9 = SIGKILL)
+- State file (`workspace-state.json`) shows tasks stuck in `in_progress` after a container is force-stopped
+- No log entries from the SIGTERM handler code path appearing in structured logs during shutdown
 
-**Phase to address:** Phase 1 (memU Service Setup) — base image decision must be locked before any memU integration code is written
+**Phase to address:** SIGTERM/Graceful Shutdown phase — the exec form change must be made in the Dockerfile and entrypoint before any state dehydration logic is built, or the dehydration code will never be reached
 
 ---
 
-### Pitfall 2: pgvector Extension Fails to Create During Docker Initialization
+### Pitfall 2: State Dehydration Inside a SIGTERM Handler Deadlocks on the fcntl Lock
 
 **What goes wrong:**
-The standard pattern for initializing a PostgreSQL Docker container is to place a `.sql` file in `/docker-entrypoint-initdb.d/`. However, `CREATE EXTENSION IF NOT EXISTS vector` in a raw `.sql` init script can fail silently or with an error during Docker startup, even when using the `pgvector/pgvector:pg17` image. The extension creation timing has a known ordering dependency: PostgreSQL must fully initialize the base database before extension creation scripts run, but script execution order depends on alphabetical filename sorting. If the schema migration script (which creates tables with `vector` column types) sorts alphabetically before the extension creation script, the table creation fails with `type "vector" does not exist`.
+The graceful shutdown plan requires the L3 container to write its current task state (dehydrate) to `workspace-state.json` when it receives SIGTERM. The `JarvisState.update_task()` method acquires `LOCK_EX` via `fcntl.flock()`. If the L3 container was in the middle of an `update_task()` call when SIGTERM arrived (e.g., writing a progress update), the lock is already held by the same process. A re-entrant call to `update_task()` from the signal handler attempts to acquire `LOCK_EX` on the same file descriptor held by the outer call — on Linux, `fcntl.flock()` is NOT re-entrant for the same process/thread. The result is a deadlock: the signal handler waits for a lock held by itself, the outer call never completes because the signal handler is blocking, and Docker's grace period expires with SIGKILL.
+
+Additionally, `fcntl.flock()` in Python uses blocking I/O. Python signal handlers (registered via `signal.signal()`) are called between bytecode instructions but cannot interrupt a blocking I/O syscall already in progress. If the process is blocked on `flock()` waiting for another process's lock when SIGTERM arrives, the signal is deferred until the flock call returns — which may never happen if the lock holder also received SIGTERM and is itself deadlocked.
 
 **Why it happens:**
-Files in `/docker-entrypoint-initdb.d/` execute in alphabetical order. A schema file named `schema.sql` runs before an extension file named `vector.sql`. Additionally, raw `.sql` scripts cannot check whether the extension is already installed, so re-running against an existing volume produces an error that halts initialization. Finally, `docker-entrypoint-initdb.d` only runs when the container data directory is empty — developers who reuse volumes without clearing them miss initialization failures entirely.
+Signal handler re-entrancy is a non-obvious constraint. The `JarvisState` class was designed for sequential use (call update_task, call read_state, etc.) and has no re-entrancy guard. Developers writing SIGTERM handlers typically call the same state update functions used in normal execution, without realising that the signal may interrupt an in-progress state write.
 
 **How to avoid:**
-- Use `pgvector/pgvector:pg17` (or pg16) as the base image — it has the extension pre-compiled and available
-- Place extension creation in a shell script (`00_init.sh`) rather than a SQL file, using the `psql -c "CREATE EXTENSION IF NOT EXISTS vector"` command. Shell scripts in the init directory are reliably executed before SQL files at the same sort position
-- Prefix filenames numerically: `00_extensions.sh`, `01_schema.sql` to guarantee ordering
-- Add `--shm-size=256m` to the Docker run command (or `shm_size` in docker-compose) if HNSW index builds are planned — pgvector HNSW parallel builds require shared memory exceeding the Docker default 64MB
+- Use a **flag + main-loop check pattern** instead of performing I/O directly in the signal handler: the signal handler sets a module-level `_shutdown_requested = True` flag only. The main execution loop checks this flag at safe checkpoints (between LLM calls, after file writes) and performs dehydration at those points.
+- Alternative for asyncio: use `loop.add_signal_handler(signal.SIGTERM, lambda: asyncio.create_task(graceful_shutdown()))` — this schedules the shutdown coroutine in the event loop rather than running it synchronously in the signal handler context, avoiding re-entrancy.
+- Add a `is_shutdown_requested()` check at the top of `update_task()` — if shutdown is in progress, skip the write and log a warning rather than blocking.
+- Design the dehydration payload to be written to a **separate file** (`soul-<task_id>.shutdown.json`) that does NOT require the main state lock, avoiding any lock contention during shutdown.
 
 **Warning signs:**
-- `psql -c "\dx"` inside the postgres container shows `vector` extension missing
-- memU-server logs show `type "vector" does not exist` during table creation
-- PostgreSQL container health check passes but memU connection to DB fails with a column type error
-- Volume mounted from a previous run skips `initdb.d` scripts entirely, masking first-run failures
+- Container hangs for exactly the Docker grace period (10s) after SIGTERM and then exits via SIGKILL
+- Structured logs show the SIGTERM handler was entered but no subsequent log entries appear (deadlock)
+- `workspace-state.json` is truncated or zero-length after a forced shutdown (interrupted mid-write)
+- `ps aux` inside a hung container shows the Python process in `D` state (uninterruptible sleep on a syscall)
 
-**Phase to address:** Phase 1 (memU Service Setup) — database initialization must be validated with a cold-start test (removing volumes and re-running) before any memory API work begins
+**Phase to address:** SIGTERM/Graceful Shutdown phase — design the dehydration-safe state write before implementing the signal handler; never call `update_task()` directly from signal handler context
 
 ---
 
-### Pitfall 3: Multiple Concurrent L3 Containers Overwhelm the memU Memorize Endpoint
+### Pitfall 3: Recovery Loop Re-Spawns a Task Whose State Is Irrecoverably Stale
 
 **What goes wrong:**
-Up to 3 L3 containers can complete simultaneously (per the pool's `max_concurrent=3` configuration). Each container's completion triggers a `POST /memorize` call to the memU service. The memU memorize operation is not a simple write — it invokes an LLM to categorize, embed, and store the content. Under the default memU-server configuration, memorize calls are synchronous from the client's perspective and can take 5-15 seconds each depending on content size and LLM latency. Three simultaneous memorize calls from 3 completing L3 containers create a thundering-herd against the single-threaded FastAPI server.
+The automated recovery loop reads `workspace-state.json` to find tasks in `in_progress` state after a restart and re-queues them. However, `in_progress` in the state file does not distinguish between three very different situations:
+1. **Container was mid-task, made no git commits** — safe to re-spawn from scratch
+2. **Container committed partial work to the staging branch** — re-spawning creates a second set of commits on `l3/task-{task_id}`, which may conflict with or duplicate the first set
+3. **Container completed the task but died before marking it `completed`** — re-spawning wastes a full L3 slot re-doing completed work, and the second run's git diff will conflict with the first run's commits
 
-The memU-server uses Temporal as its background workflow engine. Temporal adds significant overhead (its own PostgreSQL database, gRPC server, UI server), and the self-hosted Temporal setup requires careful initialization ordering that the memU-server `docker-compose.yml` does not fully automate (Temporal schema migrations must complete before the API server starts).
+The recovery loop cannot distinguish these three cases by reading state.json alone — all three look identical: `status: "in_progress"`, no `completed_at` timestamp.
 
 **Why it happens:**
-The memU memorize endpoint is designed for single-agent or low-concurrency use. The OpenClaw pool allows burst completion of 3 tasks simultaneously. The entrypoint calls memorize synchronously in the completion block, so a slow memU service directly extends L3 container lifetime beyond the task's actual work duration, consuming the pool slot and potentially causing queue starvation for the next task.
+State file design in v1.0-v1.3 uses status as a simple enum. The `in_progress` state was sufficient when tasks were ephemeral and non-recoverable. Adding recovery without adding more state transitions creates an ambiguity that the recovery loop cannot resolve safely.
 
 **How to avoid:**
-- Call memU's memorize endpoint in a fire-and-forget pattern from L3: the entrypoint should not wait for the memorize response. Use a detached subprocess call (`python3 -c "..." &`) or a short-timeout HTTP call (3s timeout) that drops the result if it times out
-- Alternatively, have L3 write task outcome metadata to the state file as a `pending_memorize` field, and have the L2 post-review step trigger memorize after the L3 container has exited and its pool slot is freed
-- Rate-limit memorize calls in the REST API wrapper with a simple asyncio semaphore (max 2 concurrent memorize operations)
-- Evaluate whether Temporal is necessary for the OpenClaw use case — for the scale of this system (3 concurrent L3s, single host), a simple asyncio background task queue is sufficient and eliminates Temporal's 3-service overhead
+- Add a `recovery_safe` boolean field to task state, defaulted to `false` and set to `true` only during SIGTERM dehydration when the container confirms no git commits have been made to the staging branch yet. Recovery loop only re-spawns tasks where `recovery_safe: true`.
+- Before re-spawning, check whether the staging branch `l3/task-{task_id}` exists in git. If it does, it contains partial or complete work — do not blindly re-spawn; require human decision (mark as `needs_review` in state).
+- Add a `dehydrated_at` timestamp field. Tasks without this field were killed mid-execution (SIGKILL path), not gracefully dehydrated — treat differently from tasks with a clean dehydration record.
+- Set a maximum re-spawn count per task (default 1). After one recovery re-spawn, if the task fails again, mark it `failed_unrecoverable` and alert.
 
 **Warning signs:**
-- L3 containers show `completed` status in state.json but continue running for 30+ seconds after task completion
-- Pool utilization stays at 3/3 even after tasks have finished their actual work
-- memU-server logs show multiple simultaneous `POST /memorize` requests piling up
-- Docker container for Temporal shows unhealthy status, causing memU memorize calls to hang indefinitely
+- Staging branch `l3/task-T001` exists with commits AND state shows `in_progress` — recovery loop is about to re-spawn a task that has already done work
+- A task appears twice in the git log (duplicate commit messages differing only by `(retry)` suffix)
+- `merge_staging` fails with a conflict on a task that "should have been clean" — caused by two runs committing different implementations of the same file
 
-**Phase to address:** Phase 2 (L3 Auto-Memorization) — must establish the fire-and-forget pattern before any L3 memorize integration; Phase 1 (memU Service Setup) must evaluate whether to include Temporal
+**Phase to address:** Task Recovery (sub-phase within Graceful Shutdown) — define the recovery eligibility rules and state transitions before implementing the recovery loop; a loop without eligibility checks is more dangerous than no recovery at all
 
 ---
 
-### Pitfall 4: SOUL Template Context Size Explosion from Memory Injection
+### Pitfall 4: Memory Health Monitor Triggers False Positives on Semantically Valid Duplicates
 
 **What goes wrong:**
-The pre-spawn memory retrieval step fetches relevant memories from memU and injects them into the SOUL template before the L3 agent starts. The current `soul_renderer.py` uses `string.Template.safe_substitute()` which performs simple variable interpolation — a memory block injected via a `$memory_context` variable placeholder has no length limit. If the retrieve call returns 20 memory items (each potentially 2-5KB of conversation context), the injected SOUL grows by 40-100KB. This bloated SOUL is passed to the L2 prompt and the L3 agent's system prompt.
+The memory health monitor must detect "stale" and "conflicting" memories. The naive implementation computes cosine similarity between all pairs of memory embeddings and flags pairs above a threshold (e.g., 0.95) as duplicates or conflicts. However, OpenClaw's memory store contains many legitimately similar entries: multiple L3 task outcomes for the same type of task (e.g., "refactored Python module to use dataclasses") have very similar embeddings but are not stale — they are distinct historical events. Flagging them as conflicts causes the operator to delete valid memory and degrades the agent's ability to pattern-match on recurring task types.
 
-Modern LLMs have large context windows (200K tokens for Claude), but injecting 50-100KB of raw memory into the system prompt has two concrete failure modes: (1) the most relevant recent memories are crowded out by verbose older memories that weren't well-filtered by retrieval, and (2) the L3 agent spends its token budget responding to or referencing stale memories rather than executing the task. For claude-code, a bloated system prompt is also never truncated — the full content is sent on every conversation turn, multiplying costs linearly with conversation length.
+The opposite problem also exists: a memory entry that is genuinely stale ("never use asyncio.run() inside pool.py") may have a moderate similarity score to a newer contradicting entry ("asyncio.run() is now used in the CLI entrypoint for standalone spawning") but because they are about different contexts, the conflict detector does not flag them.
 
 **Why it happens:**
-`retrieve()` returns whatever memU finds as relevant. Without an explicit `limit` parameter or a character budget cap on the retrieved context, the default behavior is to return all matches above a similarity threshold. Developers integrate memory injection by concatenating retrieved memories as-is into a template variable, treating all memory as equally useful context.
+Vector similarity is a proxy for semantic relatedness, not semantic contradiction. High similarity means the content is about the same topic — not that one entry is wrong and one is right. Contradiction detection requires semantic reasoning (i.e., an LLM comparing the two entries), not just embedding distance. Developers building health monitors rely on embedding distance because it is cheap and scalable, but the signal quality is wrong for the conflict detection use case.
 
 **How to avoid:**
-- Always set an explicit `limit` on `retrieve()` calls — default to 5 memories maximum for pre-spawn SOUL injection
-- Impose a hard character budget: the injected `$memory_context` block must not exceed 2,000 characters. If retrieved memories exceed this, truncate to the most recent N entries that fit
-- Structure injected memories as a brief summary section, not raw conversation transcripts: `"In a previous task on [date], you [summary]. Key outcome: [outcome]."` — not the full conversation log
-- Add `$memory_context` as an optional placeholder in `soul-default.md` using `safe_substitute` — if no memories exist (first run, new project), the placeholder is simply omitted without error
-- Scope the retrieve query specifically: `retrieve(query=task_description, agent_id=l3_agent_id, project_id=project_id, limit=5)` — do not retrieve global memories across all agents
+- Do NOT use cosine similarity alone for conflict detection. Use it only as a **pre-filter** to find candidate pairs, then use an LLM (via a quick structured prompt) to assess whether the candidates actually conflict.
+- Define "stale" operationally, not semantically: a memory entry is stale if it has not appeared in the top-10 retrieve results for any task in the past N days (configurable, default 30). This recency-based staleness metric avoids the similarity problem entirely.
+- Define "conflicting" as: two entries in the same category (`review_decision`, `task_outcome`) for the same task_id with different verdicts/outcomes. This is a simple structural check that does not require vector comparison.
+- Expose the "flag for review" action, not "auto-delete". The health monitor should surface candidates for human review in the dashboard `/memory` page — not autonomously delete or modify entries.
 
 **Warning signs:**
-- SOUL.md rendered size exceeds 10KB (the v1.2 baseline SOUL is ~3KB)
-- L3 agent's first response references a past task that is not relevant to the current task description
-- LLM API costs per task spike after memory injection is added
-- `string.Template.safe_substitute()` renders a `$memory_context` variable with 40+ KB of content
+- Memory health monitor reports 40%+ of the memory store as "conflicting" on first run — this is almost certainly false positives from similarity threshold that is too low
+- After health monitor runs, agent task success rate drops (deleted valid context entries)
+- Operator reports "the monitor keeps flagging the same entries every run" — health monitor is not recording which entries have been reviewed and dismissed
 
-**Phase to address:** Phase 3 (Pre-Spawn Context Retrieval) — memory injection template must be designed with budget constraints before the retrieve integration is wired up
+**Phase to address:** Memory Health Monitoring phase — define staleness and conflict detection metrics before writing the detector; validate the detector against synthetic ground-truth data (known good/bad pairs) before running against the production memory store
 
 ---
 
-### Pitfall 5: Container Networking — L3 Cannot Reach memU Service via localhost
+### Pitfall 5: L1 Strategic Suggestions Modify SOUL Templates at Runtime — Prompt Injection Attack Surface
 
 **What goes wrong:**
-L3 containers are spawned with the existing spawn.py configuration which does not add them to a named Docker network — they run in the default bridge network. The memU service (which will be a separate Docker container) is also in the default bridge network or its own network, exposed on a host port (e.g., 8000). From inside an L3 container, `http://localhost:8000/memorize` resolves to the container's own loopback interface, not the host or the memU service. The call silently fails with `Connection refused`.
+The L1 suggestion engine reads recurring task failure/success patterns from memU and generates SOUL template modifications to improve L3 agent behavior. If these suggestions are written directly to `agents/l3_specialist/agent/SOUL.md` (or a project's `soul-override.md`) without human review, an adversarial memory entry can cause L1 to suggest a SOUL modification that changes agent behavior in unintended ways.
 
-This is not caught during development because the developer tests memorize calls from the host machine (where `localhost:8000` works) rather than from inside a container.
+Concrete threat: a prompt injection payload stored in a memory entry (e.g., via a malicious task description processed by L3) surfaces during L1's pattern analysis. L1 interprets it as a legitimate behavioral pattern and suggests adding a SOUL instruction such as "always commit changes to main branch directly without creating a staging branch". If auto-applied, this breaks the L2 review workflow — permanently and silently.
+
+This is not a theoretical concern: Palo Alto Unit 42 research documents exactly this class of attack against agent memory systems, and a security research paper specifically targeting OpenClaw-style SOUL.md persistence was published in 2025.
 
 **Why it happens:**
-Each Docker container has its own network namespace. `localhost` inside a container is the container's loopback (`127.0.0.1`), not the host's. The L3 entrypoint (`entrypoint.sh`) currently has no concept of external service URLs — it only accesses the workspace volume and the orchestration volume. The networking topology for the memory service was not established in v1.0-v1.2 because no external services were required.
+The L1 suggestion pipeline reads from memU (which contains content generated by AI agents and external task descriptions), processes it through an LLM, and produces output that modifies files that govern other agents' behavior. This is an indirect prompt injection path: untrusted content (task descriptions, L3 outputs) → memU storage → L1 retrieval → L1 LLM processing → SOUL file modification. Each step appears legitimate in isolation; the end-to-end injection path is only visible when viewing the full pipeline.
 
 **How to avoid:**
-- Inject the memU service URL as an environment variable at spawn time: `MEMU_API_URL=http://host.docker.internal:8000` on Linux (or the host's Docker bridge IP, typically `172.17.0.1`)
-- Add `extra_hosts: ["host.docker.internal:host-gateway"]` to the docker-compose service definition for L3 (or equivalent `--add-host host.docker.internal:host-gateway` in the spawn.py `docker.containers.run()` call)
-- Alternatively, place the memU service and L3 containers on a shared named Docker network, and reference the memU service by its container name: `http://memu-service:8000`
-- Document the chosen approach in `openclaw.json` as `memory.service_url` so that L2 (which also needs to call memU for decision memorization) and L3 use the same URL resolution path
+- **Mandatory human approval gate**: L1 suggestions must NEVER be auto-applied. All suggestions are written to a `suggestions/` directory (e.g., `workspace/.openclaw/<project_id>/soul-suggestions/`) and displayed in the dashboard for human review. The operator explicitly approves each suggestion before it is applied.
+- **Diff-based review**: present the suggestion as a git-style diff against the current SOUL file, not as free-form text. This makes the exact proposed change visible and auditable.
+- **Structural validation**: before offering a suggestion for review, validate it against a SOUL schema. A valid suggestion must: (a) not remove existing safety constraints, (b) not add instructions that reference file paths or shell commands, (c) not exceed a maximum diff size (100 lines). Reject suggestions failing validation without presenting them to the operator.
+- **Read-only SOUL during normal operation**: `SOUL.md` files should be writable only by the explicit "apply suggestion" code path, not by any agent-triggered code path. L3 containers mount SOUL as read-only (`"mode": "ro"` — already the case in v1.3 spawn.py).
+- **Sanitize memory before L1 analysis**: when L1 retrieves memories for pattern analysis, strip any content that contains markdown headings (`#`), code fences (`` ` ``), or template variable patterns (`$`, `{{}}`), which are injection vectors.
 
 **Warning signs:**
-- `curl http://localhost:8000/health` from inside a running L3 container returns `Connection refused`
-- memU memorize calls from host succeed, but the same call from the entrypoint fails
-- L3 entrypoint exits with error code related to network connectivity rather than task failure
-- `MEMU_API_URL` not present in `docker inspect` environment output for L3 containers
+- A SOUL suggestion contains the phrase "always", "never", or "override" — these are high-risk behavioral absolutes that warrant extra scrutiny
+- A suggestion proposes adding a new `$variable` placeholder — this could be an attempt to inject dynamic content at render time
+- After applying a suggestion, agent task success rate drops or L2 rejection rate increases significantly
+- A SOUL suggestion references a specific task ID or project name — legitimate behavioral patterns are general, not task-specific
 
-**Phase to address:** Phase 1 (memU Service Setup) — service URL resolution strategy must be decided before any container integration is attempted; add `MEMU_API_URL` to the spawn environment variable specification in Phase 2
+**Phase to address:** L1 Strategic Suggestions phase — the human approval gate must be the first thing built; do not implement the suggestion generation pipeline until the approval + validation workflow is in place, or the feature is unsafe to test
 
 ---
 
-### Pitfall 6: Per-Project Memory Scoping Implemented as Metadata Filter — Not Enforced at Storage Layer
+### Pitfall 6: Delta Snapshot Reads Against a File Currently Being Written — Torn Snapshot
 
 **What goes wrong:**
-memU stores memories in a single PostgreSQL database. Per-project isolation is achieved by including `project_id` and `agent_id` as metadata fields on each memory record and filtering on these fields during `retrieve()` calls. If the `project_id` filter is accidentally omitted from any retrieve call, the agent receives memories from all projects — including code patterns, decisions, and credentials from projects it should not see. This is a silent failure: the retrieve call succeeds, returns plausible-looking data, and the agent acts on cross-project contaminated memory without any error signal.
+The delta snapshot system computes the diff between the staging branch and the default branch (`git diff main...HEAD`). The current `capture_semantic_snapshot()` runs a `subprocess.run(['git', 'diff', ...])` call. If an L3 container is still actively writing to the workspace while the snapshot is captured (e.g., finishing a file write between two git operations), the snapshot captures an inconsistent state: some files include the container's partial changes, others do not. The resulting diff is not a coherent semantic unit.
 
-In the OpenClaw architecture, the multi-project pattern already has a precedent: the earlier mistake was a single state file shared across projects (v1.1's Pitfall 1). The same mistake pattern recurs here with a single memory database where the isolation is filter-based rather than schema-based.
+More specifically, the delta snapshot design for v1.4 tracks changes since the last snapshot (not since `main`). If the previous snapshot's hash is used as the base (`git diff <prev-snapshot-sha>...HEAD`), and a concurrent write happens between reading `<prev-snapshot-sha>` from the last snapshot file and executing the diff, the base may not reflect the true previous state, producing a delta that appears to contain changes that were already in the previous snapshot.
 
 **Why it happens:**
-Developers write the first retrieve call with all filters correctly, test it, and it passes. Later retrieve calls added for different features (dashboard search, L2 decision context) omit the `project_id` filter because the code is written quickly and the test data only has one project's memories — so the contamination is not visible during development. The first multi-project production run surfaces the leak.
+`subprocess.run` calls to `git` are not transactional. The delta snapshot adds a new state dimension (tracking previous snapshot SHA) that the current single-snapshot-per-task design does not have. Developers implementing delta snapshots naturally reuse the existing `capture_semantic_snapshot()` function, adding only the base SHA parameter, without considering concurrent writes or the atomicity requirements of the diff operation.
 
 **How to avoid:**
-- Create a `MemoryClient` wrapper class that is initialized with `project_id` and `agent_id` and always includes these in every `memorize()` and `retrieve()` call — make it impossible to call the raw memU API without scoping parameters
-- Namespace memory categories with the project ID as a prefix: `pumplai/code-patterns` rather than just `code-patterns` — this provides human-readable isolation visible in the dashboard
-- Write a test that explicitly creates memories for two projects and asserts that `retrieve()` for project A returns zero results from project B's records
-- Treat cross-project memory leakage as a security failure in code review, not just a correctness issue
+- Take the diff **after** the L3 container has exited (in `_attempt_task` after `container.wait()` returns), not while it is running. At this point, there are no concurrent writes — the container is stopped. The current v1.3 design already does this; ensure the delta snapshot design preserves this constraint.
+- Store the previous snapshot's git commit SHA (not a file path or mtime) as the delta base. Git commit SHAs are immutable — there is no TOCTOU race between reading the SHA and using it for a diff.
+- Use `git diff --stat <base-sha>..<head-sha>` with explicit immutable SHAs rather than relative refs like `HEAD~1`, which can change meaning between the stat call and the diff call.
+- Acquire the `fcntl.LOCK_SH` on the state file before reading the previous snapshot SHA, and release it only after the diff command completes. This prevents a concurrent `update_task()` write from changing the state file mid-diff.
 
 **Warning signs:**
-- `retrieve(query="database schema")` returns memory items whose metadata shows a different `project_id` than the calling agent's project
-- Dashboard memory panel shows memory categories from projects that are not the active project
-- An L3 agent's task outcome references a tech stack (e.g., Rails) that belongs to a different project
+- Two consecutive delta snapshots for the same task show overlapping changes (the same file modification appears in both the N and N+1 delta)
+- A delta snapshot shows zero changes but the git staging branch has new commits — the diff base SHA is pointing at the wrong commit
+- Snapshot files on disk are larger than full snapshots (delta is larger than the full diff from `main`) — this indicates the base SHA is too far back
 
-**Phase to address:** Phase 2 (Per-Agent + Per-Project Memory Scoping) — the `MemoryClient` wrapper with mandatory scoping must be built before any memorize/retrieve calls are made in Phase 3 or Phase 4
+**Phase to address:** Delta Snapshot phase — design the delta base tracking strategy (commit SHA, not mtime) before implementing the capture function; validate that delta N+1 = full snapshot N+1 - full snapshot N for a known test sequence before wiring into the pool
 
 ---
 
-### Pitfall 7: pgvector HNSW Index Degrades on Non-Vector Column Updates
+### Pitfall 7: asyncio.create_task() for Fire-and-Forget Memorization Is Lost on Event Loop Shutdown
 
 **What goes wrong:**
-Every time a memory record is updated (e.g., a memory item's relevance score is bumped, a category label is changed, or a `last_accessed` timestamp is written), PostgreSQL must update the HNSW index even though the vector column itself has not changed. This causes UPDATE operations to be 10-50x slower than inserts for tables with HNSW indexes. In the memU schema, if memory records are updated frequently (e.g., to record retrieval counts or merge similar memories), this update penalty accumulates and degrades overall write throughput.
+`pool.py` uses `asyncio.create_task(self._memorize_snapshot_fire_and_forget(...))` to memorize task outcomes without blocking the pool slot release. This pattern works correctly during normal operation. However, when the pool is shutting down (e.g., receiving SIGTERM), the asyncio event loop may be cancelled before all fire-and-forget tasks complete. `asyncio.create_task()` tasks that are still pending when the event loop is cancelled are aborted — their coroutines receive `CancelledError` and halt mid-execution. The memorization call is silently lost with no record in state.json (because the memorize failure path only logs a warning, not updating state).
 
-This is a confirmed pgvector bug/design limitation documented in the pgvector GitHub issues (issue #875) and still present in pgvector 0.7.x.
+After a SIGTERM shutdown, the memory store is missing the outcomes of any tasks that completed in the final seconds before shutdown. The recovery loop does not know these tasks were completed — it re-spawns them (if they were flagged as `in_progress`), and they run again unnecessarily.
 
 **Why it happens:**
-HNSW indexes are not designed for high-update workloads. They are optimized for insert-then-query patterns. PostgreSQL's MVCC means every UPDATE creates a new version of the row, forcing the HNSW index to process the new tuple even when the vector is unchanged.
+`asyncio.create_task()` is designed for concurrent execution within a running event loop, not for deferred execution across event loop lifecycle boundaries. The pattern is correct for the "slot released immediately, memorize in background" use case but breaks at event loop termination. Standard asyncio shutdown documentation (`loop.run_until_complete()`, `asyncio.run()`) cancels all pending tasks, which is the desired behavior for most cleanup scenarios — but not for fire-and-forget work that must complete before process exit.
 
 **How to avoid:**
-- Separate mutable metadata (access counts, timestamps, labels) from the vector/content columns: put them in a companion table `memory_metadata` with a foreign key to the immutable `memory_items` table. The HNSW index lives only on `memory_items`, which receives inserts but rarely updates
-- Avoid updating memory records — prefer inserting new records with a `supersedes_id` reference rather than updating existing ones. This matches the append-only pattern that HNSW handles well
-- Defer creation of the HNSW index until after initial bulk import of historical memories — create with `CONCURRENTLY` to avoid write blocking
-- Set `maintenance_work_mem = 256MB` in the postgres container's `postgresql.conf` for faster HNSW index builds
+- Track all fire-and-forget tasks in a module-level set: `_pending_memorize_tasks: set[asyncio.Task] = set()`. In the graceful shutdown handler, `await asyncio.gather(*_pending_memorize_tasks, return_exceptions=True)` with a timeout (5 seconds). This ensures pending memorizations complete if time permits before the event loop is cancelled.
+- Use `task.add_done_callback(_pending_memorize_tasks.discard)` to automatically remove completed tasks from the tracking set, preventing unbounded growth.
+- As a fallback, write a `pending_memorize: true` field to the state file when creating the fire-and-forget task, and clear it when the task completes. On startup, the memory system can re-try any entries with `pending_memorize: true` (though at v1.4 scale this is a MEDIUM priority, not critical).
+- Set the shutdown SIGTERM grace period in Docker (`--stop-timeout`) to at least 15 seconds to allow pending memorization tasks to complete before SIGKILL.
 
 **Warning signs:**
-- PostgreSQL slow query log shows UPDATE statements on `memory_items` table taking >100ms
-- memU-server response times for memorize degrade progressively as the memory store grows
-- `EXPLAIN ANALYZE` on retrieve queries shows HNSW index scan time increasing nonlinearly with record count
-- Docker postgres container memory usage continuously growing during operations that should only read
+- After a graceful shutdown and restart, `list_active_tasks()` returns tasks that were definitely completed in the last run (because the task was running, pool completed it, but memorize task was cancelled before the fire-and-forget finished and the state update from within `_memorize_snapshot_fire_and_forget` was never persisted — note: in the current code, state IS updated in `_attempt_task` before the fire-and-forget, so this is about memory data loss rather than state data loss — clarify which risk is primary)
+- Memory store shows gaps in coverage around restart events (tasks completed shortly before shutdown have no memory entries)
+- Structured logs show `asyncio.CancelledError` on memorize tasks during shutdown
 
-**Phase to address:** Phase 1 (memU Service Setup) — database schema decisions are final; the mutable/immutable split must be designed before schema is committed
+**Phase to address:** SIGTERM/Graceful Shutdown phase — implement the pending-task tracking set at the same time as the shutdown handler; these must be built together or the fire-and-forget guarantees are weakened during the exact scenario where they matter most
 
 ---
 
@@ -192,28 +198,28 @@ Shortcuts that seem reasonable but create long-term problems.
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Call `memorize()` synchronously in L3 entrypoint completion block | Simpler code, guaranteed delivery | L3 container lifetime extended 10-30s per task; pool slot blocked; queue starvation | Never — always fire-and-forget or post-exit memorize via L2 |
-| Use single shared PostgreSQL database for all projects without schema-level isolation | No per-project DB provisioning needed | Cross-project memory leakage on any missed `project_id` filter; single DB failure takes all projects offline | Acceptable for single-project use; must add `MemoryClient` wrapper before second project added |
-| Inject raw retrieved memory transcripts directly into SOUL template | Maximum context richness | 40-100KB SOUL injection bloats every LLM call; old irrelevant memories crowd out recent context | Never — always summarize and budget-cap memory injection |
-| Base memU-server Docker image on `debian:bookworm-slim` + manual Python install | Familiar base image, smaller final image | Must add Deadsnakes PPA or compile Python 3.13 from source; fragile build | Never — use `python:3.13-slim-bookworm` which is maintained and verifiably correct |
-| Use Temporal for memU background jobs | Durable workflow execution | 3 extra services (Temporal server, Temporal UI, separate temporal DB) just to handle async memorize; overkill for 3 concurrent L3 workers | Only if memU-server's Temporal integration cannot be disabled; otherwise skip Temporal, use asyncio background tasks |
-| Include ALL memory categories in pre-spawn SOUL injection | Complete memory picture for agent | Token cost grows O(N) with memory store size; agents paralyzed by irrelevant historical context | Never — always limit retrieve to 5 items and 2,000 character budget |
+| Auto-apply L1 SOUL suggestions without human review | No approval bottleneck; fully autonomous | Prompt injection path: malicious memory → L1 analysis → SOUL modification → changed agent behavior. One bad suggestion can corrupt all future tasks | Never — human approval gate is non-negotiable for SOUL modifications |
+| Re-spawn any `in_progress` task on recovery | Simple recovery loop, no state analysis required | Re-spawns tasks that already have partial git commits, causing conflicts and duplicated work | Never without checking staging branch existence and `recovery_safe` flag first |
+| Implement SIGTERM handler using `signal.signal()` in an asyncio event loop | Familiar API, works in synchronous Python | Not asyncio-safe: signal handler runs in the main thread and can interrupt the event loop mid-operation, causing data races; use `loop.add_signal_handler()` instead | Never in asyncio contexts |
+| Delta snapshot base = previous snapshot file mtime | No need to store SHA; mtime is automatically available | mtime changes on file system metadata updates that do not change content; delta base becomes incorrect on `touch` or rsync operations | Never — always use git commit SHA as delta base |
+| Health monitor auto-deletes flagged memories | Reduces manual operator burden | Deletes valid memories that are semantically similar but historically distinct; degrades agent pattern-matching capability | Never — always flag for review, never auto-delete |
+| Skip SIGTERM handling in the L3 container entrypoint | Simpler entrypoint code | Any `docker stop` during an L3 task causes SIGKILL, which leaves the state file in `in_progress` forever and the staging branch in a partial state | Never — the entrypoint must handle SIGTERM for the recovery system to work |
 
 ---
 
 ## Integration Gotchas
 
-Common mistakes when connecting the memU service to existing subsystems.
+Common mistakes when connecting the new v1.4 features to existing subsystems.
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| L3 entrypoint → memU REST API | Using `http://localhost:8000` which resolves to the L3 container's own loopback | Set `MEMU_API_URL` env var at spawn time using `host.docker.internal` or the Docker bridge IP; inject via spawn.py |
-| soul_renderer.py → memory retrieval | Adding `$memory_context` variable without a character budget guard | Enforce 2,000 character max in the retrieval wrapper before calling `safe_substitute`; treat oversize context as a warning, not a fatal error |
-| spawn.py → memU pre-spawn retrieve | Calling retrieve at spawn time from the host Python process (where memU is reachable via localhost) then injecting into container env | This pattern is correct and avoids the container networking problem — host calls memU, injects result as `SOUL_MEMORY_CONTEXT` env var before container starts |
-| PostgreSQL pgvector initialization | Placing `CREATE EXTENSION vector` in a `.sql` file in `/docker-entrypoint-initdb.d/` | Use a `.sh` shell script (`00_init.sh`) with `psql -c "CREATE EXTENSION IF NOT EXISTS vector"` to avoid the SQL-only init ordering bug |
-| L2 decision memorize → memU | L2 memorizes immediately on `merge`/`reject` decision before the state file is updated | Update state file first, then memorize — ensures that if memorize fails, the decision is not lost |
-| dashboard → memory panel API | Using the raw memU REST API directly from the Next.js API routes | Route through an OpenClaw memory proxy API (`/api/memory/*`) that enforces project scoping and rate limiting |
-| memU retrieve → L3 in-execution | L3 calling memU during task execution without a timeout | Set a 3-second timeout on all in-execution retrieve calls; log a warning and proceed without memory if the call times out |
+| SIGTERM handler → JarvisState.update_task() | Calling update_task() directly from signal handler — re-entrancy deadlock if a write is already in progress | Set a flag in the handler; check the flag at safe checkpoints in the execution loop; schedule dehydration as an asyncio task via loop.add_signal_handler() |
+| Memory health monitor → pgvector | Running `SELECT` with cosine similarity `<->` over the full memory table at high frequency (e.g., every 5 minutes) | Cache the last health check result for 1 hour minimum; run health checks as a low-priority background job, not on every API request; use the recency-based staleness metric instead of pairwise similarity |
+| L1 suggestion engine → memU retrieve | Retrieving all memories without a project scope for pattern analysis | Always scope to project_id; L1 analyzes patterns per-project, not globally (cross-project contamination risk) |
+| Delta snapshot → state engine read (previous SHA) | Reading previous snapshot SHA from a cached JarvisState instance that may be stale | Read state fresh (with LOCK_SH) immediately before the git diff command; do not use write-through cache values for delta base decisions |
+| Recovery loop → pool.py semaphore | Re-spawning recovered tasks without checking if the pool semaphore was properly released on shutdown | On startup, reset the semaphore to its configured max value — do not carry over the pre-shutdown semaphore state, which is only valid for the previous event loop instance |
+| L1 suggestion dashboard → file write | Next.js API route writing directly to agents/l3_specialist/agent/SOUL.md | Route all SOUL writes through a dedicated Python API endpoint that validates the diff, logs the change, and requires an explicit confirmation token |
+| Health monitor → memory delete action | Calling DELETE /memory/{id} from the monitor without checking if the memory is referenced by any pending task | Soft-delete pattern: mark entry with `deleted: true` in metadata but preserve the record; hard-delete only after 7-day retention window |
 
 ---
 
@@ -223,25 +229,25 @@ Patterns that work at small scale but fail as usage grows.
 
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Synchronous memorize in L3 completion block | Pool stays at 3/3 utilization after all tasks complete; next task waits | Fire-and-forget: detach memorize call before container exits | First concurrent run of 3 L3 tasks that all complete within the same minute |
-| Unbounded retrieve returning all matching memories | Pre-spawn SOUL injection takes 10+ seconds; SOUL file >50KB | Always pass `limit=5` to retrieve; cache retrieved context with a 60s TTL keyed on `(project_id, task_description_hash)` | First project accumulating >50 memory records |
-| HNSW index on a table with frequent non-vector updates | UPDATE statements on memory records take 100ms+ each | Separate mutable metadata into companion table; use append-only inserts with `supersedes_id` | When the memU memory store exceeds ~500 records and update frequency is >1/minute |
-| Temporal service not ready when memU API starts | memU memorize calls hang for 30+ seconds waiting for Temporal gRPC; Docker healthcheck passes but memorize silently fails | Add health check that verifies Temporal gRPC is reachable before marking memU service healthy; or bypass Temporal entirely with asyncio task queue | Every cold start of the memU service Docker stack |
-| PostgreSQL `shared_buffers` at default 128MB with HNSW index | Query times for retrieve degrade as index grows beyond shared_buffers cache | Set `shared_buffers=512m` and `effective_cache_size=1g` in postgres container's `postgresql.conf` or via env var `POSTGRES_SHARED_BUFFERS` | When memory store exceeds ~5,000 records (typical HNSW index at 1,536 dim exceeds 128MB shared_buffers well before this) |
+| Memory health check with O(N²) pairwise similarity scan | Dashboard `/memory` health tab takes 30+ seconds to load; PostgreSQL CPU spikes to 100% | Use approximate nearest-neighbor search (HNSW index) with limit=10 for candidate finding, not full table scan; cache results for 1 hour | When memory store exceeds ~500 entries (pairwise scan hits 250K comparisons) |
+| Delta snapshot accumulating unbounded chain of deltas | Snapshot diff files grow nonlinearly; diff computation time increases with chain length | Periodic "rebase" to full snapshot when chain length exceeds 10; store SHAs for only the last 10 deltas | When a single task accumulates more than ~10 delta snapshots |
+| L1 pattern analysis running on every task completion | memU retrieve spikes after every L3 completion; L1 LLM calls queue up | Batch L1 analysis: run once per 24 hours or when triggered manually, not per-task | First concurrent run of 3 L3 tasks completing simultaneously (3x L1 LLM calls in parallel) |
+| SIGTERM grace period too short for state dehydration | Docker kills containers mid-dehydration, leaving state file truncated | Set `--stop-timeout 30` in Docker run config; state dehydration must complete within this window | Any task with a large activity log that takes >10s to serialize and write under lock |
+| Recovery loop running before state file is fully consistent | Recovery loop starts, reads stale in_progress tasks, re-spawns prematurely | Add a startup delay (5s) or a "state file version check" before the recovery loop runs | Any restart scenario where the state file was being written when the process was killed |
 
 ---
 
 ## Security Mistakes
 
-Domain-specific security issues beyond general web security.
+Domain-specific security issues for v1.4 features.
 
 | Mistake | Risk | Prevention |
 |---------|------|------------|
-| Exposing PostgreSQL port 5432 on the host interface | Any process on the host (or network if Docker host is exposed) can read/write all agent memories including credentials, code patterns, API keys | In docker-compose, bind postgres to `127.0.0.1:5432` not `0.0.0.0:5432`; within Docker network, containers can reach postgres by service name without exposing the host port |
-| Memory injection accepts arbitrary retrieved content without sanitization | Prompt injection: a malicious task output stored in memory is retrieved and injected into the SOUL of a future agent, causing the future agent to execute the attacker's instructions | Sanitize retrieved memory content before SOUL injection: strip any lines starting with `#` (markdown headings that could be parsed as SOUL sections), limit to plain prose, reject content containing `$` or `{{` patterns |
-| OpenAI API key in memU-server container environment accessible to L3 containers | If L3 container is compromised, it can inspect env vars of sibling containers via `/proc` or Docker API | Isolate the memU-server on a dedicated Docker network not shared with L3 containers; L3 accesses memU only through the host-network proxy, never directly to the memU container |
-| All projects share one PostgreSQL credentials | A bug that executes arbitrary SQL (e.g., in a badly sanitized retrieve query) can access all projects' memory | Use separate PostgreSQL users per project with row-level security (`CREATE POLICY`) if the single-DB approach is used; minimum viable: use a read-only user for retrieve operations |
-| memU service REST API has no authentication | Any process that can reach the host port can memorize arbitrary data or read all memories | Add a shared secret header (`X-Openclaw-Token`) checked by the memU proxy; since this is a single-host internal service, even a static shared secret provides adequate protection |
+| L1 auto-applies SOUL suggestions without human review | Prompt injection via memory: malicious task output → stored as memory → surfaced to L1 → SOUL modification that changes agent safety constraints | Mandatory human approval gate; SOUL files are write-protected at OS level during normal operation |
+| SOUL suggestion diff displayed in dashboard without escaping | Stored XSS: a SOUL suggestion containing `<script>` tags renders in the dashboard and executes in the operator's browser | Render SOUL diff as plain text in a `<pre>` tag; escape HTML entities before display; use a markdown renderer with XSS sanitization |
+| Memory health monitor exposes full memory content via dashboard API | Full memory dump API endpoint accessible without authentication returns all project memories including agent reasoning about security-sensitive tasks | Dashboard memory API must enforce project scoping and require the same auth as other API routes; never expose a "dump all memories" endpoint |
+| L1 reads memories from all projects for pattern analysis | Cross-project memory leakage: L1 pattern analysis sees memories from other projects and generates suggestions that embed cross-project context | L1 analysis must be strictly project-scoped; query memU with `where.user_id = project_id` filter on every retrieve |
+| Recovery loop re-spawns tasks with original task description | Task description may contain credentials or sensitive data from the original request; re-spawn logs them again in structured logging | Sanitize task description before logging; use task_id as the log identifier, not the full description |
 
 ---
 
@@ -249,14 +255,14 @@ Domain-specific security issues beyond general web security.
 
 Things that appear complete but are missing critical pieces.
 
-- [ ] **memU service startup:** `docker-compose up` returns healthy — verify with `curl http://localhost:8000/health` AND `curl http://localhost:8000/retrieve` (health endpoint may pass while retrieve fails due to pgvector extension missing)
-- [ ] **Python version in L3:** memU REST client in L3 entrypoint uses HTTP (curl or urllib), not Python import of memu-py — verify no `import memu` in L3 code paths
-- [ ] **Cold-start database init:** Delete the postgres volume, restart docker-compose, and verify pgvector extension is present with `psql -c "SELECT extname FROM pg_extension WHERE extname='vector'"` — must pass on every cold start
-- [ ] **Container networking:** Run the memorize call from inside a running L3 container (using `docker exec`) to verify it reaches the memU service — host-machine success does not prove in-container success
-- [ ] **Project scoping enforcement:** Create memories for project A, then retrieve with project B's scoping parameters — must return zero results
-- [ ] **SOUL injection budget:** After memory injection, measure the rendered SOUL.md byte count — must be under 8KB (2x the v1.2 baseline of ~3KB with headroom)
-- [ ] **Fire-and-forget memorize:** Verify that L3 container exit happens within 5 seconds of task completion regardless of memU service latency — test by introducing an artificial 10s delay in the memU memorize endpoint
-- [ ] **L2 memorize ordering:** Confirm that the state file reflects the `merge`/`reject` decision before the memorize call returns — not dependent on memorize success
+- [ ] **SIGTERM handling:** Docker stop returns within 10s AND exit code is 0 or 143 (not 137) — exit code 137 means SIGKILL, meaning graceful shutdown did not work
+- [ ] **Dehydration safety:** After a SIGTERM shutdown, verify `workspace-state.json` shows the task in `dehydrated` or `interrupted` status (not stuck in `in_progress`) — read the state file directly with `cat` after the container exits
+- [ ] **Recovery eligibility:** Check that the recovery loop only re-spawns tasks where `recovery_safe: true` — verify by manually setting a task to `in_progress` without the flag and confirming the loop skips it
+- [ ] **Memory health monitor false positives:** Run the health monitor against a known-good memory store of 20 entries — it must return 0 conflicts (not falsely flagging all similar entries)
+- [ ] **L1 suggestion gate:** Attempt to auto-apply a suggestion by calling the suggestion API directly (bypassing the dashboard) — the API must return 403 or require an explicit confirmation token
+- [ ] **SOUL validation:** Submit a SOUL suggestion that removes an existing safety constraint — the validation step must reject it before presenting to the operator
+- [ ] **Delta snapshot integrity:** Verify that delta N + delta N+1 applied to the base equals the full snapshot at N+1 — test with a known 2-commit sequence and compare diff outputs
+- [ ] **Fire-and-forget task tracking:** Send SIGTERM while a memorize task is pending — verify the pending task completes (or is logged as incomplete) before the process exits
 
 ---
 
@@ -266,12 +272,12 @@ When pitfalls occur despite prevention, how to recover.
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Python version mismatch in L3 (imported memu-py fails) | LOW | Remove `import memu` from L3 code; switch to HTTP REST calls via `urllib.request` or `curl` subprocess — no Python version dependency |
-| pgvector extension missing after cold start | LOW | `docker exec -it memu-postgres psql -U postgres -d memu -c "CREATE EXTENSION IF NOT EXISTS vector"` — then add init script to prevent recurrence |
-| Cross-project memory contamination (memories leaked between projects) | MEDIUM | Add `project_id` column filter retroactively to all records without it; DELETE records with NULL `project_id`; add NOT NULL constraint on `project_id` column going forward |
-| SOUL injection bloated (SOUL >50KB) | LOW | Add character budget check in `soul_renderer.py` before `safe_substitute`; truncate `$memory_context` variable value to 2,000 chars before injection |
-| Temporal not starting, memU memorize hangs | MEDIUM | Disable Temporal integration if possible; replace with asyncio background task queue; or add 5s timeout to memorize HTTP calls and treat failure as non-fatal |
-| PostgreSQL data loss (single DB for all projects) | HIGH | Restore from volume backup; implement per-project backup cron (`pg_dump -t "memory_items WHERE project_id='X'"` for each project); treat as a signal to move to per-project schemas |
+| SIGTERM never reaches Python (shell form entrypoint) | LOW | Change entrypoint to exec form in Dockerfile; rebuild L3 image; no data loss |
+| State file stuck in `in_progress` after SIGKILL | LOW | Manually update state file: `python3 -c "import json; ..."` to set task status to `interrupted`; add `recovery_safe: false` to prevent recovery loop from re-spawning |
+| Recovery loop re-spawned a task with existing staging branch | MEDIUM | `git branch -D l3/task-{id}` to delete the duplicate staging branch; review state to determine if either run's work is usable; manually trigger L2 review if commits exist |
+| L1 auto-applied a bad SOUL suggestion | MEDIUM | `git diff` on `agents/l3_specialist/agent/SOUL.md` to see what changed; `git restore` to revert; if suggestion was auto-applied without git tracking, check `soul-suggestions/` directory for the original and manual diff comparison |
+| Memory health monitor deleted valid entries | HIGH | memU PostgreSQL backup restore (if backups are configured); or partially reconstruct from state file activity logs which record task outcomes in plaintext |
+| Delta snapshot chain corrupted (overlapping deltas) | LOW | Fall back to full snapshot for the affected task: run `git diff main...l3/task-{id} > {task_id}.diff` and replace the corrupted delta chain; reset the stored base SHA |
 
 ---
 
@@ -281,30 +287,29 @@ How roadmap phases should address these pitfalls.
 
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| Python 3.13 version mismatch in L3/memU | Phase 1: memU Service Setup | `python3 --version` inside memU container returns 3.13.x; L3 integration uses HTTP REST only, no Python import |
-| pgvector extension init ordering | Phase 1: memU Service Setup | Cold-start test: delete volume, restart, verify `pg_extension` table shows vector extension |
-| Thundering-herd memorize from concurrent L3 completion | Phase 2: L3 Auto-Memorization | L3 containers exit within 5s of task completion; pool utilization drops immediately after task end |
-| SOUL context size explosion | Phase 3: Pre-Spawn Context Retrieval | Rendered SOUL.md byte count is under 8KB; retrieve is called with `limit=5` |
-| Container networking (localhost misroute) | Phase 1: memU Service Setup | Memorize call succeeds from inside a running L3 container via `docker exec` |
-| Missing project_id scoping on retrieve | Phase 2: Per-Agent + Per-Project Scoping | Two-project test: project B retrieve returns zero project A memories |
-| HNSW index update penalty | Phase 1: memU Service Setup | Schema separates mutable metadata from immutable vector/content; no direct UPDATEs on vector column |
-| Temporal overhead | Phase 1: memU Service Setup | Decision to include or bypass Temporal documented; if included, healthcheck verifies gRPC before marking service ready |
+| SIGTERM absorbed by shell entrypoint | SIGTERM/Graceful Shutdown — Docker entrypoint fix | `docker stop` produces exit code 143 (not 137) within 5s |
+| Signal handler deadlocks on fcntl lock | SIGTERM/Graceful Shutdown — dehydration design | No hung processes after `docker stop`; state file shows clean terminal status |
+| Recovery loop re-spawns partial-work tasks | Task Recovery — eligibility rules | Recovery loop integration test: task with staging branch is NOT re-spawned |
+| Health monitor false positives on similar entries | Memory Health Monitoring — staleness metric design | Zero false positives on 20-entry ground-truth test set |
+| L1 suggestions modify SOUL without approval | L1 Strategic Suggestions — approval gate | Direct API call to apply suggestion returns 403; dashboard approval flow required |
+| Prompt injection via memory → SOUL | L1 Strategic Suggestions — SOUL validation | Injected test payload in memory does not appear in any generated suggestion |
+| Delta snapshot torn during concurrent write | Delta Snapshot — timing constraint | Delta captured after container.wait() returns; SHA-based base tracking |
+| Fire-and-forget tasks lost on event loop shutdown | SIGTERM/Graceful Shutdown — task tracking | Pending memorize tasks complete or are logged as skipped; not silently lost |
 
 ---
 
 ## Sources
 
-- Direct codebase inspection: `docker/l3-specialist/Dockerfile`, `docker/l3-specialist/entrypoint.sh`, `orchestration/soul_renderer.py`, `skills/spawn_specialist/spawn.py`, `agents/l3_specialist/config.json` — HIGH confidence
-- memU official README and memU-server repository: [NevaMind-AI/memU](https://github.com/NevaMind-AI/memU), [NevaMind-AI/memU-server](https://github.com/NevaMind-AI/memU-server) — HIGH confidence
-- Python 3.13 on Debian bookworm: [docker-library/python slim-bookworm Dockerfile](https://github.com/docker-library/python/blob/master/3.13/slim-bookworm/Dockerfile), [pascallj/python3.13-backport](https://github.com/pascallj/python3.13-backport) — HIGH confidence
-- pgvector extension init ordering bug: [pgvector/pgvector Issue #355](https://github.com/pgvector/pgvector/issues/355), [pgvector/pgvector Issue #512](https://github.com/pgvector/pgvector/issues/512) — HIGH confidence
-- pgvector HNSW index update performance issue: [pgvector/pgvector Issue #875](https://github.com/pgvector/pgvector/issues/875), [HNSW Indexes with Postgres and pgvector — Crunchy Data](https://www.crunchydata.com/blog/hnsw-indexes-with-postgres-and-pgvector) — HIGH confidence
-- Docker container localhost networking: [Docker Docs: Host Network Driver](https://docs.docker.com/engine/network/drivers/host/), [How to Connect to Localhost Within a Docker Container — HowToGeek](https://www.howtogeek.com/devops/how-to-connect-to-localhost-within-a-docker-container/) — HIGH confidence
-- Multi-tenant memory namespace design: [Amazon Bedrock AgentCore: Specify namespaces](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/specify-long-term-memory-organization.html), [Multi-Tenant Isolation Challenges in Enterprise LLM Agent Platforms](https://www.researchgate.net/publication/399564099_Multi-Tenant_Isolation_Challenges_in_Enterprise_LLM_Agent_Platforms) — MEDIUM confidence
-- Concurrent LLM memorize latency: [Asynchronous LLM Function Calling — arXiv:2412.07017](https://arxiv.org/abs/2412.07017) — MEDIUM confidence
-- Memory injection attacks via retrieval: [Palo Alto Unit 42: Persistent Behaviors in Agents' Memory](https://unit42.paloaltonetworks.com/indirect-prompt-injection-poisons-ai-longterm-memory/) — MEDIUM confidence (context: threat awareness)
-- Temporal alternatives for small projects: [A lightweight alternative to Temporal for Node.js](https://dev.to/louis_dussarps_e656bc7b01/a-lightweight-alternative-to-temporal-for-nodejs-applications-9e4) — MEDIUM confidence
+- Direct codebase inspection: `orchestration/state_engine.py`, `skills/spawn_specialist/spawn.py`, `skills/spawn_specialist/pool.py`, `orchestration/snapshot.py`, `orchestration/memory_client.py`, `docker/l3-specialist/entrypoint.sh` — HIGH confidence
+- Docker SIGTERM and PID 1 signal handling: [PID 1 Signal Handling in Docker — Peter Malmgren](https://petermalmgren.com/signal-handling-docker/), [How to Handle Docker Container Graceful Shutdown and Signal Handling — OneUptime](https://oneuptime.com/blog/post/2026-01-16-docker-graceful-shutdown-signals/view), [Why Your Dockerized Application Isn't Receiving Signals — Hynek](https://hynek.me/articles/docker-signals/), [Trapping Signals in Docker Containers — CloudBees](https://www.cloudbees.com/blog/trapping-signals-in-docker-containers) — HIGH confidence
+- Python asyncio signal handling: [python-graceful-shutdown — GitHub](https://github.com/wbenny/python-graceful-shutdown), [Signal Handling in Python — johal.in](https://johal.in/signal-handling-in-python-custom-handlers-for-graceful-shutdowns/) — HIGH confidence
+- fcntl flock behavior on process termination: [File Locking in Linux — gavv.net](https://gavv.net/articles/file-locks/), [fcntl(2) Linux manual page](https://man7.org/linux/man-pages/man2/fcntl.2.html) — HIGH confidence
+- pgvector production monitoring and staleness: [pgvector for AI Memory in Production — Ivan Turkovic](https://www.ivanturkovic.com/2025/11/16/pgvector-for-ai-memory-in-production-applications/), [Optimizing Vector Search at Scale — Medium](https://medium.com/@dikhyantkrishnadalai/optimizing-vector-search-at-scale-lessons-from-pgvector-supabase-performance-tuning-ce4ada4ba2ed), [Performance Tips Using Postgres and pgvector — Crunchy Data](https://www.crunchydata.com/blog/pgvector-performance-for-developers) — MEDIUM confidence
+- Agentic AI memory and SOUL injection security: [Indirect Prompt Injection Poisons AI Long-Term Memory — Palo Alto Unit 42](https://unit42.paloaltonetworks.com/indirect-prompt-injection-poisons-ai-longterm-memory/), [The OpenClaw Prompt Injection Problem — Penligent](https://www.penligent.ai/hackinglabs/the-openclaw-prompt-injection-problem-persistence-tool-hijack-and-the-security-boundary-that-doesnt-exist/), [OWASP LLM01:2025 Prompt Injection](https://genai.owasp.org/llmrisk/llm01-prompt-injection/) — HIGH confidence (external research specifically targets OpenClaw's architecture)
+- AI agent configuration modification risks: [Agentic AI and Security — Martin Fowler](https://martinfowler.com/articles/agentic-ai-security.html), [Top 10 Agentic AI Security Threats — Lasso Security](https://www.lasso.security/blog/agentic-ai-security-threats-2025) — MEDIUM confidence
+- Delta/incremental snapshot consistency: [Incremental Snapshots in Debezium](https://debezium.io/blog/2021/10/07/incremental-snapshots/), [Concurrency Control — Delta Lake](https://docs.delta.io/concurrency-control/) — MEDIUM confidence (different domain but same consistency principles apply)
+- asyncio task lifecycle and event loop shutdown: [Python asyncio documentation — conceptual overview](https://docs.python.org/3/howto/a-conceptual-overview-of-asyncio.html), [Real Python asyncio walkthrough](https://realpython.com/async-io-python/) — HIGH confidence
 
 ---
-*Pitfalls research for: Adding memU persistent memory to OpenClaw v1.3*
+*Pitfalls research for: OpenClaw v1.4 Operational Maturity — Graceful Shutdown, Memory Health, L1 Suggestions, Delta Snapshots*
 *Researched: 2026-02-24*
