@@ -4,7 +4,7 @@
 
 - ✅ **v1.0 Grand Architect Protocol Foundation** — Phases 1-10 (shipped 2026-02-23)
 - ✅ **v1.1 Project Agnostic** — Phases 11-18 (shipped 2026-02-23)
-- 🚧 **v1.2 Orchestration Hardening** — Phases 19-24 (in progress)
+- 🚧 **v1.2 Orchestration Hardening** — Phases 19-25 (in progress)
 
 ## Phases
 
@@ -52,6 +52,7 @@ See: `.planning/milestones/v1.1-ROADMAP.md` for full phase details.
 - [ ] **Phase 22: Observability Metrics** - Task lifecycle metrics, pool utilization tracking, and activity log rotation
 - [ ] **Phase 23: Per-Project Pool Config** - Configurable concurrency limits, isolated/shared pool modes, queue overflow policies
 - [ ] **Phase 24: Dashboard Metrics** - Agent hierarchy filtering per project and usage metrics visualization panel
+- [ ] **Phase 25: Monitor Cache Fix** - Fix JarvisState cache reuse in multi-project monitor path (PERF-04 integration gap)
 
 ## Phase Details
 
@@ -131,6 +132,17 @@ Plans:
   4. An empty-state is shown (not a broken chart) when a project has no completed tasks yet
 **Plans**: TBD
 
+### Phase 25: Monitor Cache Fix
+**Goal**: Multi-project monitor tail reuses JarvisState across poll cycles so the in-memory cache provides hits instead of cold-starting every iteration
+**Depends on**: Phase 21
+**Requirements**: PERF-04 (integration gap closure)
+**Gap Closure:** Closes integration gap and broken flow from v1.2 audit
+**Success Criteria** (what must be TRUE):
+  1. `monitor.py` `tail_state()` multi-project path creates JarvisState once per project outside the poll loop and reuses it across iterations
+  2. Cache hit rate in structured logs shows hits (not only misses) during multi-project monitor tail polling
+  3. `show_status()` and `show_task()` multi-project paths also reuse JarvisState instances where practical (lower priority — one-shot calls)
+**Plans**: TBD
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -159,3 +171,4 @@ Plans:
 | 22. Observability Metrics | v1.2 | 0/TBD | Not started | - |
 | 23. Per-Project Pool Config | v1.2 | 0/TBD | Not started | - |
 | 24. Dashboard Metrics | v1.2 | 0/TBD | Not started | - |
+| 25. Monitor Cache Fix | v1.2 | 0/TBD | Not started | - |

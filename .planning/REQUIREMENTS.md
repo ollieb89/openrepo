@@ -91,6 +91,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | POOL-03 | Phase 23 | Pending |
 | DSH-09 | Phase 24 | Pending |
 | DSH-10 | Phase 24 | Pending |
+| PERF-04 (integration) | Phase 25 | Pending |
 
 **Coverage:**
 - v1.2 requirements: 16 total
