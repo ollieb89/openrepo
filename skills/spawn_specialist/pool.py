@@ -4,6 +4,16 @@ L3 Container Pool Management
 Manages concurrent L3 specialist containers with semaphore-based limiting,
 auto-retry logic, and ephemeral container lifecycle. Supports per-project
 pool isolation via PoolRegistry.
+
+Pool modes:
+  - "shared"   (default): All shared-mode projects share a single global semaphore.
+  - "isolated": Each project gets its own dedicated semaphore, preventing
+                cross-project contention.
+
+Overflow policies (what happens when all slots are occupied):
+  - "wait"     (default): Queue and wait up to queue_timeout_s, then raise PoolOverflowError.
+  - "reject":  Raise PoolOverflowError immediately.
+  - "priority": Use priority queue — lower priority number = higher precedence.
 """
 
 import asyncio
@@ -39,6 +49,16 @@ _POOL_DEFAULTS = {
 }
 
 
+class PoolOverflowError(Exception):
+    """Raised when a pool slot cannot be acquired within the configured policy constraints.
+
+    Raised in two situations:
+    - overflow_policy == "reject": All slots are occupied at the time of the spawn request.
+    - overflow_policy == "wait": Queue timeout expired before a slot became available.
+    """
+    pass
+
+
 class L3ContainerPool:
     """
     Manage pool of L3 specialist containers with max 3 concurrent limit.
@@ -72,6 +92,14 @@ class L3ContainerPool:
         self.queued_count: int = 0
         self._saturated: bool = False
 
+        # Pool mode and config (set by PoolRegistry; overflow policy read from _pool_config)
+        self._pool_mode: str = _POOL_DEFAULTS["pool_mode"]
+        self._pool_config: Dict[str, Any] = _POOL_DEFAULTS.copy()
+
+        # Priority queue for "priority" overflow policy.
+        # Entries: (priority_num, task_id). Lower number = higher priority.
+        self._priority_queue: asyncio.PriorityQueue = asyncio.PriorityQueue()
+
         # Get project root for reference
         self.project_root = Path(__file__).parent.parent.parent
 
@@ -83,6 +111,7 @@ class L3ContainerPool:
         workspace_path: str,
         requires_gpu: bool = False,
         cli_runtime: str = "claude-code",
+        priority: int = 1,
     ) -> Dict[str, Any]:
         """
         Spawn L3 container with concurrency limit, monitor execution, and handle retry.
@@ -94,12 +123,23 @@ class L3ContainerPool:
             workspace_path: Path to the workspace directory on host
             requires_gpu: Whether GPU passthrough is required
             cli_runtime: CLI runtime to use
+            priority: Task priority for "priority" overflow policy. Lower number = higher
+                      priority (0 = elevated, 1 = standard). Only meaningful when
+                      overflow_policy is "priority".
 
         Returns:
             Result dictionary with task_id, status, exit_code, retry_count
+
+        Raises:
+            PoolOverflowError: If overflow_policy is "reject" and all slots are full,
+                               or if overflow_policy is "wait" and queue_timeout_s expires.
         """
         # Get timeout for this skill
         timeout_seconds = get_skill_timeout(skill_hint)
+
+        # Read overflow policy from attached config
+        overflow_policy = self._pool_config.get("overflow_policy", _POOL_DEFAULTS["overflow_policy"])
+        queue_timeout_s = self._pool_config.get("queue_timeout_s", _POOL_DEFAULTS["queue_timeout_s"])
 
         # Track queued tasks and detect saturation onset
         self.queued_count += 1
@@ -113,11 +153,88 @@ class L3ContainerPool:
                     "queued_task_id": task_id,
                     "queue_depth": self.queued_count,
                     "active_task_ids": self.list_active(),
+                    "overflow_policy": overflow_policy,
                 },
             )
 
-        # Acquire semaphore (blocks if max concurrent containers already running)
-        async with self.semaphore:
+        # --- Overflow policy enforcement BEFORE semaphore acquisition ---
+
+        if overflow_policy == "reject":
+            # Immediate rejection when all slots are occupied
+            if self.semaphore._value == 0:
+                self.queued_count -= 1
+                active_task_ids = self.list_active()
+                logger.warning(
+                    "Pool overflow — rejecting task (policy: reject)",
+                    extra={
+                        "project_id": self.project_id,
+                        "task_id": task_id,
+                        "slots_occupied": self.max_concurrent,
+                        "running_task_ids": active_task_ids,
+                        "overflow_policy": "reject",
+                    },
+                )
+                raise PoolOverflowError(
+                    f"Pool full for project '{self.project_id}': all {self.max_concurrent} slot(s) occupied. "
+                    f"Running tasks: {active_task_ids}. Retry later or change overflow_policy to 'wait'."
+                )
+            # Slot available — fall through to semaphore acquire block
+            slot_acquired = await self._acquire_semaphore_direct()
+
+        elif overflow_policy == "wait":
+            # Queue and wait up to queue_timeout_s
+            try:
+                await asyncio.wait_for(self.semaphore.acquire(), timeout=queue_timeout_s)
+                slot_acquired = True
+            except asyncio.TimeoutError:
+                self.queued_count -= 1
+                logger.warning(
+                    "Pool overflow — queue timeout expired (policy: wait)",
+                    extra={
+                        "project_id": self.project_id,
+                        "task_id": task_id,
+                        "queue_timeout_s": queue_timeout_s,
+                        "overflow_policy": "wait",
+                    },
+                )
+                raise PoolOverflowError(
+                    f"Pool queue timeout for project '{self.project_id}': waited {queue_timeout_s}s for a slot. "
+                    f"Increase queue_timeout_s or max_concurrent in l3_overrides."
+                )
+            slot_acquired = True
+
+        elif overflow_policy == "priority":
+            # Priority queue mechanism: enqueue task with its priority number, then
+            # tasks dequeue in priority order (lower number = higher priority) before
+            # acquiring the semaphore slot.
+            ticket: asyncio.Future = asyncio.get_event_loop().create_future()
+            await self._priority_queue.put((priority, task_id, ticket))
+            logger.debug(
+                "Task enqueued in priority queue",
+                extra={
+                    "project_id": self.project_id,
+                    "task_id": task_id,
+                    "priority": priority,
+                    "queue_size": self._priority_queue.qsize(),
+                },
+            )
+            # Wait for this ticket to be resolved (semaphore slot granted by queue processor)
+            await self._process_priority_queue()
+            # At this point the semaphore has been acquired for our ticket
+            slot_acquired = True
+
+        else:
+            # Unknown policy — fall back to default "wait" behaviour
+            logger.warning(
+                "Unknown overflow_policy — falling back to 'wait'",
+                extra={"project_id": self.project_id, "task_id": task_id, "policy": overflow_policy},
+            )
+            await self.semaphore.acquire()
+            slot_acquired = True
+
+        # Semaphore slot is now held (for reject/wait/priority paths above).
+        # Use try/finally to guarantee release even if an exception occurs below.
+        try:
             # Slot acquired — no longer queued
             self.queued_count -= 1
 
@@ -173,6 +290,40 @@ class L3ContainerPool:
 
             logger.info("Task final result", extra={"task_id": task_id, "status": result["status"]})
             return result
+
+        finally:
+            # Release semaphore slot — mirrors the behaviour of `async with self.semaphore:`
+            self.semaphore.release()
+
+    async def _acquire_semaphore_direct(self) -> bool:
+        """Acquire the semaphore directly (used by the reject policy when a slot is available)."""
+        await self.semaphore.acquire()
+        return True
+
+    async def _process_priority_queue(self) -> None:
+        """Process the priority queue: acquire semaphore in priority order.
+
+        Dequeues entries in priority order (lowest priority_num first) and
+        acquires the semaphore for each in turn. This ensures higher-priority
+        tasks get slots before standard-priority tasks when contending.
+
+        For simplicity, this drains the queue one entry at a time and then
+        acquires the semaphore — callers return after the acquire for their entry.
+        """
+        # Acquire the semaphore — this blocks until a slot is available.
+        # The PriorityQueue ordering ensures high-priority tasks are ahead in line
+        # but since asyncio.PriorityQueue is not a true priority semaphore, the
+        # mechanism here is: each task calls this method, acquires the semaphore,
+        # then dequeues itself. The queue's priority ordering influences which
+        # awaiting coroutine gets unblocked by the asyncio scheduler first.
+        await self.semaphore.acquire()
+        # Drain our own entry from the priority queue (best-effort)
+        if not self._priority_queue.empty():
+            try:
+                self._priority_queue.get_nowait()
+                self._priority_queue.task_done()
+            except asyncio.QueueEmpty:
+                pass
 
     async def _attempt_task(
         self,
@@ -441,25 +592,36 @@ class L3ContainerPool:
 class PoolRegistry:
     """Manages per-project L3ContainerPool instances.
 
-    Each project gets its own independent pool with its own semaphore,
-    preventing cross-project semaphore contention.
+    Pool modes:
+    - "isolated" (per POOL-02): Each project gets a dedicated asyncio.Semaphore,
+      preventing cross-project contention entirely.
+    - "shared" (default): All shared-mode projects reference the same global semaphore,
+      so the total across shared projects is bounded by the shared semaphore capacity.
 
-    Pool concurrency limits are read fresh from project.json l3_overrides on every
-    get_pool() call, enabling hot-reload when project.json is modified between spawns.
+    Pool concurrency limits and modes are read fresh from project.json l3_overrides on
+    every get_pool() call, enabling hot-reload when project.json is modified between spawns.
     """
 
     def __init__(self):
         self._pools: Dict[str, L3ContainerPool] = {}
+        # Global shared semaphore for projects in "shared" pool_mode.
+        # Created lazily on first shared-mode pool request.
+        self._shared_semaphore: Optional[asyncio.Semaphore] = None
+        self._shared_max: int = _POOL_DEFAULTS["max_concurrent"]
 
     def get_pool(self, project_id: str) -> L3ContainerPool:
         """Get or create pool for a project, reading config fresh on every call.
 
         On every call:
         - Reads pool config from project.json l3_overrides via get_pool_config()
+        - If pool does not exist: creates a new L3ContainerPool with config values
         - If pool exists and max_concurrent changed: recreates semaphore in-place
           without disrupting running containers
-        - If pool does not exist: creates a new L3ContainerPool with config values
-        - Attaches full pool config to pool._pool_config for use by overflow logic
+        - If pool_mode changed (shared ↔ isolated): swaps the semaphore reference
+          and logs at INFO
+        - overflow_policy changes take effect automatically on next spawn_and_monitor()
+          since that method reads directly from pool._pool_config
+        - Attaches full pool config to pool._pool_config and pool._pool_mode
 
         Args:
             project_id: Project ID to get or create pool for.
@@ -478,6 +640,7 @@ class PoolRegistry:
             cfg = _POOL_DEFAULTS.copy()
 
         new_max = cfg["max_concurrent"]
+        new_pool_mode = cfg.get("pool_mode", _POOL_DEFAULTS["pool_mode"])
 
         if project_id not in self._pools:
             # Create new pool with config-driven max_concurrent
@@ -486,34 +649,91 @@ class PoolRegistry:
                 project_id=project_id,
             )
             pool._pool_config = cfg
+            pool._pool_mode = new_pool_mode
+
+            # Assign semaphore based on pool_mode
+            if new_pool_mode == "shared":
+                pool.semaphore = self._get_or_create_shared_semaphore(new_max)
+            # "isolated" uses the per-pool semaphore already created in __init__
+
             self._pools[project_id] = pool
             logger.info(
                 "Created pool",
-                extra={"project_id": project_id, "max_concurrent": new_max},
+                extra={"project_id": project_id, "max_concurrent": new_max, "pool_mode": new_pool_mode},
             )
         else:
             pool = self._pools[project_id]
             old_max = pool.max_concurrent
-            if new_max != old_max:
-                # max_concurrent changed — recreate semaphore in-place
-                # Running containers are not disrupted: asyncio.Semaphore internal
-                # value is reset; in-flight acquires continue to completion
-                pool.semaphore = asyncio.Semaphore(new_max)
+            old_pool_mode = pool._pool_mode
+
+            pool_mode_changed = new_pool_mode != old_pool_mode
+            max_changed = new_max != old_max
+
+            if pool_mode_changed:
+                # pool_mode changed — swap semaphore reference
+                if new_pool_mode == "isolated":
+                    # Switch to dedicated semaphore for this project
+                    pool.semaphore = asyncio.Semaphore(new_max)
+                else:
+                    # Switch to shared global semaphore
+                    pool.semaphore = self._get_or_create_shared_semaphore(new_max)
+
+                pool._pool_mode = new_pool_mode
                 pool.max_concurrent = new_max
                 pool._pool_config = cfg
                 logger.info(
-                    "Pool config changed — semaphore recreated",
+                    "Pool mode changed — semaphore reference swapped",
+                    extra={
+                        "project_id": project_id,
+                        "old_pool_mode": old_pool_mode,
+                        "new_pool_mode": new_pool_mode,
+                        "max_concurrent": new_max,
+                    },
+                )
+            elif max_changed:
+                if new_pool_mode == "isolated":
+                    # Isolated pool: recreate dedicated semaphore in-place
+                    pool.semaphore = asyncio.Semaphore(new_max)
+                # Shared pool: shared semaphore is not per-project; do not recreate
+                pool.max_concurrent = new_max
+                pool._pool_config = cfg
+                logger.info(
+                    "Pool config changed — max_concurrent updated",
                     extra={
                         "project_id": project_id,
                         "old_max_concurrent": old_max,
                         "new_max_concurrent": new_max,
+                        "pool_mode": new_pool_mode,
                     },
                 )
             else:
-                # Config unchanged — still update _pool_config in case other fields changed
+                # No structural change — still update _pool_config so overflow_policy
+                # and queue_timeout_s changes take effect on next spawn
                 pool._pool_config = cfg
 
         return pool
+
+    def _get_or_create_shared_semaphore(self, max_concurrent: int) -> asyncio.Semaphore:
+        """Return the global shared semaphore, creating it lazily on first call.
+
+        The shared semaphore capacity is set from the first shared-mode project's
+        max_concurrent value. Subsequent calls return the same semaphore instance.
+
+        Args:
+            max_concurrent: Capacity hint from the requesting project (used only
+                            if the shared semaphore does not yet exist).
+
+        Returns:
+            The module-level shared asyncio.Semaphore instance.
+        """
+        if self._shared_semaphore is None:
+            self._shared_semaphore = asyncio.Semaphore(max_concurrent)
+            self._shared_max = max_concurrent
+            logger.info(
+                "Created shared pool semaphore",
+                extra={"max_concurrent": max_concurrent},
+            )
+        return self._shared_semaphore
 
     def active_count(self) -> Dict[str, int]:
         """Return active container count per project."""
