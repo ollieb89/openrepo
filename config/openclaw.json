@@ -3,21 +3,6 @@
     "lastTouchedVersion": "2026.2.15",
     "lastTouchedAt": "2026-02-17T19:20:06.825Z"
   },
-  "wizard": {
-    "lastRunAt": "2026-02-17T19:20:06.816Z",
-    "lastRunVersion": "2026.2.15",
-    "lastRunCommand": "doctor",
-    "lastRunMode": "local"
-  },
-  "auth": {
-    "profiles": {
-      "google-gemini-cli:buitelaarolivier@gmail.com": {
-        "provider": "google-gemini-cli",
-        "mode": "oauth",
-        "email": "buitelaarolivier@gmail.com"
-      }
-    }
-  },
   "active_project": "pumplai",
   "source_directories": [
     "/home/ollie/Development/Projects",
@@ -119,7 +104,7 @@
     "telegram": {
       "enabled": true,
       "dmPolicy": "pairing",
-      "botToken": "8261002797:AAFMJm4sifdywmKM8oKezRnFdAgxezvIHW0",
+      "botToken": "${OPENCLAW_TELEGRAM_BOT_TOKEN}",
       "groupPolicy": "allowlist",
       "streamMode": "partial"
     }
@@ -130,7 +115,7 @@
     "bind": "loopback",
     "auth": {
       "mode": "token",
-      "token": "c1701657cb4ba6739dcb5684bebf077384ce540c3c41e112"
+      "token": "${OPENCLAW_GATEWAY_TOKEN}"
     }
   },
   "memory": {
