@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.3 Agent Memory — Phase 27: Memory Client + Scoping
+**Current focus:** v1.3 Agent Memory — Phase 29: Pre-Spawn Retrieval + SOUL Injection
 
 ## Current Position
 
-Phase: 27 of 32 (Memory Client + Scoping)
-Plan: 1 of 1 (complete)
-Status: Phase complete
-Last activity: 2026-02-24 — Phase 27 Plan 01 executed (MemoryClient with enforced scoping)
+Phase: 29 of 32 (Pre-Spawn Retrieval + SOUL Injection)
+Plan: 1 of 2 (complete)
+Status: Plan 01 complete, Plan 02 pending
+Last activity: 2026-02-24 — Phase 29 Plan 01 executed (sync httpx retrieval + tempfile SOUL injection into spawn.py)
 
-Progress: [██░░░░░░░░] 15% (v1.3)
+Progress: [████░░░░░░] 40% (v1.3)
 
 ## Performance Metrics
 
@@ -22,6 +22,7 @@ Progress: [██░░░░░░░░] 15% (v1.3)
 - v1.0: 10 phases, 25 plans across 7 days
 - v1.1: 8 phases, 17 plans in ~5 hours
 - v1.2: 7 phases, 14 plans in ~1 day
+- v1.3 (29-01): 2 tasks, 1 file, 2 min
 
 ## Accumulated Context
 
@@ -46,6 +47,14 @@ v1.3 decisions made (Phase 26 Plan 02):
 - [Phase 27]: AgentType(str, Enum) so values serialize to JSON without .value
 - [Phase 27]: retrieve() where clause maps project_id to user_id — memU user_id is project isolation key
 
+v1.3 decisions made (Phase 29 Plan 01):
+- Use httpx.Client (sync) not asyncio.run(MemoryClient.retrieve()) — avoids RuntimeError when spawn called from pool.py async context
+- Read agents/l3_specialist/agent/SOUL.md directly (not render_soul()) — render_soul() generates L2 agent content, wrong target for L3 injection
+- MEMORY_CONTEXT_BUDGET=2000 hardcoded constant, not project-configurable
+- Empty memory context produces no Memory Context header — no placeholder, clean blank
+- Tempfile cleanup in finally block after containers.run() — not before, Docker needs file at bind-mount time
+- SOUL mounted at /run/openclaw/soul.md — avoids conflict with existing /orchestration directory mount
+
 ### Pending Todos
 
 None.
@@ -57,5 +66,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 27-01-PLAN.md — MemoryClient with enforced scoping (2 tasks, 3 files, 10 tests)
-Resume file: .planning/phases/27-memory-client-scoping/27-01-SUMMARY.md
+Stopped at: Completed 29-01-PLAN.md — sync httpx retrieval + tempfile SOUL injection (2 tasks, 1 file)
+Resume file: .planning/phases/29-pre-spawn-retrieval-soul-injection/29-01-SUMMARY.md

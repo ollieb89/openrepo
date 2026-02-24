@@ -30,10 +30,10 @@ Requirements for Agent Memory milestone. Each maps to roadmap phases.
 
 ### Retrieval & Injection
 
-- [ ] **RET-01**: Pre-spawn context retrieval calls memU retrieve (RAG mode) before L3 container creation
-- [ ] **RET-02**: Retrieved memories are injected into SOUL template via soul_renderer.py with a memory context section
-- [ ] **RET-03**: Retrieved memory injection has a hard 2,000-character budget cap to prevent SOUL template bloat
-- [ ] **RET-04**: Pre-spawn retrieval degrades gracefully to empty context if memory service is unavailable
+- [x] **RET-01**: Pre-spawn context retrieval calls memU retrieve (RAG mode) before L3 container creation
+- [x] **RET-02**: Retrieved memories are injected into SOUL template via soul_renderer.py with a memory context section
+- [x] **RET-03**: Retrieved memory injection has a hard 2,000-character budget cap to prevent SOUL template bloat
+- [x] **RET-04**: Pre-spawn retrieval degrades gracefully to empty context if memory service is unavailable
 - [ ] **RET-05**: L3 containers can query memU service during execution via HTTP for task-specific lookups
 
 ### Dashboard
@@ -87,10 +87,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MEM-02 | Phase 30 | Pending |
 | MEM-03 | Phase 28 | Pending |
 | MEM-04 | Phase 28 | Pending |
-| RET-01 | Phase 29 | Pending |
-| RET-02 | Phase 29 | Pending |
-| RET-03 | Phase 29 | Pending |
-| RET-04 | Phase 29 | Pending |
+| RET-01 | Phase 29 | Complete |
+| RET-02 | Phase 29 | Complete |
+| RET-03 | Phase 29 | Complete |
+| RET-04 | Phase 29 | Complete |
 | RET-05 | Phase 31 | Pending |
 | DSH-11 | Phase 32 | Pending |
 | DSH-12 | Phase 32 | Pending |
