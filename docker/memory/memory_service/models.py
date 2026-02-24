@@ -28,3 +28,34 @@ class HealthResponse(BaseModel):
     status: str
     service: str
     memu_initialized: bool
+
+
+# ---------------------------------------------------------------------------
+# Health scan models
+# ---------------------------------------------------------------------------
+
+
+class HealthFlag(BaseModel):
+    memory_id: str
+    flag_type: Literal["stale", "conflict"]
+    score: float  # age_score (days/threshold) for stale; cosine similarity for conflict
+    recommendation: Literal["archive", "review", "merge"]
+    conflict_with: Optional[str] = None  # memory_id of conflicting item (conflict flags only)
+
+
+class HealthScanRequest(BaseModel):
+    user_id: str  # Required — prevents cross-project scope leak (Pitfall 6)
+    age_threshold_days: int = 30
+    retrieval_window_days: int = 14
+    similarity_min: float = 0.75
+    similarity_max: float = 0.97
+
+
+class HealthScanResult(BaseModel):
+    flags: list[HealthFlag]
+    scanned_at: str  # ISO timestamp
+    totals: dict  # {"stale": N, "conflict": N, "total": N}
+
+
+class MemoryUpdateRequest(BaseModel):
+    content: str  # Required (non-optional) — prevents Pitfall 1 empty-body ValueError
