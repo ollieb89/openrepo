@@ -9,6 +9,7 @@ This module provides L2-side operations for managing L3 staging branches:
 """
 
 import subprocess
+import threading
 import time
 from pathlib import Path
 from typing import Dict, Any, Optional, Tuple
@@ -18,6 +19,86 @@ from .project_config import load_project_config, get_snapshot_dir
 from .logging import get_logger
 
 logger = get_logger("snapshot")
+
+
+def _memorize_review_decision(
+    project_id: str,
+    task_id: str,
+    verdict: str,
+    reasoning: str,
+    diff_summary: str = "",
+    skill_type: str = "",
+) -> None:
+    """
+    Fire-and-forget helper that persists an L2 review decision to memU.
+
+    Launches a daemon thread to POST the decision payload to /memorize so
+    the call site is never blocked.  All exceptions are swallowed — memU
+    unavailability must never prevent a merge or rejection from completing.
+
+    Args:
+        project_id:   OpenClaw project identifier (used as memU user_id scope).
+        task_id:      L3 task identifier, e.g. "T-001".
+        verdict:      "merge", "reject", or "conflict".
+        reasoning:    Human-readable explanation of the decision.
+        diff_summary: Optional short snippet from the git diff (truncated to 500 chars).
+        skill_type:   L3 skill type, e.g. "code" or "test".
+    """
+    try:
+        # Lazy imports — consistent with pool.py pattern
+        from .project_config import get_memu_config
+        from .memory_client import AgentType
+
+        memu_cfg = get_memu_config()
+        memu_api_url = memu_cfg.get("memu_api_url", "")
+
+        if not memu_api_url or not project_id:
+            logger.debug(
+                "Skipping review memorization — memU URL or project_id not set",
+                extra={"task_id": task_id, "verdict": verdict},
+            )
+            return
+
+        # Build human-readable content string
+        lines = [
+            f"# L2 Review Decision: task {task_id}",
+            f"Verdict: {verdict}",
+            f"Task type: {skill_type}",
+            f"Reasoning: {reasoning}",
+        ]
+        if diff_summary:
+            lines.append(f"Diff summary:\n{diff_summary[:500]}")
+        content = "\n".join(lines)
+
+        base_url = memu_api_url.rstrip("/")
+        payload = {
+            "resource_url": content,
+            "modality": "conversation",
+            "user": {
+                "user_id": project_id,
+                "agent_type": AgentType.L2_PM.value,
+            },
+        }
+
+        def _post() -> None:
+            try:
+                import httpx
+                with httpx.Client(timeout=httpx.Timeout(10.0, connect=2.0)) as client:
+                    client.post(f"{base_url}/memorize", json=payload)
+            except Exception as exc:
+                logger.warning(
+                    "memU review memorization failed",
+                    extra={"task_id": task_id, "verdict": verdict, "error": str(exc)},
+                )
+
+        t = threading.Thread(target=_post, daemon=True, name=f"memu-review-{task_id}")
+        t.start()
+
+    except Exception as exc:
+        logger.warning(
+            "Failed to launch review memorization thread",
+            extra={"task_id": task_id, "verdict": verdict, "error": str(exc)},
+        )
 
 
 def _detect_default_branch(workspace: Path, project_id: Optional[str] = None) -> str:
@@ -314,20 +395,35 @@ def l2_review_diff(task_id: str, workspace_path: str) -> Dict[str, str]:
     }
 
 
-def l2_merge_staging(task_id: str, workspace_path: str, state_file: Optional[Path] = None) -> Dict[str, Any]:
+def l2_merge_staging(
+    task_id: str,
+    workspace_path: str,
+    state_file: Optional[Path] = None,
+    reasoning: str = "",
+    skill_type: str = "",
+    project_id: Optional[str] = None,
+) -> Dict[str, Any]:
     """
     Merge L3 staging branch into default branch with --no-ff.
-    
+
     On conflict: aborts merge, returns conflict details, leaves branch intact.
-    
+
+    After a successful merge or conflict-abort, fires a non-blocking daemon
+    thread to persist the decision (verdict="merge" or "conflict") to memU via
+    `_memorize_review_decision`.  memU unavailability never blocks this function.
+
     Args:
-        task_id: The task identifier
-        workspace_path: Path to the workspace git repository
-        state_file: Optional path to state file for status updates
-        
+        task_id:        The task identifier.
+        workspace_path: Path to the workspace git repository.
+        state_file:     Optional path to state file for status updates.
+        reasoning:      Human-readable explanation of the merge decision.
+        skill_type:     L3 skill type ("code" or "test") — stored in memU entry.
+        project_id:     OpenClaw project identifier for memU scoping.  Safe to
+                        omit — memorization is silently skipped when absent.
+
     Returns:
         Dictionary with 'success' (bool), 'message' (str), and optional 'conflicts' (list)
-        
+
     Raises:
         GitOperationError: If checkout or branch deletion fails
     """
@@ -361,13 +457,23 @@ def l2_merge_staging(task_id: str, workspace_path: str, state_file: Optional[Pat
             ['git', '-C', str(workspace), 'merge', '--abort'],
             capture_output=True
         )
-        
+
         # Get conflict details
         conflicts = []
         if 'CONFLICT' in merge_result.stdout or 'CONFLICT' in merge_result.stderr:
             conflict_text = merge_result.stdout + merge_result.stderr
             conflicts = [line for line in conflict_text.split('\n') if 'CONFLICT' in line]
-        
+
+        # Fire-and-forget: persist conflict decision to memU
+        _memorize_review_decision(
+            project_id=project_id or "",
+            task_id=task_id,
+            verdict="conflict",
+            reasoning=reasoning or f"Merge conflict in task {task_id}",
+            diff_summary=merge_result.stderr[:500],
+            skill_type=skill_type,
+        )
+
         return {
             'success': False,
             'message': f'Merge conflict detected for task {task_id}',
@@ -390,7 +496,17 @@ def l2_merge_staging(task_id: str, workspace_path: str, state_file: Optional[Pat
             'message': f'Merged task {task_id} successfully, but failed to delete branch: {e.stderr}',
             'branch_deleted': False
         }
-    
+
+    # Fire-and-forget: persist successful merge decision to memU
+    _memorize_review_decision(
+        project_id=project_id or "",
+        task_id=task_id,
+        verdict="merge",
+        reasoning=reasoning,
+        diff_summary="",
+        skill_type=skill_type,
+    )
+
     return {
         'success': True,
         'message': f'Successfully merged and deleted branch for task {task_id}',
@@ -398,20 +514,35 @@ def l2_merge_staging(task_id: str, workspace_path: str, state_file: Optional[Pat
     }
 
 
-def l2_reject_staging(task_id: str, workspace_path: str, state_file: Optional[Path] = None) -> Dict[str, Any]:
+def l2_reject_staging(
+    task_id: str,
+    workspace_path: str,
+    state_file: Optional[Path] = None,
+    reasoning: str = "",
+    skill_type: str = "",
+    project_id: Optional[str] = None,
+) -> Dict[str, Any]:
     """
     Reject L3 staging branch without merging.
-    
+
     Deletes the staging branch and updates task status to "rejected".
-    
+
+    After the branch is deleted, fires a non-blocking daemon thread to persist
+    the rejection decision (verdict="reject") to memU via
+    `_memorize_review_decision`.  memU unavailability never blocks this function.
+
     Args:
-        task_id: The task identifier
-        workspace_path: Path to the workspace git repository
-        state_file: Optional path to state file for status updates
-        
+        task_id:        The task identifier.
+        workspace_path: Path to the workspace git repository.
+        state_file:     Optional path to state file for status updates.
+        reasoning:      Human-readable explanation of the rejection decision.
+        skill_type:     L3 skill type ("code" or "test") — stored in memU entry.
+        project_id:     OpenClaw project identifier for memU scoping.  Safe to
+                        omit — memorization is silently skipped when absent.
+
     Returns:
         Dictionary with 'success' (bool) and 'message' (str)
-        
+
     Raises:
         GitOperationError: If branch deletion fails
     """
@@ -440,7 +571,17 @@ def l2_reject_staging(task_id: str, workspace_path: str, state_file: Optional[Pa
         )
     except subprocess.CalledProcessError as e:
         raise GitOperationError(f"Failed to delete branch {branch_name}: {e.stderr}")
-    
+
+    # Fire-and-forget: persist rejection decision to memU
+    _memorize_review_decision(
+        project_id=project_id or "",
+        task_id=task_id,
+        verdict="reject",
+        reasoning=reasoning,
+        diff_summary="",
+        skill_type=skill_type,
+    )
+
     # Update state if state_file provided
     if state_file:
         try:
