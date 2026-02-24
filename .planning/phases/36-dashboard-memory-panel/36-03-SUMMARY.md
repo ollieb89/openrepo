@@ -128,3 +128,18 @@ None - no external service configuration required.
 ---
 *Phase: 36-dashboard-memory-panel*
 *Completed: 2026-02-24*
+
+## Self-Check: PASSED
+
+All files verified present:
+- workspace/occc/src/components/memory/MemorySearch.tsx: FOUND
+- workspace/occc/src/components/memory/ConfirmDialog.tsx: FOUND
+- workspace/occc/src/components/memory/MemoryPanel.tsx: FOUND
+- .planning/phases/36-dashboard-memory-panel/36-03-SUMMARY.md: FOUND
+
+All commits verified:
+- 98eb1c1 (Task 1 — MemorySearch + ConfirmDialog): FOUND
+- 818db36 (Task 2 — wire search and delete into MemoryPanel): FOUND
+- 6e808a0 (docs — plan metadata commit): FOUND
+
+TypeScript check: 0 errors in src/ files (npx tsc --noEmit — only pre-existing test file errors unrelated to this plan)
