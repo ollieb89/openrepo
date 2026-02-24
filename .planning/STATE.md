@@ -60,6 +60,12 @@ v1.3 decisions made (Phase 29 Plan 02):
 - 12 tests written (vs planned 10) — added dict response format and missing SOUL file tests for complete branch coverage
 - MagicMock (not AsyncMock) for httpx.Client — _retrieve_memories_sync is synchronous
 
+v1.3 decisions made (Phase 30 Plan 01):
+- Daemon threads over asyncio in snapshot.py — synchronous context, matches _retrieve_memories_sync pattern, avoids asyncio.run() RuntimeError
+- GitOperationError paths excluded from memorization — those are programming errors, not L2 review decisions
+- diff_summary sliced to [:500] in content string — bounds payload size, preserves most relevant conflict context
+- Lazy imports of get_memu_config/AgentType inside _memorize_review_decision() — matches pool.py convention, avoids import-time side effects
+
 v1.3 decisions made (Phase 30 Plan 02):
 - Budget tracks bullet character counts, not total output length — section headers (~23 chars) are acceptable overhead above the 2,000-char cap
 - Dual-check for review_decision: category=='review_decision' OR agent_type=='l2_pm' — handles both new review_decision category and l2_pm agent items without a category field
@@ -76,5 +82,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 30-02-PLAN.md — two-section SOUL memory formatter + 7 new tests (2 tasks, 2 files)
-Resume file: .planning/phases/30-l2-review-decision-memorization/30-02-SUMMARY.md
+Stopped at: Completed 30-01-PLAN.md — _memorize_review_decision helper + call-site wiring in snapshot.py + 11 unit tests (2 tasks, 2 files)
+Resume file: .planning/phases/30-l2-review-decision-memorization/30-01-SUMMARY.md
