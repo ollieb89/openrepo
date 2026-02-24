@@ -10,6 +10,7 @@ import json
 import os
 import re
 import sys
+import time
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -267,6 +268,7 @@ def spawn_l3_specialist(
             "requires_gpu": requires_gpu,
             "container_name": container_name,
             "staging_branch": staging_branch,
+            "spawn_requested_at": time.time(),
         }
     )
 

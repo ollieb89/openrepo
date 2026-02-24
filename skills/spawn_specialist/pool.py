@@ -8,6 +8,7 @@ pool isolation via PoolRegistry.
 
 import asyncio
 import sys
+import time
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -160,6 +161,10 @@ class L3ContainerPool:
             "exit_code": -1,
             "retry_count": retry_count,
         }
+        # Cumulative wall-clock time spent in state engine calls (lock wait proxy)
+        lock_wait_total_ms: float = 0.0
+        # Track spawn request time for total duration calculation
+        spawn_requested_at: float = time.time()
 
         try:
             # Spawn container (sync operation in executor) — thread project_id explicitly
@@ -180,6 +185,13 @@ class L3ContainerPool:
             self.active_containers[task_id] = container
             logger.info("Container spawned", extra={"task_id": task_id, "container_name": container.name})
 
+            # Record container_started_at timestamp
+            container_started_at = time.time()
+            jarvis = JarvisState(get_state_path(self.project_id))
+            t0 = time.time()
+            jarvis.set_task_metric(task_id, "container_started_at", container_started_at)
+            lock_wait_total_ms += (time.time() - t0) * 1000
+
             # Monitor container execution
             monitor_result = await self.monitor_container(
                 container=container,
@@ -190,22 +202,53 @@ class L3ContainerPool:
             result["status"] = monitor_result["status"]
             result["exit_code"] = monitor_result["exit_code"]
 
+            # Record completed_at before status update
+            completed_at = time.time()
+            t0 = time.time()
+            jarvis.set_task_metric(task_id, "completed_at", completed_at)
+            lock_wait_total_ms += (time.time() - t0) * 1000
+
+            # Record retry_count
+            t0 = time.time()
+            jarvis.set_task_metric(task_id, "retry_count", retry_count)
+            lock_wait_total_ms += (time.time() - t0) * 1000
+
             # Update state based on result — resolve state path from project_id
-            jarvis = JarvisState(get_state_path(self.project_id))
             if result["status"] == "completed":
+                t0 = time.time()
                 jarvis.update_task(
                     task_id=task_id,
                     status="completed",
                     activity_entry=f"Task completed successfully (exit code: {result['exit_code']})",
                 )
+                lock_wait_total_ms += (time.time() - t0) * 1000
             else:
                 # Get error context
                 last_logs = get_container_logs(container, tail=50)
+                t0 = time.time()
                 jarvis.update_task(
                     task_id=task_id,
                     status="failed",
                     activity_entry=f"Task failed (exit code: {result['exit_code']}, retry: {retry_count}). Logs: {last_logs[:200]}",
                 )
+                lock_wait_total_ms += (time.time() - t0) * 1000
+
+            # Persist cumulative lock wait
+            jarvis.set_task_metric(task_id, "lock_wait_ms", round(lock_wait_total_ms, 2))
+
+            # Emit structured lifecycle metrics log
+            spawn_to_complete_ms = (completed_at - spawn_requested_at) * 1000
+            execution_ms = (completed_at - container_started_at) * 1000
+            logger.info(
+                "Task lifecycle metrics",
+                extra={
+                    "task_id": task_id,
+                    "spawn_to_complete_ms": round(spawn_to_complete_ms, 2),
+                    "execution_ms": round(execution_ms, 2),
+                    "lock_wait_ms": round(lock_wait_total_ms, 2),
+                    "retry_count": retry_count,
+                },
+            )
 
         except asyncio.TimeoutError:
             logger.error("Task timed out", extra={"task_id": task_id, "timeout": timeout_seconds})
@@ -221,6 +264,7 @@ class L3ContainerPool:
 
             # Update state
             jarvis = JarvisState(get_state_path(self.project_id))
+            jarvis.set_task_metric(task_id, "retry_count", retry_count)
             jarvis.update_task(
                 task_id=task_id,
                 status="timeout",
@@ -235,6 +279,7 @@ class L3ContainerPool:
 
             # Update state
             jarvis = JarvisState(get_state_path(self.project_id))
+            jarvis.set_task_metric(task_id, "retry_count", retry_count)
             jarvis.update_task(
                 task_id=task_id,
                 status="failed",
