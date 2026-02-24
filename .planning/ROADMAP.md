@@ -47,7 +47,7 @@ See: `.planning/milestones/v1.1-ROADMAP.md` for full phase details.
 **Milestone Goal:** Make the orchestration layer production-grade — structured observability, state reliability, performance under concurrency, per-project pool configuration, and dashboard metrics.
 
 - [x] **Phase 19: Structured Logging** - Establish structured JSON logging foundation across all orchestration components (completed 2026-02-24)
-- [ ] **Phase 20: Reliability Hardening** - State backup/recovery and config schema validation with fast-fail error reporting
+- [x] **Phase 20: Reliability Hardening** - State backup/recovery and config schema validation with fast-fail error reporting (completed 2026-02-24)
 - [ ] **Phase 21: State Engine Performance** - Docker client pooling, in-memory state caching, incremental updates, shared-lock reads
 - [ ] **Phase 22: Observability Metrics** - Task lifecycle metrics, pool utilization tracking, and activity log rotation
 - [ ] **Phase 23: Per-Project Pool Config** - Configurable concurrency limits, isolated/shared pool modes, queue overflow policies
@@ -150,7 +150,7 @@ Plans:
 | 17. Phase 11/12 Formal Verification | v1.1 | 2/2 | ✓ Complete | 2026-02-23 |
 | 18. Integration Hardening | v1.1 | 2/2 | ✓ Complete | 2026-02-23 |
 | 19. Structured Logging | 2/2 | Complete    | 2026-02-24 | - |
-| 20. Reliability Hardening | 1/2 | In Progress|  | - |
+| 20. Reliability Hardening | 2/2 | Complete   | 2026-02-24 | - |
 | 21. State Engine Performance | v1.2 | 0/TBD | Not started | - |
 | 22. Observability Metrics | v1.2 | 0/TBD | Not started | - |
 | 23. Per-Project Pool Config | v1.2 | 0/TBD | Not started | - |

@@ -44,6 +44,7 @@ Recent decisions affecting current work:
 - L3 pool isolation is shared by default; per-project isolated pools targeted in Phase 23
 - [Phase 19-structured-logging]: Use Python stdlib logging only — no external deps, emit to stderr, component field strips openclaw. prefix
 - [Phase 19-02]: L3 container stdout relay logged at DEBUG with output field; log streaming errors downgraded to debug (expected on task end)
+- [Phase 20-01]: Post-write backup (not pre-write) is correct semantics for last-known-good state — _create_backup called after json.dump/f.flush in _write_state_locked
 - [Phase 20-02]: Collect-all strategy for both validators; validate_project_config wired into load_project_config; load_and_validate_openclaw_config added as explicit validated loader
 
 ### Pending Todos
@@ -57,5 +58,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 20-02-PLAN.md
+Stopped at: Completed 20-01-PLAN.md (both 20-01 and 20-02 now complete)
 Resume file: None
