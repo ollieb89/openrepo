@@ -126,10 +126,11 @@ Plans:
   2. The injected memory context never exceeds 2,000 characters — verified by inspecting the rendered SOUL byte count
   3. When memU service is unavailable during spawn, the container still starts — the SOUL renders with an empty memory context section
   4. The SOUL template's `$memory_context` variable renders as blank (no error, no placeholder text) when no memories exist for a project
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 29-01: TBD
+- [ ] 29-01-PLAN.md — Retrieval helpers + SOUL injection wiring in spawn.py
+- [ ] 29-02-PLAN.md — Test suite for pre-spawn memory retrieval and SOUL injection
 
 ### Phase 30: L2 Review Decision Memorization
 **Goal**: Every L2 merge or reject decision — including the reasoning — is memorized after the review cycle completes, so future L3 spawns receive context about past review outcomes
