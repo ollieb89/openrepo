@@ -1,6 +1,8 @@
 import fs from 'fs/promises';
 import path from 'path';
 import type { Project, Task, Agent } from './types';
+import { minimizePersistenceRecord } from './privacy/minimization';
+import type { PersistedMetadataInput, PersistedMetadataRecord } from './types/privacy';
 
 const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || '/home/ollie/.openclaw';
 
@@ -88,4 +90,18 @@ export async function getSnapshot(projectId: string, taskId: string): Promise<st
   } catch {
     return null;
   }
+}
+
+export async function appendMinimizedRecord(
+  projectId: string,
+  payload: PersistedMetadataInput
+): Promise<PersistedMetadataRecord> {
+  const minimized = minimizePersistenceRecord(payload, { rawContentMode: 'reject' });
+  const logDir = path.join(OPENCLAW_ROOT, 'workspace', '.openclaw', projectId, 'privacy');
+  const logPath = path.join(logDir, 'minimized-records.jsonl');
+
+  await fs.mkdir(logDir, { recursive: true });
+  await fs.appendFile(logPath, `${JSON.stringify(minimized)}\n`, 'utf-8');
+
+  return minimized;
 }

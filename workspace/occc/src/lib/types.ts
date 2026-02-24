@@ -1,3 +1,5 @@
+import type { PersistedMetadataRecord } from '@/lib/types/privacy';
+
 export interface Project {
   id: string;
   name: string;
@@ -63,4 +65,8 @@ export interface Container {
   image: string;
   created: number;
   labels: Record<string, string>;
+}
+
+export interface PersistedTaskRecord extends Omit<Task, 'metadata'> {
+  metadata: PersistedMetadataRecord;
 }

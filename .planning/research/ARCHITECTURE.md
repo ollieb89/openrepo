@@ -1,29 +1,31 @@
 # Architecture Research
 
-**Domain:** memU Memory Integration for OpenClaw AI Swarm Orchestration
+**Domain:** AI Swarm Orchestration — v1.4 Operational Maturity Integration
 **Researched:** 2026-02-24
-**Confidence:** HIGH — based on direct codebase analysis + memU-server source/docs
+**Confidence:** HIGH — based on direct codebase analysis of all integration points
 
 ---
 
-## Context: What Already Exists (v1.2)
+## Context: What Already Exists (v1.3)
 
-This document is scoped exclusively to v1.3 memU integration. It describes how a standalone
-memU service fits into the existing operational architecture, which integration points require
-modification, and what is entirely new.
+This document is scoped exclusively to v1.4 feature integration. It describes how graceful
+shutdown, memory health monitoring, L1 strategic suggestions, and delta-based snapshots
+fit into the existing architecture — what to create new, what to modify surgically, and
+what to leave untouched.
 
 ### Existing Components (Do Not Rewrite)
 
-| Component | File | v1.3 Status |
+| Component | File | v1.4 Status |
 |-----------|------|-------------|
-| JarvisState | `orchestration/state_engine.py` | Unchanged — file-lock state sync untouched |
-| spawn_specialist | `skills/spawn_specialist/spawn.py` | Modify: add pre-spawn retrieve + env injection |
-| pool.py | `skills/spawn_specialist/pool.py` | Unchanged |
-| soul_renderer.py | `orchestration/soul_renderer.py` | Modify: add `$memory_context` variable slot |
-| entrypoint.sh | `docker/l3-specialist/entrypoint.sh` | Modify: add post-task memorize call |
-| snapshot.py | `orchestration/snapshot.py` | Modify: expose git diff output for memorize payload |
-| occc API routes | `workspace/occc/src/app/api/` | Add: new `/api/memory/*` routes |
-| occc dashboard pages | `workspace/occc/src/app/` | Add: new memory panel page |
+| JarvisState | `orchestration/state_engine.py` | Modify: add `interrupted_tasks` tracking + `dehydrate_task()` method |
+| L3ContainerPool | `skills/spawn_specialist/pool.py` | Modify: add SIGTERM handler + interrupted task recovery loop |
+| spawn_l3_specialist | `skills/spawn_specialist/spawn.py` | Modify: pass shutdown context to pool; inject `SHUTDOWN_SIGNAL_FILE` env var |
+| entrypoint.sh | `docker/l3-specialist/entrypoint.sh` | Modify: trap SIGTERM for graceful container-side cleanup |
+| MemoryClient | `orchestration/memory_client.py` | Modify: add `list_all()` + `delete()` + `update()` for health monitor |
+| snapshot.py | `orchestration/snapshot.py` | Modify: `capture_semantic_snapshot()` returns delta relative to last-memorized commit |
+| soul_renderer.py | `orchestration/soul_renderer.py` | Unchanged — L1 suggestion output writes to per-project soul-override.md |
+| monitor.py | `orchestration/monitor.py` | Unchanged — CLI monitor reads state only; health + suggestions go to dashboard |
+| occc dashboard | `workspace/occc/src/` | Modify: add memory health panel to `/memory` page; add suggestion panel to `/settings` page |
 
 ---
 
@@ -33,697 +35,655 @@ modification, and what is entirely new.
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                         OPENCLAW HOST (Ubuntu 24.04)                         │
 │                                                                               │
-│  ┌──────────────┐   ┌────────────────────────────────────────────────────┐  │
-│  │  L1          │   │  OpenClaw Docker Bridge Network (openclaw-net)      │  │
-│  │  ClawdiaPrime│   │                                                      │  │
-│  │  (L1 agent)  │   │  ┌─────────────────┐    ┌──────────────────────┐   │  │
-│  └──────┬───────┘   │  │  memU-server    │    │  PostgreSQL+pgvector │   │  │
-│         │ CLI call  │  │  FastAPI :8765  │◄──►│  :5432               │   │  │
-│  ┌──────▼───────┐   │  │  (nevamindai/   │    │  (pgvector/pgvector: │   │  │
-│  │  L2          │   │  │  memu-server)   │    │   pg16)              │   │  │
-│  │  PumplAI_PM  │   │  └────────▲────────┘    └──────────────────────┘   │  │
-│  │  (L2 agent)  │   │           │                                          │  │
-│  └──────┬───────┘   │           │ HTTP REST (host → container via port)    │  │
-│         │           │           │                                           │  │
-│  spawn_specialist.py│   ┌───────┴──────┐                                   │  │
-│  (pre-spawn: GET)   │   │  memory_     │                                    │  │
-│  (post-review: POST)│   │  client.py   │                                    │  │
-│         │           │   │  (new)       │                                    │  │
-│  ┌──────▼───────┐   │   └──────────────┘                                   │  │
-│  │  L3          │   │                                                        │  │
-│  │  Ephemeral   │   │  ┌─────────────────────────────────────────────────┐ │  │
-│  │  Container   │───┼─►│  L3 Container (openclaw-{project}-l3-{task_id}) │ │  │
-│  │  (spawned)   │   │  │  - MEMU_SERVICE_URL env var injected            │ │  │
-│  └──────────────┘   │  │  - entrypoint.sh: POST /memorize on completion  │ │  │
-│                      │  │  - optional mid-task GET /retrieve              │ │  │
-│  ┌──────────────┐   │  └─────────────────────────────────────────────────┘ │  │
-│  │  occc        │   │                                                        │  │
-│  │  Next.js     │───┼─► HTTP → memU-server :8765 (via /api/memory/* proxy) │  │
-│  │  :6987       │   │                                                        │  │
-│  └──────────────┘   └────────────────────────────────────────────────────┘  │  │
-└─────────────────────────────────────────────────────────────────────────────┘
+│  ┌──────────────────┐    ┌──────────────────────────────────────────────┐   │
+│  │  L1 ClawdiaPrime │    │  Orchestration Layer (Python)                 │   │
+│  │  (L1 agent)      │    │                                               │   │
+│  │                  │    │  pool.py ←──── SIGTERM handler                │   │
+│  │  receives SOUL   │    │    │   dehydrate → state_engine.py            │   │
+│  │  suggestions     │    │    │   recovery loop on restart               │   │
+│  │  (suggestion_    │    │    │                                           │   │
+│  │   engine.py)     │    │  suggestion_engine.py (NEW)                   │   │
+│  └────────┬─────────┘    │    │   reads JarvisState patterns             │   │
+│           │ CLI call     │    │   reads MemoryClient histories           │   │
+│  ┌────────▼─────────┐    │    │   produces SOUL diff proposals           │   │
+│  │  L2 PumplAI_PM   │    │                                               │   │
+│  │  (L2 agent)      │    │  memory_health.py (NEW)                       │   │
+│  └────────┬─────────┘    │    │   polls memU periodically                │   │
+│           │ spawn        │    │   detects stale/conflicting items        │   │
+│  ┌────────▼─────────┐    │    │   writes health report to state dir      │   │
+│  │  pool.py         │    │                                               │   │
+│  │  PoolRegistry    │    │  snapshot.py (MODIFIED)                       │   │
+│  └────────┬─────────┘    │    │   delta-only diff vs last-memorized      │   │
+│           │              │    │   hash stored in state_engine            │   │
+│  ┌────────▼─────────────────────────────────────────────────────────┐   │   │
+│  │  L3 Containers (openclaw-{project}-l3-{task_id})                 │   │   │
+│  │  entrypoint.sh: trap SIGTERM → git stash + update_state         │   │   │
+│  └─────────────────────────────────────────────────────────────────┘   │   │
+│                                                                           │   │
+│  ┌────────────────────────────────────────────────────────────────────┐  │   │
+│  │  occc Next.js :6987                                                │  │   │
+│  │  /memory page: memory health panel (stale/conflict badges)        │  │   │
+│  │  /settings page: L1 suggestion panel (review/apply proposals)     │  │   │
+│  └────────────────────────────────────────────────────────────────────┘  │   │
+│                                                                            │   │
+│  ┌────────────────────────────────────────────────────────────────────┐  │   │
+│  │  memU Service (Docker: openclaw-net)                               │  │   │
+│  │  memU-server :8765 ←──── health checks from memory_health.py      │  │   │
+│  │  PostgreSQL+pgvector                                               │  │   │
+│  └────────────────────────────────────────────────────────────────────┘  │   │
+└───────────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## Feature Integration Analysis
+
+### Feature 1: Graceful Shutdown with Task Recovery
+
+**Integration points:**
+
+The SIGTERM originates at the host process level (pool.py runs inside the L2 agent process).
+L3 containers are separate Docker processes that also need SIGTERM awareness.
+
+**Two-path shutdown:**
+
+```
+Host SIGTERM received
+    ↓
+pool.py SIGTERM handler fires
+    ├── Dehydrate in-flight tasks → state_engine.py: update status "interrupted"
+    ├── Send SIGTERM to each active Docker container
+    └── Wait up to 30s for containers to exit gracefully
+
+L3 Container receives SIGTERM (from Docker stop or host relay)
+    ↓
+entrypoint.sh trap handler fires
+    ├── git stash current changes (preserves partial work)
+    ├── update_state "interrupted" via Python call
+    └── exit 0 (clean exit — pool.py sees exit code 0 but status=interrupted)
+```
+
+**Recovery on restart:**
+
+```
+pool.py (or PoolRegistry) initialized
+    ↓
+read JarvisState.list_tasks_by_status("interrupted")
+    ↓
+for each interrupted task:
+    - re-spawn with original task_description + skill_hint from state
+    - set retry_count = 0 (fresh attempt)
+    - log "recovered task {task_id} from interrupted state"
+```
+
+**State engine changes required:**
+
+`state_engine.py` needs `interrupted` as a valid task status (currently not in the
+terminal states set). The existing `update_task()` method handles it without code changes —
+only the caller logic needs to understand the new status. However, `list_active_tasks()`
+filters out `completed` and `failed` — `interrupted` should NOT be in terminal states so it
+appears in active task lists for recovery.
+
+**New method needed:** `list_tasks_by_status(status: str) -> List[str]` for recovery loop
+to find exactly the interrupted tasks. Alternatively, `list_all_tasks()` already exists and
+the recovery loop can filter by status client-side.
+
+**Modified files:**
+- `skills/spawn_specialist/pool.py` — SIGTERM handler, dehydration, recovery loop
+- `docker/l3-specialist/entrypoint.sh` — `trap cleanup SIGTERM` before task execution
+- `orchestration/state_engine.py` — `interrupted` status awareness (minor: add to docstring / status constants)
+
+**New files:** None required. The recovery loop lives entirely in pool.py.
+
+---
+
+### Feature 2: Memory Health Monitoring
+
+**Integration points:**
+
+The health monitor is a periodic background service that reads memU inventory and applies
+heuristics to detect problems. It is NOT in the hot path (spawn/monitor/review).
+
+**Architecture decision: standalone module, not embedded in MemoryClient**
+
+`orchestration/memory_health.py` (new) — runs either as a background thread started by
+pool.py on init, or as a cron-style invocation from an occc API route. The simpler option
+is an on-demand API route: dashboard calls `/api/memory/health` which runs the health check
+synchronously and caches the result server-side for 5 minutes.
+
+**Health checks:**
+
+```
+memory_health.py:
+
+1. Connectivity check
+   GET /health → memU initialized?
+
+2. Stale memory detection
+   GET all items for project → filter items older than staleness_threshold_days
+   (staleness = item created_at far in the past + low retrieval score)
+
+3. Conflict detection
+   Semantic similarity scan: retrieve items with high cosine similarity but
+   contradictory content (e.g., "always use X" vs "never use X")
+   Strategy: group items by category → compare top-N pairs → flag similarity > 0.92
+
+4. Volume check
+   Count items per project → warn if > volume_warn_threshold (default: 500)
+
+5. Orphaned items check
+   Items scoped to project_ids that no longer exist in projects/ directory
+```
+
+**Health report storage:**
+
+Write to `workspace/.openclaw/{project_id}/memory-health.json`:
+```json
+{
+  "generated_at": 1234567890.0,
+  "project_id": "pumplai",
+  "status": "warning",
+  "checks": {
+    "connectivity": {"ok": true},
+    "stale_items": {"count": 12, "ids": [...]},
+    "conflicts": {"pairs": [{"id_a": "...", "id_b": "...", "similarity": 0.94}]},
+    "volume": {"total": 347, "warn_at": 500}
+  }
+}
+```
+
+**Dashboard integration:**
+
+Extend `/memory` page with a health banner (red/yellow/green) reading from
+`/api/memory/health?project={id}`. Health check is on-demand + cached — no background
+polling needed from the dashboard. The "manual override" UI is a delete button on flagged
+items (already possible via existing `/api/memory` DELETE route from v1.3, or a new route
+if that wasn't built).
+
+**Modified files:**
+- `orchestration/memory_client.py` — add `list_all(project_id)` + `delete(item_id)` methods
+- `workspace/occc/src/app/api/memory/health/route.ts` — new route, on-demand + cached
+- `workspace/occc/src/app/memory/page.tsx` — extend with health banner + flagged items panel
+
+**New files:**
+- `orchestration/memory_health.py` — health check logic, reads via MemoryClient
+
+---
+
+### Feature 3: L1 Strategic SOUL Suggestions
+
+**Integration points:**
+
+L1 (ClawdiaPrime) receives suggestions for modifying L2/L3 SOUL templates based on observed
+task failure/success patterns. This is an analytical pipeline — reads patterns, produces
+proposed diffs, surfaces them to L1 via dashboard. L1 reviews and applies.
+
+**Architecture decision: suggestion engine as standalone orchestration module**
+
+The suggestion engine does NOT modify SOUL files automatically. It proposes changes that
+L1 reviews in the dashboard and explicitly approves. This preserves the human-in-loop
+principle for SOUL evolution.
+
+```
+suggestion_engine.py (new):
+
+Input sources:
+  1. JarvisState.list_all_tasks() → task outcomes (completed/failed/timeout/retry_count)
+  2. MemoryClient.retrieve(query="task failures") → L2 review decisions
+  3. Task metadata: skill_hint, description patterns, retry frequency
+
+Analysis:
+  1. Failure pattern detection
+     - Tasks with retry_count > 0 grouped by skill_hint + description keyword
+     - Common failure log substrings extracted from activity_log entries
+
+  2. Success pattern extraction
+     - Tasks completed on first attempt grouped by characteristics
+     - Extract what made them succeed (description structure, skill_hint)
+
+  3. Suggestion generation
+     - If skill=code failure rate > 30%: suggest SOUL amendment adding known pitfall
+     - If review decisions show recurring rejection reason: suggest L3 SOUL clarity change
+     - Output: list of SuggestionItem(section, current_text, proposed_text, confidence, evidence)
+
+Output:
+  workspace/.openclaw/{project_id}/soul-suggestions.json
+  (JSON list of suggestion items, each with section, proposed_change, evidence, applied=false)
+```
+
+**Apply flow:**
+
+```
+Dashboard /settings page → L1 reviews suggestion list
+    ↓
+L1 clicks "Apply" on a suggestion
+    ↓
+POST /api/suggestions/apply {project_id, suggestion_id}
+    ↓
+API route calls soul_renderer.py logic to write to soul-override.md
+  (using existing parse_sections() + merge_sections() pattern)
+    ↓
+soul-override.md updated → next L3 spawn picks it up via existing render_soul()
+```
+
+**This reuses the existing SOUL override mechanism entirely.** `soul_renderer.py` already
+supports per-project `soul-override.md` via `merge_sections()`. Suggestions simply propose
+additions or replacements to sections in that file.
+
+**Modified files:**
+- `workspace/occc/src/app/settings/page.tsx` — extend with suggestions panel (or new `/decisions` page if settings is already complex)
+- `workspace/occc/src/app/api/suggestions/` — new route directory
+
+**New files:**
+- `orchestration/suggestion_engine.py` — pattern analysis + suggestion generation
+- `workspace/occc/src/app/api/suggestions/route.ts` — list suggestions
+- `workspace/occc/src/app/api/suggestions/apply/route.ts` — apply suggestion to soul-override.md
+
+---
+
+### Feature 4: Delta-Based Memory Snapshots
+
+**Integration points:**
+
+Currently `pool.py` memorizes the full `.diff` file (entire diff from default branch to
+HEAD) after task completion. For long-running tasks with many commits, this diff grows large
+and contains content already memorized from prior tasks.
+
+**Problem:** The current snapshot in `snapshot.py` produces a diff from `{default_branch}...HEAD`,
+which is the cumulative diff since the L3 branch was created. Each L3 task starts fresh
+from a new staging branch, so the diff is naturally task-scoped already. The actual issue
+is that the diff content passed to memU is the full file snapshot (including metadata
+header), not a delta of what changed since the last memorize call.
+
+**True delta scenario:**
+
+Within a single task, if `pool.py` calls memorize at multiple checkpoints (currently it
+does not — it calls once at completion), a delta would avoid re-memorizing unchanged parts.
+The simpler interpretation is: **delta = only the new commits since the last memorize**,
+useful when a task does multiple git commits during execution.
+
+**Architecture decision: track last-memorized commit hash in state_engine**
+
+```
+state_engine.py:
+  task entry gains optional field: "last_memorized_commit": "<sha>"
+
+snapshot.py — new function:
+  capture_delta_snapshot(task_id, workspace_path, project_id, since_commit=None):
+    if since_commit:
+      diff = git diff {since_commit}...HEAD  # delta since last memorize
+    else:
+      diff = git diff {default_branch}...HEAD  # full diff (first memorize)
+    save to {task_id}-delta-{sha[:8]}.diff
+
+pool.py — modified memorize path:
+  sha = git rev-parse HEAD (sync call)
+  last_sha = jarvis.read_task(task_id).get("last_memorized_commit")
+  content = capture_delta_snapshot(task_id, ..., since_commit=last_sha)
+  await memorize(content)
+  jarvis.set_task_metric(task_id, "last_memorized_commit", sha)
+```
+
+**Practical impact:** For typical short tasks (single git commit), delta = full diff (no
+change in behavior). For long tasks with multiple commits, delta reduces memorize payload
+size. The bookkeeping cost is one extra `git rev-parse HEAD` call and one state engine write.
+
+**Modified files:**
+- `orchestration/snapshot.py` — add `capture_delta_snapshot()` function
+- `orchestration/state_engine.py` — `last_memorized_commit` field in task metadata (no API change needed — `set_task_metric()` handles arbitrary keys)
+- `skills/spawn_specialist/pool.py` — `_memorize_snapshot_fire_and_forget()` uses delta path
+
+**New files:** None required.
 
 ---
 
 ## Component Boundaries
 
-### New Components
+### New Components (create from scratch)
 
 | Component | Responsibility | Location |
 |-----------|---------------|----------|
-| memU-server container | FastAPI wrapper: memorize/retrieve/categories REST API | Docker container via `nevamindai/memu-server:latest` |
-| PostgreSQL+pgvector container | Persistent vector store for memory items | Docker container via `pgvector/pgvector:pg16` |
-| `orchestration/memory_client.py` | Python client for memU-server (memorize, retrieve, health) | New file |
-| `docker/memory/docker-compose.yml` | Bring up memU-server + PostgreSQL together | New file |
-| `workspace/occc/src/app/api/memory/route.ts` | Proxy endpoint: list categories + items | New file |
-| `workspace/occc/src/app/api/memory/search/route.ts` | Proxy endpoint: semantic search | New file |
-| Memory Panel page | Dashboard UI for browsing/searching agent memories | New Next.js page |
+| `memory_health.py` | Periodic health checks: connectivity, stale item detection, conflict detection, volume warnings | `orchestration/memory_health.py` |
+| `suggestion_engine.py` | Pattern analysis from JarvisState + memU, produces SuggestionItem proposals for SOUL evolution | `orchestration/suggestion_engine.py` |
+| Memory Health API route | On-demand health check endpoint, 5min server-side cache | `workspace/occc/src/app/api/memory/health/route.ts` |
+| Suggestions API routes | List suggestions + apply-to-soul-override endpoint | `workspace/occc/src/app/api/suggestions/route.ts` + `apply/route.ts` |
 
-### Modified Components
+### Modified Components (surgical changes only)
 
-| Component | What Changes | Why |
-|-----------|-------------|-----|
-| `skills/spawn_specialist/spawn.py` | 1. Call `memory_client.retrieve()` before container spawn. 2. Inject `MEMU_SERVICE_URL` + `MEMU_AGENT_ID` env vars into container config. | Pre-spawn context retrieval + L3 access to memU |
-| `orchestration/soul_renderer.py` `build_variables()` | Add `memory_context` key with retrieved text (may be empty string). | Inject retrieved memories into SOUL prompt |
-| `agents/_templates/soul-default.md` | Add `## Memory Context` section consuming `$memory_context`. | Surface pre-retrieved memories to L2 agent |
-| `docker/l3-specialist/entrypoint.sh` | After task completes, POST git diff + task log to `/memorize`. | Automated L3 outcome memorization |
-| `orchestration/snapshot.py` | Expose git diff text as return value (currently writes to disk only). | Feed diff into memorize payload without re-reading file |
-| `openclaw.json` | Add `memory_service` config block (url, agent scoping, enabled flag). | Central config for memory feature toggle |
-
----
-
-## Docker Networking
-
-### Approach: Shared Bridge Network (not per-project networks)
-
-PROJECT.md explicitly records "Per-project Docker networks — no inter-container networking
-needed" as out of scope. The correct approach is a **single named bridge network** shared by
-all OpenClaw-managed containers.
-
-```bash
-# Create once during setup
-docker network create openclaw-net
-```
-
-The following containers join `openclaw-net`:
-- `memu-server` (FastAPI, :8765)
-- `memu-postgres` (PostgreSQL, :5432 internal only)
-- L3 specialist containers (ephemeral, need outbound access to memu-server)
-
-**L3 access pattern:** L3 containers call memU-server via the Docker bridge IP or container
-hostname. Because L3 containers are ephemeral and spawned dynamically, the simplest approach
-is to inject `MEMU_SERVICE_URL=http://memu-server:8765` as an env var. Docker's built-in DNS
-resolves `memu-server` within `openclaw-net`.
-
-**L2/orchestration access pattern:** The host-side Python process (spawn.py, pool.py) calls
-memU-server via `http://localhost:8765` (port mapped to host). No network config changes
-needed for host-side calls.
-
-**occc dashboard access pattern:** Next.js API routes run server-side and call
-`http://localhost:8765` (same host). Client-side browser calls go to `/api/memory/*` which
-proxies to memU-server — browser never calls memU-server directly.
-
-### docker-compose for Memory Service
-
-```yaml
-# docker/memory/docker-compose.yml
-version: "3.9"
-services:
-  memu-postgres:
-    image: pgvector/pgvector:pg16
-    container_name: memu-postgres
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: memu
-    volumes:
-      - memu-pgdata:/var/lib/postgresql/data
-    networks:
-      - openclaw-net
-    restart: unless-stopped
-
-  memu-server:
-    image: nevamindai/memu-server:latest
-    container_name: memu-server
-    ports:
-      - "8765:8000"
-    environment:
-      OPENAI_API_KEY: "${OPENAI_API_KEY}"
-      DATABASE_URL: "postgresql://postgres:postgres@memu-postgres:5432/memu"
-    depends_on:
-      - memu-postgres
-    networks:
-      - openclaw-net
-    restart: unless-stopped
-
-networks:
-  openclaw-net:
-    external: true
-
-volumes:
-  memu-pgdata:
-```
-
-**Port choice:** 8765 avoids collision with existing ports (gateway: 18789, dashboard: 6987,
-dashboard container: 18795).
-
----
-
-## Memory Scoping Model
-
-memU supports `user_id` and `agent_id__in` for filtering. OpenClaw maps these fields as:
-
-| memU field | OpenClaw value | Example |
-|------------|---------------|---------|
-| `user_id` | `project_id` | `"pumplai"` |
-| `agent_id` | Agent tier + ID | `"l2:pumplai_pm"`, `"l3:l3_specialist"` |
-
-This gives per-project isolation (all memories for project `pumplai` share `user_id=pumplai`)
-and per-agent sub-scoping for attribution (L2 decisions vs L3 outcomes are separately
-queryable).
-
-**Retrieve filter for pre-spawn L3 context:**
-```python
-where={"user_id": project_id, "agent_id__in": ["l2:pumplai_pm", "l3:l3_specialist"]}
-```
-
-**Retrieve filter for L2 decision context (similar tasks only):**
-```python
-where={"user_id": project_id, "agent_id__in": ["l2:pumplai_pm"]}
-```
+| Component | What Changes | Risk |
+|-----------|-------------|------|
+| `skills/spawn_specialist/pool.py` | SIGTERM handler registration; dehydration call; recovery loop on init; delta snapshot path in `_memorize_snapshot_fire_and_forget()` | MEDIUM — async signal handling in Python needs care |
+| `docker/l3-specialist/entrypoint.sh` | Add `trap cleanup_handler SIGTERM` before task execution; `cleanup_handler` stashes + updates state | LOW — bash trap is well-understood |
+| `orchestration/state_engine.py` | Add `interrupted` to status docstring; `list_tasks_by_status()` helper method | LOW — additive only |
+| `orchestration/snapshot.py` | Add `capture_delta_snapshot()` alongside existing `capture_semantic_snapshot()` | LOW — new function, existing function unchanged |
+| `orchestration/memory_client.py` | Add `list_all()` (paginated GET /memories) + `delete(item_id)` (DELETE /memories/{id}) methods | LOW — additive |
+| `workspace/occc/src/app/memory/page.tsx` | Add health banner section reading from `/api/memory/health` | LOW — additive |
+| `workspace/occc/src/app/settings/page.tsx` | Add SOUL suggestions panel (or `/decisions/page.tsx` if settings is overcrowded) | LOW — additive |
 
 ---
 
 ## Data Flows
 
-### Flow 1: Pre-Spawn Retrieve (L2 calls memU before spawning L3)
+### Flow 1: Graceful Shutdown
 
 ```
-L2 agent decides to spawn L3
+SIGTERM → host process (pool.py event loop)
     ↓
-spawn_l3_specialist() called in spawn.py
+asyncio signal handler: set shutdown_event
     ↓
-memory_client.retrieve(
-    query=task_description,
-    method="rag",
-    where={"user_id": project_id}
-) → memory_context: str
+for each task_id in self.active_containers:
+    container.kill(signal="SIGTERM")
+    jarvis.update_task(task_id, "interrupted", "SIGTERM received, container signalled")
     ↓
-soul_renderer.build_variables() receives memory_context
+wait up to 30s for containers.wait() to return
     ↓
-string.Template substitutes $memory_context in soul-default.md
+remaining containers: force-remove
     ↓
-SOUL.md rendered with relevant past outcomes injected
+process exits cleanly
+
+L3 container receives SIGTERM:
     ↓
-L3 container spawned with enriched task context
+entrypoint.sh trap: git stash push -m "interrupted-{TASK_ID}"
+    ↓
+python update_state(TASK_ID, "interrupted", "SIGTERM received")
+    ↓
+exit 0
+
+On next pool.py startup:
+    ↓
+jarvis.list_all_tasks() → filter status == "interrupted"
+    ↓
+for each interrupted task: re-submit to pool as new spawn
+    (original task_description + skill_hint preserved in state metadata)
 ```
 
-**Timing constraint:** retrieve must complete before container spawn. Use a short timeout
-(3s default, configurable) — if memU-server is unreachable, log warning and spawn with empty
-context (graceful degradation).
-
-### Flow 2: Post-Task Memorize (L3 auto-memorization on completion)
+### Flow 2: Memory Health Check
 
 ```
-L3 entrypoint.sh task execution completes
+Dashboard loads /memory page
     ↓
-git diff --cached captured → /tmp/task-diff.patch
-update_state "completed" called (existing)
+GET /api/memory/health?project=pumplai
     ↓
-[NEW] curl POST http://memu-server:8765/memorize \
-  -d '{"messages": [{"role": "system", "content": "Task: {desc}"},
-                     {"role": "assistant", "content": "Outcome: {diff}"}],
-       "user_id": "{project_id}",
-       "agent_id": "l3:{agent_id}"}'
+API route checks cache (< 5 min old): return cached if fresh
     ↓
-memU-server processes async — L3 exits immediately after POST
-(fire-and-forget: memorize is async pipeline in memU-server)
+Cache miss: call memory_health.run_checks(project_id)
+    ├── memory_client.health() → connectivity status
+    ├── memory_client.list_all(project_id) → all items
+    │   ├── flag items with age > staleness_days
+    │   └── run similarity scan on top-N items for conflicts
+    └── count total items → volume warning
+    ↓
+Write health-report.json to .openclaw/{project_id}/
+    ↓
+Return HealthReport to API route → cache → return to dashboard
+    ↓
+Dashboard renders: green/yellow/red banner + flagged items list
+User clicks delete on flagged item:
+    ↓
+DELETE /api/memory/{item_id}?project=pumplai
+    ↓
+memory_client.delete(item_id)
 ```
 
-**Why fire-and-forget:** memU-server memorize is a pipeline operation (extract → embed →
-store) that takes seconds. L3 containers should not block on it. The POST returns a `task_id`
-immediately; actual processing is async. L3 just needs to fire the POST before exiting.
-
-### Flow 3: L2 Post-Review Memorize (decision logging)
+### Flow 3: L1 Strategic Suggestion
 
 ```
-L2 reviews snapshot diff
+L1 or operator triggers suggestion analysis
     ↓
-Decision: merge (approved) or reject
+GET /api/suggestions/run?project=pumplai
     ↓
-[NEW] memory_client.memorize(
-    messages=[
-        {"role": "system", "content": "Review task {task_id}: {description}"},
-        {"role": "assistant", "content": "Decision: {merge|reject}. Reasoning: {rationale}"}
-    ],
-    user_id=project_id,
-    agent_id=f"l2:{l2_agent_id}"
-)
+suggestion_engine.analyze(project_id):
+    ├── read JarvisState.list_all_tasks() → task outcomes + retry counts
+    ├── memory_client.retrieve("task failures patterns") → L2 decisions
+    └── pattern analysis → List[SuggestionItem]
     ↓
-Fire-and-forget (async) — L2 continues workflow
+Write soul-suggestions.json to .openclaw/{project_id}/
+    ↓
+GET /api/suggestions?project=pumplai → returns pending suggestions
+    ↓
+Dashboard /settings page renders suggestion list
+    ↓
+L1 reviews, clicks "Apply" on accepted suggestion
+    ↓
+POST /api/suggestions/apply {project_id, suggestion_id}
+    ↓
+API route: read soul-override.md (or empty if missing)
+    parse_sections() + merge_sections() with new/modified section
+    write updated soul-override.md
+    mark suggestion as applied in soul-suggestions.json
+    ↓
+Next L3 spawn: render_soul() picks up updated soul-override.md automatically
 ```
 
-This is called from wherever L2 implements the merge/reject decision logic. In the current
-architecture that is an L2 agent action, not a Python file — the call site will be in
-`snapshot.py` or a new `orchestration/review.py` helper depending on how L2 invokes review.
-
-### Flow 4: L3 Mid-Task Retrieve (optional, on-demand)
+### Flow 4: Delta Memory Snapshot
 
 ```
-L3 container executing task via CLI runtime
+Task completes in pool.py _attempt_task()
     ↓
-CLI runtime calls: curl -s "http://memu-server:8765/retrieve" \
-  -d '{"queries": ["how to fix X"], "method": "rag",
-       "where": {"user_id": "{project_id}"}}'
+asyncio.create_task(_memorize_snapshot_fire_and_forget(...))
     ↓
-memU-server returns relevant memory items as JSON
+Read last_memorized_commit from JarvisState task metadata
     ↓
-CLI runtime injects into its context window
-```
-
-This is the L3 direct access path. The CLI runtime (claude-code, codex, gemini-cli) can
-make HTTP calls during execution. The `MEMU_SERVICE_URL` and `MEMU_AGENT_ID` env vars are
-always injected so L3 containers can query memU regardless of whether L2 pre-fetched context.
-
-### Flow 5: Dashboard Memory Browse (occc reads memU)
-
-```
-User navigates to /memory page in occc
+snapshot.capture_delta_snapshot(task_id, workspace, project_id, since_commit)
+    ├── if since_commit is None: full diff (first memorize, existing behavior)
+    └── if since_commit set: git diff {since_commit}...HEAD (delta only)
     ↓
-Browser → GET /api/memory?project=pumplai&category=all
+Build memorize payload with delta content (smaller if multi-commit task)
     ↓
-Next.js API route: GET http://localhost:8765/categories
-  (with user_id=project_id filter)
+MemoryClient.memorize(delta_content)
     ↓
-Returns category list + item counts
-    ↓
-Browser → GET /api/memory/search?q=docker+error&project=pumplai
-    ↓
-Next.js API route: POST http://localhost:8765/retrieve
-  (with query + user_id filter)
-    ↓
-Returns matching memory items
+On success: jarvis.set_task_metric(task_id, "last_memorized_commit", current_sha)
 ```
 
 ---
 
-## New File Structure
+## Build Order (Phase Dependencies)
+
+The four features are largely independent — they touch different parts of the system. This
+ordering minimizes risk by building foundational changes before dependent features.
 
 ```
-orchestration/
-└── memory_client.py         # Python HTTP client for memU-server (new)
+Phase 1: Graceful Shutdown — SIGTERM handling
+  WHY FIRST: Foundational reliability; required before long-running production use.
+  Touches: pool.py, entrypoint.sh, state_engine.py (minor)
+  Test: send SIGTERM to pool process → verify interrupted state in state.json → verify recovery spawns on next start
+  No dependencies on other v1.4 features.
 
-docker/
-└── memory/
-    ├── docker-compose.yml   # memU-server + PostgreSQL services (new)
-    └── .env.example         # OPENAI_API_KEY placeholder (new)
+Phase 2: Delta Snapshots — snapshot.py + pool.py memorize path
+  WHY SECOND: Pure backend optimization; no dashboard needed; verifiable with existing tools.
+  Touches: snapshot.py (new function), pool.py (memorize path), state_engine.py (last_memorized_commit metric)
+  Test: spawn task with multiple commits → verify delta diff is smaller than full diff → verify memU item contains only new changes
+  Depends on: nothing (but builds on Phase 1 pool.py changes — schedule after Phase 1 to avoid merge conflicts)
 
-workspace/occc/src/app/
-├── api/
-│   └── memory/
-│       ├── route.ts         # GET categories + items (new)
-│       └── search/
-│           └── route.ts     # POST retrieve / semantic search (new)
-└── memory/
-    └── page.tsx             # Memory browser page (new)
+Phase 3: Memory Health Monitor
+  WHY THIRD: Backend logic + API + minimal dashboard. Self-contained.
+  Touches: memory_client.py (list_all, delete), memory_health.py (new), /api/memory/health route (new), /memory page (extend)
+  Test: inject a stale item → health check flags it → dashboard shows yellow banner → delete removes it
+  Depends on: existing memU service (v1.3 already shipped)
 
-workspace/occc/src/lib/
-└── memory.ts                # useMemory() SWR hook (new)
+Phase 4: L1 Strategic Suggestions
+  WHY LAST: Requires task history data (Phase 1 ensures clean history), benefits from
+  delta snapshots (Phase 2 means cleaner memory items), and is the highest-complexity feature.
+  Touches: suggestion_engine.py (new), /api/suggestions routes (new), /settings page (extend)
+  Test: run several tasks with failures → generate suggestions → apply suggestion → verify soul-override.md updated
+  Depends on: existing JarvisState task history, existing MemoryClient, existing soul_renderer.py
 ```
-
----
-
-## `memory_client.py` Design
-
-```python
-# orchestration/memory_client.py
-import httpx
-from typing import Optional
-
-class MemoryClient:
-    """Thin HTTP client for memU-server REST API.
-
-    Raises MemoryServiceUnavailable on connection errors — callers
-    should catch and degrade gracefully (log + continue without memory).
-    """
-
-    def __init__(self, base_url: str, timeout: float = 3.0):
-        self.base_url = base_url.rstrip("/")
-        self.timeout = timeout
-
-    def memorize(
-        self,
-        messages: list[dict],
-        user_id: str,
-        agent_id: str,
-    ) -> dict:
-        """Fire-and-forget memorize. Returns task_id from memU-server."""
-        resp = httpx.post(
-            f"{self.base_url}/memorize",
-            json={"messages": messages, "user_id": user_id, "agent_id": agent_id},
-            timeout=self.timeout,
-        )
-        resp.raise_for_status()
-        return resp.json()
-
-    def retrieve(
-        self,
-        queries: list[str],
-        user_id: str,
-        method: str = "rag",
-        agent_id_filter: Optional[list[str]] = None,
-    ) -> str:
-        """Retrieve relevant memory context as formatted string."""
-        where: dict = {"user_id": user_id}
-        if agent_id_filter:
-            where["agent_id__in"] = agent_id_filter
-        resp = httpx.post(
-            f"{self.base_url}/retrieve",
-            json={"queries": queries, "method": method, "where": where},
-            timeout=self.timeout,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        # Flatten categories + items into prompt-injectable text
-        return _format_memory_context(data)
-
-    def health(self) -> bool:
-        """Returns True if memU-server is reachable."""
-        try:
-            resp = httpx.get(f"{self.base_url}/health", timeout=1.0)
-            return resp.status_code == 200
-        except Exception:
-            return False
-
-
-def get_memory_client() -> MemoryClient:
-    """Create MemoryClient from openclaw.json memory_service config."""
-    from orchestration.project_config import _find_project_root
-    import json, os
-    root = _find_project_root()
-    config = json.loads((root / "openclaw.json").read_text())
-    svc = config.get("memory_service", {})
-    url = svc.get("url", os.environ.get("MEMU_SERVICE_URL", "http://localhost:8765"))
-    timeout = svc.get("timeout_s", 3.0)
-    return MemoryClient(base_url=url, timeout=timeout)
-```
-
-**Dependency:** `httpx` (sync client, no new async complexity). Add to orchestration
-dependencies. Alternative: use stdlib `urllib.request` to maintain zero-external-deps
-policy — acceptable since this is an optional feature path with graceful degradation.
-
-**Decision point:** `httpx` vs stdlib. Prefer `httpx` for cleaner timeout handling and
-JSON support. Add to `docker/l3-specialist/requirements.txt` as well since L3 entrypoint
-needs it for curl-equivalent calls (or use bash `curl` in entrypoint.sh directly).
-
----
-
-## SOUL Template Injection
-
-The existing `soul_renderer.py` `build_variables()` already returns a dict of template
-variables. Adding memory context requires:
-
-1. Add `memory_context` key to the dict (empty string default)
-2. Populate it by calling `MemoryClient.retrieve()` at render time or pass it in as a
-   parameter from spawn.py (preferred — avoids memory_client import inside soul_renderer)
-
-**Preferred pattern: parameter injection**
-
-```python
-# spawn.py (modified)
-memory_context = ""
-try:
-    client = get_memory_client()
-    memory_context = client.retrieve(
-        queries=[task_description],
-        user_id=project_id,
-    )
-except Exception as e:
-    logger.warning("Memory retrieve failed, spawning without context", extra={"error": str(e)})
-
-soul_content = render_soul(project_id, extra_vars={"memory_context": memory_context})
-```
-
-```python
-# soul_renderer.py (modified)
-def build_variables(project_config, extra_vars=None) -> dict:
-    base = { ...existing vars... }
-    base["memory_context"] = ""  # default empty
-    if extra_vars:
-        base.update(extra_vars)
-    return base
-```
-
-```markdown
-<!-- soul-default.md — new section added -->
-## Memory Context
-
-$memory_context
-```
-
-If `$memory_context` is empty, the section renders as an empty `## Memory Context` heading
-which is harmless. Alternatively, use a conditional marker and strip the section in
-`merge_sections()` when the value is empty.
-
----
-
-## L3 Container Environment Variables (New)
-
-Added to `container_config["environment"]` in `spawn.py`:
-
-| Variable | Value | Purpose |
-|----------|-------|---------|
-| `MEMU_SERVICE_URL` | `http://memu-server:8765` | memU-server address inside Docker net |
-| `MEMU_AGENT_ID` | `l3:{l3_agent_id}` | Agent attribution for stored memories |
-| `MEMU_PROJECT_ID` | `{project_id}` | Memory scoping (user_id in memU terms) |
-| `MEMU_ENABLED` | `"true"` / `"false"` | Feature toggle — skip memorize if false |
-
-The L3 entrypoint uses these to POST to memU-server without needing Python — curl is
-sufficient for the fire-and-forget memorize POST.
-
----
-
-## openclaw.json Config Block (New)
-
-```json
-{
-  "memory_service": {
-    "enabled": true,
-    "url": "http://localhost:8765",
-    "timeout_s": 3,
-    "retrieve_method": "rag",
-    "memorize_on_l3_complete": true,
-    "memorize_on_l2_review": true,
-    "inject_into_soul": true
-  }
-}
-```
-
-The `enabled` flag gates all memory operations system-wide. When `false`, spawn.py skips
-the retrieve call, entrypoint.sh skips the memorize POST, and dashboard API routes return
-empty responses. This is the feature-toggle pattern used throughout OpenClaw.
-
----
-
-## Dashboard API Routes
-
-### GET `/api/memory?project={id}`
-
-Returns categories + item counts for the project. Calls:
-```
-GET http://localhost:8765/categories  (with user_id filter)
-```
-
-Response shape:
-```typescript
-interface MemoryCategory {
-  name: string
-  itemCount: number
-  lastUpdated: string
-}
-interface MemoryResponse {
-  categories: MemoryCategory[]
-  projectId: string
-}
-```
-
-### POST `/api/memory/search`
-
-Semantic search over memories. Calls:
-```
-POST http://localhost:8765/retrieve  (with query + user_id filter)
-```
-
-Request body: `{ query: string, project: string, method?: "rag" | "llm" }`
-
-Response shape:
-```typescript
-interface MemoryItem {
-  id: string
-  content: string
-  category: string
-  agentId: string
-  createdAt: string
-  score?: number
-}
-interface SearchResponse {
-  items: MemoryItem[]
-  query: string
-}
-```
-
-### Dashboard Memory Panel Page
-
-`/memory` page in occc with:
-- Project-scoped display (inherits current project from `ProjectProvider`)
-- Category list sidebar (SWR polling, 30s interval — memory changes slowly)
-- Item table for selected category
-- Search bar that hits `/api/memory/search`
-- Agent attribution column (shows L2 vs L3 source)
 
 ---
 
 ## Architectural Patterns
 
-### Pattern 1: Graceful Degradation on Memory Unavailability
+### Pattern 1: Async Signal Handling in pool.py
 
-**What:** All memory operations wrapped in try/except. On failure, log warning and continue
-without memory context.
-**When to use:** Always — memU-server is a non-critical auxiliary service.
-**Implementation:** `MemoryClient` raises `MemoryServiceUnavailable`. Callers catch it,
-log at WARNING level, and proceed with `memory_context = ""`.
+**What:** Register SIGTERM handler via `asyncio.get_event_loop().add_signal_handler()` to
+set a `shutdown_event`. Spawn coroutine checks the event after each container exit.
 
-### Pattern 2: Fire-and-Forget Memorize
+**Why not `signal.signal()`:** The existing pool.py is fully asyncio — mixing sync signal
+handlers with async code causes race conditions on Python <3.12. The asyncio API is safe.
 
-**What:** POST to `/memorize` without waiting for processing to complete. memU-server returns
-`task_id` immediately; actual extraction/embedding is async in its Temporal workflow.
-**When to use:** All memorize calls from L3 entrypoint.sh and L2 review decisions.
-**Why:** Memorize pipeline takes 2-10 seconds (LLM extraction + embed + store). Blocking
-L3 container exit or L2 review flow on this is unacceptable.
+**Example:**
+```python
+# pool.py __init__ or startup
+loop = asyncio.get_event_loop()
+loop.add_signal_handler(signal.SIGTERM, lambda: asyncio.ensure_future(_shutdown(loop)))
 
-### Pattern 3: Config-Gated Feature
+async def _shutdown(loop):
+    logger.info("SIGTERM received — initiating graceful shutdown")
+    for task_id, container in list(self.active_containers.items()):
+        container.kill(signal="SIGTERM")
+        jarvis.update_task(task_id, "interrupted", "SIGTERM received")
+    # Give containers 30s to exit
+    await asyncio.sleep(30)
+    loop.stop()
+```
 
-**What:** `memory_service.enabled` in `openclaw.json` gates all memory operations.
-**When to use:** All new memory code paths check `enabled` before doing anything.
-**Why:** Allows v1.3 to ship with memory disabled by default for projects that don't need it,
-and for testing without a running memU-server.
+**Trade-offs:** Simple and well-understood. Does not handle SIGKILL (unclean kill). Recovery
+loop handles the gap — interrupted tasks are re-queued on next start.
 
-### Pattern 4: Host-Port Access for L2, Container-DNS for L3
+### Pattern 2: On-Demand Health Check with Server-Side Cache
 
-**What:** L2/orchestration (host Python) calls `http://localhost:8765`. L3 containers call
-`http://memu-server:8765` via Docker DNS on `openclaw-net`.
-**Why:** L3 containers are inside Docker network; they cannot use `localhost` to reach the
-host. L2 is a host process; it cannot use Docker DNS names.
-**Implementation:** `MEMU_SERVICE_URL` env var in L3 container always set to
-`http://memu-server:8765`. `memory_client.py` reads from `openclaw.json` which specifies
-`http://localhost:8765` for host-side access.
+**What:** `/api/memory/health` route runs health checks on first call, caches result in
+module-level variable with timestamp, returns cached result for 5 minutes.
+
+**Why not background polling:** Background polling requires a persistent server process or
+cron — adds operational complexity. On-demand is sufficient for health monitoring use case.
+The dashboard only shows health when the user views the `/memory` page.
+
+**Example:**
+```typescript
+// route.ts
+let _healthCache: { report: HealthReport; ts: number } | null = null
+
+export async function GET(req: Request) {
+  const now = Date.now()
+  if (_healthCache && now - _healthCache.ts < 5 * 60 * 1000) {
+    return Response.json(_healthCache.report)
+  }
+  const report = await runHealthChecks(project)
+  _healthCache = { report, ts: now }
+  return Response.json(report)
+}
+```
+
+### Pattern 3: Suggestion-as-File (not DB)
+
+**What:** `soul-suggestions.json` lives in the project state directory alongside
+`workspace-state.json`. Suggestions are immutable once generated — applying one marks it
+`applied: true` rather than deleting it (audit trail).
+
+**Why:** Consistent with the existing pattern of JSON files in `.openclaw/{project_id}/`.
+No new storage dependency. Suggestions are project-scoped and few in number (< 50 expected).
+
+### Pattern 4: Delta by Default, Full on First
+
+**What:** `capture_delta_snapshot()` checks `last_memorized_commit`. If none, produces full
+diff (matching existing behavior exactly). If set, produces `git diff {sha}...HEAD`.
+
+**Why:** Zero behavioral change for existing single-commit tasks. Multi-commit tasks get the
+optimization automatically. No configuration required.
 
 ---
 
 ## Anti-Patterns
 
-### Anti-Pattern 1: Blocking L3 Container Exit on Memorize
+### Anti-Pattern 1: Modifying SOUL Files Without L1 Review
 
-**What people do:** `curl -s ... /memorize && wait_for_task_id` in entrypoint.sh
-**Why it's wrong:** memU memorize pipeline is async (Temporal workflow). Blocking adds 2-10s
-to every L3 container lifecycle with no benefit.
-**Do this instead:** Fire the POST, check for HTTP 200/202, log the returned task_id, exit.
+**What people do:** `suggestion_engine.py` automatically writes to `soul-override.md` when
+confidence is high.
+**Why it's wrong:** SOUL mutations affect every subsequent task. Automated changes without
+review can compound — one bad suggestion affects all future L3 spawns until manually reverted.
+**Do this instead:** Always write to `soul-suggestions.json` with `applied: false`. L1 clicks
+Apply in the dashboard. The Apply API route writes to `soul-override.md`. Audit trail preserved.
 
-### Anti-Pattern 2: Storing Full Git Diffs as Raw Memory
+### Anti-Pattern 2: Blocking Pool Shutdown on Container Completion
 
-**What people do:** `content = open("task.diff").read()` → memorize entire diff verbatim
-**Why it's wrong:** Large diffs (thousands of lines) hit token limits in LLM extraction step
-and store noisy/irrelevant content. Vector retrieval matches patch syntax not semantics.
-**Do this instead:** Summarize: task description + changed file names + exit code + key log
-lines. Diffs > 200 lines should be truncated or summarized before memorize POST.
+**What people do:** SIGTERM handler waits indefinitely for all containers to complete their
+current task before shutting down.
+**Why it's wrong:** A task that hung before SIGTERM will hang the shutdown too. The pool
+process becomes unkillable.
+**Do this instead:** Dehydrate task state immediately on SIGTERM. Give containers 30s with
+SIGTERM, then force-remove. Recovery loop handles the rest on restart.
 
-### Anti-Pattern 3: Per-Request L2 Memory Retrieve During Monitoring
+### Anti-Pattern 3: Running Similarity Scan on All Memory Items
 
-**What people do:** Call `memory_client.retrieve()` inside the monitor poll loop
-**Why it's wrong:** Monitor polls every 1s. Memory retrieval is 50-200ms per call.
-This adds 5-20% overhead to monitoring with zero benefit (monitoring doesn't need memory).
-**Do this instead:** Only retrieve at spawn time (pre-spawn). Never in monitor/status paths.
+**What people do:** Conflict detection loads all memory items and runs pairwise cosine
+similarity O(n²).
+**Why it's wrong:** At 500 items, that is 125,000 comparisons — called every time the health
+page loads.
+**Do this instead:** Scope conflict scan to the most recent N items (default 50) within each
+category. Use memU's existing `/retrieve` semantic search to find items similar to known
+conflict seeds rather than exhaustive pairwise scan.
 
-### Anti-Pattern 4: Using localhost in L3 Container
+### Anti-Pattern 4: Re-memorizing Full Diff on Every Checkpoint
 
-**What people do:** `MEMU_SERVICE_URL=http://localhost:8765` in L3 container environment
-**Why it's wrong:** Inside a Docker container, `localhost` resolves to the container itself,
-not the host. The call fails silently or hangs.
-**Do this instead:** `MEMU_SERVICE_URL=http://memu-server:8765` — Docker DNS resolves
-`memu-server` via `openclaw-net` bridge network.
+**What people do:** Call memorize multiple times during a task, each time with the full
+`{default_branch}...HEAD` diff.
+**Why it's wrong:** Each subsequent memorize includes all content from prior memorizations.
+memU deduplicates by content hash but still pays the embedding cost for every call.
+**Do this instead:** Delta snapshots — only the new commits since `last_memorized_commit`.
+The state engine tracks the SHA so each memorize payload contains only net-new information.
 
 ---
 
-## Build Order (Component Dependencies)
-
-The following order respects dependency relationships. Each phase is a logical build unit.
+## File Structure Delta (New Files Only)
 
 ```
-Phase 1: Infrastructure (no code deps)
-  - docker/memory/docker-compose.yml
-  - docker network create openclaw-net
-  - Add L3 containers to openclaw-net in spawn.py (network= param)
-  - Verify: docker compose up → memu-server health check passes
+orchestration/
+├── memory_health.py          # NEW: stale/conflict/volume health checks
+└── suggestion_engine.py      # NEW: pattern analysis, SuggestionItem generation
 
-Phase 2: Python Client (depends on Phase 1)
-  - orchestration/memory_client.py
-  - Add httpx to L3 requirements (or confirm curl sufficient)
-  - Add memory_service block to openclaw.json (enabled: false initially)
-  - Verify: memory_client.health() returns True
+workspace/occc/src/app/
+├── api/
+│   ├── memory/
+│   │   └── health/
+│   │       └── route.ts      # NEW: on-demand health check endpoint
+│   └── suggestions/
+│       ├── route.ts           # NEW: GET list, POST generate
+│       └── apply/
+│           └── route.ts      # NEW: POST apply suggestion to soul-override.md
+└── settings/                  # EXISTS: extend page.tsx with suggestions panel
+    └── page.tsx               # MODIFY: add SuggestionsPanel component
 
-Phase 3: L3 Memorize (depends on Phase 2)
-  - entrypoint.sh: add post-task memorize POST
-  - MEMU_* env vars injected in spawn.py
-  - Verify: spawn test task → memory item appears in memU-server
-
-Phase 4: L2 Pre-Spawn Retrieve + SOUL Injection (depends on Phase 3)
-  - spawn.py: retrieve call before container creation
-  - soul_renderer.py: extra_vars support + memory_context variable
-  - soul-default.md: Memory Context section
-  - Verify: spawned task SOUL.md contains retrieved context from Phase 3
-
-Phase 5: L2 Review Memorize (depends on Phase 2)
-  - orchestration/memory_client.py used from review logic
-  - Verify: merge/reject decision stored, retrievable in Phase 4
-
-Phase 6: Dashboard (depends on Phase 1)
-  - workspace/occc/src/app/api/memory/route.ts
-  - workspace/occc/src/app/api/memory/search/route.ts
-  - workspace/occc/src/app/memory/page.tsx
-  - workspace/occc/src/lib/memory.ts
-  - Verify: dashboard /memory page shows categories + search works
+workspace/occc/src/components/
+├── memory/
+│   └── HealthBanner.tsx       # NEW: green/yellow/red health status
+└── suggestions/
+    └── SuggestionsList.tsx    # NEW: suggestion review/apply UI
 ```
 
 ---
 
-## Integration Points: New vs Modified
+## Integration Points Summary
 
-### New (create from scratch)
-
-| Artifact | Type | Purpose |
-|----------|------|---------|
-| `docker/memory/docker-compose.yml` | Config | memU-server + PostgreSQL services |
-| `orchestration/memory_client.py` | Python | HTTP client for memU-server |
-| `workspace/occc/src/app/api/memory/route.ts` | API route | Categories endpoint |
-| `workspace/occc/src/app/api/memory/search/route.ts` | API route | Search endpoint |
-| `workspace/occc/src/app/memory/page.tsx` | UI | Memory browser page |
-| `workspace/occc/src/lib/memory.ts` | Hook | `useMemory()` SWR hook |
-
-### Modified (surgical changes only)
-
-| Artifact | Change | Risk |
-|----------|--------|------|
-| `skills/spawn_specialist/spawn.py` | +retrieve call +env vars | LOW — wrapped in try/except, graceful degradation |
-| `orchestration/soul_renderer.py` | +extra_vars param | LOW — additive, backward compat |
-| `agents/_templates/soul-default.md` | +Memory Context section | LOW — empty renders harmlessly |
-| `docker/l3-specialist/entrypoint.sh` | +memorize POST after completion | LOW — fire-and-forget, not on critical path |
-| `openclaw.json` | +memory_service block | LOW — new key, existing code ignores unknown keys |
+| Feature | New Files | Modified Files | Untouched |
+|---------|-----------|----------------|-----------|
+| Graceful Shutdown | none | `pool.py`, `entrypoint.sh`, `state_engine.py` (minor) | `spawn.py`, `snapshot.py`, `memory_client.py` |
+| Delta Snapshots | none | `snapshot.py` (+function), `pool.py` (memorize path), `state_engine.py` (metric key) | `memory_client.py`, `entrypoint.sh`, dashboard |
+| Memory Health | `memory_health.py`, `api/memory/health/route.ts`, `HealthBanner.tsx` | `memory_client.py` (+methods), `memory/page.tsx` | `pool.py`, `state_engine.py`, `snapshot.py` |
+| L1 Suggestions | `suggestion_engine.py`, `api/suggestions/` routes, `SuggestionsList.tsx` | `settings/page.tsx` | `soul_renderer.py` (reused as-is), `memory_client.py`, `pool.py` |
 
 ---
 
 ## Scaling Considerations
 
-This is a single-host system. Scaling concerns are operational, not distributed:
+This remains a single-host system. v1.4 scaling concerns:
 
-| Concern | At current scale (3 concurrent L3) | Notes |
-|---------|-------------------------------------|-------|
-| memU-server throughput | Not a bottleneck — 3 memorize calls/task-completion cycle | Async pipeline absorbs bursts |
-| PostgreSQL storage | pgvector indexes grow with usage — acceptable indefinitely on SSD | Add pg_partman if > 1M items |
-| Retrieve latency | RAG: ~50ms, LLM: ~2s — set retrieve_method="rag" for pre-spawn | LLM method only for dashboard search |
-| Memory disk usage | pgvector embedding (1536 dims × 4 bytes = 6KB/item) — 1M items ≈ 6GB | Monitor with pg_database_size() |
+| Concern | Current Scale | Notes |
+|---------|---------------|-------|
+| SIGTERM recovery storm | Restart after kill → all interrupted tasks re-queued simultaneously | Stagger recovery with `asyncio.sleep(0)` yield between spawns; pool semaphore already limits concurrency |
+| Suggestion analysis cost | list_all_tasks() on large state files | JarvisState.list_all_tasks() reads full state.json — consider task count limit (e.g., last 500 tasks) for suggestion analysis |
+| Health check latency | list_all() from memU at 500+ items | Server-side cache (5min) prevents hammering; scope scan to last 50 items per category |
+| soul-suggestions.json growth | Accumulates applied suggestions | Add `max_suggestions` cap (e.g., 100); archive older applied suggestions |
 
 ---
 
 ## Sources
 
-- memU GitHub README: https://github.com/NevaMind-AI/memU/blob/main/README.md
-- memU-server GitHub (backend wrapper): https://github.com/NevaMind-AI/memU-server
-- memu-py PyPI: https://pypi.org/project/memu-py/
-- pgvector Docker image: https://hub.docker.com/r/pgvector/pgvector
-- OpenClaw codebase: `skills/spawn_specialist/spawn.py`, `orchestration/soul_renderer.py`, `orchestration/state_engine.py`, `docker/l3-specialist/entrypoint.sh`
+- OpenClaw codebase: `skills/spawn_specialist/pool.py`, `orchestration/state_engine.py`, `orchestration/snapshot.py`, `docker/l3-specialist/entrypoint.sh`, `orchestration/memory_client.py`, `orchestration/soul_renderer.py`
+- PROJECT.md: v1.4 feature definitions + out-of-scope constraints
+- Python asyncio signal docs: `loop.add_signal_handler()` for safe async SIGTERM handling
 
 ---
 
-*Architecture research for: memU integration into OpenClaw v1.3*
+*Architecture research for: OpenClaw v1.4 Operational Maturity*
 *Researched: 2026-02-24*

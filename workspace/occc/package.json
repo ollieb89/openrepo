@@ -6,12 +6,15 @@
     "dev": "next dev -p 6987",
     "build": "next build",
     "start": "next start -p 6987",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "bun test"
   },
   "dependencies": {
     "autoprefixer": "^10.4.0",
+    "better-sqlite3": "^12.6.2",
     "dockerode": "^4.0.2",
     "next": "14.2.5",
+    "ollama": "^0.6.3",
     "postcss": "^8.4.0",
     "react": "^18",
     "react-dom": "^18",

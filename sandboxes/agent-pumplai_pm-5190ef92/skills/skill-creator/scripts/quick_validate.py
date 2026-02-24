@@ -7,8 +7,6 @@ import re
 import sys
 from pathlib import Path
 
-import yaml
-
 MAX_SKILL_NAME_LENGTH = 64
 
 
@@ -30,12 +28,19 @@ def validate_skill(skill_path):
 
     frontmatter_text = match.group(1)
 
-    try:
-        frontmatter = yaml.safe_load(frontmatter_text)
-        if not isinstance(frontmatter, dict):
-            return False, "Frontmatter must be a YAML dictionary"
-    except yaml.YAMLError as e:
-        return False, f"Invalid YAML in frontmatter: {e}"
+    frontmatter = {}
+    for raw_line in frontmatter_text.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        if ":" not in line:
+            return False, f"Invalid frontmatter line (missing colon): '{raw_line}'"
+        key, value = line.split(":", 1)
+        key = key.strip()
+        value = value.strip()
+        if not key:
+            return False, f"Invalid frontmatter line (empty key): '{raw_line}'"
+        frontmatter[key] = value
 
     allowed_properties = {"name", "description", "license", "allowed-tools", "metadata"}
 

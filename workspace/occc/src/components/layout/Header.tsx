@@ -2,6 +2,7 @@
 
 import { useProject } from '@/context/ProjectContext';
 import { useTheme } from '@/context/ThemeContext';
+import HeaderSyncStatus from '@/components/layout/HeaderSyncStatus';
 
 export default function Header() {
   const { projectId, projects, setProjectId, loading } = useProject();
@@ -12,6 +13,8 @@ export default function Header() {
       <div />
 
       <div className="flex items-center gap-4">
+        <HeaderSyncStatus />
+
         {/* Project Switcher */}
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-500 dark:text-gray-400">Project:</span>

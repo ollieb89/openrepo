@@ -10,76 +10,94 @@ OpenClaw is an AI Swarm Orchestration system implementing the **Grand Architect 
 
 ```
 L1: ClawdiaPrime (Strategic Orchestrator)
- └─ L2: PumplAI_PM (Tactical Project Manager)
+ └─ L2: Project Manager (Tactical — per-project)
      └─ L3: Ephemeral Specialists (Isolated Docker Containers)
 ```
 
-**L1 → L2 delegation**: `skills/router_skill/index.js` dispatches directives via `openclaw agent --agent {targetId} --message "{directive}"` CLI commands.
+**L1 → L2 delegation**: `skills/router_skill/index.js` dispatches directives via `openclaw agent --agent {targetId} --message "{directive}"` CLI commands. Uses `execFileSync` with argument arrays (no shell interpretation) to prevent injection.
 
-**L2 → L3 delegation**: `skills/spawn_specialist/spawn.py` spawns Docker containers with security isolation (`no-new-privileges`, `cap_drop ALL`, 4GB mem limit, 1 CPU). Max 3 concurrent L3 containers managed by `skills/spawn_specialist/pool.py` via asyncio semaphore.
+**L2 → L3 delegation**: `skills/spawn_specialist/spawn.py` spawns Docker containers with security isolation (`no-new-privileges`, `cap_drop ALL`, 4GB mem limit, 1 CPU). Max 3 concurrent L3 containers per project managed by `skills/spawn_specialist/pool.py` via asyncio semaphore (`PoolRegistry` gives per-project independent semaphores).
 
-**State synchronization**: The **Jarvis Protocol** (`orchestration/state_engine.py`) uses `fcntl.flock()` for cross-container state management via `workspace/.openclaw/workspace-state.json`. Exclusive locks (LOCK_EX) for writes, shared locks (LOCK_SH) for reads.
+**State synchronization**: The **Jarvis Protocol** (`orchestration/state_engine.py`) uses `fcntl.flock()` for cross-container state management via `workspace/.openclaw/<project_id>/workspace-state.json`. Exclusive locks (LOCK_EX) for writes, shared locks (LOCK_SH) for reads. mtime-based cache avoids unnecessary disk I/O. Backup recovery from `.bak` on corruption.
 
-**Git workflow**: L3 work is isolated on `l3/task-{task_id}` staging branches. L2 reviews diffs (`orchestration/snapshot.py`), then merges with `--no-ff` or rejects. Semantic snapshots (git diffs with metadata) are saved to `workspace/.openclaw/snapshots/`.
+**Git workflow**: L3 work is isolated on `l3/task-{task_id}` staging branches. L2 reviews diffs (`orchestration/snapshot.py`), then merges with `--no-ff` or rejects. Semantic snapshots saved to `workspace/.openclaw/<project_id>/snapshots/`.
+
+**Agent memory** (v1.3, in progress): `orchestration/memory_client.py` wraps a memU REST API (`workspace/memory/`) with per-project, per-agent scoping. `spawn.py` retrieves memories pre-spawn and injects them into L3 SOUL context (2000 char budget cap, graceful degradation on failure).
 
 ## Key Directories
 
-- `agents/` — Agent identities (IDENTITY.md, SOUL.md, config.json) for each tier
-- `orchestration/` — Jarvis Protocol state engine, snapshot system, CLI monitor, config
-- `skills/` — Executable skills: `router_skill` (L1→L2, Node.js), `spawn_specialist` (L2→L3, Python)
-- `docker/l3-specialist/` — Dockerfile and entrypoint for ephemeral L3 containers
-- `workspace/` — Actual project workspace (includes `occc/` Next.js dashboard)
-- `sandbox/` — Container registry (`containers.json`)
-- `identity/` — Device authentication tokens
-- `.planning/` — Roadmap, phase plans, and verification docs
+- `agents/` — Agent identities (IDENTITY.md, SOUL.md, config.json) per tier; `_templates/soul-default.md` for SOUL variable substitution
+- `orchestration/` — Jarvis Protocol state engine, snapshot system, CLI monitor, project CLI, memory client, SOUL renderer, config
+- `skills/` — `router_skill` (L1→L2, Node.js), `spawn_specialist` (L2→L3, Python), `review_skill` (L2 diff review), `gog/` (skill from ClawhHub)
+- `docker/l3-specialist/` — Dockerfile and `entrypoint.sh` for ephemeral L3 containers
+- `workspace/` — Runtime data: `.openclaw/` per-project state/snapshots, `occc/` Next.js dashboard, `memory/` memU service
+- `projects/<id>/` — Per-project manifest (`project.json`), optional `soul-override.md`
+- `.planning/` — Roadmap, phase plans, milestone archives, verification docs
 
 ## Commands
 
+### Tests
+```bash
+python3 -m pytest tests/ -v                     # Run all tests
+python3 -m pytest tests/test_spawn_memory.py -v  # Run specific test file
+```
+
+### Multi-Project Management
+```bash
+python3 orchestration/project_cli.py init --id myproject --name "My Project"
+python3 orchestration/project_cli.py list
+python3 orchestration/project_cli.py switch <project_id>
+python3 orchestration/project_cli.py remove <project_id>
+```
+
 ### L3 Monitor (CLI)
 ```bash
-python3 orchestration/monitor.py tail          # Stream L3 activity in real-time
-python3 orchestration/monitor.py status        # One-shot status of all tasks
-python3 orchestration/monitor.py task <id>     # Full activity log for a task
+python3 orchestration/monitor.py tail                    # Stream all projects
+python3 orchestration/monitor.py tail --project pumplai  # Single project
+python3 orchestration/monitor.py status                  # One-shot status table
+python3 orchestration/monitor.py task <id>               # Full activity log for a task
+python3 orchestration/monitor.py pool                    # Pool utilization stats
 ```
 
 ### L3 Container Spawning
 ```bash
-# Build L3 image (required before spawning)
 docker build -t openclaw-l3-specialist:latest docker/l3-specialist/
 
-# Spawn a specialist (test CLI)
-python3 skills/spawn_specialist/spawn.py <task_id> <code|test> "<description>" --workspace /home/ollie/.openclaw/workspace
+# Direct spawn (testing)
+python3 skills/spawn_specialist/spawn.py <task_id> <code|test> "<description>" \
+  --workspace /path/to/workspace --project myproject
+
+# Pool-managed spawn (production — enforces concurrency limits + retry)
+python3 skills/spawn_specialist/pool.py <task_id> <code|test> "<description>" \
+  --workspace /path/to/workspace --project myproject
+```
+
+### SOUL Templating
+```bash
+python3 orchestration/soul_renderer.py --project myproject --write
 ```
 
 ### Dashboard (occc)
 ```bash
-cd workspace/occc
-bun install
-bun run dev        # Dev server on http://localhost:6987
-```
-
-### Docker Dashboard
-```bash
-docker build -t openclaw-dashboard workspace/occc/
-# Exposed on port 18795 → container 6987
+cd workspace/occc && bun install && bun run dev   # http://localhost:6987
 ```
 
 ## Configuration
 
-- `openclaw.json` — Root config: agent definitions, gateway (port 18789), sandbox modes, Telegram integration, `source_directories`
-- `openclaw.json:source_directories` — Lists where user code lives: `["/home/ollie/Development/Projects", "/home/ollie/Development/Tools"]`. Used by `project_cli.py init` for default workspace path and available to any tool that needs to discover projects.
-- `projects/<id>/project.json` — Per-project manifest with `workspace` path (points into source_directories), tech stack, agent mappings, L3 overrides
-- `agents/l3_specialist/config.json` — L3 container config: supported runtimes (claude-code, codex, gemini-cli), skill registry with timeouts (code: 600s, test: 300s), max 3 concurrent, retry once on failure
-- `orchestration/config.py` — State file path, lock timeout (5s), poll interval (1s), snapshot directory
+- `openclaw.json` — Root config: agent list, gateway (port 18789), `source_directories`, `active_project`, Telegram integration, memU API URL. **Contains secrets** (bot token, gateway auth token).
+- `projects/<id>/project.json` — Per-project: workspace path, tech stack, agent mappings, `l3_overrides` (mem_limit, cpu_quota, pool_mode, overflow_policy, max_concurrent, queue_timeout_s)
+- `agents/l3_specialist/config.json` — L3 defaults: supported runtimes (claude-code, codex, gemini-cli), skill timeouts (code: 600s, test: 300s)
+- `orchestration/config.py` — Runtime tuning constants (lock timeout, poll interval, cache TTL, activity log max). Overridable via `OPENCLAW_LOG_LEVEL` and `OPENCLAW_ACTIVITY_LOG_MAX` env vars.
 
 ## Development Notes
 
-- The orchestration layer is Python 3 with no external dependencies beyond `docker>=7.1.0` (for spawn_specialist)
-- The router_skill is Node.js (uses `child_process.execSync` to call `openclaw` CLI)
-- The L3 entrypoint (`docker/l3-specialist/entrypoint.sh`) handles git branch creation, CLI runtime execution, and state updates
-- State file at `workspace/.openclaw/workspace-state.json` is the single source of truth for task status across containers
-- L3 containers run as non-root user (UID 1000) with volumes: workspace → `/workspace`, orchestration → `/orchestration` (read-only)
+- Orchestration is Python 3 with dependencies: `docker>=7.1.0`, `httpx` (memory client + spawn memory retrieval)
+- The router_skill is Node.js
+- L3 containers run as non-root (UID 1000) with volumes: workspace → `/workspace`, orchestration → `/orchestration` (read-only)
+- Per-project state is namespaced: containers (`openclaw-{project}-l3-{task}`), state files, snapshots, pool semaphores
+- SOUL templates use `string.Template.safe_substitute()` with `$variable` placeholders; per-project overrides in `soul-override.md`
+- Pool supports modes (`shared`/`isolated`), overflow policies (`wait`/`reject`/`priority`), configurable per-project in `l3_overrides`
 
 ## Current Status
 
-Phases 1-3 complete (environment, orchestration, specialist execution). Phase 4 (monitoring dashboard) is planned. See `.planning/ROADMAP.md` for full progress.
+v1.0 (Foundation), v1.1 (Project Agnostic), and v1.2 (Orchestration Hardening) are shipped. v1.3 (Agent Memory) is in progress — phases 26-32. See `.planning/ROADMAP.md` for details.
