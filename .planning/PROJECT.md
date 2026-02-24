@@ -2,41 +2,30 @@
 
 ## What This Is
 
-OpenClaw is an AI Swarm Orchestration system implementing the Grand Architect Protocol — a 3-tier hierarchical architecture where AI agents delegate, execute, and synchronize work through Docker containers and git-based workflows. The occc dashboard provides real-time visibility into swarm operations.
+OpenClaw is an AI Swarm Orchestration system implementing the Grand Architect Protocol — a 3-tier hierarchical architecture where AI agents delegate, execute, and synchronize work through Docker containers and git-based workflows. The occc dashboard provides real-time visibility into swarm operations with per-project metrics.
 
 ## Core Value
 
 Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
 
-## Current Milestone: v1.2 Orchestration Hardening
-
-**Goal:** Make the orchestration layer production-grade — fix silent failures, improve performance under concurrency, add structured observability, and complete per-project pool isolation with dashboard metrics.
-
-**Target features:**
-- Reliability hardening: state recovery, graceful shutdown, error classification, config validation
-- Performance: Docker client pooling, state caching, batch updates, subprocess reduction
-- Full observability: structured JSON logging, task lifecycle metrics, pool utilization, adaptive monitoring
-- Per-project pool config: configurable concurrency limits, isolated/shared mode, queue overflow policy
-- Dashboard: agent hierarchy filtering per project, usage metrics visualization
-
 ## Tech Stack
 
 - **Core:** OpenClaw CLI, Bun, Docker 29.1.5
-- **Orchestration:** Python 3 (state engine, snapshots, spawn, monitoring, project_config)
-- **Frontend:** Next.js 16 (App Router), Tailwind 4, SWR, Zod
+- **Orchestration:** Python 3 (state engine, snapshots, spawn, monitoring, project_config, config_validator, logging)
+- **Frontend:** Next.js 16 (App Router), Tailwind 4, SWR, Zod, Recharts
 - **Container:** Debian bookworm-slim L3 images, Nvidia Container Toolkit
 - **OS:** Ubuntu 24.04 LTS
 
 ## Current State
 
-**Shipped:** v1.1 Project Agnostic (2026-02-23)
-**LOC:** ~27,400 (Python + TypeScript + JavaScript)
+**Shipped:** v1.2 Orchestration Hardening (2026-02-24)
+**LOC:** ~22,800 (Python + TypeScript)
 
 Architecture operational:
 - L1 (ClawdiaPrime) → L2 (PumplAI_PM) → L3 (Ephemeral Specialists) delegation chain
-- Jarvis Protocol state synchronization with file locking
+- Jarvis Protocol state synchronization with file locking, backup-on-write, and corruption recovery
 - Semantic snapshot system with git staging branches
-- occc mission control dashboard with SSE real-time streaming and project switching
+- occc mission control dashboard with SSE real-time streaming, project switching, and metrics visualization
 - Docker isolation with `no-new-privileges`, `cap_drop ALL`, memory/CPU limits
 
 Multi-project framework (v1.1):
@@ -45,13 +34,20 @@ Multi-project framework (v1.1):
 - Namespaced container naming and per-project pool isolation (PoolRegistry)
 - `openclaw project` CLI with init/list/switch/remove and template presets
 - Dashboard project selector with project-scoped API routes and SSE streams
-- `OPENCLAW_PROJECT` env var takes priority over `active_project` in config
+
+Orchestration hardening (v1.2):
+- Structured JSON logging across all orchestration components via `get_logger()` factory
+- State engine reliability: backup-on-write, .bak recovery, config schema validation on load
+- State engine performance: mtime-based in-memory caching, write-through updates, Docker client pooling
+- Task lifecycle observability: spawn-to-complete timestamps, lock wait tracking, activity log rotation
+- Per-project pool config: configurable concurrency limits, shared/isolated modes, overflow policies (reject/wait/priority)
+- Dashboard metrics: Recharts visualization (task charts, pool gauges), agent hierarchy with status dots
+- Monitor cache fix: JarvisState reuse across poll cycles for cache hit performance
 
 Known limitations:
 - Gateway startup is manual (runtime dependency)
 - COM-04 snapshot capture cannot be E2E tested when workspace is a git submodule
 - CLI routing replaces lane queue REST API (accepted spec deviation)
-- L3 pool isolation is shared by default; per-project isolated pools deferred to v1.2
 
 ## Requirements
 
@@ -78,10 +74,15 @@ Known limitations:
 - ✓ MPR-01 through MPR-06: Multi-project runtime (container labels, namespaced naming, project-scoped pool/monitor) — v1.1
 - ✓ CLI-01 through CLI-06: Project CLI (init/list/switch/remove with template presets) — v1.1
 - ✓ DSH-05 through DSH-08: Dashboard project switcher (selector, scoped API/SSE, filtered views) — v1.1
+- ✓ REL-01 through REL-03: State backup/recovery, project config validation, agent hierarchy validation — v1.2
+- ✓ PERF-01 through PERF-04: Docker client pooling, state caching, write-through cache, cached monitor reads — v1.2
+- ✓ OBS-01 through OBS-04: Structured logging, task lifecycle metrics, pool utilization, activity log rotation — v1.2
+- ✓ POOL-01 through POOL-03: Per-project concurrency limits, shared/isolated modes, overflow policies — v1.2
+- ✓ DSH-09 through DSH-10: Agent hierarchy filtering, usage metrics panel — v1.2
 
 ### Active
 
-(Defined in REQUIREMENTS.md for v1.2)
+(No active milestone — define next with `/gsd:new-milestone`)
 
 ### Out of Scope
 
@@ -92,6 +93,9 @@ Known limitations:
 - Per-project Docker networks — no inter-container networking needed
 - CWD-based project auto-detection — conflicts with scripts calling openclaw from arbitrary directories
 - Cross-project agent sharing — conflicts with 1:1 L2-to-project assumption
+- GitPython library adoption — subprocess reduction sufficient for now
+- Prometheus/OpenTelemetry export — overkill for single-host system
+- Docker health checks — defer to container hardening milestone
 
 ## Key Decisions
 
@@ -110,6 +114,14 @@ Known limitations:
 | argparse subparsers for project CLI | ✓ Good — consistent with existing spawn/monitor pattern | v1.1 |
 | OPENCLAW_PROJECT env var priority over config | ✓ Good — prevents mid-execution mutation | v1.1 |
 | SOUL auto-generation in initialize_workspace() | ✓ Good — skip-if-exists default, --force for explicit overwrite | v1.1 |
+| Python stdlib logging only (no external deps) | ✓ Good — JSON to stderr, component field, configurable levels | v1.2 |
+| Post-write backup (not pre-write) for state engine | ✓ Good — .bak always contains last valid state | v1.2 |
+| mtime-based cache invalidation with TTL safety net | ✓ Good — zero contention on cache hits, deep copy prevents mutation | v1.2 |
+| Docker client singleton with ping-on-reuse | ✓ Good — transparent daemon restart recovery | v1.2 |
+| Config-driven pool with hot-reload on every get_pool() | ✓ Good — no restart needed for config changes | v1.2 |
+| PoolOverflowError for all overflow scenarios | ✓ Good — single exception type, clear error messages | v1.2 |
+| Shared semaphore lazy-created on first shared-mode call | ✓ Good — no wasted resources for isolated-only projects | v1.2 |
+| JarvisState instance dict local to tail_state() | ✓ Good — implicit teardown on exit, no module-level cache | v1.2 |
 
 ## Primary Docs
 
@@ -119,4 +131,4 @@ Known limitations:
 - DEV_WF_FINDINGS.md
 
 ---
-*Last updated: 2026-02-24 after v1.2 milestone started*
+*Last updated: 2026-02-24 after v1.2 milestone completed*

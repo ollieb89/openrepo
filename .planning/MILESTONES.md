@@ -36,3 +36,21 @@
 
 ---
 
+
+## v1.2 Orchestration Hardening (Shipped: 2026-02-24)
+
+**Phases:** 19-25 | **Plans:** 14 executed | **Timeline:** 1 day (2026-02-24)
+**Requirements:** 16/16 satisfied | **Files changed:** 71 | **Lines:** +8,787 / -132
+
+**Key accomplishments:**
+- Structured JSON logging across all orchestration components (state_engine, spawn, pool, snapshot, monitor) via `get_logger()` factory — replaces all print() calls
+- State engine reliability with backup-on-write, automatic .bak recovery on JSON corruption, and schema validation on project/agent config load
+- mtime-based in-memory state caching with write-through updates, Docker client connection pooling, and monitor poll loop JarvisState reuse
+- Task lifecycle observability — spawn-to-complete timestamps, lock wait tracking, activity log rotation, pool utilization with saturation detection
+- Per-project pool configuration — config-driven concurrency limits via project.json, shared vs isolated pool modes, overflow policies (reject/wait/priority)
+- Dashboard metrics panel — Recharts visualization with task completion charts, pool utilization gauges, agent hierarchy tree with status dots
+
+**Git range:** `docs(19)` → `docs(phase-24)` | **LOC:** ~22,800 (Python + TypeScript)
+
+---
+
