@@ -213,14 +213,24 @@ export function getPendingSuggestions() {
 }
 
 /**
- * Update the status of a link suggestion.
+ * Update the status of a link suggestion and return the updated suggestion.
  */
-export function updateLinkSuggestionStatus(id: string, status: 'accepted' | 'rejected') {
+export function updateLinkSuggestionStatus(id: string, status: 'accepted' | 'rejected'): LinkSuggestion | null {
   const db = initVectorStore();
   try {
-    const stmt = db.prepare('UPDATE link_suggestions SET status = ? WHERE id = ?');
-    const result = stmt.run(status, id);
-    return result.changes > 0;
+    const updateStmt = db.prepare('UPDATE link_suggestions SET status = ? WHERE id = ?');
+    const result = updateStmt.run(status, id);
+    
+    if (result.changes === 0) return null;
+
+    const selectStmt = db.prepare('SELECT * FROM link_suggestions WHERE id = ?');
+    const row = selectStmt.get(id) as any;
+    if (!row) return null;
+
+    return {
+      ...row,
+      reasons: JSON.parse(row.reasons)
+    };
   } finally {
     db.close();
   }

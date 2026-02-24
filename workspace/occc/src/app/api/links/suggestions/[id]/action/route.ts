@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updateLinkSuggestionStatus } from '@/lib/sync/vector-store';
+import { addEdge } from '@/lib/sync/graph';
 
 export async function POST(
   request: NextRequest,
@@ -14,10 +15,14 @@ export async function POST(
     }
 
     const status = action === 'accept' ? 'accepted' : 'rejected';
-    const success = updateLinkSuggestionStatus(id, status);
+    const suggestion = updateLinkSuggestionStatus(id, status);
 
-    if (!success) {
+    if (!suggestion) {
       return NextResponse.json({ error: 'Suggestion not found' }, { status: 404 });
+    }
+
+    if (status === 'accepted') {
+      addEdge(suggestion.decision_id, suggestion.issue_id, 'relates_to');
     }
 
     return NextResponse.json({ success: true, status });
