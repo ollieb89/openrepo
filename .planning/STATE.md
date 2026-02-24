@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.4 Operational Maturity — Phase 41: L1 Strategic Suggestions (in progress — Plans 01-02 complete)
+**Current focus:** v1.4 Operational Maturity — Phase 41: L1 Strategic Suggestions (complete — all 3 plans done)
 
 ## Current Position
 
-Phase: 41 of 42 (L1 Strategic Suggestions) — in progress
-Plan: 2 of 3 complete in current phase
-Status: Plan 02 complete — Suggestions API routes (GET/POST list + accept/reject action with approval gate) + 8 validation tests
-Last activity: 2026-02-24 — Phase 41 Plan 02 complete: suggestions API routes, validateDiffText approval gate, test_suggest_api.py
+Phase: 41 of 42 (L1 Strategic Suggestions) — complete
+Plan: 3 of 3 complete in current phase
+Status: Plan 03 complete — Suggestions dashboard UI (SuggestionsPanel, SuggestionCard, DismissedTab, Sidebar badge)
+Last activity: 2026-02-24 — Phase 41 Plan 03 complete: /suggestions dashboard page, SuggestionCard accept/reject flows, Sidebar pending count badge
 
 Progress: [█████░░░░░] 55% (v1.4)
 
@@ -96,6 +96,8 @@ v1.4 research flags to carry into planning:
 - sys.path guard added before asyncio import to prevent orchestration/logging.py shadowing stdlib logging in Python 3.14
 - suggest.py has zero imports of soul_renderer write functions — structural approval gate enforced at module boundary (ADV-06)
 - Suppression fingerprint derived from md5 of keyword so rejected suggestions are matched even after evidence count changes
+- [Phase 41]: SuggestionCard accepted state renders as green confirmation card (stays visible after accept for clear operator feedback)
+- [Phase 41]: Sidebar reads projectId from localStorage directly (not ProjectContext) to avoid React context dependency in layout component
 
 ### Pending Todos
 
@@ -110,5 +112,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 41-02-PLAN.md — Suggestions API routes (GET/POST list + accept/reject action with validateDiffText approval gate), 8 validation tests
-Resume: Phase 41 Plan 03 (Dashboard UI — suggestions tab/panel for approval workflow)
+Stopped at: Completed 41-03-PLAN.md — Suggestions dashboard UI (SuggestionsPanel, SuggestionCard, DismissedTab, Sidebar badge)
+Resume: Phase 42 Plan 01 (Delta Snapshots)

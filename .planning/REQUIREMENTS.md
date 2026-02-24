@@ -30,7 +30,7 @@ Requirements for v1.4 Operational Maturity. Each maps to roadmap phases.
 - [x] **ADV-02**: Suggestion generator produces concrete diff-style SOUL amendments with pattern description, evidence count, and exact text to add to soul-override.md
 - [x] **ADV-03**: Pending suggestions stored in `workspace/.openclaw/<project_id>/soul-suggestions.json`
 - [x] **ADV-04**: L2 acceptance flow reads pending suggestions and accepts (appends to soul-override.md, re-renders SOUL) or rejects (memorizes rejection reason)
-- [ ] **ADV-05**: Dashboard surfaces pending SOUL suggestions with accept/reject actions for operator review
+- [x] **ADV-05**: Dashboard surfaces pending SOUL suggestions with accept/reject actions for operator review
 - [x] **ADV-06**: Auto-apply of suggestions without human approval is structurally prevented (mandatory approval gate)
 
 ### Performance (Delta Snapshots)
@@ -85,7 +85,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ADV-02 | Phase 41 | Complete |
 | ADV-03 | Phase 41 | Complete |
 | ADV-04 | Phase 41 | Complete |
-| ADV-05 | Phase 41 | Pending |
+| ADV-05 | Phase 41 | Complete |
 | ADV-06 | Phase 41 | Complete |
 | PERF-05 | Phase 42 | Pending |
 | PERF-06 | Phase 42 | Pending |

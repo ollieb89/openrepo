@@ -86,7 +86,7 @@ See: `.planning/milestones/v1.3-ROADMAP.md` for full phase details.
 
 - [x] **Phase 39: Graceful Sentinel** - SIGTERM handling, task dehydration, interrupted task recovery loop, and fire-and-forget drain on shutdown (completed 2026-02-24)
 - [x] **Phase 40: Memory Health Monitor** - Batch staleness and conflict detection with dashboard review UI and memory edit endpoint (completed 2026-02-24)
-- [ ] **Phase 41: L1 Strategic Suggestions** - Pattern extraction engine producing reviewable SOUL amendments with mandatory human approval gate
+- [x] **Phase 41: L1 Strategic Suggestions** - Pattern extraction engine producing reviewable SOUL amendments with mandatory human approval gate (completed 2026-02-24)
 - [ ] **Phase 42: Delta Snapshots** - Cursor-based memory retrieval and configurable snapshot pruning to reduce I/O at scale
 
 ## Phase Details
@@ -134,7 +134,7 @@ Plans:
   3. The dashboard surfaces pending suggestions with accept and reject actions; accepting appends the suggestion to soul-override.md and re-renders the SOUL; rejecting memorizes the rejection reason
   4. Suggestions are only generated when ≥3 similar rejections are found within the lookback window — the engine produces no output on insufficient data rather than generating noise
   5. The suggestion apply API route validates the diff before writing (rejects payloads containing safety constraint removal, shell commands, or exceeding 100 lines) — structural injection is prevented at the API layer
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 41-01-PLAN.md — Pattern extraction engine + soul-suggestions.json schema + unit tests (ADV-01, ADV-02, ADV-03)
@@ -162,5 +162,5 @@ Plans:
 | 26-38 | v1.3 | 19/19 | ✓ Complete | 2026-02-24 |
 | 39. Graceful Sentinel | 4/4 | Complete    | 2026-02-24 | - |
 | 40. Memory Health Monitor | 4/4 | Complete    | 2026-02-24 | - |
-| 41. L1 Strategic Suggestions | 2/3 | In Progress|  | - |
+| 41. L1 Strategic Suggestions | 3/3 | Complete   | 2026-02-24 | - |
 | 42. Delta Snapshots | v1.4 | 0/TBD | Not started | - |
