@@ -144,7 +144,9 @@ Plans:
   1. `monitor.py` `tail_state()` multi-project path creates JarvisState once per project outside the poll loop and reuses it across iterations
   2. Cache hit rate in structured logs shows hits (not only misses) during multi-project monitor tail polling
   3. `show_status()` and `show_task()` multi-project paths also reuse JarvisState instances where practical (lower priority — one-shot calls)
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 25-01-PLAN.md — Hoist JarvisState instances out of poll loops, add structured logger, document one-shot paths
 
 ## Progress
 
@@ -174,4 +176,4 @@ Plans:
 | 22. Observability Metrics | 2/2 | Complete    | 2026-02-24 | - |
 | 23. Per-Project Pool Config | v1.2 | 0/TBD | Not started | - |
 | 24. Dashboard Metrics | v1.2 | 0/TBD | Not started | - |
-| 25. Monitor Cache Fix | v1.2 | 0/TBD | Not started | - |
+| 25. Monitor Cache Fix | v1.2 | 0/1 | Not started | - |
