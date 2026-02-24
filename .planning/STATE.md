@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.3 Agent Memory — Phase 30: L2 Review Memorization (complete)
+**Current focus:** v1.3 Agent Memory — Phase 33: Integration Gap Closure (complete)
 
 ## Current Position
 
-Phase: 30 of 32 (L2 Review Decision Memorization)
-Plan: 2 of 2 (complete)
-Status: Phase 30 Plan 02 complete
-Last activity: 2026-02-24 — Phase 30 Plan 02 executed (two-section SOUL memory formatter + 7 new tests)
+Phase: 33 of 33 (Integration Gap Closure)
+Plan: 1 of 1 (complete)
+Status: Phase 33 Plan 01 complete
+Last activity: 2026-02-24 — Phase 33 Plan 01 executed (URL rewrite + Docker network join + entrypoint SOUL_FILE dispatch + 10 new tests)
 
-Progress: [█████░░░░░] 50% (v1.3)
+Progress: [██████████] 100% (v1.3)
 
 ## Performance Metrics
 
@@ -71,6 +71,13 @@ v1.3 decisions made (Phase 30 Plan 02):
 - Dual-check for review_decision: category=='review_decision' OR agent_type=='l2_pm' — handles both new review_decision category and l2_pm agent items without a category field
 - Old tag suffixes ('(from memory)', '(from L2 review)') removed — section headers provide source context, bullets are cleaner
 
+v1.3 decisions made (Phase 33 Plan 01):
+- Docker DNS hostname 'openclaw-memory' used for MEMU_API_URL rewrite — matches container service name convention
+- SOUL_ARGS bash array chosen over string interpolation for safe multiline --system-prompt quoting
+- Persistent SOUL path workspace/.openclaw/<proj>/soul-<task>.md survives container exit for debug inspection
+- PIPESTATUS[0] replaces $? to correctly capture CLI exit code from piped tee invocation
+- Empty SOUL_ARGS array expands to nothing — safe no-op when no SOUL file mounted
+
 ### Pending Todos
 
 None.
@@ -82,5 +89,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 30-01-PLAN.md — _memorize_review_decision helper + call-site wiring in snapshot.py + 11 unit tests (2 tasks, 2 files)
-Resume file: .planning/phases/30-l2-review-decision-memorization/30-01-SUMMARY.md
+Stopped at: Completed 33-01-PLAN.md — URL rewrite, network join, persistent SOUL file (spawn.py) + SOUL_FILE runtime dispatch (entrypoint.sh) + 10 unit tests (3 tasks, 3 files)
+Resume file: .planning/phases/33-integration-gap-closure/33-01-SUMMARY.md
