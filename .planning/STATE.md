@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.3 Agent Memory — Phase 29: Pre-Spawn Retrieval + SOUL Injection
+**Current focus:** v1.3 Agent Memory — Phase 30: L2 Review Memorization (next)
 
 ## Current Position
 
-Phase: 29 of 32 (Pre-Spawn Retrieval + SOUL Injection)
-Plan: 1 of 2 (complete)
-Status: Plan 01 complete, Plan 02 pending
-Last activity: 2026-02-24 — Phase 29 Plan 01 executed (sync httpx retrieval + tempfile SOUL injection into spawn.py)
+Phase: 29 of 32 (Pre-Spawn Retrieval + SOUL Injection) — COMPLETE
+Plan: 2 of 2 (complete)
+Status: Phase 29 complete, Phase 30 pending
+Last activity: 2026-02-24 — Phase 29 Plan 02 executed (12 unit tests for memory retrieval + SOUL injection helpers)
 
-Progress: [████░░░░░░] 40% (v1.3)
+Progress: [█████░░░░░] 50% (v1.3)
 
 ## Performance Metrics
 
@@ -23,6 +23,7 @@ Progress: [████░░░░░░] 40% (v1.3)
 - v1.1: 8 phases, 17 plans in ~5 hours
 - v1.2: 7 phases, 14 plans in ~1 day
 - v1.3 (29-01): 2 tasks, 1 file, 2 min
+- v1.3 (29-02): 1 task, 1 file, 5 min
 
 ## Accumulated Context
 
@@ -55,6 +56,10 @@ v1.3 decisions made (Phase 29 Plan 01):
 - Tempfile cleanup in finally block after containers.run() — not before, Docker needs file at bind-mount time
 - SOUL mounted at /run/openclaw/soul.md — avoids conflict with existing /orchestration directory mount
 
+v1.3 decisions made (Phase 29 Plan 02):
+- 12 tests written (vs planned 10) — added dict response format and missing SOUL file tests for complete branch coverage
+- MagicMock (not AsyncMock) for httpx.Client — _retrieve_memories_sync is synchronous
+
 ### Pending Todos
 
 None.
@@ -66,5 +71,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 29-01-PLAN.md — sync httpx retrieval + tempfile SOUL injection (2 tasks, 1 file)
-Resume file: .planning/phases/29-pre-spawn-retrieval-soul-injection/29-01-SUMMARY.md
+Stopped at: Completed 29-02-PLAN.md — 12 unit tests for memory retrieval + SOUL injection (1 task, 1 file)
+Resume file: .planning/phases/29-pre-spawn-retrieval-soul-injection/29-02-SUMMARY.md
