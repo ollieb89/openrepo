@@ -5,7 +5,7 @@
 - ✅ **v1.0 Grand Architect Protocol Foundation** — Phases 1-10 (shipped 2026-02-23)
 - ✅ **v1.1 Project Agnostic** — Phases 11-18 (shipped 2026-02-23)
 - ✅ **v1.2 Orchestration Hardening** — Phases 19-25 (shipped 2026-02-24)
-- 🚧 **v1.3 Agent Memory** — Phases 26-32 (in progress)
+- 🚧 **v1.3 Agent Memory** — Phases 26-36 (in progress)
 
 ## Phases
 
@@ -70,6 +70,9 @@ See: `.planning/milestones/v1.2-ROADMAP.md` for full phase details.
 - [ ] **Phase 31: L3 In-Execution Memory Queries** — L3 containers can query memU via HTTP during task execution for on-demand lookups
 - [ ] **Phase 32: Dashboard Memory Panel** — /memory page in occc for browsing, searching, and deleting project-scoped memory items
 - [x] **Phase 33: Integration Gap Closure** — Fix broken SOUL_FILE wiring in entrypoint.sh, correct MEMU_API_URL for in-container use, join L3 containers to openclaw-net, update requirement checkboxes (completed 2026-02-24)
+- [ ] **Phase 34: Review Decision Category Fix** — Add missing `category` field to review decision memorize payload so _format_memory_context() routes to correct SOUL section
+- [ ] **Phase 35: L3 In-Execution Memory Queries** — Validate and wire L3 in-container memU HTTP queries during task execution
+- [ ] **Phase 36: Dashboard Memory Panel** — /memory page in occc for browsing, semantic search, deletion, and metadata display of project-scoped memory items
 
 ## Phase Details
 
@@ -191,6 +194,50 @@ Plans:
 - [ ] 33-01-PLAN.md — Code fixes: spawn.py URL rewrite + network join + persistent SOUL path, entrypoint.sh SOUL_FILE handling, unit tests
 - [ ] 33-02-PLAN.md — Requirements audit: verify MEM-01/MEM-03 evidence, update MEM-04/RET-02 checkboxes
 
+### Phase 34: Review Decision Category Fix
+**Goal**: The `_memorize_review_decision()` payload includes `category: "review_decision"` so `_format_memory_context()` routes review memories to the "Past Review Outcomes" SOUL section instead of falling through to the generic "Past Work Context" section
+**Depends on**: Phase 30
+**Requirements**: MEM-02, RET-02 (correctness fix — both already marked satisfied but routing is broken)
+**Gap Closure:** Closes integration gap and Flow D from v1.3 re-audit
+**Success Criteria** (what must be TRUE):
+  1. `_memorize_review_decision()` sends `category: "review_decision"` in the memorize payload
+  2. `_format_memory_context()` correctly routes items with `category == "review_decision"` to the "Past Review Outcomes" section
+  3. Items without a category field still route to "Past Work Context" (backward compatibility)
+  4. Unit test confirms the full round-trip: memorize with category → retrieve → format into correct section
+**Plans**: TBD
+
+Plans:
+- [ ] 34-01: TBD
+
+### Phase 35: L3 In-Execution Memory Queries
+**Goal**: L3 containers can query memU for task-specific context during execution — not just at spawn time — via HTTP calls that are independent of SOUL injection
+**Depends on**: Phase 33 (network access + MEMU_API_URL wiring)
+**Requirements**: RET-05
+**Gap Closure:** Closes orphaned Phase 31 requirement from v1.3 re-audit
+**Success Criteria** (what must be TRUE):
+  1. From within a running L3 container, an HTTP POST to memU retrieve endpoint with a query payload returns relevant memory items
+  2. An L3 task that performs a mid-execution memory query completes successfully whether or not the query returns results
+  3. MEMU_API_URL environment variable inside the container resolves to a reachable memU service endpoint
+**Plans**: TBD
+
+Plans:
+- [ ] 35-01: TBD
+
+### Phase 36: Dashboard Memory Panel
+**Goal**: The occc dashboard has a /memory page where the operator can browse project-scoped memory categories, inspect individual items with metadata, run semantic search, and delete items
+**Depends on**: Phase 26
+**Requirements**: DSH-11, DSH-12, DSH-13, DSH-14
+**Gap Closure:** Closes orphaned Phase 32 requirements from v1.3 re-audit
+**Success Criteria** (what must be TRUE):
+  1. Navigating to /memory in the dashboard shows memory items scoped to the currently selected project — switching projects updates the view
+  2. Typing a query in the search bar returns semantically relevant memory items (vector-based retrieval via POST /retrieve)
+  3. Clicking delete on a memory item removes it — a subsequent page refresh confirms the item is gone
+  4. Each memory item displays its type, category, created_at timestamp, and agent source (l2_pm, l3_code, l3_test)
+**Plans**: TBD
+
+Plans:
+- [ ] 36-01: TBD
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -228,3 +275,6 @@ Plans:
 | 31. L3 In-Execution Memory Queries | v1.3 | 0/? | Not started | - |
 | 32. Dashboard Memory Panel | v1.3 | 0/? | Not started | - |
 | 33. Integration Gap Closure | 2/2 | Complete    | 2026-02-24 | - |
+| 34. Review Decision Category Fix | v1.3 | 0/? | Not started | - |
+| 35. L3 In-Execution Memory Queries | v1.3 | 0/? | Not started | - |
+| 36. Dashboard Memory Panel | v1.3 | 0/? | Not started | - |

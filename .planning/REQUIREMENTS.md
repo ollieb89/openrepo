@@ -91,11 +91,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RET-02 | Phase 33 | Complete |
 | RET-03 | Phase 29 | Complete |
 | RET-04 | Phase 29 | Complete |
-| RET-05 | Phase 31 | Pending |
-| DSH-11 | Phase 32 | Pending |
-| DSH-12 | Phase 32 | Pending |
-| DSH-13 | Phase 32 | Pending |
-| DSH-14 | Phase 32 | Pending |
+| RET-05 | Phase 35 | Pending |
+| DSH-11 | Phase 36 | Pending |
+| DSH-12 | Phase 36 | Pending |
+| DSH-13 | Phase 36 | Pending |
+| DSH-14 | Phase 36 | Pending |
 
 **Coverage:**
 - v1.3 requirements: 21 total
@@ -104,4 +104,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-24*
-*Last updated: 2026-02-24 after Phase 33 integration gap closure (MEM-01, MEM-03, MEM-04, RET-02 confirmed satisfied)*
+*Last updated: 2026-02-24 after gap closure phase creation (RET-05→Phase 35, DSH-11–14→Phase 36, integration fix→Phase 34)*
