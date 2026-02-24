@@ -6,8 +6,20 @@ const levelStyles: Record<number, { bg: string; label: string }> = {
   3: { bg: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300', label: 'L3' },
 };
 
-export default function AgentCard({ agent }: { agent: Agent }) {
+const statusDotStyles: Record<'idle' | 'busy' | 'offline', string> = {
+  idle: 'bg-green-400',
+  busy: 'bg-yellow-400',
+  offline: 'bg-gray-400',
+};
+
+interface AgentCardProps {
+  agent: Agent;
+  status?: 'idle' | 'busy' | 'offline';
+}
+
+export default function AgentCard({ agent, status = 'offline' }: AgentCardProps) {
   const style = levelStyles[agent.level] || levelStyles[3];
+  const dotStyle = statusDotStyles[status];
 
   return (
     <div className="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
@@ -15,6 +27,7 @@ export default function AgentCard({ agent }: { agent: Agent }) {
         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${style.bg}`}>
           {style.label}
         </span>
+        <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${dotStyle}`} title={status} />
         <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{agent.name}</h4>
       </div>
 
