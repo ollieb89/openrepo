@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 27 of 32 (Memory Client + Scoping)
-Plan: 0 of ? (context gathered, planning next)
-Status: Context gathered
-Last activity: 2026-02-24 — Phase 27 context gathered (discuss-phase complete)
+Plan: 1 of 1 (complete)
+Status: Phase complete
+Last activity: 2026-02-24 — Phase 27 Plan 01 executed (MemoryClient with enforced scoping)
 
-Progress: [█░░░░░░░░░] 5% (v1.3)
+Progress: [██░░░░░░░░] 15% (v1.3)
 
 ## Performance Metrics
 
@@ -43,6 +43,8 @@ v1.3 decisions made (Phase 26 Plan 02):
 - Dockerfile needs build-essential + libc6-dev + rustup — memu-py v1.4.0 uses maturin/pyo3 Rust extension
 - pydantic-settings required in requirements.txt — missing from Plan 01, added as auto-fix
 - memorize_config llm_temperature removed — not a valid MemorizeConfig field
+- [Phase 27]: AgentType(str, Enum) so values serialize to JSON without .value
+- [Phase 27]: retrieve() where clause maps project_id to user_id — memU user_id is project isolation key
 
 ### Pending Todos
 
@@ -55,5 +57,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Phase 27 context gathered — discuss-phase complete
-Resume file: .planning/phases/27-memory-client-scoping/27-CONTEXT.md
+Stopped at: Completed 27-01-PLAN.md — MemoryClient with enforced scoping (2 tasks, 3 files, 10 tests)
+Resume file: .planning/phases/27-memory-client-scoping/27-01-SUMMARY.md

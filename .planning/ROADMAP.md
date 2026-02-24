@@ -63,7 +63,7 @@ See: `.planning/milestones/v1.2-ROADMAP.md` for full phase details.
 **Milestone Goal:** Integrate memU memory framework so agents learn across sessions — L3 outcomes and L2 decisions are memorized, and relevant context is retrieved and injected before task execution.
 
 - [x] **Phase 26: memU Infrastructure** — Standalone memory service (memu-server + PostgreSQL+pgvector) running in Docker with a verified REST API and cold-start-safe extension initialization (completed 2026-02-24)
-- [ ] **Phase 27: Memory Client + Scoping** — MemoryClient wrapper in orchestration layer that makes per-project and per-agent scoping structurally mandatory
+- [x] **Phase 27: Memory Client + Scoping** — MemoryClient wrapper in orchestration layer that makes per-project and per-agent scoping structurally mandatory (completed 2026-02-24)
 - [ ] **Phase 28: L3 Auto-Memorization** — L3 task outcomes fire-and-forget memorized after container exit; MEMU env vars injected at spawn time
 - [ ] **Phase 29: Pre-Spawn Retrieval + SOUL Injection** — spawn.py retrieves relevant context before L3 creation; soul_renderer.py injects it under a hard 2,000-character budget
 - [ ] **Phase 30: L2 Review Decision Memorization** — merge/reject decisions with reasoning are memorized after each L2 review cycle
@@ -200,7 +200,7 @@ Plans:
 | 24. Dashboard Metrics | v1.2 | 2/2 | ✓ Complete | 2026-02-24 |
 | 25. Monitor Cache Fix | v1.2 | 1/1 | ✓ Complete | 2026-02-24 |
 | 26. memU Infrastructure | 2/2 | Complete    | 2026-02-24 | - |
-| 27. Memory Client + Scoping | v1.3 | 0/? | Not started | - |
+| 27. Memory Client + Scoping | 1/1 | Complete   | 2026-02-24 | - |
 | 28. L3 Auto-Memorization | v1.3 | 0/? | Not started | - |
 | 29. Pre-Spawn Retrieval + SOUL Injection | v1.3 | 0/? | Not started | - |
 | 30. L2 Review Decision Memorization | v1.3 | 0/? | Not started | - |

@@ -17,9 +17,9 @@ Requirements for Agent Memory milestone. Each maps to roadmap phases.
 
 ### Scoping
 
-- [ ] **SCOPE-01**: All memory operations enforce per-project scoping via mandatory project_id parameter at the API wrapper level
-- [ ] **SCOPE-02**: Memory operations support per-agent scoping via agent_type parameter (l2_pm, l3_code, l3_test)
-- [ ] **SCOPE-03**: MemoryClient wrapper in orchestration layer enforces scoping — impossible to call memorize/retrieve without project_id
+- [x] **SCOPE-01**: All memory operations enforce per-project scoping via mandatory project_id parameter at the API wrapper level
+- [x] **SCOPE-02**: Memory operations support per-agent scoping via agent_type parameter (l2_pm, l3_code, l3_test)
+- [x] **SCOPE-03**: MemoryClient wrapper in orchestration layer enforces scoping — impossible to call memorize/retrieve without project_id
 
 ### Memory Operations
 
@@ -80,9 +80,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INFRA-03 | Phase 26 | Complete |
 | INFRA-04 | Phase 26 | Complete |
 | INFRA-05 | Phase 26 | Complete |
-| SCOPE-01 | Phase 27 | Pending |
-| SCOPE-02 | Phase 27 | Pending |
-| SCOPE-03 | Phase 27 | Pending |
+| SCOPE-01 | Phase 27 | Complete |
+| SCOPE-02 | Phase 27 | Complete |
+| SCOPE-03 | Phase 27 | Complete |
 | MEM-01 | Phase 28 | Pending |
 | MEM-02 | Phase 30 | Pending |
 | MEM-03 | Phase 28 | Pending |
