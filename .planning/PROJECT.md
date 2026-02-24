@@ -17,24 +17,14 @@ Hierarchical AI orchestration with physical isolation — enabling autonomous, s
 - **Container:** Debian bookworm-slim L3 images, Nvidia Container Toolkit
 - **OS:** Ubuntu 24.04 LTS
 
-## Current Milestone: v1.3 Agent Memory
+## Current Milestone: None (planning next)
 
-**Goal:** Integrate memU memory framework as a standalone service so agents learn across sessions — L3 outcomes and L2 decisions are memorized, and relevant context is retrieved before task execution.
-
-**Target features:**
-- Standalone memU service in Docker with PostgreSQL+pgvector backend
-- Internal REST API for memory operations (memorize, retrieve, CRUD)
-- Per-agent + per-project memory scoping
-- L3 auto-memorization of task outcomes (git diff + conversation)
-- L2 memorization of review decisions (merge/reject + reasoning)
-- Pre-spawn context retrieval and SOUL template injection
-- L3 in-execution memory queries for task-specific lookups
-- Dashboard memory panel (categories, items, search)
+**Last shipped:** v1.3 Agent Memory (2026-02-24)
 
 ## Current State
 
-**Shipped:** v1.2 Orchestration Hardening (2026-02-24)
-**LOC:** ~22,800 (Python + TypeScript)
+**Shipped:** v1.3 Agent Memory (2026-02-24)
+**LOC:** ~38,600 (Python + TypeScript)
 
 Architecture operational:
 - L1 (ClawdiaPrime) → L2 (PumplAI_PM) → L3 (Ephemeral Specialists) delegation chain
@@ -59,10 +49,21 @@ Orchestration hardening (v1.2):
 - Dashboard metrics: Recharts visualization (task charts, pool gauges), agent hierarchy with status dots
 - Monitor cache fix: JarvisState reuse across poll cycles for cache hit performance
 
+Agent memory (v1.3):
+- Standalone memU service (memu-py + PostgreSQL+pgvector) in Docker with REST API (memorize, retrieve, CRUD, health)
+- Per-project + per-agent memory scoping enforced by MemoryClient wrapper
+- L3 auto-memorization of task outcomes via fire-and-forget (non-blocking)
+- L2 review decision memorization with category metadata
+- Pre-spawn context retrieval injected into SOUL template (2,000-char budget cap, graceful degradation)
+- L3 in-execution memory queries via HTTP (SOUL documents curl pattern)
+- Category-routed memory formatting — CATEGORY_SECTION_MAP routes to Past Review Outcomes / Task Outcomes / Past Work Context
+- Dashboard /memory page with project-scoped browsing, semantic search, bulk delete, metadata display
+
 Known limitations:
 - Gateway startup is manual (runtime dependency)
 - COM-04 snapshot capture cannot be E2E tested when workspace is a git submodule
 - CLI routing replaces lane queue REST API (accepted spec deviation)
+- Pre-existing TypeScript errors in unrelated connector/test files (occc)
 
 ## Requirements
 
@@ -94,17 +95,15 @@ Known limitations:
 - ✓ OBS-01 through OBS-04: Structured logging, task lifecycle metrics, pool utilization, activity log rotation — v1.2
 - ✓ POOL-01 through POOL-03: Per-project concurrency limits, shared/isolated modes, overflow policies — v1.2
 - ✓ DSH-09 through DSH-10: Agent hierarchy filtering, usage metrics panel — v1.2
+- ✓ INFRA-01 through INFRA-05: memU Docker service, PostgreSQL+pgvector, Docker Compose, REST API, health check — v1.3
+- ✓ SCOPE-01 through SCOPE-03: Per-project scoping, per-agent scoping, MemoryClient enforcement — v1.3
+- ✓ MEM-01 through MEM-04: L3 auto-memorization, L2 review memorization, non-blocking failure, MEMU_API_URL injection — v1.3
+- ✓ RET-01 through RET-05: Pre-spawn retrieval, SOUL injection, budget cap, graceful degradation, in-execution queries — v1.3
+- ✓ DSH-11 through DSH-14: Memory page, semantic search, delete action, metadata display — v1.3
 
 ### Active
 
-- [ ] Standalone memU memory service (Docker + PostgreSQL+pgvector)
-- [ ] Internal REST API for memory operations
-- [ ] Per-agent + per-project memory scoping
-- [ ] L3 auto-memorization of task outcomes
-- [ ] L2 memorization of review decisions
-- [ ] Pre-spawn context retrieval and SOUL injection
-- [ ] L3 in-execution memory queries
-- [ ] Dashboard memory panel
+(None — start next milestone to define requirements)
 
 ### Out of Scope
 
@@ -144,10 +143,13 @@ Known limitations:
 | PoolOverflowError for all overflow scenarios | ✓ Good — single exception type, clear error messages | v1.2 |
 | Shared semaphore lazy-created on first shared-mode call | ✓ Good — no wasted resources for isolated-only projects | v1.2 |
 | JarvisState instance dict local to tail_state() | ✓ Good — implicit teardown on exit, no module-level cache | v1.2 |
-| memU as self-hosted library in standalone Docker service | — Pending | v1.3 |
-| PostgreSQL+pgvector for memory storage | — Pending | v1.3 |
-| Per-agent + per-project memory scoping | — Pending | v1.3 |
-| L2 proxy + L3 direct access (both paths) | — Pending | v1.3 |
+| memU as self-hosted library in standalone Docker service | ✓ Good — avoids unknown Temporal dependency from nevamindai image | v1.3 |
+| PostgreSQL+pgvector for memory storage | ✓ Good — PG17 native vector performance, persistent volume | v1.3 |
+| Per-agent + per-project memory scoping via MemoryClient | ✓ Good — structurally impossible to skip scoping | v1.3 |
+| Fire-and-forget memorization via asyncio.create_task | ✓ Good — non-blocking, pool slot released immediately | v1.3 |
+| Sync httpx for pre-spawn retrieval (not asyncio) | ✓ Good — avoids RuntimeError in async context | v1.3 |
+| CATEGORY_SECTION_MAP for memory routing | ✓ Good — explicit three-bucket output, clean routing | v1.3 |
+| 2,000-char SOUL memory budget (hardcoded) | ✓ Good — simple, prevents template bloat | v1.3 |
 
 ## Primary Docs
 
@@ -157,4 +159,4 @@ Known limitations:
 - DEV_WF_FINDINGS.md
 
 ---
-*Last updated: 2026-02-24 after v1.3 milestone started*
+*Last updated: 2026-02-24 after v1.3 milestone*

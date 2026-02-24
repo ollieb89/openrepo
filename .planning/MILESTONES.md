@@ -54,3 +54,21 @@
 
 ---
 
+
+## v1.3 Agent Memory (Shipped: 2026-02-24)
+
+**Phases:** 26-38 (11 active, 2 superseded) | **Plans:** 19 executed | **Timeline:** 7 days (2026-02-17 → 2026-02-24)
+**Requirements:** 21/21 satisfied | **Files changed:** 114 | **Lines:** +15,838 / -100
+
+**Key accomplishments:**
+- Standalone memU memory service — FastAPI wrapper around memu-py with PostgreSQL+pgvector backend, running in Docker on openclaw-net
+- Bidirectional memory pipeline — L3 outcomes auto-memorized via fire-and-forget; L2 review decisions memorized with category metadata
+- Pre-spawn context retrieval + SOUL injection — retrieved memories injected into SOUL template under a 2,000-char budget cap with graceful degradation
+- L3 in-execution memory queries — containers can query memU mid-task via HTTP for on-demand lookups
+- Dashboard memory panel — /memory page with project-scoped browsing, semantic search, bulk delete, and metadata display
+- Category-routed memory formatting — three-bucket SOUL output (Past Review Outcomes, Task Outcomes, Past Work Context) with CATEGORY_SECTION_MAP routing
+
+**Git range:** `feat(26-01)` → `docs(phase-38)` | **LOC:** ~38,600 (Python + TypeScript)
+
+---
+
