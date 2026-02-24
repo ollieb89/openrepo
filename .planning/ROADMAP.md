@@ -84,7 +84,7 @@ See: `.planning/milestones/v1.3-ROADMAP.md` for full phase details.
 
 **Milestone Goal:** Harden the swarm for production-grade autonomy — graceful shutdown with task recovery, memory health monitoring, L1 proactive SOUL suggestions, and delta-based snapshot optimization.
 
-- [ ] **Phase 39: Graceful Sentinel** - SIGTERM handling, task dehydration, interrupted task recovery loop, and fire-and-forget drain on shutdown
+- [x] **Phase 39: Graceful Sentinel** - SIGTERM handling, task dehydration, interrupted task recovery loop, and fire-and-forget drain on shutdown (completed 2026-02-24)
 - [ ] **Phase 40: Memory Health Monitor** - Batch staleness and conflict detection with dashboard review UI and memory edit endpoint
 - [ ] **Phase 41: L1 Strategic Suggestions** - Pattern extraction engine producing reviewable SOUL amendments with mandatory human approval gate
 - [ ] **Phase 42: Delta Snapshots** - Cursor-based memory retrieval and configurable snapshot pruning to reduce I/O at scale
@@ -100,7 +100,7 @@ See: `.planning/milestones/v1.3-ROADMAP.md` for full phase details.
   2. Pool startup scans workspace-state.json for tasks stuck in `in_progress`, `interrupted`, or `starting` beyond the skill timeout and applies the configured recovery policy without manual intervention
   3. Recovery policy (`mark_failed` / `auto_retry` / `manual`) is settable per project in `l3_overrides.recovery_policy` in project.json and takes effect on the next pool startup
   4. Fire-and-forget memorize tasks in flight at shutdown are drained via `asyncio.gather` before the event loop stops — no pending task silently discarded
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 39-01-PLAN.md — Entrypoint SIGTERM trap + spawn stop_timeout (REL-04, REL-05)
@@ -149,7 +149,7 @@ Plans:
 | 11-18 | v1.1 | 17/17 | ✓ Complete | 2026-02-23 |
 | 19-25 | v1.2 | 14/14 | ✓ Complete | 2026-02-24 |
 | 26-38 | v1.3 | 19/19 | ✓ Complete | 2026-02-24 |
-| 39. Graceful Sentinel | 2/3 | In Progress|  | - |
+| 39. Graceful Sentinel | 3/3 | Complete   | 2026-02-24 | - |
 | 40. Memory Health Monitor | v1.4 | 0/TBD | Not started | - |
 | 41. L1 Strategic Suggestions | v1.4 | 0/TBD | Not started | - |
 | 42. Delta Snapshots | v1.4 | 0/TBD | Not started | - |

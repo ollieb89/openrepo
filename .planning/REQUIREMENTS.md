@@ -9,11 +9,11 @@ Requirements for v1.4 Operational Maturity. Each maps to roadmap phases.
 
 ### Reliability (Graceful Sentinel)
 
-- [ ] **REL-04**: L3 entrypoint uses exec form so Python process is PID 1 and receives SIGTERM directly from Docker
-- [ ] **REL-05**: L3 container handles SIGTERM via bash trap, writes `interrupted` status to Jarvis state before exit
-- [ ] **REL-06**: Pool scans for orphaned tasks (in_progress/interrupted/starting beyond skill timeout) on startup and applies configurable recovery policy (mark_failed / auto_retry / manual)
-- [ ] **REL-07**: Recovery policy is configurable per-project via `l3_overrides.recovery_policy` in project.json
-- [ ] **REL-08**: Pending fire-and-forget asyncio memorization tasks are drained (gathered) on pool shutdown instead of silently lost
+- [x] **REL-04**: L3 entrypoint uses exec form so Python process is PID 1 and receives SIGTERM directly from Docker
+- [x] **REL-05**: L3 container handles SIGTERM via bash trap, writes `interrupted` status to Jarvis state before exit
+- [x] **REL-06**: Pool scans for orphaned tasks (in_progress/interrupted/starting beyond skill timeout) on startup and applies configurable recovery policy (mark_failed / auto_retry / manual)
+- [x] **REL-07**: Recovery policy is configurable per-project via `l3_overrides.recovery_policy` in project.json
+- [x] **REL-08**: Pending fire-and-forget asyncio memorization tasks are drained (gathered) on pool shutdown instead of silently lost
 
 ### Quality (Memory Health Monitor)
 
@@ -70,11 +70,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| REL-04 | Phase 39 | Pending |
-| REL-05 | Phase 39 | Pending |
-| REL-06 | Phase 39 | Pending |
-| REL-07 | Phase 39 | Pending |
-| REL-08 | Phase 39 | Pending |
+| REL-04 | Phase 39 | Complete |
+| REL-05 | Phase 39 | Complete |
+| REL-06 | Phase 39 | Complete |
+| REL-07 | Phase 39 | Complete |
+| REL-08 | Phase 39 | Complete |
 | QUAL-01 | Phase 40 | Pending |
 | QUAL-02 | Phase 40 | Pending |
 | QUAL-03 | Phase 40 | Pending |

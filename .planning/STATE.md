@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 39 of 42 (Graceful Sentinel)
-Plan: 2 of 2 in current phase
+Plan: 3 of 3 in current phase
 Status: Phase 39 complete — ready for Phase 40
-Last activity: 2026-02-24 — Phase 39 Plan 02 complete: pool memorize drain on SIGTERM (REL-08)
+Last activity: 2026-02-24 — Phase 39 Plan 03 complete: pool startup recovery scan (REL-06, REL-07)
 
-Progress: [██░░░░░░░░] 20% (v1.4)
+Progress: [███░░░░░░░] 30% (v1.4)
 
 ## Performance Metrics
 
@@ -24,7 +24,7 @@ Progress: [██░░░░░░░░] 20% (v1.4)
 - v1.2: 7 phases, 14 plans in ~1 day
 - v1.3: 11 phases, 19 plans in 7 days
 
-**v1.4:** 4 phases, TBD plans — 2 plans complete (Phase 39 Plans 01-02)
+**v1.4:** 4 phases, TBD plans — 3 plans complete (Phase 39 Plans 01-03)
 
 ## Accumulated Context
 
@@ -47,6 +47,12 @@ v1.4 research flags to carry into planning:
 - drain_pending_memorize_tasks() returns summary dict not raises — caller decides action
 - 30s drain timeout matches stop_timeout=30 set in plan 01
 
+**Phase 39 Plan 03 decisions:**
+- auto_retry checks git branch for partial commits before re-queuing — falls back to mark_failed if commits exist (conservative, no data loss)
+- Retry limit of 1 enforced via metadata.retry_count >= 1 — prevents infinite retry loops
+- Missing spawn_requested_at treated as expired with warning log — silently skipping could mask orphaned tasks
+- run_recovery_scan() always logs startup summary even when nothing recovered
+
 ### Pending Todos
 
 None.
@@ -60,5 +66,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 39-02-PLAN.md — pool memorize drain on SIGTERM (REL-08)
-Resume: Phase 39 complete — run Phase 40 (Memory Health Monitor, QUAL-01..06)
+Stopped at: Completed 39-03-PLAN.md — pool startup recovery scan (REL-06, REL-07)
+Resume: Phase 39 complete (all 3 plans) — run Phase 40 (Memory Health Monitor, QUAL-01..06)
