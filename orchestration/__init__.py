@@ -32,6 +32,7 @@ from .snapshot import (
     GitOperationError,
 )
 from .soul_renderer import render_soul, write_soul
+from .logging import get_logger
 
 __all__ = [
     # State engine
@@ -39,6 +40,9 @@ __all__ = [
 
     # Config constants
     'LOCK_TIMEOUT', 'POLL_INTERVAL',
+
+    # Logging
+    'get_logger',
 
     # Workspace lifecycle
     'initialize_workspace', 'verify_workspace',
