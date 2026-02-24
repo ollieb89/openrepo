@@ -1,0 +1,41 @@
+services:
+  db:
+    image: pgvector/pgvector:pg17-bookworm
+    container_name: openclaw-memory-db
+    environment:
+      POSTGRES_DB: openclaw_memory
+      POSTGRES_USER: claw_admin
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U claw_admin -d openclaw_memory"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - openclaw-net
+
+  memory:
+    build: .
+    container_name: openclaw-memory
+    ports:
+      - "127.0.0.1:18791:18791"
+    env_file: .env
+    environment:
+      DB_HOST: openclaw-memory-db
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - openclaw-net
+
+volumes:
+  pgdata:
+
+networks:
+  openclaw-net:
+    external: true
