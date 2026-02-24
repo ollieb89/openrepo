@@ -337,7 +337,40 @@ def capture_semantic_snapshot(task_id: str, workspace_path: str, project_id: str
     snapshot_path = snapshots_dir / f'{task_id}.diff'
     snapshot_content = metadata_header + diff_result.stdout
     snapshot_path.write_text(snapshot_content)
-    
+
+    # Auto-prune oldest snapshots if max_snapshots is configured for this project (PERF-08)
+    try:
+        project_cfg = load_project_config(project_id)
+        max_snapshots = project_cfg.get("l3_overrides", {}).get("max_snapshots")
+        if max_snapshots is not None:
+            # Validate: must be a positive integer
+            if isinstance(max_snapshots, int) and max_snapshots > 0:
+                prune_result = cleanup_old_snapshots(
+                    workspace_path=workspace_path,
+                    project_id=project_id,
+                    max_snapshots=max_snapshots,
+                )
+                if prune_result.get("deleted_count", 0) > 0:
+                    logger.info(
+                        "Snapshot pruning complete",
+                        extra={
+                            "project_id": project_id,
+                            "deleted": prune_result["deleted_count"],
+                            "remaining": prune_result["remaining_count"],
+                        },
+                    )
+            else:
+                logger.warning(
+                    "Invalid max_snapshots value — skipping prune",
+                    extra={"project_id": project_id, "max_snapshots": max_snapshots},
+                )
+    except Exception as exc:
+        # Pruning failure must never block capture — log and continue
+        logger.warning(
+            "Snapshot pruning failed (non-blocking)",
+            extra={"project_id": project_id, "error": str(exc)},
+        )
+
     summary = {
         'files_changed': files_changed,
         'insertions': insertions,

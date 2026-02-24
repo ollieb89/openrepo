@@ -287,7 +287,11 @@ def test_prune_called_when_configured(tmp_path):
         snapshots_dir.mkdir(parents=True, exist_ok=True)
         mock_snapdir.return_value = snapshots_dir
 
-        # Mock subprocess.run to return fake diff output
+        # _detect_default_branch calls subprocess.run for git symbolic-ref first — must be mocked
+        mock_branch_detect = MagicMock()
+        mock_branch_detect.stdout = "refs/remotes/origin/main\n"
+        mock_branch_detect.returncode = 0
+
         mock_diff = MagicMock()
         mock_diff.stdout = "diff --git a/foo.py b/foo.py\n+line"
         mock_diff.returncode = 0
@@ -296,7 +300,7 @@ def test_prune_called_when_configured(tmp_path):
         mock_stat.stdout = " 1 file changed, 1 insertion(+)"
         mock_stat.returncode = 0
 
-        mock_run.side_effect = [mock_diff, mock_stat]
+        mock_run.side_effect = [mock_branch_detect, mock_diff, mock_stat]
 
         capture_semantic_snapshot("task-001", str(tmp_path), "testproj")
 
@@ -324,6 +328,11 @@ def test_prune_not_called_when_unconfigured(tmp_path):
         snapshots_dir.mkdir(parents=True, exist_ok=True)
         mock_snapdir.return_value = snapshots_dir
 
+        # _detect_default_branch calls subprocess.run for git symbolic-ref first — must be mocked
+        mock_branch_detect = MagicMock()
+        mock_branch_detect.stdout = "refs/remotes/origin/main\n"
+        mock_branch_detect.returncode = 0
+
         mock_diff = MagicMock()
         mock_diff.stdout = "diff --git a/bar.py b/bar.py\n+line"
         mock_diff.returncode = 0
@@ -332,7 +341,7 @@ def test_prune_not_called_when_unconfigured(tmp_path):
         mock_stat.stdout = " 1 file changed, 1 insertion(+)"
         mock_stat.returncode = 0
 
-        mock_run.side_effect = [mock_diff, mock_stat]
+        mock_run.side_effect = [mock_branch_detect, mock_diff, mock_stat]
 
         capture_semantic_snapshot("task-002", str(tmp_path), "testproj")
 
@@ -358,6 +367,11 @@ def test_prune_failure_nonfatal(tmp_path):
         # Pruning raises an OSError — must not propagate
         mock_cleanup.side_effect = OSError("permission denied")
 
+        # _detect_default_branch calls subprocess.run for git symbolic-ref first — must be mocked
+        mock_branch_detect = MagicMock()
+        mock_branch_detect.stdout = "refs/remotes/origin/main\n"
+        mock_branch_detect.returncode = 0
+
         mock_diff = MagicMock()
         mock_diff.stdout = "diff --git a/baz.py b/baz.py\n+line"
         mock_diff.returncode = 0
@@ -366,7 +380,7 @@ def test_prune_failure_nonfatal(tmp_path):
         mock_stat.stdout = " 1 file changed, 1 insertion(+)"
         mock_stat.returncode = 0
 
-        mock_run.side_effect = [mock_diff, mock_stat]
+        mock_run.side_effect = [mock_branch_detect, mock_diff, mock_stat]
 
         # Must NOT raise
         result = capture_semantic_snapshot("task-003", str(tmp_path), "testproj")
