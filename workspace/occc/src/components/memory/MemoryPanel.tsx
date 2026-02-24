@@ -1,14 +1,19 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { toast } from 'react-toastify';
 import { useMemory } from '@/lib/hooks/useMemory';
 import { useProject } from '@/context/ProjectContext';
 import type { MemoryItem } from '@/lib/types/memory';
 import MemoryStatBar from './MemoryStatBar';
 import MemoryFilters from './MemoryFilters';
 import MemoryTable from './MemoryTable';
+import MemorySearch from './MemorySearch';
+import ConfirmDialog from './ConfirmDialog';
 
 const PAGE_SIZE = 25;
+// Fade-out animation duration in ms
+const DELETE_ANIMATION_MS = 300;
 
 type SortField = 'type' | 'category' | 'agent_type' | 'created_at';
 type SortDirection = 'asc' | 'desc';
@@ -32,9 +37,18 @@ function sortItems(items: MemoryItem[], field: SortField, direction: SortDirecti
   });
 }
 
+type DialogState =
+  | { type: 'none' }
+  | { type: 'single'; id: string }
+  | { type: 'bulk'; ids: Set<string> };
+
 export default function MemoryPanel() {
   const { projectId } = useProject();
-  const { items, isLoading, error, mutate } = useMemory(projectId, null);
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState<string | null>(null);
+
+  const { items, isLoading, error, mutate } = useMemory(projectId, searchQuery);
 
   // Filter state
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
@@ -51,6 +65,23 @@ export default function MemoryPanel() {
 
   // Pagination
   const [page, setPage] = useState(1);
+
+  // Delete confirmation dialog
+  const [dialog, setDialog] = useState<DialogState>({ type: 'none' });
+
+  // Deleting IDs for fade-out animation
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+
+  // Reset search when project changes
+  useEffect(() => {
+    setSearchQuery(null);
+    setPage(1);
+  }, [projectId]);
+
+  // Reset page when searchQuery changes
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery]);
 
   function handleSort(field: string) {
     const f = field as SortField;
@@ -84,15 +115,97 @@ export default function MemoryPanel() {
     }
   }
 
-  async function handleDeleteItem(id: string) {
-    // Plan 03 will implement actual deletion; mutate to refresh after
-    await mutate();
-    setExpandedId(null);
+  function handleFilterChange(setter: (v: string | null) => void) {
+    return (value: string | null) => {
+      setter(value);
+      setPage(1);
+    };
+  }
+
+  // --- Delete single item ---
+  function openSingleDelete(id: string) {
+    setDialog({ type: 'single', id });
+  }
+
+  async function confirmSingleDelete() {
+    if (dialog.type !== 'single') return;
+    const id = dialog.id;
+    setDialog({ type: 'none' });
+
+    // Start fade-out animation
+    setDeletingIds(prev => new Set(Array.from(prev).concat([id])));
+
+    // Wait for animation before removing from cache
+    await new Promise(resolve => setTimeout(resolve, DELETE_ANIMATION_MS));
+
+    try {
+      const res = await fetch(`/api/memory/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      // Optimistically remove from SWR cache
+      await mutate(
+        prev => prev ? { ...prev, items: prev.items.filter(i => i.id !== id), total: Math.max(0, prev.total - 1) } : prev,
+        false
+      );
+      toast.success('Memory item deleted');
+    } catch {
+      toast.error('Failed to delete memory item');
+      // Re-fetch to sync state
+      await mutate();
+    } finally {
+      setDeletingIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+
+    // Clean up expand state
+    setExpandedId(prev => (prev === id ? null : prev));
     setSelectedIds(prev => {
       const next = new Set(prev);
       next.delete(id);
       return next;
     });
+  }
+
+  // --- Delete bulk ---
+  function openBulkDelete() {
+    if (selectedIds.size === 0) return;
+    setDialog({ type: 'bulk', ids: new Set(selectedIds) });
+  }
+
+  async function confirmBulkDelete() {
+    if (dialog.type !== 'bulk') return;
+    const ids = dialog.ids;
+    setDialog({ type: 'none' });
+
+    // Start fade-out animation on all targeted IDs
+    setDeletingIds(prev => new Set(Array.from(prev).concat(Array.from(ids))));
+
+    await new Promise(resolve => setTimeout(resolve, DELETE_ANIMATION_MS));
+
+    try {
+      await Promise.all(Array.from(ids).map(id => fetch(`/api/memory/${id}`, { method: 'DELETE' }).then(r => { if (!r.ok) throw new Error(`HTTP ${r.status} for ${id}`); })));
+
+      // Optimistically remove from SWR cache
+      await mutate(
+        prev => prev ? { ...prev, items: prev.items.filter(i => !ids.has(i.id)), total: Math.max(0, prev.total - ids.size) } : prev,
+        false
+      );
+      toast.success(`Deleted ${ids.size} memory item${ids.size !== 1 ? 's' : ''}`);
+      setSelectedIds(new Set());
+    } catch {
+      toast.error('Some items could not be deleted');
+      // Full refetch to sync state
+      await mutate();
+    } finally {
+      setDeletingIds(prev => {
+        const next = new Set(prev);
+        ids.forEach(id => next.delete(id));
+        return next;
+      });
+    }
   }
 
   // Filtered items
@@ -116,12 +229,17 @@ export default function MemoryPanel() {
   const clampedPage = Math.min(page, totalPages);
   const pageItems = sortedItems.slice((clampedPage - 1) * PAGE_SIZE, clampedPage * PAGE_SIZE);
 
-  // Reset page when filters change
-  function handleFilterChange(setter: (v: string | null) => void) {
-    return (value: string | null) => {
-      setter(value);
-      setPage(1);
-    };
+  const isConfirmOpen = dialog.type !== 'none';
+  const confirmTitle = dialog.type === 'bulk'
+    ? `Delete ${dialog.ids.size} item${dialog.ids.size !== 1 ? 's' : ''}?`
+    : 'Delete memory item?';
+  const confirmMessage = dialog.type === 'bulk'
+    ? `Delete ${dialog.ids.size} memory item${dialog.ids.size !== 1 ? 's' : ''}? This cannot be undone.`
+    : 'This memory item will be permanently removed. This cannot be undone.';
+
+  function handleConfirm() {
+    if (dialog.type === 'single') confirmSingleDelete();
+    else if (dialog.type === 'bulk') confirmBulkDelete();
   }
 
   return (
@@ -133,10 +251,13 @@ export default function MemoryPanel() {
         </p>
       </div>
 
-      {/* Search placeholder — Plan 03 will wire this */}
-      <div className="w-full rounded-md border border-dashed border-gray-300 dark:border-gray-600 px-4 py-2 text-sm text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800/50">
-        Search coming in Plan 03...
-      </div>
+      {/* Search bar */}
+      <MemorySearch
+        onSearch={q => setSearchQuery(q)}
+        onClear={() => setSearchQuery(null)}
+        isSearchMode={!!searchQuery}
+        searchQuery={searchQuery ?? ''}
+      />
 
       <MemoryStatBar items={items} />
 
@@ -149,6 +270,25 @@ export default function MemoryPanel() {
         onAgentTypeChange={handleFilterChange(setFilterAgentType)}
         onTypeChange={handleFilterChange(setFilterType)}
       />
+
+      {/* Bulk delete button */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 py-1">
+          <button
+            type="button"
+            onClick={openBulkDelete}
+            className="flex items-center gap-1.5 rounded-md bg-red-600 hover:bg-red-700 px-3 py-1.5 text-sm font-medium text-white transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Delete selected ({selectedIds.size})
+          </button>
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            {selectedIds.size} item{selectedIds.size !== 1 ? 's' : ''} selected
+          </span>
+        </div>
+      )}
 
       {isLoading && (
         <div className="flex items-center justify-center py-16 text-gray-400 dark:text-gray-500">
@@ -168,8 +308,9 @@ export default function MemoryPanel() {
 
       {!isLoading && !error && sortedItems.length === 0 && (
         <div className="flex items-center justify-center py-16 text-gray-400 dark:text-gray-500 text-sm">
-          No memory items found
-          {(filterCategory || filterAgentType || filterType) && ' matching current filters'}.
+          {searchQuery
+            ? `No memory items found for "${searchQuery}".`
+            : 'No memory items found' + ((filterCategory || filterAgentType || filterType) ? ' matching current filters.' : '.')}
         </div>
       )}
 
@@ -185,7 +326,8 @@ export default function MemoryPanel() {
             selectedIds={selectedIds}
             onToggleSelect={handleToggleSelect}
             onSelectAll={handleSelectAll}
-            onDeleteItem={handleDeleteItem}
+            onDeleteItem={openSingleDelete}
+            deletingIds={deletingIds}
           />
 
           {/* Pagination */}
@@ -241,6 +383,16 @@ export default function MemoryPanel() {
           )}
         </>
       )}
+
+      {/* Confirmation dialog */}
+      <ConfirmDialog
+        isOpen={isConfirmOpen}
+        title={confirmTitle}
+        message={confirmMessage}
+        confirmLabel="Delete"
+        onConfirm={handleConfirm}
+        onCancel={() => setDialog({ type: 'none' })}
+      />
     </div>
   );
 }

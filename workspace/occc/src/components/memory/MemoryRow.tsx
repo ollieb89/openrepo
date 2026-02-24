@@ -10,6 +10,7 @@ interface MemoryRowProps {
   isSelected: boolean;
   onToggleSelect: () => void;
   onDelete: () => void;
+  isDeleting?: boolean;
 }
 
 const CONTENT_CAP = 300;
@@ -60,6 +61,7 @@ export default function MemoryRow({
   isSelected,
   onToggleSelect,
   onDelete,
+  isDeleting = false,
 }: MemoryRowProps) {
   const [showMore, setShowMore] = useState(false);
 
@@ -73,7 +75,7 @@ export default function MemoryRow({
   return (
     <>
       <tr
-        className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
+        className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-opacity duration-300 ${isDeleting ? 'opacity-0' : 'opacity-100'}`}
         onClick={e => {
           // Don't toggle expand when clicking checkbox
           if ((e.target as HTMLElement).closest('input[type="checkbox"]')) return;

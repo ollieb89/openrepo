@@ -12,6 +12,7 @@ interface MemoryTableProps {
   onToggleSelect: (id: string) => void;
   onSelectAll: () => void;
   onDeleteItem: (id: string) => void;
+  deletingIds?: Set<string>;
 }
 
 type Column = {
@@ -56,6 +57,7 @@ export default function MemoryTable({
   onToggleSelect,
   onSelectAll,
   onDeleteItem,
+  deletingIds = new Set(),
 }: MemoryTableProps) {
   const allSelected = items.length > 0 && items.every(i => selectedIds.has(i.id));
 
@@ -95,6 +97,7 @@ export default function MemoryTable({
               isSelected={selectedIds.has(item.id)}
               onToggleSelect={() => onToggleSelect(item.id)}
               onDelete={() => onDeleteItem(item.id)}
+              isDeleting={deletingIds.has(item.id)}
             />
           ))}
         </tbody>
