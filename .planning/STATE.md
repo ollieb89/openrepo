@@ -5,13 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** Planning next milestone
+**Current focus:** v1.3 Agent Memory — memU integration
 
 ## Current Position
 
-Milestone: v1.2 Orchestration Hardening — SHIPPED (2026-02-24)
-Status: Between milestones. v1.0, v1.1, v1.2 all shipped. Ready for next milestone.
-Last activity: 2026-02-24 — v1.2 archived to .planning/milestones/
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-24 — Milestone v1.3 started
 
 ## Performance Metrics
 
@@ -32,10 +33,11 @@ None.
 
 ### Blockers/Concerns
 
-None.
+- memU requires Python 3.13+ and Rust build toolchain (maturin) — L3 container base image may need updating
+- No built-in REST server in open-source memU — need to build internal API wrapper
 
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: v1.2 milestone archived and tagged
+Stopped at: Defining v1.3 requirements
 Resume file: None

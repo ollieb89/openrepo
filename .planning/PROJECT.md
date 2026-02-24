@@ -11,10 +11,25 @@ Hierarchical AI orchestration with physical isolation — enabling autonomous, s
 ## Tech Stack
 
 - **Core:** OpenClaw CLI, Bun, Docker 29.1.5
-- **Orchestration:** Python 3 (state engine, snapshots, spawn, monitoring, project_config, config_validator, logging)
+- **Orchestration:** Python 3 (state engine, snapshots, spawn, monitoring, project_config, config_validator, logging), memU (memu-py)
+- **Memory:** memU 1.4.0 (Python 3.13+, PostgreSQL+pgvector)
 - **Frontend:** Next.js 16 (App Router), Tailwind 4, SWR, Zod, Recharts
 - **Container:** Debian bookworm-slim L3 images, Nvidia Container Toolkit
 - **OS:** Ubuntu 24.04 LTS
+
+## Current Milestone: v1.3 Agent Memory
+
+**Goal:** Integrate memU memory framework as a standalone service so agents learn across sessions — L3 outcomes and L2 decisions are memorized, and relevant context is retrieved before task execution.
+
+**Target features:**
+- Standalone memU service in Docker with PostgreSQL+pgvector backend
+- Internal REST API for memory operations (memorize, retrieve, CRUD)
+- Per-agent + per-project memory scoping
+- L3 auto-memorization of task outcomes (git diff + conversation)
+- L2 memorization of review decisions (merge/reject + reasoning)
+- Pre-spawn context retrieval and SOUL template injection
+- L3 in-execution memory queries for task-specific lookups
+- Dashboard memory panel (categories, items, search)
 
 ## Current State
 
@@ -82,7 +97,14 @@ Known limitations:
 
 ### Active
 
-(No active milestone — define next with `/gsd:new-milestone`)
+- [ ] Standalone memU memory service (Docker + PostgreSQL+pgvector)
+- [ ] Internal REST API for memory operations
+- [ ] Per-agent + per-project memory scoping
+- [ ] L3 auto-memorization of task outcomes
+- [ ] L2 memorization of review decisions
+- [ ] Pre-spawn context retrieval and SOUL injection
+- [ ] L3 in-execution memory queries
+- [ ] Dashboard memory panel
 
 ### Out of Scope
 
@@ -122,6 +144,10 @@ Known limitations:
 | PoolOverflowError for all overflow scenarios | ✓ Good — single exception type, clear error messages | v1.2 |
 | Shared semaphore lazy-created on first shared-mode call | ✓ Good — no wasted resources for isolated-only projects | v1.2 |
 | JarvisState instance dict local to tail_state() | ✓ Good — implicit teardown on exit, no module-level cache | v1.2 |
+| memU as self-hosted library in standalone Docker service | — Pending | v1.3 |
+| PostgreSQL+pgvector for memory storage | — Pending | v1.3 |
+| Per-agent + per-project memory scoping | — Pending | v1.3 |
+| L2 proxy + L3 direct access (both paths) | — Pending | v1.3 |
 
 ## Primary Docs
 
@@ -131,4 +157,4 @@ Known limitations:
 - DEV_WF_FINDINGS.md
 
 ---
-*Last updated: 2026-02-24 after v1.2 milestone completed*
+*Last updated: 2026-02-24 after v1.3 milestone started*
