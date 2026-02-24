@@ -233,10 +233,12 @@ Plans:
   2. Typing a query in the search bar returns semantically relevant memory items (vector-based retrieval via POST /retrieve)
   3. Clicking delete on a memory item removes it — a subsequent page refresh confirms the item is gone
   4. Each memory item displays its type, category, created_at timestamp, and agent source (l2_pm, l3_code, l3_test)
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 36-01: TBD
+- [ ] 36-01-PLAN.md — API proxy routes + TypeScript types + SWR hook + sidebar nav + ToastContainer
+- [ ] 36-02-PLAN.md — Memory page + table + accordion rows + filters + stats bar + pagination
+- [ ] 36-03-PLAN.md — Search bar + delete workflow + bulk delete + confirmation dialog + toasts
 
 ## Progress
 
