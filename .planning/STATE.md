@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 
 ## Current Position
 
-Phase: 23 of 25 (Pool Config) — COMPLETE
-Plan: Phase 23 complete (2 of 2 plans done)
-Status: Phase 23 complete — POOL-01, POOL-02, POOL-03 done. Next: Phase 24-dashboard-metrics
-Last activity: 2026-02-24 — 23-02-PLAN.md complete (pool isolation modes + overflow policies)
+Phase: 24 of 25 (Dashboard Metrics) — IN PROGRESS
+Plan: 24-02 complete (2 of N plans done)
+Status: DSH-09 done — agent tree with global/project sections + status dots. Next: 24-03 (if any)
+Last activity: 2026-02-24 — 24-02-PLAN.md complete (agent tree sections + status indicator dots)
 
 Progress: [██░░░░░░░░░░░░░░░░░░] 10% (v1.2)
 
@@ -38,6 +38,8 @@ Progress: [██░░░░░░░░░░░░░░░░░░] 10% (v1
 | 23-pool-config P01 | 1 | 2 tasks | 4 files |
 | 23-pool-config P02 | 5 | 2 tasks | 2 files |
 | 25-monitor-cache-fix P01 | 1 | 2 tasks | 1 file |
+
+| 24-dashboard-metrics P02 | 1 | 1 tasks | 2 files |
 
 *Updated after each plan completion*
 
@@ -69,6 +71,7 @@ Recent decisions affecting current work:
 - [Phase 23-pool-config]: Shared semaphore created lazily on first shared-mode get_pool() call; isolated pools get dedicated semaphores
 - [Phase 23-pool-config]: priority overflow policy uses PriorityQueue + semaphore.acquire() — infrastructure for L2 priority=0 elevation
 - [Phase 23-pool-config]: Monitor TOTAL saturation denominator is sum(per-project max_concurrent) not N*3
+- [Phase 24-dashboard-metrics]: Status dot placed between level badge and agent name; statusMap precomputed before render loop; Project section always rendered even when empty
 
 ### Pending Todos
 
@@ -81,5 +84,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 23-02-PLAN.md (pool isolation modes + overflow policies; POOL-02 + POOL-03 complete; Phase 23 complete)
+Stopped at: Completed 24-02-PLAN.md (agent tree global/project sections + status dots; DSH-09 complete)
 Resume file: None

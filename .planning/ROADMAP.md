@@ -181,5 +181,5 @@ Plans:
 | 21. State Engine Performance | 3/3 | Complete    | 2026-02-24 | - |
 | 22. Observability Metrics | 2/2 | Complete    | 2026-02-24 | - |
 | 23. Per-Project Pool Config | 2/2 | Complete    | 2026-02-24 | - |
-| 24. Dashboard Metrics | v1.2 | 0/TBD | Not started | - |
+| 24. Dashboard Metrics | 1/2 | In Progress|  | - |
 | 25. Monitor Cache Fix | 1/1 | Complete    | 2026-02-24 | - |
