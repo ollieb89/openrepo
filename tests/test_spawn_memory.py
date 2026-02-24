@@ -25,6 +25,7 @@ from skills.spawn_specialist.spawn import (
     _write_soul_file,
     _rewrite_memu_url_for_container,
     MEMORY_CONTEXT_BUDGET,
+    CATEGORY_SECTION_MAP,
 )
 
 
@@ -477,3 +478,138 @@ def test_item_without_category_routes_to_work_context():
     assert "## Past Work Context" in result
     assert "## Past Review Outcomes" not in result  # no review items present
     assert "Legacy memory item" in result
+
+
+# ---------------------------------------------------------------------------
+# Phase 37 Plan 02: Category-primary routing, Task Outcomes section, ordering
+# ---------------------------------------------------------------------------
+
+
+def test_category_section_map_contains_expected_keys():
+    """CATEGORY_SECTION_MAP is a module-level constant with exactly two entries."""
+    assert "review_decision" in CATEGORY_SECTION_MAP
+    assert "task_outcome" in CATEGORY_SECTION_MAP
+    assert CATEGORY_SECTION_MAP["review_decision"] == "Past Review Outcomes"
+    assert CATEGORY_SECTION_MAP["task_outcome"] == "Task Outcomes"
+
+
+def test_category_primary_routing_review_decision():
+    """Items with category='review_decision' route to '## Past Review Outcomes' via primary path.
+
+    No agent_type field — confirms primary routing fires without the fallback.
+    """
+    memories = [
+        {
+            "resource_url": "Approved — tests all green, no style issues",
+            "category": "review_decision",
+            # deliberately no agent_type — primary path only
+        }
+    ]
+
+    result = _format_memory_context(memories)
+
+    assert "## Past Review Outcomes" in result
+    assert "## Past Work Context" not in result
+    assert "## Task Outcomes" not in result
+    assert "- Approved — tests all green, no style issues" in result
+
+
+def test_category_primary_routing_task_outcome():
+    """Items with category='task_outcome' route to '## Task Outcomes' section.
+
+    This is the NEW section added in Plan 02 — did not exist before.
+    """
+    memories = [
+        {
+            "resource_url": "Implemented OAuth2 token refresh with 30-min expiry",
+            "category": "task_outcome",
+        }
+    ]
+
+    result = _format_memory_context(memories)
+
+    assert "## Task Outcomes" in result
+    assert "## Past Review Outcomes" not in result
+    assert "## Past Work Context" not in result
+    assert "- Implemented OAuth2 token refresh with 30-min expiry" in result
+
+
+def test_category_routing_with_mixed_categories():
+    """Mixed category input produces all three sections with correct items per section.
+
+    Verifies:
+    - All three sections present
+    - Output ordering: Past Review Outcomes -> Task Outcomes -> Past Work Context
+    - Each item is under the correct section
+    """
+    memories = [
+        {"resource_url": "Approved — clean diff", "category": "review_decision"},
+        {"resource_url": "Auth service implemented", "category": "task_outcome"},
+        {"resource_url": "Prefer named parameters over positional"},  # no category
+    ]
+
+    result = _format_memory_context(memories)
+
+    assert "## Past Review Outcomes" in result
+    assert "## Task Outcomes" in result
+    assert "## Past Work Context" in result
+
+    # Verify output ordering: review -> task outcomes -> work context
+    review_pos = result.index("## Past Review Outcomes")
+    task_pos = result.index("## Task Outcomes")
+    work_pos = result.index("## Past Work Context")
+    assert review_pos < task_pos < work_pos, (
+        f"Section order wrong: review={review_pos}, task={task_pos}, work={work_pos}"
+    )
+
+    # Each item must appear under its own section header
+    review_section_end = task_pos
+    task_section_end = work_pos
+    assert "- Approved — clean diff" in result[:review_section_end]
+    assert "- Auth service implemented" in result[task_pos:task_section_end]
+    assert "- Prefer named parameters over positional" in result[work_pos:]
+
+
+def test_legacy_items_without_category_still_route_correctly():
+    """Items with agent_type='l2_pm' but no category field route to '## Past Review Outcomes'.
+
+    Backward-compat guard: existing memories stored before category field
+    introduction still arrive in the review section via the agent_type fallback.
+    """
+    memories = [
+        {
+            "resource_url": "Approved — legacy item from before category field",
+            "agent_type": "l2_pm",
+            # no 'category' key at all
+        }
+    ]
+
+    result = _format_memory_context(memories)
+
+    assert "## Past Review Outcomes" in result
+    assert "## Past Work Context" not in result
+    assert "- Approved — legacy item from before category field" in result
+
+
+def test_task_outcome_category_budget_shared():
+    """task_outcome items consume from the same MEMORY_CONTEXT_BUDGET as other sections.
+
+    Input: enough task_outcome items to approach the budget.
+    Assert: budget is respected (bullet chars stay within cap); items are dropped
+    when the budget is exhausted rather than truncated.
+    """
+    # Each bullet is ~397 chars; 5 fit (1985 chars), 6th would exceed (1985+398=2383)
+    long_text = "T" * 395
+    memories = [{"resource_url": long_text, "category": "task_outcome"} for _ in range(6)]
+
+    result = _format_memory_context(memories)
+
+    assert "## Task Outcomes" in result
+
+    # At least one item was dropped
+    bullet_count = sum(1 for line in result.splitlines() if line.startswith("- "))
+    assert bullet_count < 6
+
+    # Bullet content stays within budget
+    bullet_chars = sum(len(line) + 1 for line in result.splitlines() if line.startswith("- "))
+    assert bullet_chars <= MEMORY_CONTEXT_BUDGET
