@@ -198,16 +198,29 @@ def _retrieve_memories_sync(base_url: str, project_id: str, query: str) -> list:
         return []
 
 
+# Category-to-section mapping for primary routing in _format_memory_context().
+# Items with a matching category field are routed here before the agent_type fallback.
+CATEGORY_SECTION_MAP = {
+    "review_decision": "Past Review Outcomes",
+    "task_outcome": "Task Outcomes",
+}
+
+
 def _format_memory_context(memories: list) -> str:
-    """Format retrieved memories into two distinct markdown sections by category.
+    """Format retrieved memories into three distinct markdown sections by category.
 
-    Splits memories into:
-    - "## Past Work Context" — L3 task outcomes (category == "l3_outcome" or
-      no special category)
-    - "## Past Review Outcomes" — L2 review decisions (category ==
-      "review_decision" OR agent_type == "l2_pm" as fallback)
+    Routing priority:
+    1. Primary: category field checked against CATEGORY_SECTION_MAP.
+       - "review_decision" → "## Past Review Outcomes"
+       - "task_outcome"    → "## Task Outcomes"
+    2. Fallback: agent_type == "l2_pm" → "## Past Review Outcomes"
+       (handles legacy items stored before the category field was introduced)
+    3. Default: all other items → "## Past Work Context"
 
-    Both sections share the MEMORY_CONTEXT_BUDGET (2,000 chars). Items are
+    Output ordering (locked decision): review decisions FIRST, then task
+    outcomes, then uncategorized/fallback work context.
+
+    All three sections share MEMORY_CONTEXT_BUDGET (2,000 chars). Items are
     added in rank order from memU and the shared counter stops as soon as a
     bullet would exceed the budget (whole-item drop, not truncation). Empty
     sections are omitted — no empty headers, no placeholders. Empty input
@@ -217,7 +230,7 @@ def _format_memory_context(memories: list) -> str:
         memories: List of memory dicts from memU /retrieve response.
 
     Returns:
-        One or two section strings joined by double newline, or "" when no
+        Up to three section strings joined by double newline, or "" when no
         items fit within the budget or the input list is empty.
     """
     if not memories:
@@ -225,6 +238,7 @@ def _format_memory_context(memories: list) -> str:
 
     work_bullets = []
     review_bullets = []
+    task_bullets = []
     total_chars = 0
 
     for item in memories:
@@ -233,28 +247,39 @@ def _format_memory_context(memories: list) -> str:
         if not text:
             continue
 
-        # Discriminate category: dual check (category field + agent_type fallback)
-        is_review = (
-            item.get("category", "") == "review_decision"
-            or item.get("agent_type", "") == "l2_pm"
-        )
+        category = item.get("category", "")
+        agent_type = item.get("agent_type", "")
+
+        # Primary routing: category field (new items with category stored)
+        if category in CATEGORY_SECTION_MAP:
+            bucket_name = CATEGORY_SECTION_MAP[category]
+        # Fallback: agent_type for legacy items without category
+        elif agent_type == "l2_pm":
+            bucket_name = "Past Review Outcomes"
+        else:
+            bucket_name = "Past Work Context"
 
         bullet = f"- {text}"
         candidate = total_chars + len(bullet) + 1  # +1 for \n separator
         if candidate > MEMORY_CONTEXT_BUDGET:
             break  # drop remaining items rather than truncating
 
-        if is_review:
+        if bucket_name == "Past Review Outcomes":
             review_bullets.append(bullet)
+        elif bucket_name == "Task Outcomes":
+            task_bullets.append(bullet)
         else:
             work_bullets.append(bullet)
         total_chars += len(bullet) + 1
 
+    # Output ordering: review decisions -> task outcomes -> work context (uncategorized)
     sections = []
-    if work_bullets:
-        sections.append("## Past Work Context\n\n" + "\n".join(work_bullets))
     if review_bullets:
         sections.append("## Past Review Outcomes\n\n" + "\n".join(review_bullets))
+    if task_bullets:
+        sections.append("## Task Outcomes\n\n" + "\n".join(task_bullets))
+    if work_bullets:
+        sections.append("## Past Work Context\n\n" + "\n".join(work_bullets))
 
     return "\n\n".join(sections) if sections else ""
 
