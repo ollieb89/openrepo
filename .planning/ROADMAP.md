@@ -78,7 +78,10 @@ Plans:
   2. A project.json missing a required field (e.g. workspace) causes openclaw to exit immediately with a message identifying the missing field — not a KeyError traceback
   3. An openclaw.json with a broken reports_to chain causes startup to fail fast with the specific agent ID and constraint violated
   4. State writes always leave a recoverable backup; no write path skips the backup step
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 20-01-PLAN.md — State backup-before-write and recovery-from-backup
+- [ ] 20-02-PLAN.md — Project config schema validation and agent hierarchy validation
 
 ### Phase 21: State Engine Performance
 **Goal**: Orchestration throughput improves under concurrent spawns — Docker connections reused, state reads served from memory, and file writes minimized to changed fields only
