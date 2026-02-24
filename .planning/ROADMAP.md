@@ -312,5 +312,5 @@ Plans:
 | 34. Review Decision Category Fix | 1/1 | Complete    | 2026-02-24 | - |
 | 35. L3 In-Execution Memory Queries | 1/1 | Complete    | 2026-02-24 | - |
 | 36. Dashboard Memory Panel | 3/3 | Complete    | 2026-02-24 | - |
-| 37. Category Field E2E Fix | v1.3 | 0/2 | Not started | - |
+| 37. Category Field E2E Fix | 1/2 | In Progress|  | - |
 | 38. Phase 28 Verification + Cleanup | v1.3 | 0/? | Not started | - |

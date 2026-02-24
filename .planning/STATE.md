@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** Phase 36: Dashboard Memory Panel (complete)
+**Current focus:** Phase 37: Category Field E2E Fix
 
 ## Current Position
 
-Phase: 36 of 36 (Dashboard Memory Panel)
-Plan: 3 of 3 (complete)
-Status: Phase 36 complete — all 3 plans done. v1.3 memory milestone feature-complete.
-Last activity: 2026-02-24 — Phase 36 Plan 03 executed (MemorySearch component, ConfirmDialog component, search/delete wiring in MemoryPanel with optimistic UI and toast notifications)
+Phase: 37 of 38 (Category Field E2E Fix)
+Plan: 1 of 1 (complete)
+Status: Phase 37 Plan 01 complete — category field wired through memorize pipeline.
+Last activity: 2026-02-24 — Phase 37 Plan 01 executed (CategoryValue type alias, MemorizeRequest category field, router user_dict injection, MemoryClient payload wiring, 2 new tests)
 
-Progress: [██████████] 100% (v1.3 gap closure)
+Progress: [██████████] Phase 37/38 complete
 
 ## Performance Metrics
 
@@ -105,6 +105,12 @@ Phase 36 Plan 03 decisions:
 - 300ms DELETE_ANIMATION_MS constant: setDeletingIds -> await delay -> fetch DELETE -> optimistic mutate pattern
 - MemorySearch enter-key-only trigger (no debounce/as-you-type) per plan locked decision
 
+Phase 37 Plan 01 decisions:
+- CategoryValue = Literal['review_decision', 'task_outcome'] — strict Pydantic validation catches invalid categories at API boundary
+- category: Optional[str] = None in MemoryClient — orchestration layer does not import Docker service models; validation at FastAPI boundary
+- Non-mutating user_dict merge in router: dict(request.user) + conditional category injection — never mutates request.user in place
+- category omitted from POST payload entirely when None — clean backward compatibility, no null values in wire format
+
 ### Pending Todos
 
 None.
@@ -116,5 +122,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 36-03-PLAN.md — MemorySearch, ConfirmDialog, search wiring, single/bulk delete with optimistic UI and toast notifications
-Resume file: .planning/phases/36-dashboard-memory-panel/36-03-SUMMARY.md
+Stopped at: Completed 37-01-PLAN.md — CategoryValue type alias, MemorizeRequest category field, router user_dict injection, MemoryClient payload wiring, 2 new tests
+Resume file: .planning/phases/37-category-field-e2e-fix/37-01-SUMMARY.md

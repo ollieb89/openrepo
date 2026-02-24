@@ -23,7 +23,7 @@ Requirements for Agent Memory milestone. Each maps to roadmap phases.
 
 ### Memory Operations
 
-- [ ] **MEM-01**: L3 task outcomes (semantic snapshots) are auto-memorized after successful container exit via fire-and-forget pattern
+- [x] **MEM-01**: L3 task outcomes (semantic snapshots) are auto-memorized after successful container exit via fire-and-forget pattern
 - [x] **MEM-02**: L2 review decisions (merge/reject with reasoning) are memorized after each review cycle
 - [ ] **MEM-03**: Memorization failure is non-blocking — L3 task lifecycle and L2 review flow continue uninterrupted if memory service is unavailable
 - [x] **MEM-04**: MEMU_API_URL environment variable is injected into L3 containers at spawn time
@@ -83,12 +83,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SCOPE-01 | Phase 27 | Complete |
 | SCOPE-02 | Phase 27 | Complete |
 | SCOPE-03 | Phase 27 | Complete |
-| MEM-01 | Phase 37, 38 | Pending |
-| MEM-02 | Phase 37 | Pending |
+| MEM-01 | Phase 37, 38 | Complete |
+| MEM-02 | Phase 37 | Complete |
 | MEM-03 | Phase 38 | Pending |
 | MEM-04 | Phase 33 | Complete |
 | RET-01 | Phase 29 | Complete |
-| RET-02 | Phase 37 | Pending |
+| RET-02 | Phase 37 | Complete |
 | RET-03 | Phase 29 | Complete |
 | RET-04 | Phase 29 | Complete |
 | RET-05 | Phase 35 | Complete |
