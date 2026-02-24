@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { useMemory } from '@/lib/hooks/useMemory';
 import { useProject } from '@/context/ProjectContext';
@@ -10,6 +10,8 @@ import MemoryFilters from './MemoryFilters';
 import MemoryTable from './MemoryTable';
 import MemorySearch from './MemorySearch';
 import ConfirmDialog from './ConfirmDialog';
+import HealthTab from './HealthTab';
+import type { HealthFlag } from './HealthTab';
 
 const PAGE_SIZE = 25;
 // Fade-out animation duration in ms
@@ -17,6 +19,23 @@ const DELETE_ANIMATION_MS = 300;
 
 type SortField = 'type' | 'category' | 'agent_type' | 'created_at';
 type SortDirection = 'asc' | 'desc';
+type ActiveTab = 'list' | 'health';
+
+interface HealthSettings {
+  scan_interval_ms: number;
+  age_threshold_days: number;
+  retrieval_window_days: number;
+  similarity_min: number;
+  similarity_max: number;
+}
+
+const DEFAULT_HEALTH_SETTINGS: HealthSettings = {
+  scan_interval_ms: 3600000,
+  age_threshold_days: 30,
+  retrieval_window_days: 14,
+  similarity_min: 0.75,
+  similarity_max: 0.97,
+};
 
 function sortItems(items: MemoryItem[], field: SortField, direction: SortDirection): MemoryItem[] {
   return [...items].sort((a, b) => {
@@ -44,6 +63,15 @@ type DialogState =
 
 export default function MemoryPanel() {
   const { projectId } = useProject();
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState<ActiveTab>('list');
+
+  // Health state
+  const [healthFlags, setHealthFlags] = useState<Map<string, HealthFlag>>(new Map());
+  const [showOnlyFlagged, setShowOnlyFlagged] = useState(false);
+  const [scanRunning, setScanRunning] = useState(false);
+  const [healthSettings] = useState<HealthSettings>(DEFAULT_HEALTH_SETTINGS);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
@@ -76,12 +104,55 @@ export default function MemoryPanel() {
   useEffect(() => {
     setSearchQuery(null);
     setPage(1);
+    setHealthFlags(new Map());
+    setShowOnlyFlagged(false);
   }, [projectId]);
 
   // Reset page when searchQuery changes
   useEffect(() => {
     setPage(1);
   }, [searchQuery]);
+
+  // Health scan function
+  const runHealthScan = useCallback(async () => {
+    if (!projectId || scanRunning) return;
+    setScanRunning(true);
+    try {
+      const res = await fetch('/api/memory/health-scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: projectId,
+          age_threshold_days: healthSettings.age_threshold_days,
+          retrieval_window_days: healthSettings.retrieval_window_days,
+          similarity_min: healthSettings.similarity_min,
+          similarity_max: healthSettings.similarity_max,
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const flags: HealthFlag[] = Array.isArray(data.flags) ? data.flags : [];
+      const flagMap = new Map<string, HealthFlag>();
+      for (const flag of flags) {
+        flagMap.set(flag.memory_id, flag);
+      }
+      setHealthFlags(flagMap);
+    } catch (err) {
+      console.error('Health scan failed:', err);
+      toast.error('Health scan failed. Please try again.');
+    } finally {
+      setScanRunning(false);
+    }
+  }, [projectId, scanRunning, healthSettings]);
+
+  // Scheduled scan interval — only active when on health tab and interval is set
+  useEffect(() => {
+    if (activeTab !== 'health' || !projectId || healthSettings.scan_interval_ms <= 0) return;
+    const intervalId = setInterval(() => {
+      runHealthScan();
+    }, healthSettings.scan_interval_ms);
+    return () => clearInterval(intervalId);
+  }, [activeTab, projectId, healthSettings.scan_interval_ms, runHealthScan]);
 
   function handleSort(field: string) {
     const f = field as SortField;
@@ -120,6 +191,25 @@ export default function MemoryPanel() {
       setter(value);
       setPage(1);
     };
+  }
+
+  // Handle dismiss flag (stale)
+  function handleDismissFlag(memoryId: string) {
+    setHealthFlags(prev => {
+      const next = new Map(prev);
+      next.delete(memoryId);
+      return next;
+    });
+  }
+
+  // Handle open conflict — placeholder (could open a modal later)
+  function handleOpenConflict(flag: HealthFlag) {
+    toast.info(`Conflict: ${flag.memory_id} — ${flag.recommendation}`);
+  }
+
+  // Handle open settings — placeholder
+  function handleOpenSettings() {
+    toast.info('Scan settings coming soon.');
   }
 
   // --- Delete single item ---
@@ -214,9 +304,10 @@ export default function MemoryPanel() {
       if (filterCategory && item.category !== filterCategory) return false;
       if (filterAgentType && item.agent_type !== filterAgentType) return false;
       if (filterType && item.type !== filterType) return false;
+      if (showOnlyFlagged && !healthFlags.has(item.id)) return false;
       return true;
     });
-  }, [items, filterCategory, filterAgentType, filterType]);
+  }, [items, filterCategory, filterAgentType, filterType, showOnlyFlagged, healthFlags]);
 
   // Sorted items
   const sortedItems = useMemo(
@@ -242,6 +333,8 @@ export default function MemoryPanel() {
     else if (dialog.type === 'bulk') confirmBulkDelete();
   }
 
+  const totalFlagCount = healthFlags.size;
+
   return (
     <div className="space-y-4">
       <div>
@@ -251,135 +344,207 @@ export default function MemoryPanel() {
         </p>
       </div>
 
-      {/* Search bar */}
-      <MemorySearch
-        onSearch={q => setSearchQuery(q)}
-        onClear={() => setSearchQuery(null)}
-        isSearchMode={!!searchQuery}
-        searchQuery={searchQuery ?? ''}
-      />
-
-      <MemoryStatBar items={items} />
-
-      <MemoryFilters
-        items={items}
-        category={filterCategory}
-        agentType={filterAgentType}
-        type={filterType}
-        onCategoryChange={handleFilterChange(setFilterCategory)}
-        onAgentTypeChange={handleFilterChange(setFilterAgentType)}
-        onTypeChange={handleFilterChange(setFilterType)}
-      />
-
-      {/* Bulk delete button */}
-      {selectedIds.size > 0 && (
-        <div className="flex items-center gap-3 py-1">
-          <button
-            type="button"
-            onClick={openBulkDelete}
-            className="flex items-center gap-1.5 rounded-md bg-red-600 hover:bg-red-700 px-3 py-1.5 text-sm font-medium text-white transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-            Delete selected ({selectedIds.size})
-          </button>
-          <span className="text-xs text-gray-500 dark:text-gray-400">
-            {selectedIds.size} item{selectedIds.size !== 1 ? 's' : ''} selected
-          </span>
-        </div>
-      )}
-
-      {isLoading && (
-        <div className="flex items-center justify-center py-16 text-gray-400 dark:text-gray-500">
-          <svg className="animate-spin w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+      {/* Tab bar */}
+      <div className="flex border-b border-gray-200 dark:border-gray-700">
+        <button
+          type="button"
+          onClick={() => setActiveTab('list')}
+          className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'list'
+              ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
+              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+          }`}
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
           </svg>
-          Loading memory items...
-        </div>
-      )}
+          Memories
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('health')}
+          className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'health'
+              ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
+              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+          }`}
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Health
+          {totalFlagCount > 0 && (
+            <span className="inline-flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold min-w-[18px] h-[18px] px-1">
+              {totalFlagCount}
+            </span>
+          )}
+        </button>
+      </div>
 
-      {!isLoading && error && (
-        <div className="rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-300">
-          Failed to load memory items. Please try again.
-        </div>
-      )}
-
-      {!isLoading && !error && sortedItems.length === 0 && (
-        <div className="flex items-center justify-center py-16 text-gray-400 dark:text-gray-500 text-sm">
-          {searchQuery
-            ? `No memory items found for "${searchQuery}".`
-            : 'No memory items found' + ((filterCategory || filterAgentType || filterType) ? ' matching current filters.' : '.')}
-        </div>
-      )}
-
-      {!isLoading && !error && sortedItems.length > 0 && (
+      {activeTab === 'health' ? (
+        <HealthTab
+          flags={healthFlags}
+          onRunScan={runHealthScan}
+          scanRunning={scanRunning}
+          onOpenConflict={handleOpenConflict}
+          onDismissFlag={handleDismissFlag}
+          onOpenSettings={handleOpenSettings}
+        />
+      ) : (
         <>
-          <MemoryTable
-            items={pageItems}
-            sortField={sortField}
-            sortDirection={sortDirection}
-            onSort={handleSort}
-            expandedId={expandedId}
-            onToggleExpand={handleToggleExpand}
-            selectedIds={selectedIds}
-            onToggleSelect={handleToggleSelect}
-            onSelectAll={handleSelectAll}
-            onDeleteItem={openSingleDelete}
-            deletingIds={deletingIds}
+          {/* Search bar */}
+          <MemorySearch
+            onSearch={q => setSearchQuery(q)}
+            onClear={() => setSearchQuery(null)}
+            isSearchMode={!!searchQuery}
+            searchQuery={searchQuery ?? ''}
           />
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between pt-2">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Page {clampedPage} of {totalPages} &middot; {sortedItems.length} items
-              </p>
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={clampedPage === 1}
-                  className="rounded px-2 py-1 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  &laquo; Prev
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1)
-                  .filter(p => p === 1 || p === totalPages || Math.abs(p - clampedPage) <= 2)
-                  .reduce<(number | 'ellipsis')[]>((acc, p, idx, arr) => {
-                    if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('ellipsis');
-                    acc.push(p);
-                    return acc;
-                  }, [])
-                  .map((p, idx) =>
-                    p === 'ellipsis' ? (
-                      <span key={`ellipsis-${idx}`} className="px-1 text-gray-400">…</span>
-                    ) : (
-                      <button
-                        key={p}
-                        type="button"
-                        onClick={() => setPage(p as number)}
-                        className={`rounded px-2.5 py-1 text-sm ${
-                          clampedPage === p
-                            ? 'bg-blue-600 text-white'
-                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                        }`}
-                      >
-                        {p}
-                      </button>
-                    )
-                  )}
-                <button
-                  type="button"
-                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                  disabled={clampedPage === totalPages}
-                  className="rounded px-2 py-1 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  Next &raquo;
-                </button>
-              </div>
+          <MemoryStatBar items={items} />
+
+          <MemoryFilters
+            items={items}
+            category={filterCategory}
+            agentType={filterAgentType}
+            type={filterType}
+            onCategoryChange={handleFilterChange(setFilterCategory)}
+            onAgentTypeChange={handleFilterChange(setFilterAgentType)}
+            onTypeChange={handleFilterChange(setFilterType)}
+          />
+
+          {/* Flagged filter toggle */}
+          {healthFlags.size > 0 && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => { setShowOnlyFlagged(v => !v); setPage(1); }}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium border transition-colors ${
+                  showOnlyFlagged
+                    ? 'bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-700'
+                    : 'bg-white text-gray-600 border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                {showOnlyFlagged ? 'Show all' : `Show flagged (${healthFlags.size})`}
+              </button>
             </div>
+          )}
+
+          {/* Bulk delete button */}
+          {selectedIds.size > 0 && (
+            <div className="flex items-center gap-3 py-1">
+              <button
+                type="button"
+                onClick={openBulkDelete}
+                className="flex items-center gap-1.5 rounded-md bg-red-600 hover:bg-red-700 px-3 py-1.5 text-sm font-medium text-white transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Delete selected ({selectedIds.size})
+              </button>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {selectedIds.size} item{selectedIds.size !== 1 ? 's' : ''} selected
+              </span>
+            </div>
+          )}
+
+          {isLoading && (
+            <div className="flex items-center justify-center py-16 text-gray-400 dark:text-gray-500">
+              <svg className="animate-spin w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              Loading memory items...
+            </div>
+          )}
+
+          {!isLoading && error && (
+            <div className="rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+              Failed to load memory items. Please try again.
+            </div>
+          )}
+
+          {!isLoading && !error && sortedItems.length === 0 && (
+            <div className="flex items-center justify-center py-16 text-gray-400 dark:text-gray-500 text-sm">
+              {searchQuery
+                ? `No memory items found for "${searchQuery}".`
+                : 'No memory items found' + ((filterCategory || filterAgentType || filterType || showOnlyFlagged) ? ' matching current filters.' : '.')}
+            </div>
+          )}
+
+          {!isLoading && !error && sortedItems.length > 0 && (
+            <>
+              <MemoryTable
+                items={pageItems}
+                sortField={sortField}
+                sortDirection={sortDirection}
+                onSort={handleSort}
+                expandedId={expandedId}
+                onToggleExpand={handleToggleExpand}
+                selectedIds={selectedIds}
+                onToggleSelect={handleToggleSelect}
+                onSelectAll={handleSelectAll}
+                onDeleteItem={openSingleDelete}
+                deletingIds={deletingIds}
+                healthFlags={healthFlags}
+                onOpenConflict={handleOpenConflict}
+              />
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-2">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Page {clampedPage} of {totalPages} &middot; {sortedItems.length} items
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setPage(p => Math.max(1, p - 1))}
+                      disabled={clampedPage === 1}
+                      className="rounded px-2 py-1 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      &laquo; Prev
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(p => p === 1 || p === totalPages || Math.abs(p - clampedPage) <= 2)
+                      .reduce<(number | 'ellipsis')[]>((acc, p, idx, arr) => {
+                        if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('ellipsis');
+                        acc.push(p);
+                        return acc;
+                      }, [])
+                      .map((p, idx) =>
+                        p === 'ellipsis' ? (
+                          <span key={`ellipsis-${idx}`} className="px-1 text-gray-400">…</span>
+                        ) : (
+                          <button
+                            key={p}
+                            type="button"
+                            onClick={() => setPage(p as number)}
+                            className={`rounded px-2.5 py-1 text-sm ${
+                              clampedPage === p
+                                ? 'bg-blue-600 text-white'
+                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        )
+                      )}
+                    <button
+                      type="button"
+                      onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                      disabled={clampedPage === totalPages}
+                      className="rounded px-2 py-1 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Next &raquo;
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </>
       )}

@@ -1,5 +1,6 @@
 import type { MemoryItem } from '@/lib/types/memory';
 import MemoryRow from './MemoryRow';
+import type { HealthFlag } from './HealthTab';
 
 interface MemoryTableProps {
   items: MemoryItem[];
@@ -13,6 +14,8 @@ interface MemoryTableProps {
   onSelectAll: () => void;
   onDeleteItem: (id: string) => void;
   deletingIds?: Set<string>;
+  healthFlags?: Map<string, HealthFlag>;
+  onOpenConflict?: (flag: HealthFlag) => void;
 }
 
 type Column = {
@@ -58,6 +61,8 @@ export default function MemoryTable({
   onSelectAll,
   onDeleteItem,
   deletingIds = new Set(),
+  healthFlags,
+  onOpenConflict,
 }: MemoryTableProps) {
   const allSelected = items.length > 0 && items.every(i => selectedIds.has(i.id));
 
@@ -85,6 +90,9 @@ export default function MemoryTable({
                 <SortIcon active={sortField === col.field} direction={sortDirection} />
               </th>
             ))}
+            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap">
+              Health
+            </th>
           </tr>
         </thead>
         <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
@@ -98,6 +106,8 @@ export default function MemoryTable({
               onToggleSelect={() => onToggleSelect(item.id)}
               onDelete={() => onDeleteItem(item.id)}
               isDeleting={deletingIds.has(item.id)}
+              healthFlag={healthFlags?.get(item.id)}
+              onOpenConflict={onOpenConflict}
             />
           ))}
         </tbody>

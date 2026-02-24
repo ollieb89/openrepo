@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { MemoryItem } from '@/lib/types/memory';
+import type { HealthFlag } from './HealthTab';
 
 interface MemoryRowProps {
   item: MemoryItem;
@@ -11,6 +12,8 @@ interface MemoryRowProps {
   onToggleSelect: () => void;
   onDelete: () => void;
   isDeleting?: boolean;
+  healthFlag?: HealthFlag;
+  onOpenConflict?: (flag: HealthFlag) => void;
 }
 
 const CONTENT_CAP = 300;
@@ -62,6 +65,8 @@ export default function MemoryRow({
   onToggleSelect,
   onDelete,
   isDeleting = false,
+  healthFlag,
+  onOpenConflict,
 }: MemoryRowProps) {
   const [showMore, setShowMore] = useState(false);
 
@@ -102,6 +107,26 @@ export default function MemoryRow({
         </td>
         <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
           {formatDate(item.created_at)}
+        </td>
+        <td className="px-4 py-3 text-sm whitespace-nowrap">
+          {healthFlag && (
+            <button
+              type="button"
+              onClick={e => {
+                e.stopPropagation();
+                if (healthFlag.flag_type === 'conflict' && onOpenConflict) {
+                  onOpenConflict(healthFlag);
+                }
+              }}
+              className={`${pillClass} cursor-pointer ${
+                healthFlag.flag_type === 'stale'
+                  ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300'
+                  : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+              }`}
+            >
+              {healthFlag.flag_type}
+            </button>
+          )}
         </td>
       </tr>
 
