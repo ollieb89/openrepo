@@ -75,33 +75,33 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 | — | Pending |
-| INFRA-02 | — | Pending |
-| INFRA-03 | — | Pending |
-| INFRA-04 | — | Pending |
-| INFRA-05 | — | Pending |
-| SCOPE-01 | — | Pending |
-| SCOPE-02 | — | Pending |
-| SCOPE-03 | — | Pending |
-| MEM-01 | — | Pending |
-| MEM-02 | — | Pending |
-| MEM-03 | — | Pending |
-| MEM-04 | — | Pending |
-| RET-01 | — | Pending |
-| RET-02 | — | Pending |
-| RET-03 | — | Pending |
-| RET-04 | — | Pending |
-| RET-05 | — | Pending |
-| DSH-11 | — | Pending |
-| DSH-12 | — | Pending |
-| DSH-13 | — | Pending |
-| DSH-14 | — | Pending |
+| INFRA-01 | Phase 26 | Pending |
+| INFRA-02 | Phase 26 | Pending |
+| INFRA-03 | Phase 26 | Pending |
+| INFRA-04 | Phase 26 | Pending |
+| INFRA-05 | Phase 26 | Pending |
+| SCOPE-01 | Phase 27 | Pending |
+| SCOPE-02 | Phase 27 | Pending |
+| SCOPE-03 | Phase 27 | Pending |
+| MEM-01 | Phase 28 | Pending |
+| MEM-02 | Phase 30 | Pending |
+| MEM-03 | Phase 28 | Pending |
+| MEM-04 | Phase 28 | Pending |
+| RET-01 | Phase 29 | Pending |
+| RET-02 | Phase 29 | Pending |
+| RET-03 | Phase 29 | Pending |
+| RET-04 | Phase 29 | Pending |
+| RET-05 | Phase 31 | Pending |
+| DSH-11 | Phase 32 | Pending |
+| DSH-12 | Phase 32 | Pending |
+| DSH-13 | Phase 32 | Pending |
+| DSH-14 | Phase 32 | Pending |
 
 **Coverage:**
 - v1.3 requirements: 21 total
-- Mapped to phases: 0
-- Unmapped: 21 ⚠️
+- Mapped to phases: 21
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-02-24*
-*Last updated: 2026-02-24 after initial definition*
+*Last updated: 2026-02-24 after roadmap creation (v1.3 phases 26-32)*
