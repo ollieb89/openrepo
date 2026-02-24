@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.2 Orchestration Hardening — Phase 23: Pool Config
+**Current focus:** v1.2 Orchestration Hardening — Phase 24: Dashboard Metrics
 
 ## Current Position
 
-Phase: 23 of 25 (Pool Config)
-Plan: 2 of 2 in current phase (23-01 complete, 23-02 pending)
-Status: Phase 23 in progress — 23-01-PLAN.md complete (POOL-01: config-driven PoolRegistry)
-Last activity: 2026-02-24 — 23-01-PLAN.md complete (POOL-01: get_pool_config + hot-reload PoolRegistry)
+Phase: 23 of 25 (Pool Config) — COMPLETE
+Plan: Phase 23 complete (2 of 2 plans done)
+Status: Phase 23 complete — POOL-01, POOL-02, POOL-03 done. Next: Phase 24-dashboard-metrics
+Last activity: 2026-02-24 — 23-02-PLAN.md complete (pool isolation modes + overflow policies)
 
 Progress: [██░░░░░░░░░░░░░░░░░░] 10% (v1.2)
 
@@ -36,6 +36,7 @@ Progress: [██░░░░░░░░░░░░░░░░░░] 10% (v1
 | 22-observability-metrics P01 | 1 | 2 tasks | 4 files |
 | 22-observability-metrics P02 | 1 | 2 tasks | 2 files |
 | 23-pool-config P01 | 1 | 2 tasks | 4 files |
+| 23-pool-config P02 | 5 | 2 tasks | 2 files |
 | 25-monitor-cache-fix P01 | 1 | 2 tasks | 1 file |
 
 *Updated after each plan completion*
@@ -64,6 +65,10 @@ Recent decisions affecting current work:
 - [Phase 23-pool-config]: Pool config reads project.json fresh on every get_pool() call — supports hot-reload without restart
 - [Phase 23-pool-config]: Invalid pool config values log a warning and fall back to defaults — never raise, never block spawns
 - [Phase 23-pool-config]: max_per_project removed from PoolRegistry; config-driven via get_pool_config() with _POOL_DEFAULTS fallback; _pool_config attached to pool instances for Plan 02 overflow policy
+- [Phase 23-pool-config]: PoolOverflowError is single exception type for all overflow scenarios (reject immediate + wait timeout)
+- [Phase 23-pool-config]: Shared semaphore created lazily on first shared-mode get_pool() call; isolated pools get dedicated semaphores
+- [Phase 23-pool-config]: priority overflow policy uses PriorityQueue + semaphore.acquire() — infrastructure for L2 priority=0 elevation
+- [Phase 23-pool-config]: Monitor TOTAL saturation denominator is sum(per-project max_concurrent) not N*3
 
 ### Pending Todos
 
@@ -76,5 +81,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 23-01-PLAN.md (config-driven PoolRegistry with hot-reload; POOL-01 complete; Phase 23 Plan 1 of 2 done)
+Stopped at: Completed 23-02-PLAN.md (pool isolation modes + overflow policies; POOL-02 + POOL-03 complete; Phase 23 complete)
 Resume file: None

@@ -30,8 +30,8 @@ Requirements for Orchestration Hardening milestone. Each maps to roadmap phases.
 ### Pool Config
 
 - [x] **POOL-01**: Per-project concurrency limits configurable via project.json l3_overrides
-- [ ] **POOL-02**: Projects can run in isolated pool mode (dedicated containers) vs shared mode (default)
-- [ ] **POOL-03**: Queue overflow policy configurable per project (reject, wait, priority)
+- [x] **POOL-02**: Projects can run in isolated pool mode (dedicated containers) vs shared mode (default)
+- [x] **POOL-03**: Queue overflow policy configurable per project (reject, wait, priority)
 
 ### Dashboard
 
@@ -87,8 +87,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OBS-03 | Phase 22 | Complete |
 | OBS-04 | Phase 22 | Complete |
 | POOL-01 | Phase 23 | Complete |
-| POOL-02 | Phase 23 | Pending |
-| POOL-03 | Phase 23 | Pending |
+| POOL-02 | Phase 23 | Complete |
+| POOL-03 | Phase 23 | Complete |
 | DSH-09 | Phase 24 | Pending |
 | DSH-10 | Phase 24 | Pending |
 | PERF-04 (integration) | Phase 25 | Complete |
