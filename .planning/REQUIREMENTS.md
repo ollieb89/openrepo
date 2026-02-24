@@ -23,15 +23,15 @@ Requirements for Agent Memory milestone. Each maps to roadmap phases.
 
 ### Memory Operations
 
-- [ ] **MEM-01**: L3 task outcomes (semantic snapshots) are auto-memorized after successful container exit via fire-and-forget pattern
+- [x] **MEM-01**: L3 task outcomes (semantic snapshots) are auto-memorized after successful container exit via fire-and-forget pattern
 - [ ] **MEM-02**: L2 review decisions (merge/reject with reasoning) are memorized after each review cycle
-- [ ] **MEM-03**: Memorization failure is non-blocking — L3 task lifecycle and L2 review flow continue uninterrupted if memory service is unavailable
+- [x] **MEM-03**: Memorization failure is non-blocking — L3 task lifecycle and L2 review flow continue uninterrupted if memory service is unavailable
 - [ ] **MEM-04**: MEMU_API_URL environment variable is injected into L3 containers at spawn time
 
 ### Retrieval & Injection
 
 - [x] **RET-01**: Pre-spawn context retrieval calls memU retrieve (RAG mode) before L3 container creation
-- [x] **RET-02**: Retrieved memories are injected into SOUL template via soul_renderer.py with a memory context section
+- [ ] **RET-02**: Retrieved memories are injected into SOUL template via soul_renderer.py with a memory context section
 - [x] **RET-03**: Retrieved memory injection has a hard 2,000-character budget cap to prevent SOUL template bloat
 - [x] **RET-04**: Pre-spawn retrieval degrades gracefully to empty context if memory service is unavailable
 - [ ] **RET-05**: L3 containers can query memU service during execution via HTTP for task-specific lookups
@@ -83,12 +83,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SCOPE-01 | Phase 27 | Complete |
 | SCOPE-02 | Phase 27 | Complete |
 | SCOPE-03 | Phase 27 | Complete |
-| MEM-01 | Phase 28 | Pending |
+| MEM-01 | Phase 28 | Complete |
 | MEM-02 | Phase 30 | Pending |
-| MEM-03 | Phase 28 | Pending |
-| MEM-04 | Phase 28 | Pending |
+| MEM-03 | Phase 28 | Complete |
+| MEM-04 | Phase 33 | Pending |
 | RET-01 | Phase 29 | Complete |
-| RET-02 | Phase 29 | Complete |
+| RET-02 | Phase 33 | Pending |
 | RET-03 | Phase 29 | Complete |
 | RET-04 | Phase 29 | Complete |
 | RET-05 | Phase 31 | Pending |

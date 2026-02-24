@@ -69,6 +69,7 @@ See: `.planning/milestones/v1.2-ROADMAP.md` for full phase details.
 - [ ] **Phase 30: L2 Review Decision Memorization** — merge/reject decisions with reasoning are memorized after each L2 review cycle
 - [ ] **Phase 31: L3 In-Execution Memory Queries** — L3 containers can query memU via HTTP during task execution for on-demand lookups
 - [ ] **Phase 32: Dashboard Memory Panel** — /memory page in occc for browsing, searching, and deleting project-scoped memory items
+- [ ] **Phase 33: Integration Gap Closure** — Fix broken SOUL_FILE wiring in entrypoint.sh, correct MEMU_API_URL for in-container use, join L3 containers to openclaw-net, update requirement checkboxes
 
 ## Phase Details
 
@@ -172,6 +173,22 @@ Plans:
 Plans:
 - [ ] 32-01: TBD
 
+### Phase 33: Integration Gap Closure
+**Goal**: Fix the two broken integration points from audit — entrypoint.sh SOUL_FILE handling and MEMU_API_URL container networking — so the pre-spawn SOUL injection flow works end-to-end and L3 containers can reach memU
+**Depends on**: Phases 28, 29
+**Requirements**: MEM-04, RET-02 (completing partial satisfaction)
+**Gap Closure:** Closes gaps from v1.3 milestone audit
+**Success Criteria** (what must be TRUE):
+  1. entrypoint.sh reads $SOUL_FILE and passes its content to the CLI runtime — the augmented SOUL with memory context reaches the L3 agent
+  2. MEMU_API_URL uses Docker DNS (memu-server) or host.docker.internal — not localhost — so L3 containers can reach the memory service
+  3. L3 containers are joined to openclaw-net at spawn time, enabling Docker DNS resolution for memu-server
+  4. Pre-spawn SOUL injection flow works end-to-end: spawn.py retrieves → renders SOUL → mounts file → entrypoint reads → CLI receives augmented SOUL
+  5. MEM-01 and MEM-03 checkboxes in REQUIREMENTS.md reflect their actual satisfied status
+**Plans**: TBD
+
+Plans:
+- [ ] 33-01: TBD
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -208,3 +225,4 @@ Plans:
 | 30. L2 Review Decision Memorization | v1.3 | 0/? | Not started | - |
 | 31. L3 In-Execution Memory Queries | v1.3 | 0/? | Not started | - |
 | 32. Dashboard Memory Panel | v1.3 | 0/? | Not started | - |
+| 33. Integration Gap Closure | v1.3 | 0/? | Not started | - |
