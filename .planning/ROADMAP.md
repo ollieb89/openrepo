@@ -204,10 +204,10 @@ Plans:
   2. `_format_memory_context()` correctly routes items with `category == "review_decision"` to the "Past Review Outcomes" section
   3. Items without a category field still route to "Past Work Context" (backward compatibility)
   4. Unit test confirms the full round-trip: memorize with category → retrieve → format into correct section
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 34-01: TBD
+- [ ] 34-01-PLAN.md — Add category field to review decision payload + tests for round-trip routing and backward compat
 
 ### Phase 35: L3 In-Execution Memory Queries
 **Goal**: L3 containers can query memU for task-specific context during execution — not just at spawn time — via HTTP calls that are independent of SOUL injection
