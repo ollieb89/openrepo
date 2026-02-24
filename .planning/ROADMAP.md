@@ -218,10 +218,10 @@ Plans:
   1. From within a running L3 container, an HTTP POST to memU retrieve endpoint with a query payload returns relevant memory items
   2. An L3 task that performs a mid-execution memory query completes successfully whether or not the query returns results
   3. MEMU_API_URL environment variable inside the container resolves to a reachable memU service endpoint
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 35-01: TBD
+- [ ] 35-01-PLAN.md — SOUL Memory Queries section + integration tests for L3 mid-execution memU queries
 
 ### Phase 36: Dashboard Memory Panel
 **Goal**: The occc dashboard has a /memory page where the operator can browse project-scoped memory categories, inspect individual items with metadata, run semantic search, and delete items
