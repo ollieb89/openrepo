@@ -53,3 +53,35 @@
 - **Capability Drop:** Function with minimal Linux capabilities (cap_drop ALL, limited adds if needed).
 - **Network:** Respect container network boundaries; no external access unless explicitly configured.
 - **Secrets:** Never log or expose API keys, tokens, or credentials in state updates or logs.
+
+## Memory Queries
+
+You can query the project's memory service during execution for task-specific context.
+This is independent of the memories injected at spawn time — use it for on-demand lookups.
+
+**When to query:** Consider querying memU when you encounter an unfamiliar pattern, hit an error,
+or need to check project conventions before making a decision.
+
+**How to query (5-second timeout enforced):**
+
+```bash
+# Query memU for relevant context
+QUERY="your natural language question here"
+RESPONSE=$(curl -s --max-time 5 \
+  -X POST "${MEMU_API_URL}/retrieve" \
+  -H "Content-Type: application/json" \
+  -d "{\"queries\": [{\"role\": \"user\", \"content\": \"${QUERY}\"}], \"where\": {\"user_id\": \"${OPENCLAW_PROJECT}\"}}" \
+  2>/dev/null || echo "[]")
+
+# Extract memory texts (jq is available in the container)
+echo "$RESPONSE" | jq -r '(if type == "array" then . else .items // [] end)[] | .resource_url // empty' 2>/dev/null || true
+```
+
+**Scoping:** Queries use `OPENCLAW_PROJECT` for `where.user_id` — results are scoped to this project only.
+No cross-project results are returned, which preserves per-project isolation.
+
+**Agent context:** You can include task type from `$SKILL_HINT` in your query string for more relevant results,
+e.g., `"common errors in ${SKILL_HINT} tasks"` or `"project conventions for ${SKILL_HINT} work"`.
+
+**Advisory only:** If memU is unreachable or returns no results, continue task execution —
+memory queries are advisory only. Silent degradation is guaranteed by the `|| echo "[]"` fallback.
