@@ -5,7 +5,7 @@ import { IntentMetadata } from './types/intent';
 import { calculateScore } from './relevance';
 
 const GET_DB_PATH = () => {
-  const root = process.env.OPENCLAW_ROOT || process.cwd();
+  const root = process.env.OPENCLAW_ROOT || '/home/ollie/.openclaw';
   return path.join(root, 'workspace', '.openclaw', 'nexus-sync.db');
 };
 

@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs';
 
 const GET_RECORDS_ROOT = () => {
-  const root = process.env.OPENCLAW_ROOT || process.cwd();
+  const root = process.env.OPENCLAW_ROOT || '/home/ollie/.openclaw';
   return path.join(root, 'workspace', '.openclaw', 'records', 'decisions');
 };
 
