@@ -546,6 +546,134 @@ def _show_task_detail_single_file(state_file_path: str, task_id: str) -> None:
         sys.exit(1)
 
 
+def show_pool_utilization(project_filter: Optional[str] = None) -> None:
+    """
+    Display per-project pool utilization computed on-the-fly from state data.
+
+    Reads workspace-state.json for each project and aggregates task counts by
+    status. Saturation percentage is color-coded: green (0-33%), yellow (34-66%),
+    red (67-100%).
+
+    Args:
+        project_filter: If set, show only this project. If None, show all.
+    """
+    projects = _discover_projects(project_filter)
+
+    # Per CONTEXT.md: max_concurrent is 3; Phase 23 makes it configurable.
+    max_concurrent = 3
+
+    active_statuses = {'in_progress', 'starting', 'testing'}
+    pending_statuses = {'pending'}
+    terminal_statuses = {'completed'}
+    failed_statuses = {'failed', 'timeout'}
+
+    rows = []
+    total_active = 0
+    total_queued = 0
+    total_completed = 0
+    total_failed = 0
+
+    for proj_id, state_file in projects:
+        if not state_file.exists():
+            # Include project with zeroes — it exists but no tasks yet
+            rows.append({
+                "project_id": proj_id,
+                "active": 0,
+                "queued": 0,
+                "completed": 0,
+                "failed": 0,
+                "max_concurrent": max_concurrent,
+                "saturation_pct": 0.0,
+            })
+            continue
+
+        try:
+            js = JarvisState(state_file)
+            state = js.read_state()
+            tasks = state.get('tasks', {})
+
+            active = sum(1 for t in tasks.values() if t.get('status') in active_statuses)
+            queued = sum(1 for t in tasks.values() if t.get('status') in pending_statuses)
+            completed = sum(1 for t in tasks.values() if t.get('status') in terminal_statuses)
+            failed = sum(1 for t in tasks.values() if t.get('status') in failed_statuses)
+            saturation_pct = round((active / max_concurrent) * 100, 1)
+
+            rows.append({
+                "project_id": proj_id,
+                "active": active,
+                "queued": queued,
+                "completed": completed,
+                "failed": failed,
+                "max_concurrent": max_concurrent,
+                "saturation_pct": saturation_pct,
+            })
+
+            total_active += active
+            total_queued += queued
+            total_completed += completed
+            total_failed += failed
+
+        except Exception as e:
+            print(f"{Colors.RED}Error reading state for {proj_id}: {e}{Colors.RESET}", file=sys.stderr)
+
+    if not rows:
+        print(f"{Colors.YELLOW}No tasks found{Colors.RESET}")
+        return
+
+    def saturation_color(pct: float) -> str:
+        if pct <= 33.0:
+            return Colors.GREEN
+        elif pct <= 66.0:
+            return Colors.YELLOW
+        return Colors.RED
+
+    # Print header
+    print(f"{Colors.BOLD}OpenClaw Pool Utilization{Colors.RESET}")
+    if project_filter:
+        print(f"Project: {project_filter}\n")
+    else:
+        print()
+
+    header = (
+        f"{Colors.BOLD}"
+        f"{'PROJECT':<18} {'ACTIVE':<8} {'QUEUED':<8} {'COMPLETED':<12} {'FAILED':<8} {'SATURATION'}"
+        f"{Colors.RESET}"
+    )
+    print(header)
+    print("-" * 75)
+
+    for row in rows:
+        pct = row["saturation_pct"]
+        sat_color = saturation_color(pct)
+        saturation_str = f"{sat_color}{pct:>5.1f}%{Colors.RESET}"
+
+        print(
+            f"{row['project_id']:<18} "
+            f"{row['active']:<8} "
+            f"{row['queued']:<8} "
+            f"{row['completed']:<12} "
+            f"{row['failed']:<8} "
+            f"{saturation_str}"
+        )
+
+    # Summary line for multi-project view
+    if project_filter is None and len(rows) > 1:
+        print("-" * 75)
+        total_pct = round((total_active / (len(rows) * max_concurrent)) * 100, 1)
+        sat_color = saturation_color(total_pct)
+        total_saturation_str = f"{sat_color}{total_pct:>5.1f}%{Colors.RESET}"
+        print(
+            f"{'TOTAL':<18} "
+            f"{total_active:<8} "
+            f"{total_queued:<8} "
+            f"{total_completed:<12} "
+            f"{total_failed:<8} "
+            f"{total_saturation_str}"
+        )
+
+    print()
+
+
 def main():
     """CLI entrypoint for OpenClaw L3 Monitor."""
     parser = argparse.ArgumentParser(
@@ -602,8 +730,14 @@ def main():
         help='Path to workspace-state.json (legacy single-file mode)'
     )
 
+    # pool command
+    pool_parser = subparsers.add_parser(
+        'pool',
+        help='Show pool utilization per project'
+    )
+
     # Add --project to all subcommands
-    for sub in [tail_parser, status_parser, task_parser]:
+    for sub in [tail_parser, status_parser, task_parser, pool_parser]:
         sub.add_argument(
             '--project',
             type=str,
@@ -639,6 +773,8 @@ def main():
             state_file_path=state_file,
             project_filter=args.project,
         )
+    elif args.command == 'pool':
+        show_pool_utilization(project_filter=args.project)
 
 
 if __name__ == '__main__':
