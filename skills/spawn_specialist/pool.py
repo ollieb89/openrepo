@@ -25,6 +25,9 @@ from spawn import (
 )
 from orchestration.state_engine import JarvisState
 from orchestration.project_config import get_active_project_id, get_workspace_path, get_state_path
+from orchestration.logging import get_logger
+
+logger = get_logger("pool")
 
 
 class L3ContainerPool:
@@ -84,7 +87,7 @@ class L3ContainerPool:
 
         # Acquire semaphore (blocks if max concurrent containers already running)
         async with self.semaphore:
-            print(f"[pool] Acquired slot for task: {task_id}")
+            logger.info("Acquired pool slot", extra={"task_id": task_id})
 
             # First attempt
             result = await self._attempt_task(
@@ -100,7 +103,7 @@ class L3ContainerPool:
 
             # Auto-retry once on failure (per locked decision)
             if result["status"] == "failed" and result["retry_count"] == 0:
-                print(f"[pool] Task {task_id} failed, retrying once...")
+                logger.warning("Task failed, retrying", extra={"task_id": task_id, "retry_count": 1})
 
                 # Clean up failed container
                 if task_id in self.active_containers:
@@ -119,7 +122,7 @@ class L3ContainerPool:
                     retry_count=1,
                 )
 
-            print(f"[pool] Task {task_id} final result: {result['status']}")
+            logger.info("Task final result", extra={"task_id": task_id, "status": result["status"]})
             return result
 
     async def _attempt_task(
@@ -174,7 +177,7 @@ class L3ContainerPool:
             )
 
             self.active_containers[task_id] = container
-            print(f"[pool] Spawned container for task {task_id}: {container.name}")
+            logger.info("Container spawned", extra={"task_id": task_id, "container_name": container.name})
 
             # Monitor container execution
             monitor_result = await self.monitor_container(
@@ -204,7 +207,7 @@ class L3ContainerPool:
                 )
 
         except asyncio.TimeoutError:
-            print(f"[pool] Task {task_id} timed out after {timeout_seconds}s")
+            logger.error("Task timed out", extra={"task_id": task_id, "timeout": timeout_seconds})
             result["status"] = "timeout"
             result["exit_code"] = -1
 
@@ -213,7 +216,7 @@ class L3ContainerPool:
                 try:
                     container.kill()
                 except Exception as e:
-                    print(f"[pool] Error killing container on timeout: {e}")
+                    logger.error("Error killing container on timeout", extra={"task_id": task_id, "error": str(e)})
 
             # Update state
             jarvis = JarvisState(get_state_path(self.project_id))
@@ -224,7 +227,7 @@ class L3ContainerPool:
             )
 
         except Exception as e:
-            print(f"[pool] Error executing task {task_id}: {e}")
+            logger.error("Task execution error", extra={"task_id": task_id, "error": str(e)})
             result["status"] = "error"
             result["exit_code"] = -1
             result["error"] = str(e)
@@ -264,7 +267,7 @@ class L3ContainerPool:
         Returns:
             Dictionary with exit_code and status
         """
-        print(f"[pool] Monitoring container for task {task_id} (timeout: {timeout_seconds}s)")
+        logger.info("Monitoring container", extra={"task_id": task_id, "timeout": timeout_seconds})
 
         # Stream logs in real-time
         async def stream_logs():
@@ -278,9 +281,9 @@ class L3ContainerPool:
 
                 async for log_line in log_stream:
                     decoded = log_line.decode("utf-8", errors="replace").strip()
-                    print(f"[L3-{task_id}] {decoded}")
+                    logger.debug("L3 output", extra={"task_id": task_id, "output": decoded})
             except Exception as e:
-                print(f"[pool] Log streaming error: {e}")
+                logger.debug("Log streaming ended", extra={"task_id": task_id, "error": str(e)})
 
         # Start log streaming task
         log_task = asyncio.create_task(stream_logs())
@@ -296,7 +299,7 @@ class L3ContainerPool:
             exit_code = wait_result.get("StatusCode", -1)
             status = "completed" if exit_code == 0 else "failed"
 
-            print(f"[pool] Container for task {task_id} exited with code {exit_code}")
+            logger.info("Container exited", extra={"task_id": task_id, "exit_code": exit_code, "status": status})
 
             return {
                 "exit_code": exit_code,
@@ -304,7 +307,7 @@ class L3ContainerPool:
             }
 
         except asyncio.TimeoutError:
-            print(f"[pool] Container timeout for task {task_id}")
+            logger.error("Container timeout", extra={"task_id": task_id})
             raise  # Re-raise to be handled by caller
 
         finally:
