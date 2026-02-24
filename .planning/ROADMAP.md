@@ -73,6 +73,8 @@ See: `.planning/milestones/v1.2-ROADMAP.md` for full phase details.
 - [x] **Phase 34: Review Decision Category Fix** — Add missing `category` field to review decision memorize payload so _format_memory_context() routes to correct SOUL section (completed 2026-02-24)
 - [x] **Phase 35: L3 In-Execution Memory Queries** — Validate and wire L3 in-container memU HTTP queries during task execution (completed 2026-02-24)
 - [x] **Phase 36: Dashboard Memory Panel** — /memory page in occc for browsing, semantic search, deletion, and metadata display of project-scoped memory items (completed 2026-02-24)
+- [ ] **Phase 37: Category Field End-to-End Fix** — Add missing category field to MemorizeRequest model, include category in MemoryClient payload, verify primary routing path fires
+- [ ] **Phase 38: Phase 28 Verification + Dead Code Cleanup** — Write missing Phase 28 VERIFICATION.md, remove dead MEMU_SERVICE_URL constant and stale entrypoint comment
 
 ## Phase Details
 
@@ -240,6 +242,35 @@ Plans:
 - [ ] 36-02-PLAN.md — Memory page + table + accordion rows + filters + stats bar + pagination
 - [ ] 36-03-PLAN.md — Search bar + delete workflow + bulk delete + confirmation dialog + toasts
 
+### Phase 37: Category Field End-to-End Fix
+**Goal**: The `category` field flows end-to-end from memorize callers through MemoryClient, MemorizeRequest, and memu-py storage, so `_format_memory_context()` primary routing path fires and category metadata appears on retrieved items
+**Depends on**: Phase 34
+**Requirements**: MEM-01, MEM-02, RET-02 (completing partial integration)
+**Gap Closure:** Closes 3 integration gaps and 2 partial flows from v1.3 audit
+**Success Criteria** (what must be TRUE):
+  1. `MemorizeRequest` Pydantic model accepts `category` as an optional field — extra fields are no longer silently discarded
+  2. `MemoryClient.memorize()` includes `category` in POST payload when provided
+  3. A memorized item with `category="review_decision"` returns that category on retrieval
+  4. `_format_memory_context()` routes `category=="review_decision"` items to "Past Review Outcomes" via primary path (not agent_type fallback)
+**Plans**: TBD
+
+Plans:
+- [ ] 37-01: TBD
+
+### Phase 38: Phase 28 Verification + Dead Code Cleanup
+**Goal**: Phase 28 has formal verification (the only milestone phase without it), and accumulated dead code from the memory subsystem is removed
+**Depends on**: Phase 37
+**Requirements**: MEM-01, MEM-03 (completing partial verification status)
+**Gap Closure:** Closes missing VERIFICATION.md and dead code tech debt from v1.3 audit
+**Success Criteria** (what must be TRUE):
+  1. Phase 28 VERIFICATION.md exists with evidence from existing test suite (5 tests pass) and cross-references from Phase 33
+  2. Dead `MEMU_SERVICE_URL` constant removed from `memory_client.py`
+  3. Stale placeholder comment removed from `entrypoint.sh` line 75
+**Plans**: TBD
+
+Plans:
+- [ ] 38-01: TBD
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -280,3 +311,5 @@ Plans:
 | 34. Review Decision Category Fix | 1/1 | Complete    | 2026-02-24 | - |
 | 35. L3 In-Execution Memory Queries | 1/1 | Complete    | 2026-02-24 | - |
 | 36. Dashboard Memory Panel | 3/3 | Complete    | 2026-02-24 | - |
+| 37. Category Field E2E Fix | v1.3 | 0/? | Not started | - |
+| 38. Phase 28 Verification + Cleanup | v1.3 | 0/? | Not started | - |
