@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 19 of 24 (Structured Logging)
-Plan: 1 of TBD in current phase
+Plan: 2 of 2 in current phase (phase complete)
 Status: In progress
-Last activity: 2026-02-24 — 19-01-PLAN.md complete (structured logging foundation)
+Last activity: 2026-02-24 — 19-02-PLAN.md complete (spawn/pool/snapshot structured logging)
 
 Progress: [█░░░░░░░░░░░░░░░░░░░] 5% (v1.2)
 
@@ -27,6 +27,7 @@ Progress: [█░░░░░░░░░░░░░░░░░░░] 5% (v1.
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 19-structured-logging P01 | 1 | 2 tasks | 4 files |
+| 19-structured-logging P02 | 1 | 2 tasks | 3 files |
 
 *Updated after each plan completion*
 
@@ -40,6 +41,7 @@ Recent decisions affecting current work:
 - Shell injection hotfix committed before v1.2 (execSync → execFileSync in router_skill)
 - L3 pool isolation is shared by default; per-project isolated pools targeted in Phase 23
 - [Phase 19-structured-logging]: Use Python stdlib logging only — no external deps, emit to stderr, component field strips openclaw. prefix
+- [Phase 19-02]: L3 container stdout relay logged at DEBUG with output field; log streaming errors downgraded to debug (expected on task end)
 
 ### Pending Todos
 
@@ -52,5 +54,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 19-01-PLAN.md
+Stopped at: Completed 19-02-PLAN.md
 Resume file: None
