@@ -12,6 +12,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from .config import LOCK_TIMEOUT, LOCK_RETRY_ATTEMPTS
+from .logging import get_logger
+
+logger = get_logger("state_engine")
 
 
 class JarvisState:
@@ -53,14 +56,23 @@ class JarvisState:
             while True:
                 try:
                     fcntl.flock(fd, lock_type | fcntl.LOCK_NB)
+                    logger.debug(
+                        "Lock acquired",
+                        extra={"lock_type": "exclusive" if lock_type == fcntl.LOCK_EX else "shared"},
+                    )
                     return True
                 except BlockingIOError:
                     if time.time() - start_time > self.lock_timeout:
+                        logger.error("Lock acquisition timeout", extra={"timeout": self.lock_timeout})
                         raise TimeoutError(f"Lock acquisition timeout after {self.lock_timeout}s")
                     time.sleep(0.1)
         else:
             try:
                 fcntl.flock(fd, lock_type | fcntl.LOCK_NB)
+                logger.debug(
+                    "Lock acquired",
+                    extra={"lock_type": "exclusive" if lock_type == fcntl.LOCK_EX else "shared"},
+                )
                 return True
             except BlockingIOError:
                 return False
@@ -96,7 +108,7 @@ class JarvisState:
             return json.loads(content)
         except json.JSONDecodeError as e:
             # Log error and reinitialize with empty state
-            print(f"[JarvisState] Warning: Corrupt JSON, reinitializing: {e}")
+            logger.warning("Corrupt JSON in state file, reinitializing", extra={"error": str(e)})
             return {"version": "1.0.0", "protocol": "jarvis", "tasks": {}, "metadata": {}}
 
     def read_state(self) -> Dict[str, Any]:
@@ -111,7 +123,9 @@ class JarvisState:
         with self.state_file.open('r+') as f:
             self._acquire_lock(f.fileno(), fcntl.LOCK_SH)
             try:
-                return self._read_state_locked(f)
+                state = self._read_state_locked(f)
+                logger.debug("State read completed")
+                return state
             finally:
                 self._release_lock(f.fileno())
 
@@ -191,6 +205,7 @@ class JarvisState:
 
                         # Atomic write
                         self._write_state_locked(f, state)
+                        logger.info("Task updated", extra={"task_id": task_id, "status": status})
                         return
 
                     finally:
@@ -232,6 +247,7 @@ class JarvisState:
                         }
 
                         self._write_state_locked(f, state)
+                        logger.info("Task created", extra={"task_id": task_id, "skill_hint": skill_hint})
                         return
 
                     finally:
