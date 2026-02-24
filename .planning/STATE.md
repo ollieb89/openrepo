@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** Phase 37: Category Field E2E Fix
+**Current focus:** Phase 38: Gap Closure (next)
 
 ## Current Position
 
-Phase: 37 of 38 (Category Field E2E Fix)
-Plan: 1 of 1 (complete)
-Status: Phase 37 Plan 01 complete — category field wired through memorize pipeline.
-Last activity: 2026-02-24 — Phase 37 Plan 01 executed (CategoryValue type alias, MemorizeRequest category field, router user_dict injection, MemoryClient payload wiring, 2 new tests)
+Phase: 37 of 38 (Category Field E2E Fix — complete)
+Plan: 2 of 2 (complete)
+Status: Phase 37 complete — MEM-02 and RET-02 fully end-to-end. Category stored via Plan 01; formatted via Plan 02.
+Last activity: 2026-02-24 — Phase 37 Plan 02 executed (CATEGORY_SECTION_MAP, three-bucket _format_memory_context(), review-first ordering, 6 new tests)
 
 Progress: [██████████] Phase 37/38 complete
 
@@ -111,6 +111,12 @@ Phase 37 Plan 01 decisions:
 - Non-mutating user_dict merge in router: dict(request.user) + conditional category injection — never mutates request.user in place
 - category omitted from POST payload entirely when None — clean backward compatibility, no null values in wire format
 
+Phase 37 Plan 02 decisions:
+- CATEGORY_SECTION_MAP hard-coded dict maps review_decision->Past Review Outcomes, task_outcome->Task Outcomes — plain string literals, no Enum per prior convention
+- Three-bucket _format_memory_context() output ordering locked: Past Review Outcomes -> Task Outcomes -> Past Work Context (review-first)
+- Primary routing via CATEGORY_SECTION_MAP[category]; agent_type=='l2_pm' fallback retained unchanged for legacy items
+- Budget shared across all three sections via same MEMORY_CONTEXT_BUDGET counter
+
 ### Pending Todos
 
 None.
@@ -122,5 +128,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 37-01-PLAN.md — CategoryValue type alias, MemorizeRequest category field, router user_dict injection, MemoryClient payload wiring, 2 new tests
-Resume file: .planning/phases/37-category-field-e2e-fix/37-01-SUMMARY.md
+Stopped at: Completed 37-02-PLAN.md — CATEGORY_SECTION_MAP, three-bucket _format_memory_context(), review-first ordering, 6 new tests, MEM-02 and RET-02 complete e2e
+Resume file: .planning/phases/37-category-field-e2e-fix/37-02-SUMMARY.md

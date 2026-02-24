@@ -73,7 +73,7 @@ See: `.planning/milestones/v1.2-ROADMAP.md` for full phase details.
 - [x] **Phase 34: Review Decision Category Fix** — Add missing `category` field to review decision memorize payload so _format_memory_context() routes to correct SOUL section (completed 2026-02-24)
 - [x] **Phase 35: L3 In-Execution Memory Queries** — Validate and wire L3 in-container memU HTTP queries during task execution (completed 2026-02-24)
 - [x] **Phase 36: Dashboard Memory Panel** — /memory page in occc for browsing, semantic search, deletion, and metadata display of project-scoped memory items (completed 2026-02-24)
-- [ ] **Phase 37: Category Field End-to-End Fix** — Add missing category field to MemorizeRequest model, include category in MemoryClient payload, verify primary routing path fires
+- [x] **Phase 37: Category Field End-to-End Fix** — Add missing category field to MemorizeRequest model, include category in MemoryClient payload, verify primary routing path fires (completed 2026-02-24)
 - [ ] **Phase 38: Phase 28 Verification + Dead Code Cleanup** — Write missing Phase 28 VERIFICATION.md, remove dead MEMU_SERVICE_URL constant and stale entrypoint comment
 
 ## Phase Details
@@ -312,5 +312,5 @@ Plans:
 | 34. Review Decision Category Fix | 1/1 | Complete    | 2026-02-24 | - |
 | 35. L3 In-Execution Memory Queries | 1/1 | Complete    | 2026-02-24 | - |
 | 36. Dashboard Memory Panel | 3/3 | Complete    | 2026-02-24 | - |
-| 37. Category Field E2E Fix | 1/2 | In Progress|  | - |
+| 37. Category Field E2E Fix | 2/2 | Complete   | 2026-02-24 | - |
 | 38. Phase 28 Verification + Cleanup | v1.3 | 0/? | Not started | - |
