@@ -11,6 +11,8 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from .config_validator import validate_project_config, validate_agent_hierarchy, ConfigValidationError  # noqa: F401
+
 
 def _find_project_root() -> Path:
     """Find the OpenClaw project root (directory containing openclaw.json)."""
@@ -23,16 +25,29 @@ def _find_project_root() -> Path:
     return Path(__file__).parent.parent
 
 
+def load_and_validate_openclaw_config() -> Dict[str, Any]:
+    """
+    Load openclaw.json and validate agent hierarchy.
+
+    Raises:
+        FileNotFoundError: If openclaw.json does not exist.
+        ConfigValidationError: If agent hierarchy has invalid reports_to or level constraints.
+    """
+    root = _find_project_root()
+    config_path = root / "openclaw.json"
+    with open(config_path) as f:
+        config = json.load(f)
+    validate_agent_hierarchy(config, str(config_path))
+    return config
+
+
 def get_active_project_id() -> str:
     """Read the active project ID from openclaw.json or OPENCLAW_PROJECT env var."""
     env_project = os.environ.get("OPENCLAW_PROJECT")
     if env_project:
         return env_project
 
-    root = _find_project_root()
-    config_path = root / "openclaw.json"
-    with open(config_path) as f:
-        config = json.load(f)
+    config = load_and_validate_openclaw_config()
 
     project_id = config.get("active_project")
     if not project_id:
@@ -70,7 +85,10 @@ def load_project_config(project_id: Optional[str] = None) -> Dict[str, Any]:
         )
 
     with open(manifest_path) as f:
-        return json.load(f)
+        config = json.load(f)
+
+    validate_project_config(config, str(manifest_path))
+    return config
 
 
 def get_source_directories() -> list:

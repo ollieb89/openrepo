@@ -14,6 +14,7 @@ from .config import LOCK_TIMEOUT, POLL_INTERVAL
 from .init import initialize_workspace, verify_workspace
 from .project_config import (
     load_project_config,
+    load_and_validate_openclaw_config,
     get_workspace_path,
     get_tech_stack,
     get_agent_mapping,
@@ -22,6 +23,7 @@ from .project_config import (
     get_snapshot_dir,
     ProjectNotFoundError,
 )
+from .config_validator import validate_project_config, validate_agent_hierarchy, ConfigValidationError
 from .snapshot import (
     create_staging_branch,
     capture_semantic_snapshot,
@@ -48,9 +50,13 @@ __all__ = [
     'initialize_workspace', 'verify_workspace',
 
     # Project configuration
-    'load_project_config', 'get_workspace_path', 'get_tech_stack',
+    'load_project_config', 'load_and_validate_openclaw_config',
+    'get_workspace_path', 'get_tech_stack',
     'get_agent_mapping', 'get_active_project_id',
     'get_state_path', 'get_snapshot_dir', 'ProjectNotFoundError',
+
+    # Config validation
+    'validate_project_config', 'validate_agent_hierarchy', 'ConfigValidationError',
 
     # Git snapshot workflow
     'create_staging_branch', 'capture_semantic_snapshot',
