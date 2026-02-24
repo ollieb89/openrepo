@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 26 of 32 (memU Infrastructure)
-Plan: 1 of 3 complete
+Plan: 2 of 3 complete
 Status: In progress
-Last activity: 2026-02-24 — Phase 26 Plan 01 complete (Docker Compose + Postgres infrastructure)
+Last activity: 2026-02-24 — Phase 26 Plan 02 complete (FastAPI memory_service application + full stack verified)
 
 Progress: [█░░░░░░░░░] 5% (v1.3)
 
@@ -37,6 +37,13 @@ v1.3 decisions made (Phase 26 Plan 01):
 - Single uvicorn worker required — multiple workers create separate MemUService instances
 - DSN format: postgresql+psycopg:// (psycopg3, not psycopg2) for memu-py compatibility
 
+v1.3 decisions made (Phase 26 Plan 02):
+- MemoryService from memu.app (not MemUService from memu) — plan used wrong class name, correct class discovered via introspection
+- MemoryService constructor is sync — init_service() is a regular function, no await in lifespan
+- Dockerfile needs build-essential + libc6-dev + rustup — memu-py v1.4.0 uses maturin/pyo3 Rust extension
+- pydantic-settings required in requirements.txt — missing from Plan 01, added as auto-fix
+- memorize_config llm_temperature removed — not a valid MemorizeConfig field
+
 ### Pending Todos
 
 None.
@@ -48,5 +55,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Phase 26 Plan 01 complete — Docker Compose + Postgres infrastructure
-Resume file: .planning/phases/26-memu-infrastructure/26-01-SUMMARY.md
+Stopped at: Phase 26 Plan 02 complete — FastAPI memory_service application + full stack verified
+Resume file: .planning/phases/26-memu-infrastructure/26-02-SUMMARY.md

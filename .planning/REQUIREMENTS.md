@@ -9,11 +9,11 @@ Requirements for Agent Memory milestone. Each maps to roadmap phases.
 
 ### Infrastructure
 
-- [ ] **INFRA-01**: memU service runs as a standalone Docker container (python:3.13-slim-bookworm base) with FastAPI wrapper around memu-py
+- [x] **INFRA-01**: memU service runs as a standalone Docker container (python:3.13-slim-bookworm base) with FastAPI wrapper around memu-py
 - [x] **INFRA-02**: PostgreSQL+pgvector runs as a Docker container with persistent volume and correct extension initialization
 - [x] **INFRA-03**: Docker Compose defines memory stack (memU service + PostgreSQL) on shared bridge network accessible to L2 and L3 containers
-- [ ] **INFRA-04**: Internal REST API exposes POST /memorize, POST /retrieve, GET /memories, DELETE /memories/{id} endpoints with Pydantic validation
-- [ ] **INFRA-05**: Memory service health check endpoint (GET /health) verifiable by orchestration layer
+- [x] **INFRA-04**: Internal REST API exposes POST /memorize, POST /retrieve, GET /memories, DELETE /memories/{id} endpoints with Pydantic validation
+- [x] **INFRA-05**: Memory service health check endpoint (GET /health) verifiable by orchestration layer
 
 ### Scoping
 
@@ -75,11 +75,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 | Phase 26 | Pending |
+| INFRA-01 | Phase 26 | Complete |
 | INFRA-02 | Phase 26 | Complete |
 | INFRA-03 | Phase 26 | Complete |
-| INFRA-04 | Phase 26 | Pending |
-| INFRA-05 | Phase 26 | Pending |
+| INFRA-04 | Phase 26 | Complete |
+| INFRA-05 | Phase 26 | Complete |
 | SCOPE-01 | Phase 27 | Pending |
 | SCOPE-02 | Phase 27 | Pending |
 | SCOPE-03 | Phase 27 | Pending |
