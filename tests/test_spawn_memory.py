@@ -435,3 +435,45 @@ def test_write_soul_file_overwrites_existing(tmp_path):
     _write_soul_file("first", "proj", "t1", tmp_path)
     path = _write_soul_file("second", "proj", "t1", tmp_path)
     assert path.read_text(encoding="utf-8") == "second"
+
+
+# ---------------------------------------------------------------------------
+# RET-02 (phase 34): Round-trip category routing tests
+# ---------------------------------------------------------------------------
+
+
+def test_review_decision_category_routes_to_review_section():
+    """Items stored with category='review_decision' route to '## Past Review Outcomes'.
+
+    This is the primary routing path — now that snapshot.py sends the category
+    field, retrieved items should arrive here and not rely on the agent_type fallback.
+    """
+    memories = [
+        {
+            "resource_url": "# L2 Review Decision: task T-001\nVerdict: merge\nReasoning: all good",
+            "category": "review_decision",
+        }
+    ]
+
+    result = _format_memory_context(memories)
+
+    assert "## Past Review Outcomes" in result
+    assert "## Past Work Context" not in result  # no work items present
+    assert "Verdict: merge" in result
+
+
+def test_item_without_category_routes_to_work_context():
+    """Items without a category field route to '## Past Work Context' (backward compatibility).
+
+    Note: test_format_work_only_no_review_section already covers this case implicitly.
+    This explicit test documents the backward-compatibility contract per user decision.
+    """
+    memories = [
+        {"resource_url": "Legacy memory item with no category"},  # no 'category' key
+    ]
+
+    result = _format_memory_context(memories)
+
+    assert "## Past Work Context" in result
+    assert "## Past Review Outcomes" not in result  # no review items present
+    assert "Legacy memory item" in result
