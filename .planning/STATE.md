@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.4 Operational Maturity — Phase 41: L1 Strategic Suggestions (in progress — Plan 01 complete)
+**Current focus:** v1.4 Operational Maturity — Phase 41: L1 Strategic Suggestions (in progress — Plans 01-02 complete)
 
 ## Current Position
 
 Phase: 41 of 42 (L1 Strategic Suggestions) — in progress
-Plan: 1 of 3 complete in current phase
-Status: Plan 01 complete — Pattern extraction engine (suggest.py) + 11 unit tests
-Last activity: 2026-02-24 — Phase 41 Plan 01 complete: suggest.py pattern extraction engine, test_suggest.py
+Plan: 2 of 3 complete in current phase
+Status: Plan 02 complete — Suggestions API routes (GET/POST list + accept/reject action with approval gate) + 8 validation tests
+Last activity: 2026-02-24 — Phase 41 Plan 02 complete: suggestions API routes, validateDiffText approval gate, test_suggest_api.py
 
 Progress: [█████░░░░░] 55% (v1.4)
 
@@ -24,7 +24,7 @@ Progress: [█████░░░░░] 55% (v1.4)
 - v1.2: 7 phases, 14 plans in ~1 day
 - v1.3: 11 phases, 19 plans in 7 days
 
-**v1.4:** 4 phases, TBD plans — 9 plans complete (Phase 39 Plans 01-04, Phase 40 Plans 01-04, Phase 41 Plan 01)
+**v1.4:** 4 phases, TBD plans — 10 plans complete (Phase 39 Plans 01-04, Phase 40 Plans 01-04, Phase 41 Plans 01-02)
 
 ## Accumulated Context
 
@@ -84,6 +84,12 @@ v1.4 research flags to carry into planning:
 - items array from useMemory hook used directly (hook exposes items already unwrapped, not data?.items)
 - Regression test uses stdlib dict validator not pydantic (pydantic not installed in root test env)
 
+**Phase 41 Plan 02 decisions:**
+- validateDiffText exported from action route (not shared lib) — keeps approval gate co-located with write path, preventing accidental bypass
+- rerenderSoul failure logged but does not fail accept request — override content already durably written
+- rejection_reason memorization deferred to L2 CLI — action route does not call memU directly (separation of concerns)
+- project param always required in query string — no active_project fallback (cross-project scope safety)
+
 **Phase 41 Plan 01 decisions:**
 - Activity log (workspace-state.json) used as primary corpus; memU as supplementary — engine works even when memU is empty or down
 - keyword frequency clustering (stdlib) chosen over embedding-based — no live memU dependency, works on plain text
@@ -104,5 +110,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 41-01-PLAN.md — Pattern extraction engine (suggest.py), 11 unit tests
-Resume: Phase 41 Plan 02 (API routes — approval gate + GET/POST suggestions endpoints)
+Stopped at: Completed 41-02-PLAN.md — Suggestions API routes (GET/POST list + accept/reject action with validateDiffText approval gate), 8 validation tests
+Resume: Phase 41 Plan 03 (Dashboard UI — suggestions tab/panel for approval workflow)
