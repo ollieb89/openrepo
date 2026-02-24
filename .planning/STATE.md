@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 
 ## Current Position
 
-Phase: 37 of 38 (Category Field E2E Fix — complete)
-Plan: 2 of 2 (complete)
-Status: Phase 37 complete — MEM-02 and RET-02 fully end-to-end. Category stored via Plan 01; formatted via Plan 02.
-Last activity: 2026-02-24 — Phase 37 Plan 02 executed (CATEGORY_SECTION_MAP, three-bucket _format_memory_context(), review-first ordering, 6 new tests)
+Phase: 38 of 38 (Phase 28 Verification + Dead Code Cleanup — complete)
+Plan: 1 of 1 (complete)
+Status: Phase 38 complete — MEMU_SERVICE_URL dead constant removed, stale entrypoint comment removed, Phase 28 VERIFICATION.md written (5/5 truths), MEM-01 and MEM-03 Complete.
+Last activity: 2026-02-24 — Phase 38 Plan 01 executed (dead code removal, 28-VERIFICATION.md, REQUIREMENTS.md traceability update)
 
-Progress: [██████████] Phase 37/38 complete
+Progress: [██████████] Phase 38/38 complete — v1.3 milestone phases done
 
 ## Performance Metrics
 
@@ -116,6 +116,8 @@ Phase 37 Plan 02 decisions:
 - Three-bucket _format_memory_context() output ordering locked: Past Review Outcomes -> Task Outcomes -> Past Work Context (review-first)
 - Primary routing via CATEGORY_SECTION_MAP[category]; agent_type=='l2_pm' fallback retained unchanged for legacy items
 - Budget shared across all three sections via same MEMORY_CONTEXT_BUDGET counter
+- [Phase 38]: Docstring example updated from MEMU_SERVICE_URL to literal URL — avoids NameError if example is copy-pasted
+- [Phase 38]: MEM-03 traceability updated to Phase 28,38 — Phase 28 implemented it, Phase 38 formally verified it
 
 ### Pending Todos
 
@@ -128,5 +130,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 37-02-PLAN.md — CATEGORY_SECTION_MAP, three-bucket _format_memory_context(), review-first ordering, 6 new tests, MEM-02 and RET-02 complete e2e
-Resume file: .planning/phases/37-category-field-e2e-fix/37-02-SUMMARY.md
+Stopped at: Completed 38-01-PLAN.md — MEMU_SERVICE_URL removed, stale placeholder comment removed, Phase 28 VERIFICATION.md (5/5), MEM-01 and MEM-03 Complete
+Resume file: .planning/phases/38-phase28-verification-cleanup/38-01-SUMMARY.md
