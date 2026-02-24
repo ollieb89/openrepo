@@ -85,7 +85,7 @@ See: `.planning/milestones/v1.3-ROADMAP.md` for full phase details.
 **Milestone Goal:** Harden the swarm for production-grade autonomy — graceful shutdown with task recovery, memory health monitoring, L1 proactive SOUL suggestions, and delta-based snapshot optimization.
 
 - [x] **Phase 39: Graceful Sentinel** - SIGTERM handling, task dehydration, interrupted task recovery loop, and fire-and-forget drain on shutdown (completed 2026-02-24)
-- [ ] **Phase 40: Memory Health Monitor** - Batch staleness and conflict detection with dashboard review UI and memory edit endpoint
+- [x] **Phase 40: Memory Health Monitor** - Batch staleness and conflict detection with dashboard review UI and memory edit endpoint (completed 2026-02-24)
 - [ ] **Phase 41: L1 Strategic Suggestions** - Pattern extraction engine producing reviewable SOUL amendments with mandatory human approval gate
 - [ ] **Phase 42: Delta Snapshots** - Cursor-based memory retrieval and configurable snapshot pruning to reduce I/O at scale
 
@@ -117,7 +117,7 @@ Plans:
   2. The `/memory` dashboard page shows health badges on flagged memories — stale and conflict indicators are visible at a glance without navigating away
   3. Clicking a conflict badge opens a side panel showing both conflicting memories, their similarity score, and three actions: edit, delete, or dismiss flag
   4. A `PUT /memories/:id` endpoint in the memory service accepts updated content and persists the change without creating a duplicate record
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 40-01-PLAN.md — Health scan engine + PUT endpoint in memory service (QUAL-01, QUAL-02, QUAL-03, QUAL-04)
@@ -156,6 +156,6 @@ Plans:
 | 19-25 | v1.2 | 14/14 | ✓ Complete | 2026-02-24 |
 | 26-38 | v1.3 | 19/19 | ✓ Complete | 2026-02-24 |
 | 39. Graceful Sentinel | 4/4 | Complete    | 2026-02-24 | - |
-| 40. Memory Health Monitor | 2/3 | In Progress|  | - |
+| 40. Memory Health Monitor | 3/3 | Complete   | 2026-02-24 | - |
 | 41. L1 Strategic Suggestions | v1.4 | 0/TBD | Not started | - |
 | 42. Delta Snapshots | v1.4 | 0/TBD | Not started | - |

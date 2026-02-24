@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.4 Operational Maturity — Phase 40: Memory Health Monitor
+**Current focus:** v1.4 Operational Maturity — Phase 40: Memory Health Monitor COMPLETE, Phase 41 next
 
 ## Current Position
 
-Phase: 40 of 42 (Memory Health Monitor) — IN PROGRESS
-Plan: 2 of N in current phase
-Status: Plan 02 complete — dashboard health UI (QUAL-04 PUT proxy, QUAL-05 badges + Health tab)
-Last activity: 2026-02-24 — Phase 40 Plan 02 complete: health-scan proxy, PUT proxy, HealthTab, health badges, scan trigger
+Phase: 40 of 42 (Memory Health Monitor) — COMPLETE
+Plan: 3 of 3 in current phase
+Status: Plan 03 complete — ConflictPanel with LCS word-diff, SettingsPanel with 5 thresholds, MemoryPanel integration (QUAL-06)
+Last activity: 2026-02-24 — Phase 40 Plan 03 complete: ConflictPanel, SettingsPanel, HealthTab archive action
 
-Progress: [████░░░░░░] 40% (v1.4)
+Progress: [█████░░░░░] 50% (v1.4)
 
 ## Performance Metrics
 
@@ -24,7 +24,7 @@ Progress: [████░░░░░░] 40% (v1.4)
 - v1.2: 7 phases, 14 plans in ~1 day
 - v1.3: 11 phases, 19 plans in 7 days
 
-**v1.4:** 4 phases, TBD plans — 6 plans complete (Phase 39 Plans 01-04, Phase 40 Plans 01-02)
+**v1.4:** 4 phases, TBD plans — 7 plans complete (Phase 39 Plans 01-04, Phase 40 Plans 01-03)
 
 ## Accumulated Context
 
@@ -72,6 +72,13 @@ v1.4 research flags to carry into planning:
 - handleOpenConflict and handleOpenSettings use toast.info placeholders — modals deferred (out of QUAL-04/05 scope)
 - Scheduled interval guards on activeTab === health AND projectId non-null
 
+**Phase 40 Plan 03 decisions:**
+- LCS word-diff splits on \s+ preserving spacing tokens for faithful original formatting
+- SettingsPanel is ephemeral session-only state — no backend persistence per CONTEXT.md scope
+- HealthSettings type defined in SettingsPanel.tsx, imported by MemoryPanel — single source of truth
+- onArchiveMemory is optional prop on HealthTab for backward compatibility
+- handleAdvanceNext sequences conflict flags only — stale flags use dismiss/archive independently
+
 ### Pending Todos
 
 None.
@@ -79,11 +86,11 @@ None.
 ### Blockers/Concerns
 
 - Phase 39 Plan 01 RESOLVED: stop_timeout=30 added to spawn.py container_config.
-- Phase 40: `PUT /memories/:id` endpoint schema needs confirmation against existing `memory_item` model before implementation to avoid schema migration.
+- Phase 40: RESOLVED — PUT /api/memory/[id] proxy implemented in plan 02, used successfully in plan 03.
 - Phase 41: Rejection corpus may be too small for ≥3-cluster threshold at current project scale — track cluster hit rate early and add keyword-frequency fallback if needed.
 
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 40-02-PLAN.md — dashboard health UI (QUAL-04 PUT proxy, QUAL-05 badges + Health tab)
-Resume: Phase 40 Plan 03 (if exists) or Phase 41
+Stopped at: Completed 40-03-PLAN.md — ConflictPanel with LCS word-diff, SettingsPanel, MemoryPanel integration (QUAL-06)
+Resume: Phase 41 (L1 Strategic Suggestions — build approval gate first)

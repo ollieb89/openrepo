@@ -22,7 +22,7 @@ Requirements for v1.4 Operational Maturity. Each maps to roadmap phases.
 - [x] **QUAL-03**: Health scan returns scored list of flagged memories with flag type, similarity score, and recommendation
 - [x] **QUAL-04**: New `PUT /memories/:id` endpoint in memory service allows updating memory content
 - [x] **QUAL-05**: Dashboard /memory page displays health badges on flagged memories with staleness and conflict indicators
-- [ ] **QUAL-06**: Dashboard side panel shows conflict details (both memories, similarity score) with actions: edit, delete, dismiss flag
+- [x] **QUAL-06**: Dashboard side panel shows conflict details (both memories, similarity score) with actions: edit, delete, dismiss flag
 
 ### Advanced (L1 Strategic Suggestions)
 
@@ -80,7 +80,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | QUAL-03 | Phase 40 | Complete |
 | QUAL-04 | Phase 40 | Complete |
 | QUAL-05 | Phase 40 | Complete |
-| QUAL-06 | Phase 40 | Pending |
+| QUAL-06 | Phase 40 | Complete |
 | ADV-01 | Phase 41 | Pending |
 | ADV-02 | Phase 41 | Pending |
 | ADV-03 | Phase 41 | Pending |
