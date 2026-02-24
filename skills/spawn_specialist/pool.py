@@ -36,7 +36,7 @@ from spawn import (
     spawn_l3_specialist,
 )
 from orchestration.state_engine import JarvisState
-from orchestration.project_config import get_active_project_id, get_workspace_path, get_state_path, get_pool_config
+from orchestration.project_config import get_active_project_id, get_workspace_path, get_state_path, get_pool_config, get_memu_config, get_snapshot_dir
 from orchestration.logging import get_logger
 
 logger = get_logger("pool")
@@ -420,6 +420,13 @@ class L3ContainerPool:
                     activity_entry=f"Task completed successfully (exit code: {result['exit_code']})",
                 )
                 lock_wait_total_ms += (time.time() - t0) * 1000
+
+                # Fire-and-forget memorization (MEM-01): non-blocking, runs concurrently after slot release
+                snapshot_path = get_snapshot_dir(self.project_id) / f"{task_id}.diff"
+                snapshot_content = snapshot_path.read_text() if snapshot_path.exists() else f"Task {task_id} completed (no snapshot available)"
+                asyncio.create_task(
+                    self._memorize_snapshot_fire_and_forget(task_id, snapshot_content, skill_hint)
+                )
             else:
                 # Get error context
                 last_logs = get_container_logs(container, tail=50)
@@ -493,6 +500,47 @@ class L3ContainerPool:
                 del self.active_containers[task_id]
 
         return result
+
+    async def _memorize_snapshot_fire_and_forget(
+        self,
+        task_id: str,
+        snapshot_content: str,
+        skill_hint: str,
+    ) -> None:
+        """
+        Memorize L3 task snapshot in memU. Non-blocking fire-and-forget.
+
+        Called via asyncio.create_task() -- exceptions are caught and logged,
+        never raised. Memorization failure is completely non-blocking.
+        """
+        from orchestration.memory_client import MemoryClient, AgentType
+
+        memu_cfg = get_memu_config()
+        base_url = memu_cfg.get("memu_api_url", "").strip()
+        if not base_url:
+            logger.debug(
+                "MEMU_API_URL not configured -- skipping memorization",
+                extra={"task_id": task_id},
+            )
+            return
+
+        agent_type = AgentType.L3_CODE if skill_hint == "code" else AgentType.L3_TEST
+        try:
+            async with MemoryClient(base_url, self.project_id, agent_type) as client:
+                result = await client.memorize(
+                    f"# L3 {skill_hint.upper()} task {task_id}\n\n{snapshot_content}",
+                    category="l3_outcome",
+                )
+            if result is not None:
+                logger.info(
+                    "Snapshot memorized",
+                    extra={"task_id": task_id, "project_id": self.project_id},
+                )
+        except Exception as exc:
+            logger.warning(
+                "Snapshot memorization failed (non-blocking)",
+                extra={"task_id": task_id, "error": str(exc)},
+            )
 
     async def monitor_container(
         self,
