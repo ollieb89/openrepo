@@ -47,6 +47,34 @@ _RETRIEVE_TIMEOUT = httpx.Timeout(3.0, connect=2.0)  # Match memory_client.py pa
 _RETRIEVE_LIMIT = 10  # Max items to request from memU
 SOUL_CONTAINER_PATH = "/run/openclaw/soul.md"  # Container-side path for augmented SOUL
 
+_LOCALHOST_PATTERN = re.compile(r'(https?://)(?:localhost|127\.0\.0\.1)((?::\d+)?(?:/.*)?$)')
+
+
+def _rewrite_memu_url_for_container(url: str, dns_hostname: str = "openclaw-memory") -> str:
+    """Rewrite localhost/127.0.0.1 in memU URL to Docker DNS hostname.
+    Only replaces the hostname portion — port and path are preserved.
+    Non-localhost URLs pass through unchanged."""
+    if not url:
+        return url
+    return _LOCALHOST_PATTERN.sub(r'\1' + dns_hostname + r'\2', url)
+
+
+def _ensure_openclaw_network(client: docker.DockerClient, network_name: str = "openclaw-net") -> None:
+    """Ensure the named Docker bridge network exists, creating it if absent.
+    Idempotent — safe to call on every spawn."""
+    try:
+        client.networks.get(network_name)
+        logger.debug("Docker network exists", extra={"network": network_name})
+    except docker.errors.NotFound:
+        try:
+            client.networks.create(network_name, driver="bridge")
+            logger.info("Created Docker network", extra={"network": network_name})
+        except docker.errors.APIError as exc:
+            logger.warning(
+                "Failed to create Docker network (non-blocking)",
+                extra={"network": network_name, "error": str(exc)},
+            )
+
 
 def get_docker_client() -> docker.DockerClient:
     """Return a shared Docker client, creating or reconnecting as needed.
@@ -258,6 +286,8 @@ def _build_augmented_soul(project_root: Path, memory_context: str) -> str:
 def _write_soul_tempfile(content: str) -> Path:
     """Write SOUL content to a named temporary file.
 
+    DEPRECATED: Use _write_soul_file() for new code. Retained for existing tests.
+
     Uses delete=False so the file path can be passed to Docker volumes dict and
     the file remains on disk until the caller explicitly unlinks it. Docker
     bind-mounts by inode — the host can unlink after containers.run() returns
@@ -279,6 +309,28 @@ def _write_soul_tempfile(content: str) -> Path:
     tmp.flush()
     tmp.close()
     return Path(tmp.name)
+
+
+def _write_soul_file(content: str, project_id: str, task_id: str, workspace_root: Path) -> Path:
+    """Write augmented SOUL to per-task file in project state directory.
+    Path: workspace/.openclaw/<project_id>/soul-<task_id>.md
+    File persists after container exit for debugging.
+    Caller does NOT clean up — files are removed with project removal.
+
+    Args:
+        content:        Full text content to write.
+        project_id:     Project ID for directory namespacing.
+        task_id:        Task ID for unique filename.
+        workspace_root: Root of the openclaw project (parent of .openclaw/).
+
+    Returns:
+        Path to the written soul file.
+    """
+    state_dir = workspace_root / ".openclaw" / project_id
+    state_dir.mkdir(parents=True, exist_ok=True)
+    soul_path = state_dir / f"soul-{task_id}.md"
+    soul_path.write_text(content, encoding="utf-8")
+    return soul_path
 
 
 def spawn_l3_specialist(
@@ -322,6 +374,9 @@ def spawn_l3_specialist(
         raise RuntimeError(
             f"Docker daemon not running: {e}. Please start Docker and try again."
         ) from e
+
+    # Ensure openclaw-net bridge network exists (idempotent)
+    _ensure_openclaw_network(client)
 
     # Check if L3 image exists
     try:
@@ -377,11 +432,14 @@ def spawn_l3_specialist(
             "TASK_DESCRIPTION": task_description,
             "OPENCLAW_PROJECT": project_id,
             "OPENCLAW_STATE_FILE": f"/workspace/.openclaw/{project_id}/workspace-state.json",
-            "MEMU_API_URL": get_memu_config().get("memu_api_url", ""),
+            "MEMU_API_URL": _rewrite_memu_url_for_container(get_memu_config().get("memu_api_url", "")),
             "MEMU_AGENT_ID": "l3_specialist",
             "MEMU_PROJECT_ID": project_id,
             "MEMU_ENABLED": "1",
         },
+
+        # Docker network — enables DNS resolution for openclaw-memory service
+        "network": "openclaw-net",
 
         # Security isolation (HIE-04 requirements)
         "security_opt": ["no-new-privileges"],
@@ -458,10 +516,10 @@ def spawn_l3_specialist(
         )
 
     soul_content = _build_augmented_soul(project_root, memory_context)
-    soul_tempfile = None
+    soul_file = None
     if soul_content:
-        soul_tempfile = _write_soul_tempfile(soul_content)
-        container_config["volumes"][str(soul_tempfile)] = {
+        soul_file = _write_soul_file(soul_content, project_id, task_id, project_root)
+        container_config["volumes"][str(soul_file)] = {
             "bind": SOUL_CONTAINER_PATH,
             "mode": "ro",
         }
@@ -470,12 +528,7 @@ def spawn_l3_specialist(
     # Spawn container
     logger.info("Spawning L3 container", extra={"task_id": task_id, "project_id": project_id, "container_name": container_name, "skill": skill_hint, "gpu": requires_gpu})
 
-    try:
-        container = client.containers.run(**container_config)
-    finally:
-        if soul_tempfile:
-            soul_tempfile.unlink(missing_ok=True)
-
+    container = client.containers.run(**container_config)
     return container
 
 
