@@ -11,10 +11,13 @@ logger = get_logger("router.memorize")
 async def _run_memorize(service, request: MemorizeRequest) -> None:
     """Background task: calls service.memorize() and logs any errors."""
     try:
+        user_dict = dict(request.user) if request.user else {}
+        if request.category is not None:
+            user_dict["category"] = request.category
         await service.memorize(
             resource_url=request.resource_url,
             modality=request.modality,
-            user=request.user,
+            user=user_dict if user_dict else None,
         )
         logger.info(f"Memorized: {request.resource_url}")
     except Exception as e:

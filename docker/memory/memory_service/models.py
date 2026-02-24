@@ -1,14 +1,17 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel
+
+CategoryValue = Literal["review_decision", "task_outcome"]
 
 
 class MemorizeRequest(BaseModel):
     resource_url: str
     modality: str = "conversation"
     user: dict[str, Any] | None = None
+    category: Optional[CategoryValue] = None
 
 
 class RetrieveRequest(BaseModel):
