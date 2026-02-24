@@ -7,6 +7,7 @@ to enable multiple L3 containers to safely read and write shared state.
 
 import fcntl
 import json
+import shutil
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -98,17 +99,68 @@ class JarvisState:
                 json.dump(initial_state, f, indent=2)
                 f.flush()
 
+    def _create_backup(self) -> None:
+        """
+        Copy state file to .bak before writing.
+
+        Only copies if the source file exists and has content (skip backup of empty files).
+        """
+        if self.state_file.exists() and self.state_file.stat().st_size > 0:
+            backup_path = self.state_file.with_suffix('.json.bak')
+            shutil.copy2(self.state_file, backup_path)
+            logger.debug("State backup created", extra={"backup_path": str(backup_path)})
+
     def _read_state_locked(self, f) -> Dict[str, Any]:
         """Read state from file inside a lock context."""
         f.seek(0)
+        content = f.read()
+        if not content:
+            # Empty file — attempt recovery from backup before reinitializing
+            backup_path = self.state_file.with_suffix('.json.bak')
+            if backup_path.exists():
+                try:
+                    with open(backup_path, 'r') as bf:
+                        backup_content = bf.read()
+                    recovered = json.loads(backup_content)
+                    logger.warning(
+                        "workspace-state.json was empty. Restored from backup."
+                    )
+                    f.seek(0)
+                    f.truncate()
+                    json.dump(recovered, f, indent=2)
+                    f.flush()
+                    return recovered
+                except (json.JSONDecodeError, OSError) as backup_err:
+                    logger.error(
+                        "Backup also corrupt, reinitializing",
+                        extra={"backup_error": str(backup_err)},
+                    )
+            else:
+                logger.warning("State file is empty and no backup found, reinitializing empty state")
+            return {"version": "1.0.0", "protocol": "jarvis", "tasks": {}, "metadata": {}}
         try:
-            content = f.read()
-            if not content:
-                return {"version": "1.0.0", "protocol": "jarvis", "tasks": {}, "metadata": {}}
             return json.loads(content)
         except json.JSONDecodeError as e:
-            # Log error and reinitialize with empty state
-            logger.warning("Corrupt JSON in state file, reinitializing", extra={"error": str(e)})
+            logger.warning("Corrupt JSON in state file, attempting backup recovery", extra={"error": str(e)})
+            backup_path = self.state_file.with_suffix('.json.bak')
+            if backup_path.exists():
+                try:
+                    with open(backup_path, 'r') as bf:
+                        backup_content = bf.read()
+                    recovered = json.loads(backup_content)
+                    logger.warning(
+                        "workspace-state.json was corrupt (invalid JSON). Restored from backup."
+                    )
+                    # Write recovered state back to main file
+                    f.seek(0)
+                    f.truncate()
+                    json.dump(recovered, f, indent=2)
+                    f.flush()
+                    return recovered
+                except (json.JSONDecodeError, OSError) as backup_err:
+                    logger.error("Backup also corrupt, reinitializing", extra={"backup_error": str(backup_err)})
+            else:
+                logger.warning("No backup file found, reinitializing empty state")
             return {"version": "1.0.0", "protocol": "jarvis", "tasks": {}, "metadata": {}}
 
     def read_state(self) -> Dict[str, Any]:
@@ -152,6 +204,8 @@ class JarvisState:
         f.truncate()
         json.dump(state, f, indent=2)
         f.flush()
+        # Backup after successful write so .bak always holds the last known-good state
+        self._create_backup()
 
     def update_task(self, task_id: str, status: str, activity_entry: str) -> None:
         """
