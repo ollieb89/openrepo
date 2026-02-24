@@ -13,48 +13,14 @@ logger = get_logger("main")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = Settings()
-    logger.info("Initializing MemUService...")
+    logger.info("Initializing MemoryService...")
     try:
-        app.state.memu = await init_service(settings)
-        logger.info("MemUService initialized successfully")
-    except TypeError:
-        # MemUService constructor is synchronous — call without await
-        try:
-            settings2 = Settings()
-            from memu import MemUService
-            app.state.memu = MemUService(
-                llm_profiles={
-                    "default": {
-                        "api_key": settings2.OPENAI_API_KEY,
-                        "chat_model": settings2.OPENAI_CHAT_MODEL,
-                    },
-                    "embedding": {
-                        "api_key": settings2.OPENAI_API_KEY,
-                        "embed_model": settings2.OPENAI_EMBED_MODEL,
-                    },
-                },
-                database_config={
-                    "metadata_store": {
-                        "provider": "postgres",
-                        "ddl_mode": "create",
-                        "dsn": settings2.dsn,
-                    },
-                    "vector_index": {
-                        "provider": "pgvector",
-                        "dsn": settings2.dsn,
-                    },
-                },
-                memorize_config={
-                    "llm_temperature": 0.0,
-                },
-            )
-            logger.info("MemUService initialized successfully (sync constructor)")
-        except Exception as inner_e:
-            logger.error(f"Failed to initialize MemUService (sync): {inner_e}")
-            app.state.memu = None
+        # MemoryService.__init__ is synchronous
+        app.state.memu = init_service(settings)
+        logger.info("MemoryService initialized successfully")
     except Exception as e:
-        logger.error(f"Failed to initialize MemUService: {e}")
-        app.state.memu = None
+        logger.error(f"Failed to initialize MemoryService: {e}")
+        app.state.memu = None  # Health endpoint will report uninitialized
 
     yield
 

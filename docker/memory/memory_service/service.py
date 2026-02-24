@@ -1,4 +1,4 @@
-from memu import MemUService
+from memu.app import MemoryService
 
 from .config import Settings
 from .logging import get_logger
@@ -6,9 +6,13 @@ from .logging import get_logger
 logger = get_logger("service")
 
 
-async def init_service(settings: Settings) -> MemUService:
-    """Initialize MemUService with postgres backend and OpenAI LLM profiles."""
-    service = MemUService(
+def init_service(settings: Settings) -> MemoryService:
+    """Initialize MemoryService with postgres backend and OpenAI LLM profiles.
+
+    The MemoryService constructor is synchronous. Individual methods
+    (memorize, retrieve, list_memory_items, delete_memory_item) are async.
+    """
+    service = MemoryService(
         llm_profiles={
             "default": {
                 "api_key": settings.OPENAI_API_KEY,
@@ -30,9 +34,6 @@ async def init_service(settings: Settings) -> MemUService:
                 "dsn": settings.dsn,
             },
         },
-        memorize_config={
-            "llm_temperature": 0.0,
-        },
     )
-    logger.info("MemUService instance created")
+    logger.info("MemoryService instance created")
     return service
