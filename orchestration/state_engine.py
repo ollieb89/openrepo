@@ -5,14 +5,16 @@ This module provides thread-safe state management using fcntl file locking
 to enable multiple L3 containers to safely read and write shared state.
 """
 
+import copy
 import fcntl
 import json
+import os
 import shutil
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from .config import LOCK_TIMEOUT, LOCK_RETRY_ATTEMPTS
+from .config import LOCK_TIMEOUT, LOCK_RETRY_ATTEMPTS, CACHE_TTL_SECONDS
 from .logging import get_logger
 
 logger = get_logger("state_engine")
@@ -36,6 +38,28 @@ class JarvisState:
         self.state_file = Path(state_file_path)
         self.lock_timeout = LOCK_TIMEOUT
         self.lock_retry_attempts = LOCK_RETRY_ATTEMPTS
+        self._cache: Optional[Dict[str, Any]] = None
+        self._cache_mtime: float = 0.0
+        self._cache_time: float = 0.0  # time.time() when cache was populated
+
+    def _is_cache_valid(self) -> tuple[bool, str]:
+        """
+        Check whether the in-memory cache is still valid.
+
+        Returns:
+            (is_valid, reason) — reason is only meaningful on cache miss.
+        """
+        if self._cache is None:
+            return False, "first_read"
+        if time.time() - self._cache_time > CACHE_TTL_SECONDS:
+            return False, "ttl_expired"
+        try:
+            current_mtime = os.path.getmtime(self.state_file)
+        except OSError:
+            return False, "file_missing"
+        if current_mtime != self._cache_mtime:
+            return False, "mtime_changed"
+        return True, ""
 
     def _acquire_lock(self, fd: int, lock_type: int, blocking: bool = True) -> bool:
         """
@@ -167,15 +191,30 @@ class JarvisState:
         """
         Read current state with shared lock (LOCK_SH).
 
+        Returns from in-memory cache when mtime has not changed (cache hit).
+        Falls back to disk read with LOCK_SH on cache miss.
+
         Returns:
             Full state dictionary
         """
         self._ensure_state_file()
 
+        # Check cache before acquiring any lock
+        cache_valid, miss_reason = self._is_cache_valid()
+        if cache_valid:
+            logger.debug("State cache hit", extra={"state_file": str(self.state_file)})
+            return copy.deepcopy(self._cache)
+
+        logger.debug("State cache miss", extra={"reason": miss_reason})
+
         with self.state_file.open('r+') as f:
             self._acquire_lock(f.fileno(), fcntl.LOCK_SH)
             try:
                 state = self._read_state_locked(f)
+                # Populate cache after successful disk read
+                self._cache = copy.deepcopy(state)
+                self._cache_mtime = os.path.getmtime(self.state_file)
+                self._cache_time = time.time()
                 logger.debug("State read completed")
                 return state
             finally:
