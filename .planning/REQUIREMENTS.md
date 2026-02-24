@@ -10,8 +10,8 @@ Requirements for Orchestration Hardening milestone. Each maps to roadmap phases.
 ### Reliability
 
 - [ ] **REL-01**: State engine creates backup before every write, restoring from backup on JSON corruption instead of reinitializing empty
-- [ ] **REL-02**: Project config validates schema on load (project.json required fields, type checking), failing fast with actionable error messages
-- [ ] **REL-03**: openclaw.json validates agent hierarchy on load (valid reports_to references, level constraints)
+- [x] **REL-02**: Project config validates schema on load (project.json required fields, type checking), failing fast with actionable error messages
+- [x] **REL-03**: openclaw.json validates agent hierarchy on load (valid reports_to references, level constraints)
 
 ### Performance
 
@@ -76,8 +76,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | REL-01 | Phase 20 | Pending |
-| REL-02 | Phase 20 | Pending |
-| REL-03 | Phase 20 | Pending |
+| REL-02 | Phase 20 | Complete |
+| REL-03 | Phase 20 | Complete |
 | PERF-01 | Phase 21 | Pending |
 | PERF-02 | Phase 21 | Pending |
 | PERF-03 | Phase 21 | Pending |
