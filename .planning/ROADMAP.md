@@ -64,7 +64,10 @@ See: `.planning/milestones/v1.1-ROADMAP.md` for full phase details.
   2. Log level is configurable at startup without code changes (env var or config)
   3. A log grep for a task ID returns structured entries from every component that touched that task
   4. Existing stdout prints and ad-hoc logging replaced — no mixed plain-text/JSON output from orchestration layer
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 19-01-PLAN.md — Logging foundation module + state_engine instrumentation
+- [ ] 19-02-PLAN.md — Instrument spawn, pool, and snapshot with structured logging
 
 ### Phase 20: Reliability Hardening
 **Goal**: The system never loses state to JSON corruption and catches misconfigured projects at load time with clear, actionable errors
@@ -143,7 +146,7 @@ See: `.planning/milestones/v1.1-ROADMAP.md` for full phase details.
 | 16. Phase 11/12 Integration Fixes | v1.1 | 2/2 | ✓ Complete | 2026-02-23 |
 | 17. Phase 11/12 Formal Verification | v1.1 | 2/2 | ✓ Complete | 2026-02-23 |
 | 18. Integration Hardening | v1.1 | 2/2 | ✓ Complete | 2026-02-23 |
-| 19. Structured Logging | v1.2 | 0/TBD | Not started | - |
+| 19. Structured Logging | v1.2 | 0/2 | Planned | - |
 | 20. Reliability Hardening | v1.2 | 0/TBD | Not started | - |
 | 21. State Engine Performance | v1.2 | 0/TBD | Not started | - |
 | 22. Observability Metrics | v1.2 | 0/TBD | Not started | - |
