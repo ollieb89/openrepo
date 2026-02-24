@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 
 ## Current Position
 
-Phase: 39 of 42 (Graceful Sentinel) — COMPLETE
-Plan: 4 of 4 in current phase (gap closure plan)
-Status: Phase 39 fully complete — ready for Phase 40
-Last activity: 2026-02-24 — Phase 39 Plan 04 complete: wired run_recovery_scan() into spawn_task() (REL-04..REL-08)
+Phase: 40 of 42 (Memory Health Monitor) — IN PROGRESS
+Plan: 1 of N in current phase
+Status: Plan 01 complete — health scan backend API (QUAL-01..QUAL-04)
+Last activity: 2026-02-24 — Phase 40 Plan 01 complete: health scan engine, three endpoints, 19 tests
 
-Progress: [███░░░░░░░] 30% (v1.4)
+Progress: [████░░░░░░] 40% (v1.4)
 
 ## Performance Metrics
 
@@ -24,7 +24,7 @@ Progress: [███░░░░░░░] 30% (v1.4)
 - v1.2: 7 phases, 14 plans in ~1 day
 - v1.3: 11 phases, 19 plans in 7 days
 
-**v1.4:** 4 phases, TBD plans — 4 plans complete (Phase 39 Plans 01-04)
+**v1.4:** 4 phases, TBD plans — 5 plans complete (Phase 39 Plans 01-04, Phase 40 Plan 01)
 
 ## Accumulated Context
 
@@ -57,6 +57,14 @@ v1.4 research flags to carry into planning:
 - pool_cfg set in both try and except paths so pool._pool_config is always a valid dict before run_recovery_scan() call
 - run_recovery_scan() called unconditionally in spawn_task() — no conditional guard needed (scan handles empty state gracefully)
 
+**Phase 40 Plan 01 decisions:**
+- scan_engine.py extracted as stdlib-only module so algorithm is testable without pydantic/memu in root env
+- Lazy imports of cosine_topk and pendulum inside function bodies — _check_staleness works without memu at import time
+- user_id required (non-optional) in HealthScanRequest to prevent cross-project scope leak
+- content required (non-optional) in MemoryUpdateRequest to prevent empty-body ValueError from memu CRUD
+- last_reinforced_at absence treated as 'fresh' if created_at within retrieval_window — avoids false-positive stale flags
+- Conflict pair deduplication via tuple(sorted([id_a, id_b])) seen-set
+
 ### Pending Todos
 
 None.
@@ -70,5 +78,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 39-04-PLAN.md — wired run_recovery_scan() into spawn_task() (REL-04..REL-08, gap closure)
-Resume: Phase 39 fully complete (all 4 plans) — run Phase 40 (Memory Health Monitor, QUAL-01..06)
+Stopped at: Completed 40-01-PLAN.md — health scan engine + REST endpoints (QUAL-01..QUAL-04)
+Resume: Phase 40 Plan 02 — dashboard health UI (QUAL-05, QUAL-06)

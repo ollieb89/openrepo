@@ -17,10 +17,10 @@ Requirements for v1.4 Operational Maturity. Each maps to roadmap phases.
 
 ### Quality (Memory Health Monitor)
 
-- [ ] **QUAL-01**: Batch health scan detects stale memories older than configurable threshold (default 30 days) that haven't been retrieved recently
-- [ ] **QUAL-02**: Batch health scan detects conflicting memories via pgvector cosine similarity range query (same topic, different verdict)
-- [ ] **QUAL-03**: Health scan returns scored list of flagged memories with flag type, similarity score, and recommendation
-- [ ] **QUAL-04**: New `PUT /memories/:id` endpoint in memory service allows updating memory content
+- [x] **QUAL-01**: Batch health scan detects stale memories older than configurable threshold (default 30 days) that haven't been retrieved recently
+- [x] **QUAL-02**: Batch health scan detects conflicting memories via pgvector cosine similarity range query (same topic, different verdict)
+- [x] **QUAL-03**: Health scan returns scored list of flagged memories with flag type, similarity score, and recommendation
+- [x] **QUAL-04**: New `PUT /memories/:id` endpoint in memory service allows updating memory content
 - [ ] **QUAL-05**: Dashboard /memory page displays health badges on flagged memories with staleness and conflict indicators
 - [ ] **QUAL-06**: Dashboard side panel shows conflict details (both memories, similarity score) with actions: edit, delete, dismiss flag
 
@@ -75,10 +75,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REL-06 | Phase 39 | Complete |
 | REL-07 | Phase 39 | Complete |
 | REL-08 | Phase 39 | Complete |
-| QUAL-01 | Phase 40 | Pending |
-| QUAL-02 | Phase 40 | Pending |
-| QUAL-03 | Phase 40 | Pending |
-| QUAL-04 | Phase 40 | Pending |
+| QUAL-01 | Phase 40 | Complete |
+| QUAL-02 | Phase 40 | Complete |
+| QUAL-03 | Phase 40 | Complete |
+| QUAL-04 | Phase 40 | Complete |
 | QUAL-05 | Phase 40 | Pending |
 | QUAL-06 | Phase 40 | Pending |
 | ADV-01 | Phase 41 | Pending |
