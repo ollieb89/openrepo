@@ -238,11 +238,12 @@ export function updateLinkSuggestionStatus(id: string, status: 'accepted' | 'rej
 
 /**
  * Searches for relevant context records based on intent (temporal, project, semantic).
- * Applies a +0.3 boost to records in the active project.
+ * Applies a +0.3 boost to records in the active project and a +0.3 boost to graph neighbors.
  */
 export async function searchContext(intent: IntentMetadata, queryEmbedding?: number[]): Promise<VectorRecord[]> {
   const db = initVectorStore();
   try {
+    // 1. Initial Pool (Temporal filters)
     let sql = 'SELECT * FROM vector_cache WHERE 1=1';
     const params: any[] = [];
 
@@ -257,16 +258,14 @@ export async function searchContext(intent: IntentMetadata, queryEmbedding?: num
 
     const rows = db.prepare(sql).all(...params) as any[];
     
-    const records = rows.map(row => ({
+    let records = rows.map(row => ({
       ...row,
       metadata: JSON.parse(row.metadata),
       embedding: JSON.parse(row.embedding)
-    })) as VectorRecord[];
+    })) as (VectorRecord & { _score?: number; _isNeighbor?: boolean })[];
 
-    // Calculate scores and apply boosts
-    const scoredRecords = records.map(record => {
-      let finalScore = 0;
-      
+    // 2. Initial Scoring
+    records.forEach(record => {
       if (queryEmbedding) {
         // Mock a decision record for calculateScore
         const mockDecision: VectorRecord = {
@@ -277,26 +276,97 @@ export async function searchContext(intent: IntentMetadata, queryEmbedding?: num
           embedding: queryEmbedding
         };
         const { score } = calculateScore(mockDecision, record);
-        finalScore = score;
+        record._score = score;
       } else {
         // If no embedding, use a baseline score
-        finalScore = 0.5;
+        record._score = 0.5;
       }
+    });
+
+    // 3. Identify Seeds (Top 5)
+    const seeds = [...records]
+      .sort((a, b) => (b._score || 0) - (a._score || 0))
+      .slice(0, 5);
+    const seedIds = seeds.map(s => s.id);
+
+    // 4. Graph Expansion
+    if (seedIds.length > 0) {
+      const placeholders = seedIds.map(() => '?').join(',');
+      const neighborRows = db.prepare(`
+        SELECT DISTINCT v.id
+        FROM edges e
+        JOIN vector_cache v ON (e.target_id = v.id OR e.source_id = v.id)
+        WHERE (e.source_id IN (${placeholders}) OR e.target_id IN (${placeholders}))
+      `).all(...seedIds, ...seedIds) as any[];
+
+      const neighborIds = new Set(neighborRows.map(r => r.id));
+      
+      // Mark existing records as neighbors
+      records.forEach(r => {
+        if (neighborIds.has(r.id)) {
+          r._isNeighbor = true;
+        }
+      });
+
+      // Find which neighborIds are NOT in records
+      const existingIds = new Set(records.map(r => r.id));
+      const missingNeighborIds = [...neighborIds].filter(id => !existingIds.has(id));
+
+      if (missingNeighborIds.length > 0) {
+        const missingPlaceholders = missingNeighborIds.map(() => '?').join(',');
+        const missingRows = db.prepare(`SELECT * FROM vector_cache WHERE id IN (${missingPlaceholders})`)
+          .all(...missingNeighborIds) as any[];
+        
+        missingRows.forEach(row => {
+          const record = {
+            ...row,
+            metadata: JSON.parse(row.metadata),
+            embedding: JSON.parse(row.embedding),
+            _isNeighbor: true
+          } as VectorRecord & { _score?: number; _isNeighbor?: boolean };
+          
+          // Score new neighbor
+          if (queryEmbedding) {
+            const mockDecision: VectorRecord = {
+              id: 'query',
+              entity_type: 'decision',
+              content: intent.query,
+              metadata: {},
+              embedding: queryEmbedding
+            };
+            const { score } = calculateScore(mockDecision, record);
+            record._score = score;
+          } else {
+            record._score = 0.5;
+          }
+          records.push(record);
+        });
+      }
+    }
+
+    // 5. Final Boosting
+    const finalRecords = records.map(record => {
+      let finalScore = record._score || 0;
 
       // Apply +0.3 boost for active project
       if (intent.boostedProjectId && record.metadata?.projectId === intent.boostedProjectId) {
         finalScore += 0.3;
       }
 
+      // Apply +0.3 boost for graph neighbors
+      if (record._isNeighbor) {
+        finalScore += 0.3;
+      }
+
       return {
         ...record,
         _score: Math.min(1.0, finalScore)
-      } as VectorRecord & { _score: number };
+      };
     });
 
-    // Sort by score descending and apply limit
-    return scoredRecords
-      .sort((a, b) => b._score - a._score)
+    // 6. Sort and Limit
+    return finalRecords
+      .sort((a, b) => (b._score || 0) - (a._score || 0))
       .slice(0, intent.limit) as VectorRecord[];
 
   } finally {
