@@ -22,10 +22,12 @@ _POOL_CONFIG_DEFAULTS: Dict[str, Any] = {
     "pool_mode": "shared",
     "overflow_policy": "wait",
     "queue_timeout_s": 300,
+    "recovery_policy": "mark_failed",
 }
 
 _VALID_POOL_MODES = {"shared", "isolated"}
 _VALID_OVERFLOW_POLICIES = {"reject", "wait", "priority"}
+_VALID_RECOVERY_POLICIES = {"mark_failed", "auto_retry", "manual"}
 
 
 def _find_project_root() -> Path:
@@ -145,6 +147,7 @@ def get_pool_config(project_id: Optional[str] = None) -> Dict[str, Any]:
             "pool_mode": str,            # default "shared" — values: "shared", "isolated"
             "overflow_policy": str,      # default "wait" — values: "reject", "wait", "priority"
             "queue_timeout_s": int,      # default 300
+            "recovery_policy": str,      # default "mark_failed" — values: "mark_failed", "auto_retry", "manual"
         }
 
     Invalid values produce a warning log and fall back to defaults.
@@ -230,6 +233,22 @@ def get_pool_config(project_id: Optional[str] = None) -> Dict[str, Any]:
                     "project_id": project_id,
                     "got": val,
                     "default": defaults["queue_timeout_s"],
+                },
+            )
+
+    # recovery_policy: must be one of the known policies
+    if "recovery_policy" in overrides:
+        val = overrides["recovery_policy"]
+        if isinstance(val, str) and val in _VALID_RECOVERY_POLICIES:
+            result["recovery_policy"] = val
+        else:
+            _logger.warning(
+                "Invalid pool config: recovery_policy must be one of %s — using default",
+                sorted(_VALID_RECOVERY_POLICIES),
+                extra={
+                    "project_id": project_id,
+                    "got": val,
+                    "default": defaults["recovery_policy"],
                 },
             )
 

@@ -17,6 +17,7 @@ Overflow policies (what happens when all slots are occupied):
 """
 
 import asyncio
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -46,6 +47,7 @@ _POOL_DEFAULTS = {
     "pool_mode": "shared",
     "overflow_policy": "wait",
     "queue_timeout_s": 300,
+    "recovery_policy": "mark_failed",
 }
 
 
@@ -676,6 +678,186 @@ class L3ContainerPool:
                 extra={"timeout": timeout, "drained": done_count, "remaining": len(pending) - done_count},
             )
             return {"pending": len(pending), "drained": done_count, "timed_out": True}
+
+
+    async def run_recovery_scan(self) -> dict:
+        """Scan for orphaned tasks at pool startup and apply recovery policy.
+
+        Checks workspace-state.json for tasks in 'in_progress', 'interrupted',
+        or 'starting' states that are older than their skill timeout. Applies
+        the configured recovery_policy (mark_failed / auto_retry / manual).
+
+        Returns:
+            Summary dict with scanned, mark_failed, retried, manual counts.
+        """
+        recovery_policy = self._pool_config.get("recovery_policy", _POOL_DEFAULTS["recovery_policy"])
+
+        scanned = 0
+        mark_failed_count = 0
+        retried_count = 0
+        manual_count = 0
+
+        try:
+            state_path = get_state_path(self.project_id)
+            jarvis = JarvisState(state_path)
+            active_task_ids = jarvis.list_active_tasks()
+        except Exception as exc:
+            logger.warning(
+                "Recovery scan: failed to read state — skipping scan",
+                extra={"project_id": self.project_id, "error": str(exc)},
+            )
+            logger.info(
+                "Pool startup: recovery scan complete",
+                extra={
+                    "project_id": self.project_id,
+                    "scanned": 0,
+                    "mark_failed": 0,
+                    "retried": 0,
+                    "manual": 0,
+                    "policy": recovery_policy,
+                },
+            )
+            return {"scanned": 0, "mark_failed": 0, "retried": 0, "manual": 0}
+
+        recoverable_states = {"in_progress", "interrupted", "starting"}
+
+        for task_id in active_task_ids:
+            try:
+                task = jarvis.read_task(task_id)
+                if task is None:
+                    continue
+
+                status = task.get("status", "")
+                if status not in recoverable_states:
+                    continue
+
+                scanned += 1
+
+                skill_hint = task.get("skill_hint", "code")
+                timeout_s = get_skill_timeout(skill_hint)
+
+                metadata = task.get("metadata", {})
+                spawn_requested_at = metadata.get("spawn_requested_at")
+
+                if spawn_requested_at is None or not isinstance(spawn_requested_at, (int, float)):
+                    logger.warning(
+                        "Recovery scan: task has no spawn_requested_at — treating as expired",
+                        extra={"project_id": self.project_id, "task_id": task_id, "status": status},
+                    )
+                    age_s = timeout_s + 1  # treat as expired
+                else:
+                    age_s = time.time() - spawn_requested_at
+
+                if age_s < timeout_s:
+                    # Task is still within its allowed time window — skip
+                    scanned -= 1
+                    continue
+
+                # Apply recovery policy
+                if recovery_policy == "mark_failed":
+                    jarvis.update_task(
+                        task_id=task_id,
+                        status="failed",
+                        activity_entry=f"RECOVERED: task-{task_id} -> mark_failed (age: {age_s:.0f}s, timeout: {timeout_s}s)",
+                    )
+                    mark_failed_count += 1
+                    logger.info(
+                        "Recovery scan: task marked failed",
+                        extra={"project_id": self.project_id, "task_id": task_id, "age_s": round(age_s, 1)},
+                    )
+
+                elif recovery_policy == "auto_retry":
+                    retry_count = metadata.get("retry_count", 0)
+                    if retry_count >= 1:
+                        # Retry limit reached — fall back to mark_failed
+                        jarvis.update_task(
+                            task_id=task_id,
+                            status="failed",
+                            activity_entry=f"RECOVERED: task-{task_id} -> mark_failed (retry limit reached)",
+                        )
+                        mark_failed_count += 1
+                        logger.info(
+                            "Recovery scan: task marked failed (retry limit reached)",
+                            extra={"project_id": self.project_id, "task_id": task_id, "retry_count": retry_count},
+                        )
+                    else:
+                        # Check for existing commits on staging branch
+                        workspace = get_workspace_path(self.project_id)
+                        branch = f"l3/task-{task_id}"
+                        try:
+                            git_result = subprocess.run(
+                                ["git", "log", "--oneline", f"HEAD..{branch}"],
+                                capture_output=True, text=True, timeout=5,
+                                cwd=workspace,
+                            )
+                            has_commits = bool(git_result.stdout.strip())
+                        except Exception:
+                            has_commits = True  # conservative: assume commits exist on error
+
+                        if has_commits:
+                            jarvis.update_task(
+                                task_id=task_id,
+                                status="failed",
+                                activity_entry=f"RECOVERED: task-{task_id} -> mark_failed (partial commits on staging branch)",
+                            )
+                            mark_failed_count += 1
+                            logger.info(
+                                "Recovery scan: task marked failed (partial commits on staging branch)",
+                                extra={"project_id": self.project_id, "task_id": task_id},
+                            )
+                        else:
+                            # No partial commits — flag for retry
+                            jarvis.update_task(
+                                task_id=task_id,
+                                status="failed",
+                                activity_entry=f"RECOVERED: task-{task_id} -> auto_retry (queued for re-spawn)",
+                            )
+                            retried_count += 1
+                            logger.info(
+                                "Recovery scan: task flagged for auto_retry",
+                                extra={"project_id": self.project_id, "task_id": task_id},
+                            )
+
+                elif recovery_policy == "manual":
+                    # Leave state unchanged — operator must act
+                    manual_count += 1
+                    logger.info(
+                        "Recovery scan: task left for manual recovery",
+                        extra={"project_id": self.project_id, "task_id": task_id, "status": status},
+                    )
+
+                else:
+                    # Unknown policy — fall back to mark_failed
+                    logger.warning(
+                        "Recovery scan: unknown recovery_policy — falling back to mark_failed",
+                        extra={"project_id": self.project_id, "policy": recovery_policy, "task_id": task_id},
+                    )
+                    jarvis.update_task(
+                        task_id=task_id,
+                        status="failed",
+                        activity_entry=f"RECOVERED: task-{task_id} -> mark_failed (unknown policy: {recovery_policy})",
+                    )
+                    mark_failed_count += 1
+
+            except Exception as exc:
+                logger.warning(
+                    "Recovery scan: error processing task — skipping",
+                    extra={"project_id": self.project_id, "task_id": task_id, "error": str(exc)},
+                )
+
+        logger.info(
+            "Pool startup: recovery scan complete",
+            extra={
+                "project_id": self.project_id,
+                "scanned": scanned,
+                "mark_failed": mark_failed_count,
+                "retried": retried_count,
+                "manual": manual_count,
+                "policy": recovery_policy,
+            },
+        )
+
+        return {"scanned": scanned, "mark_failed": mark_failed_count, "retried": retried_count, "manual": manual_count}
 
 
 class PoolRegistry:
