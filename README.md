@@ -570,6 +570,95 @@ L3 specialist containers run with strict isolation:
 
 ---
 
+## Agent Autonomy Framework (v1.6)
+
+The **Agent Autonomy Framework** enables L3 containers to self-direct their work with confidence-based decision making, automatically escalating to human oversight when confidence falls below threshold.
+
+### Architecture
+
+```
+L3 Container
+ │
+ ├─ AutonomyClient ──→ Orchestrator HTTP API
+ │                        │
+ ├─ Sentinel Files ──→ /tmp/openclaw/autonomy/  (backup)
+ │                        │
+ └─ Confidence Loop    Autonomy Hooks
+    (self-reporting)    │
+                         ├─ State Machine (4 states)
+                         ├─ Event Bus (decoupled)
+                         └─ memU (persistence)
+```
+
+### States
+
+| State | Description | Transition Trigger |
+|-------|-------------|-------------------|
+| **PLANNING** | Task initialized | `on_task_spawn()` |
+| **EXECUTING** | Container healthy, work in progress | Container health check |
+| **BLOCKED** | Hit obstacle, retry pending | Task failure |
+| **COMPLETE** | Task finished successfully | Task completion |
+| **ESCALATING** | Max retries exceeded, human needed | Retry exhaustion |
+
+### Confidence Scoring
+
+Tasks are scored 0.0-1.0 based on:
+- **Complexity** (25%): Code keywords, length, multi-step indicators
+- **Ambiguity** (30%): Uncertainty words vs clarity indicators
+- **Past Success** (25%): Historical success rate (future: ML-based)
+- **Time Estimate** (20%): Duration-based confidence
+
+**Escalation Threshold**: 0.6 (configurable per-project)
+
+### Usage
+
+```python
+from openclaw.autonomy import (
+    on_task_spawn, on_container_healthy, on_task_complete,
+    AutonomyState, AutonomyContext, AutonomyEventBus
+)
+
+# 1. Spawn creates PLANNING context
+context = on_task_spawn("task-001", {"max_retries": 1})
+
+# 2. Health check transitions to EXECUTING
+on_container_healthy("task-001")
+
+# 3. L3 container reports confidence
+#    (inside container via AutonomyClient)
+from openclaw.autonomy import AutonomyClient
+client = AutonomyClient("task-001", "http://host.docker.internal:8080")
+client.report_state_update("executing", confidence=0.85)
+
+# 4. Task completion
+on_task_complete("task-001", {"status": "success"})
+```
+
+### Configuration
+
+```json
+{
+  "autonomy": {
+    "enabled": true,
+    "escalation_threshold": 0.6,
+    "confidence_calculator": "threshold",
+    "max_retries": 1,
+    "blocked_timeout_minutes": 30
+  }
+}
+```
+
+### Events
+
+| Event | Description |
+|-------|-------------|
+| `autonomy.state_changed` | State transition occurred |
+| `autonomy.confidence_updated` | Confidence score changed (debounced) |
+| `autonomy.escalation_triggered` | Human escalation requested |
+| `autonomy.retry_attempted` | Retry from BLOCKED state |
+
+---
+
 ## Milestones
 
 | Version | Name | Phases | Shipped |

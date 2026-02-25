@@ -3,21 +3,70 @@ Autonomy Framework for OpenClaw
 
 This package provides the foundational architecture for agent autonomy,
 enabling L3 agents to self-direct their work with confidence-based
-decision making and state tracking.
+decision making and state tracking. The framework manages task execution
+through a 4-state machine (PLANNING → EXECUTING → BLOCKED/COMPLETE → ESCALATING),
+with automatic escalation to human oversight when confidence falls below threshold.
 
-Example:
-    from openclaw.autonomy import AutonomyState, AutonomyContext, StateMachine
+Architecture:
+    - State Machine: 4-state lifecycle with retry logic
+    - Confidence Scoring: Threshold-based and adaptive scoring
+    - Event Bus: Decoupled communication via autonomy events
+    - Hooks: Spawn flow integration for task lifecycle
+    - L3 Client: HTTP client with sentinel file backup
+    - memU Persistence: Context storage and archival
+
+Quick Start:
+    # Orchestrator side - spawn flow hooks
+    from openclaw.autonomy import on_task_spawn, on_container_healthy, on_task_complete
     
-    # Create context for a task
-    context = AutonomyContext(
-        task_id="task-123",
-        state=AutonomyState.PLANNING,
-        confidence_score=0.8
-    )
+    context = on_task_spawn("task-123", {"max_retries": 1})
+    # ... container starts ...
+    on_container_healthy("task-123")
+    # ... task completes ...
+    on_task_complete("task-123", {"status": "success"})
+
+    # L3 container side - self-reporting
+    from openclaw.autonomy import AutonomyClient
     
-    # Create state machine and transition
-    sm = StateMachine(context)
-    sm.transition(AutonomyState.EXECUTING, "Starting work")
+    client = AutonomyClient("task-123", "http://host.docker.internal:8080")
+    client.report_state_update("executing", confidence=0.85)
+
+State Machine:
+    PLANNING -> EXECUTING (container healthy)
+    EXECUTING -> BLOCKED (task failure, retry available)
+    EXECUTING -> COMPLETE (task success)
+    BLOCKED -> EXECUTING (retry attempt)
+    BLOCKED -> ESCALATING (max retries exceeded)
+
+Configuration (openclaw.json):
+    {
+        "autonomy": {
+            "enabled": true,
+            "escalation_threshold": 0.6,
+            "confidence_calculator": "threshold",  # or "adaptive"
+            "max_retries": 1,
+            "blocked_timeout_minutes": 30
+        }
+    }
+
+Events:
+    autonomy.state_changed - State transition occurred
+    autonomy.confidence_updated - Confidence score changed (debounced)
+    autonomy.escalation_triggered - Human escalation requested
+    autonomy.retry_attempted - Retry from BLOCKED state
+
+Modules:
+    types - Core dataclasses (AutonomyState, AutonomyContext, StateTransition)
+    state - StateMachine implementation
+    confidence - ConfidenceScorer protocol and implementations
+    events - Event types and AutonomyEventBus
+    hooks - Spawn flow integration hooks
+    autonomy_client - L3 HTTP client with sentinel backup
+    memory - memU persistence (AutonomyMemoryStore)
+    reporter - Legacy reporting infrastructure
+
+For full documentation, see:
+    .planning/research/autonomy-framework-design.md
 """
 
 from dataclasses import dataclass
