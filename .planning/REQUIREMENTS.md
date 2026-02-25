@@ -21,7 +21,7 @@
 
 ### Quality (QUAL)
 
-- [ ] **QUAL-07**: Cosine similarity threshold for memory conflict detection is configurable in `openclaw.json` and defaults to a value validated against real workload data (not the placeholder 0.92 from v1.4)
+- [x] **QUAL-07**: Cosine similarity threshold for memory conflict detection is configurable in `openclaw.json` and defaults to a value validated against real workload data (not the placeholder 0.92 from v1.4)
 
 ### Observability (OBS)
 
@@ -75,7 +75,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CONF-04 | Phase 47 | Complete |
 | CONF-07 | Phase 48 | Complete |
 | REL-09  | Phase 49 | Complete |
-| QUAL-07 | Phase 49 | Pending |
+| QUAL-07 | Phase 49 | Complete |
 | OBS-05  | Phase 49 | Complete |
 
 | NOTION-01 | Phase 50 | Complete |
