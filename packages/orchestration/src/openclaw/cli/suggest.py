@@ -47,11 +47,11 @@ def _suggestions_path(project_id: str) -> Path:
 
     Path: <project_root>/workspace/.openclaw/<project_id>/soul-suggestions.json
 
-    Lazy import of _find_project_root so this module is testable without
+    Lazy import of get_project_root so this module is testable without
     the full orchestration stack loaded.
     """
-    from openclaw.project_config import _find_project_root  # lazy import
-    root = _find_project_root()
+    from openclaw.config import get_project_root  # lazy import
+    root = get_project_root()
     return root / "workspace" / ".openclaw" / project_id / "soul-suggestions.json"
 
 
@@ -282,7 +282,7 @@ def _load_activity_memories(project_id: str) -> List[dict]:
     Per RESEARCH.md: activity log is the primary corpus; memU is supplementary.
     """
     try:
-        from openclaw.project_config import get_state_path  # lazy import
+        from openclaw.config import get_state_path  # lazy import
         state_path = get_state_path(project_id)
         with open(state_path) as f:
             state = json.load(f)

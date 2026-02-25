@@ -19,7 +19,8 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from openclaw.project_config import _find_project_root, get_active_project_id
+from openclaw.config import get_project_root as _find_project_root
+from openclaw.project_config import get_active_project_id
 
 
 # ANSI color codes — same as monitor.py and init.py

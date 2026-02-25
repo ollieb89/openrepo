@@ -111,7 +111,8 @@ class L3ContainerPool:
         self._pending_memorize_tasks: list = []
 
         # Get project root for reference
-        self.project_root = Path(__file__).parent.parent.parent
+        from openclaw.config import get_project_root as _get_root
+        self.project_root = _get_root()
 
     async def spawn_and_monitor(
         self,

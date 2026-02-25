@@ -15,7 +15,7 @@ import sys
 from pathlib import Path
 
 from openclaw.state_engine import JarvisState
-from openclaw.project_config import get_state_path, get_snapshot_dir, _find_project_root
+from openclaw.config import get_state_path, get_snapshot_dir, get_project_root as _find_project_root
 
 IN_FLIGHT_STATUSES = {'spawned', 'running', 'in_progress', 'starting', 'testing'}
 
