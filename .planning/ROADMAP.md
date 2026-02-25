@@ -177,7 +177,12 @@ Plans:
   1. Running `docker ps` shows `healthy`, `unhealthy`, or `starting` health status for L3 containers rather than no health information
   2. The cosine similarity threshold for conflict detection is set in `openclaw.json` (not hardcoded) and defaults to a value chosen based on observed data — the rationale for the chosen value is noted in a comment or decision log
   3. The monitor poll interval shortens when L3 tasks are actively running and lengthens when the swarm is idle — CPU usage during quiet periods is measurably lower than with a fixed interval
-**Plans**: TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 49-01-PLAN.md — Test scaffold (8 failing tests) + REL-09 Docker HEALTHCHECK + entrypoint.sh sentinel
+- [ ] 49-02-PLAN.md — QUAL-07: MEMORY_CONFLICT_THRESHOLD in config.py + get_conflict_threshold() + memorize router conflict check
+- [ ] 49-03-PLAN.md — OBS-05: POLL_INTERVAL_ACTIVE/IDLE in config.py + _count_active_l3_containers() + adaptive sleep in tail_state()
 
 ### v2.0 Notion Kanban Sync (Planned)
 
@@ -226,5 +231,5 @@ Plans:
 | 46. Schema Validation + Fail-Fast Startup | 3/3 | Complete    | 2026-02-25 | - |
 | 47. Env Var Precedence + Migration CLI | 3/3 | Complete    | 2026-02-25 | - |
 | 48. Config Integration Tests | 1/1 | Complete    | 2026-02-25 | - |
-| 49. Deferred Reliability, Quality, and Observability | v1.5 | 0/? | Not started | - |
+| 49. Deferred Reliability, Quality, and Observability | v1.5 | 0/3 | Not started | - |
 | 50. Notion Kanban Sync | 6/6 | Complete    | 2026-02-25 | - |
