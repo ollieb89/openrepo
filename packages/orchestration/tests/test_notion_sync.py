@@ -28,7 +28,111 @@ if _skill_dir not in sys.path:
 import pytest
 
 from capture_handler import _compute_capture_hash, _infer_area, _infer_status, _parse_batch
-from notion_sync import _evaluate_meaningful_rule, _should_write_status
+from notion_sync import (
+    SyncResult,
+    _evaluate_meaningful_rule,
+    _should_write_status,
+    handle_event_sync,
+)
+from unittest.mock import patch
+
+
+# ---------------------------------------------------------------------------
+# SyncResult tests
+# ---------------------------------------------------------------------------
+
+class TestSyncResult:
+    """Tests for the SyncResult tracking class."""
+
+    def test_record_mutation_created(self):
+        result = SyncResult("test_sync")
+        result.record_mutation("created", "cards_db", "page-1", "dedupe-1")
+        assert result.created == 1
+        assert result.updated == 0
+        assert len(result.mutations) == 1
+        assert result.mutations[0]["action"] == "created"
+        assert result.mutations[0]["target"] == "cards_db"
+        assert result.mutations[0]["notion_page_id"] == "page-1"
+        assert result.mutations[0]["dedupe_key"] == "dedupe-1"
+
+    def test_record_mutation_updated(self):
+        result = SyncResult("test_sync")
+        result.record_mutation("updated", "projects_db", "page-2", "dedupe-2")
+        assert result.created == 0
+        assert result.updated == 1
+        assert len(result.mutations) == 1
+        assert result.mutations[0]["action"] == "updated"
+
+    def test_record_skip_and_error(self):
+        result = SyncResult("test_sync")
+        result.record_skip()
+        result.record_skip()
+        result.record_error("Test error")
+        assert result.skipped == 2
+        assert len(result.errors) == 1
+        assert result.errors[0] == "Test error"
+
+    def test_to_dict(self):
+        result = SyncResult("test_sync")
+        result.record_mutation("created", "cards_db", "page-1", "dedupe-1")
+        result.record_skip()
+        result.record_error("Bad things happened")
+        result.extra = {"drift_count": 5}
+        
+        data = result.to_dict()
+        assert data["request_type"] == "test_sync"
+        assert data["result"]["created"] == 1
+        assert data["result"]["updated"] == 0
+        assert data["result"]["skipped"] == 1
+        assert data["result"]["errors"] == ["Bad things happened"]
+        assert len(data["result"]["mutations"]) == 1
+        assert data["result"]["mutations"][0]["action"] == "created"
+        assert data["result"]["extra"]["drift_count"] == 5
+
+
+# ---------------------------------------------------------------------------
+# Event Routing tests
+# ---------------------------------------------------------------------------
+
+class TestHandleEventSyncRouting:
+    """Tests for the handle_event_sync routing function."""
+
+    @patch("notion_sync._sync_project_registered")
+    def test_routes_project_registered(self, mock_handler):
+        payload = {
+            "request_type": "event_sync",
+            "event": {"event_type": "project_registered", "project_id": "pumplai"}
+        }
+        res = handle_event_sync(payload)
+        mock_handler.assert_called_once()
+        assert res["request_type"] == "event_sync"
+        assert res["result"]["skipped"] == 0
+
+    @patch("notion_sync._sync_phase_started")
+    def test_routes_phase_started(self, mock_handler):
+        payload = {
+            "request_type": "event_sync",
+            "event": {"event_type": "phase_started", "project_id": "pumplai", "phase_id": "45"}
+        }
+        handle_event_sync(payload)
+        mock_handler.assert_called_once()
+
+    @patch("notion_sync._sync_container_completed")
+    def test_routes_container_completed(self, mock_handler):
+        payload = {
+            "request_type": "event_sync",
+            "event": {"event_type": "container_completed"}
+        }
+        handle_event_sync(payload)
+        mock_handler.assert_called_once()
+
+    def test_routes_unknown_event_skips(self):
+        payload = {
+            "request_type": "event_sync",
+            "event": {"event_type": "some_future_event"}
+        }
+        res = handle_event_sync(payload)
+        assert res["result"]["skipped"] == 1
 
 
 # ---------------------------------------------------------------------------
@@ -395,3 +499,230 @@ class TestShouldWriteStatusUnlinked:
         """Card with no properties dict → _should_write_status returns False (safe default)."""
         card = {"id": "page-789"}
         assert _should_write_status(card) is False
+
+
+# ---------------------------------------------------------------------------
+# Project Handlers tests
+# ---------------------------------------------------------------------------
+
+class TestProjectHandlers:
+    """Tests for project_registered and project_removed handlers."""
+
+    @patch("notion_client.NotionClient")
+    def test_sync_project_registered(self, mock_client_class):
+        # Setup mock client
+        mock_client = mock_client_class.return_value
+        mock_client._get_db_ids.return_value = ("proj_db", "proj_ds", "cards_db", "cards_ds")
+        
+        # Mock upsert returns
+        mock_client.upsert_by_dedupe.side_effect = [
+            {"action": "created", "page_id": "proj-page-1"},   # Projects DB upsert
+            {"action": "created", "page_id": "triage-page-1"}  # Triage card upsert
+        ]
+        
+        from notion_sync import _sync_project_registered, SyncResult
+        
+        event = {
+            "project_id": "pumplai",
+            "payload": {"name": "PumpLAI", "workspace_path": "/home/user/pumplai"}
+        }
+        result = SyncResult("event_sync")
+        
+        _sync_project_registered(event, result)
+        
+        # Verify Projects DB upsert call
+        call_args = mock_client.upsert_by_dedupe.call_args_list[0]
+        assert call_args[0][0] == "proj_db"
+        assert call_args[0][2] == "OpenClaw ID"
+        assert call_args[0][3] == "pumplai"
+        assert "Name" in call_args[0][4]
+        assert "Repo/Path" in call_args[0][4]
+        
+        # Verify Triage Card upsert call
+        call_args2 = mock_client.upsert_by_dedupe.call_args_list[1]
+        assert call_args2[0][0] == "cards_db"
+        assert call_args2[0][2] == "OpenClaw Phase ID"
+        assert call_args2[0][3] == "pumplai:triage"
+        assert "Project" in call_args2[0][4]
+        
+        assert result.created == 2
+        assert len(result.mutations) == 2
+        assert result.mutations[0]["target"] == "projects_db"
+        assert result.mutations[1]["target"] == "cards_db"
+
+    @patch("notion_client.NotionClient")
+    def test_sync_project_removed(self, mock_client_class):
+        mock_client = mock_client_class.return_value
+        mock_client._get_db_ids.return_value = ("proj_db", "proj_ds", "cards_db", "cards_ds")
+        
+        # Mock finding the project
+        mock_client.query_database.return_value = [{"id": "proj-page-1"}]
+        
+        from notion_sync import _sync_project_removed, SyncResult
+        
+        event = {"project_id": "pumplai"}
+        result = SyncResult("event_sync")
+        
+        _sync_project_removed(event, result)
+        
+        mock_client.query_database.assert_called_once()
+        mock_client.update_page.assert_called_once()
+        update_args = mock_client.update_page.call_args[0]
+        assert update_args[0] == "proj-page-1"
+        assert update_args[1]["Status"]["select"]["name"] == "Archived"
+        
+        assert result.updated == 1
+        assert len(result.mutations) == 1
+        assert result.mutations[0]["action"] == "updated"
+
+    @patch("notion_client.NotionClient")
+    def test_sync_project_removed_not_found(self, mock_client_class):
+        mock_client = mock_client_class.return_value
+        mock_client._get_db_ids.return_value = ("proj_db", "proj_ds", "cards_db", "cards_ds")
+        
+        # Mock project NOT found
+        mock_client.query_database.return_value = []
+        
+        from notion_sync import _sync_project_removed, SyncResult
+        
+        event = {"project_id": "pumplai"}
+        result = SyncResult("event_sync")
+        
+        _sync_project_removed(event, result)
+        
+        mock_client.query_database.assert_called_once()
+        mock_client.update_page.assert_not_called()
+        
+        assert result.skipped == 1
+        assert result.updated == 0
+
+
+# ---------------------------------------------------------------------------
+# Phase Handlers tests
+# ---------------------------------------------------------------------------
+
+class TestPhaseHandlers:
+    """Tests for phase_started, phase_completed, and phase_blocked handlers."""
+
+    def setup_method(self):
+        import notion_sync
+        notion_sync._project_page_id_cache.clear()
+
+    @patch("notion_client.NotionClient")
+    def test_sync_phase_started_new(self, mock_client_class):
+        mock_client = mock_client_class.return_value
+        mock_client._get_db_ids.return_value = ("proj_db", "proj_ds", "cards_db", "cards_ds")
+        
+        # Mock project lookup
+        mock_client.query_database.side_effect = [
+            [{"id": "proj-page-1"}], # Project lookup
+            [],                      # Phase card existing check (not found -> create)
+            [{"id": "proj-page-1"}]  # Projects DB lookup for Current Phase update
+        ]
+        
+        mock_client.create_page.return_value = {"id": "phase-page-1"}
+        
+        from notion_sync import _sync_phase_started, SyncResult
+        
+        event = {
+            "project_id": "pumplai",
+            "phase_id": "45",
+            "payload": {"phase_name": "Test Phase"}
+        }
+        result = SyncResult("event_sync")
+        
+        _sync_phase_started(event, result)
+        
+        # Assert create_page was called with right props
+        mock_client.create_page.assert_called_once()
+        create_args = mock_client.create_page.call_args[0]
+        assert create_args[0] == "cards_db"
+        assert create_args[1]["Status"]["select"]["name"] == "In Progress"
+        assert create_args[1]["Name"]["title"][0]["text"]["content"] == "Phase 45: Test Phase"
+        
+        # Assert Projects DB Current Phase updated
+        mock_client.update_page.assert_called_once()
+        update_args = mock_client.update_page.call_args[0]
+        assert update_args[0] == "proj-page-1"
+        assert update_args[1]["Current Phase"]["rich_text"][0]["text"]["content"] == "Phase 45: Test Phase"
+        
+        # Assert activity appended
+        mock_client.append_activity.assert_called_once_with("phase-page-1", "phase_started: Phase 45")
+        
+        assert result.created == 1
+        assert len(result.mutations) == 1
+
+    @patch("notion_client.NotionClient")
+    def test_sync_phase_completed(self, mock_client_class):
+        mock_client = mock_client_class.return_value
+        mock_client._get_db_ids.return_value = ("proj_db", "proj_ds", "cards_db", "cards_ds")
+        
+        # Mock finding the phase card
+        # Also need to mock the card having OpenClaw Phase ID so it passes _should_write_status guard
+        phase_card = _make_card(openclaw_phase_id="pumplai:45")
+        phase_card["id"] = "phase-page-1"
+        
+        mock_client.query_database.side_effect = [
+            [phase_card],            # Phase card lookup
+            [{"id": "proj-page-1"}]  # Projects DB lookup for Current Phase update
+        ]
+        
+        from notion_sync import _sync_phase_completed, SyncResult
+        
+        event = {
+            "project_id": "pumplai",
+            "phase_id": "45",
+            "payload": {"phase_name": "Test Phase"}
+        }
+        result = SyncResult("event_sync")
+        
+        _sync_phase_completed(event, result)
+        
+        assert mock_client.update_page.call_count == 2
+        # First update is phase card
+        update_card_args = mock_client.update_page.call_args_list[0][0]
+        assert update_card_args[0] == "phase-page-1"
+        assert update_card_args[1]["Status"]["select"]["name"] == "Done"
+        
+        # Second update is Projects DB Current Phase
+        update_proj_args = mock_client.update_page.call_args_list[1][0]
+        assert update_proj_args[0] == "proj-page-1"
+        assert update_proj_args[1]["Current Phase"]["rich_text"][0]["text"]["content"] == "Completed: Phase 45: Test Phase"
+        
+        # Assert activity appended
+        mock_client.append_activity.assert_called_once_with("phase-page-1", "phase_completed: Phase 45")
+        
+        assert result.updated == 1
+        assert len(result.mutations) == 1
+
+    @patch("notion_client.NotionClient")
+    def test_sync_phase_blocked(self, mock_client_class):
+        mock_client = mock_client_class.return_value
+        mock_client._get_db_ids.return_value = ("proj_db", "proj_ds", "cards_db", "cards_ds")
+        
+        # Mock finding the phase card
+        phase_card = _make_card(openclaw_phase_id="pumplai:45")
+        phase_card["id"] = "phase-page-1"
+        mock_client.query_database.return_value = [phase_card]
+        
+        from notion_sync import _sync_phase_blocked, SyncResult
+        
+        event = {
+            "project_id": "pumplai",
+            "phase_id": "45",
+            "payload": {"blocker": "Waiting on API key"}
+        }
+        result = SyncResult("event_sync")
+        
+        _sync_phase_blocked(event, result)
+        
+        mock_client.update_page.assert_called_once()
+        update_args = mock_client.update_page.call_args[0]
+        assert update_args[0] == "phase-page-1"
+        assert update_args[1]["Status"]["select"]["name"] == "Waiting"
+        
+        # Assert activity appended
+        mock_client.append_activity.assert_called_once_with("phase-page-1", "phase_blocked: Waiting on API key")
+        
+        assert result.updated == 1
+        assert len(result.mutations) == 1
