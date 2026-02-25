@@ -37,7 +37,7 @@
 - [x] **NOTION-04**: Conversational capture creates cards with correct area inference and dedupe
 - [x] **NOTION-05**: Container events append to activity log without spamming new cards (meaningful rule enforced)
 - [x] **NOTION-06**: Unlinked cards have Notion-owned Status — OpenClaw never overwrites
-- [ ] **NOTION-07**: Reconcile detects drift, applies only allowed corrections, never deletes
+- [x] **NOTION-07**: Reconcile detects drift, applies only allowed corrections, never deletes
 - [x] **NOTION-08**: DB discovery works on first run; cached IDs used on subsequent runs
 - [x] **NOTION-09**: Field ownership respected — every write checks ownership before touching a field
 - [x] **NOTION-10**: Structured result returned for every invocation with created/updated/skipped/errors
@@ -84,7 +84,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | NOTION-04 | Phase 50 | Complete |
 | NOTION-05 | Phase 50 | Complete |
 | NOTION-06 | Phase 50 | Complete |
-| NOTION-07 | Phase 50 | Pending |
+| NOTION-07 | Phase 50 | Complete |
 | NOTION-08 | Phase 50 | Complete |
 | NOTION-09 | Phase 50 | Complete |
 | NOTION-10 | Phase 50 | Complete |
