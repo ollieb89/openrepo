@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.5 Config Consolidation — Phase 49 in progress (REL-09 complete, QUAL-07/OBS-05 pending Wave 2)
+**Current focus:** v1.5 Config Consolidation — Phase 49 COMPLETE (REL-09, QUAL-07, OBS-05 all shipped)
 
 ## Current Position
 
 Phase: 49 of 49 (Deferred Reliability, Quality, and Observability)
-Plan: 1 of 3 complete
-Status: In Progress
-Last activity: 2026-02-25 — 49-01 complete: test_phase49.py (8 tests RED scaffold), Dockerfile HEALTHCHECK, entrypoint.sh sentinel. 2 pass (REL-09), 6 fail (Wave 2). 262 total passing.
+Plan: 3 of 3 complete
+Status: Complete
+Last activity: 2026-02-25 — 49-03 complete: POLL_INTERVAL_ACTIVE/IDLE in config.py, _count_active_l3_containers() + adaptive sleep in monitor.py. All 8 phase 49 tests pass. 268 total passing.
 
-Progress: [##########] 100% — Phase 45 done (2/2), Phase 46 done (3/3), Phase 47 done (3/3), Phase 48 done (1/1), Phase 49 in progress (1/3)
+Progress: [##########] 100% — Phase 45 done (2/2), Phase 46 done (3/3), Phase 47 done (3/3), Phase 48 done (1/1), Phase 49 done (3/3)
 
 ## Performance Metrics
 
@@ -85,6 +85,7 @@ Notable for v1.5:
 - [Phase 48-01]: try/finally with importlib.reload(cfg) in finally block restores module-level LOG_LEVEL/ACTIVITY_LOG_MAX after env var tests
 - [Phase 48-01]: Pool config tests write tmp_path/projects/testproject/project.json to match exact path load_project_config() resolves
 - [Phase 49-deferred-reliability-quality-and-observability]: HEALTHCHECK shell form (CMD test -f) not exec form — Debian bookworm-slim test is bash builtin; sentinel placed after update_state starting before staging branch
+- [Phase 49-03-OBS-05]: Adaptive polling constants (2s/30s) hardcoded — not configurable in openclaw.json per locked decision; Docker failure returns 0 (fail-open to idle)
 
 ### Pending Todos
 
@@ -97,5 +98,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: 49-01 complete — test_phase49.py (8 tests RED scaffold), Dockerfile HEALTHCHECK, entrypoint.sh sentinel. REL-09 COMPLETE. 262 tests passing.
-Resume: Phase 49 plan 01 done. Next: Plan 02 (QUAL-07 — MEMORY_CONFLICT_THRESHOLD constant, get_conflict_threshold(), schema expansion) then Plan 03 (OBS-05 — adaptive polling).
+Stopped at: Completed 49-03-PLAN.md — Phase 49 fully done. OBS-05 shipped. All 8 phase 49 tests pass. 268 total passing.
+Resume: Phase 49 complete. v1.5 Config Consolidation milestone complete (phases 45-49, all 10 requirements).

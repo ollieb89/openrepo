@@ -25,7 +25,7 @@
 
 ### Observability (OBS)
 
-- [ ] **OBS-05**: Monitor poll interval adapts dynamically — shorter interval when L3 tasks are active, longer interval when swarm is idle — reducing CPU load during quiet periods
+- [x] **OBS-05**: Monitor poll interval adapts dynamically — shorter interval when L3 tasks are active, longer interval when swarm is idle — reducing CPU load during quiet periods
 
 ## v2.0 Requirements
 
@@ -76,7 +76,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CONF-07 | Phase 48 | Complete |
 | REL-09  | Phase 49 | Complete |
 | QUAL-07 | Phase 49 | Pending |
-| OBS-05  | Phase 49 | Pending |
+| OBS-05  | Phase 49 | Complete |
 
 | NOTION-01 | Phase 50 | Complete |
 | NOTION-02 | Phase 50 | Complete |

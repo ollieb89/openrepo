@@ -104,7 +104,7 @@ See: `.planning/milestones/v1.4-ROADMAP.md` for full phase details.
 - [x] **Phase 46: Schema Validation + Fail-Fast Startup** - Add a documented openclaw.json schema and enforce it at process startup (completed 2026-02-25)
 - [x] **Phase 47: Env Var Precedence + Migration CLI** - Document and enforce env var resolution order; give operators a migration command to upgrade existing configs (completed 2026-02-25)
 - [x] **Phase 48: Config Integration Tests** - Test suite verifying path resolution, validation, env precedence, and pool config fallback runs clean under pytest (completed 2026-02-25)
-- [ ] **Phase 49: Deferred Reliability, Quality, and Observability** - Docker health checks for L3 containers, calibrated cosine similarity threshold, and adaptive monitor polling
+- [x] **Phase 49: Deferred Reliability, Quality, and Observability** - Docker health checks for L3 containers, calibrated cosine similarity threshold, and adaptive monitor polling (completed 2026-02-25)
 
 ## Phase Details
 
@@ -177,7 +177,7 @@ Plans:
   1. Running `docker ps` shows `healthy`, `unhealthy`, or `starting` health status for L3 containers rather than no health information
   2. The cosine similarity threshold for conflict detection is set in `openclaw.json` (not hardcoded) and defaults to a value chosen based on observed data — the rationale for the chosen value is noted in a comment or decision log
   3. The monitor poll interval shortens when L3 tasks are actively running and lengthens when the swarm is idle — CPU usage during quiet periods is measurably lower than with a fixed interval
-**Plans:** 1/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 49-01-PLAN.md — Test scaffold (8 failing tests) + REL-09 Docker HEALTHCHECK + entrypoint.sh sentinel
@@ -231,5 +231,5 @@ Plans:
 | 46. Schema Validation + Fail-Fast Startup | 3/3 | Complete    | 2026-02-25 | - |
 | 47. Env Var Precedence + Migration CLI | 3/3 | Complete    | 2026-02-25 | - |
 | 48. Config Integration Tests | 1/1 | Complete    | 2026-02-25 | - |
-| 49. Deferred Reliability, Quality, and Observability | 1/3 | In Progress|  | - |
+| 49. Deferred Reliability, Quality, and Observability | 3/3 | Complete   | 2026-02-25 | - |
 | 50. Notion Kanban Sync | 6/6 | Complete    | 2026-02-25 | - |
