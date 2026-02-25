@@ -17,12 +17,16 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
 
+import docker
+
 from openclaw.state_engine import JarvisState
 from openclaw.config import (
     DEFAULT_POOL_MAX_CONCURRENT,
     DEFAULT_POOL_MODE,
     DEFAULT_POOL_OVERFLOW_POLICY,
     POLL_INTERVAL,
+    POLL_INTERVAL_ACTIVE,
+    POLL_INTERVAL_IDLE,
     get_project_root,
     get_state_path,
 )
@@ -59,6 +63,29 @@ def get_project_color(project_id: str, project_list: list) -> str:
     """Deterministic color for a project based on its position in the known project list."""
     idx = project_list.index(project_id) if project_id in project_list else 0
     return PROJECT_COLORS[idx % len(PROJECT_COLORS)]
+
+
+def _count_active_l3_containers() -> int:
+    """Return count of running openclaw-managed L3 containers.
+
+    Used by tail_state() to determine whether to use POLL_INTERVAL_ACTIVE or
+    POLL_INTERVAL_IDLE. Fails open: returns 0 (idle) on any Docker error so the
+    monitor continues running even when Docker is unavailable.
+
+    Query: containers with label 'openclaw.managed=true' and status 'running'.
+    """
+    try:
+        client = docker.from_env()
+        containers = client.containers.list(
+            filters={"label": "openclaw.managed=true", "status": "running"}
+        )
+        return len(containers)
+    except Exception as exc:
+        logger.warning(
+            "Docker query failed in adaptive poll — assuming idle",
+            extra={"error": str(exc)},
+        )
+        return 0
 
 
 def _discover_projects(project_filter: Optional[str] = None) -> List[Tuple[str, Path]]:
@@ -223,7 +250,16 @@ def tail_state(
                 "poll cycle complete",
                 extra={"projects_polled": len(projects), "instances_cached": len(js_instances)},
             )
-            time.sleep(interval)
+            # Adaptive poll interval (OBS-05):
+            # Short interval when L3 containers are active, long interval when idle.
+            # Docker query is per-cycle — up to 30s lag on idle→active transition is acceptable.
+            _active_count = _count_active_l3_containers()
+            _sleep_sec = POLL_INTERVAL_ACTIVE if _active_count > 0 else POLL_INTERVAL_IDLE
+            logger.debug(
+                "adaptive poll sleep",
+                extra={"active_containers": _active_count, "sleep_interval": _sleep_sec},
+            )
+            time.sleep(_sleep_sec)
 
     except KeyboardInterrupt:
         print(f"\n{Colors.BOLD}Monitor stopped{Colors.RESET}")
