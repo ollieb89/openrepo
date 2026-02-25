@@ -231,7 +231,7 @@ Plans:
   8. Sidebar badge shows correct pending suggestion count
   9. POST `/api/suggestions` invokes `suggest.py` and returns results
 
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 52-01-PLAN.md — Environment setup + known code fixes (memU rebuild, seed data, localStorage persistence, auto-rescan)
@@ -279,4 +279,4 @@ Plans:
 | 49. Deferred Reliability, Quality, and Observability | 3/3 | Complete    | 2026-02-25 | - |
 | 50. Notion Kanban Sync | 6/6 | Complete    | 2026-02-25 | - |
 | 51. Live Verification — Docker & Sentinel | 0/1 | Pending | - | - |
-| 52. Live Verification — Dashboard & memU | 0/1 | Pending | - | - |
+| 52. Live Verification — Dashboard & memU | 1/2 | In Progress|  | - |
