@@ -17,20 +17,11 @@ Hierarchical AI orchestration with physical isolation — enabling autonomous, s
 - **Container:** Debian bookworm-slim L3 images, Nvidia Container Toolkit
 - **OS:** Ubuntu 24.04 LTS
 
-## Current Milestone: v1.4 Operational Maturity
-
-**Goal:** Harden the swarm for production-grade autonomy — graceful shutdown with task recovery, memory health monitoring, L1 proactive SOUL suggestions, and delta-based snapshot optimization.
-
-**Target features:**
-- Graceful SIGTERM handling with task state dehydration/rehydration and automated recovery loops
-- Memory health monitor detecting stale/conflicting memories with manual override UI
-- L1 strategic SOUL template suggestions based on recurring task failure/success patterns
-- Delta-based memory snapshots to reduce I/O during deep context injection
-
 ## Current State
 
-**Shipped:** v1.3 Agent Memory (2026-02-24)
-**LOC:** ~38,600 (Python + TypeScript)
+**Shipped:** v1.4 Operational Maturity (2026-02-25)
+**LOC:** ~28K Python, ~27K TypeScript/TSX (packages/ only)
+**Tests:** 148/148 passing
 
 Architecture operational:
 - L1 (ClawdiaPrime) → L2 (PumplAI_PM) → L3 (Ephemeral Specialists) delegation chain
@@ -53,23 +44,30 @@ Orchestration hardening (v1.2):
 - Task lifecycle observability: spawn-to-complete timestamps, lock wait tracking, activity log rotation
 - Per-project pool config: configurable concurrency limits, shared/isolated modes, overflow policies (reject/wait/priority)
 - Dashboard metrics: Recharts visualization (task charts, pool gauges), agent hierarchy with status dots
-- Monitor cache fix: JarvisState reuse across poll cycles for cache hit performance
 
 Agent memory (v1.3):
-- Standalone memU service (memu-py + PostgreSQL+pgvector) in Docker with REST API (memorize, retrieve, CRUD, health)
+- Standalone memU service (memu-py + PostgreSQL+pgvector) in Docker with REST API
 - Per-project + per-agent memory scoping enforced by MemoryClient wrapper
 - L3 auto-memorization of task outcomes via fire-and-forget (non-blocking)
 - L2 review decision memorization with category metadata
 - Pre-spawn context retrieval injected into SOUL template (2,000-char budget cap, graceful degradation)
-- L3 in-execution memory queries via HTTP (SOUL documents curl pattern)
-- Category-routed memory formatting — CATEGORY_SECTION_MAP routes to Past Review Outcomes / Task Outcomes / Past Work Context
+- L3 in-execution memory queries via HTTP; category-routed memory formatting (CATEGORY_SECTION_MAP)
 - Dashboard /memory page with project-scoped browsing, semantic search, bulk delete, metadata display
+
+Operational maturity (v1.4):
+- SIGTERM graceful shutdown for L3 containers — bash trap writes `interrupted` to Jarvis state (exit 143)
+- Fire-and-forget memorize drain — asyncio tasks tracked + drained (30s gather) via `loop.add_signal_handler`
+- Pool startup recovery scan — detects orphaned tasks, applies configurable `mark_failed`/`auto_retry`/`manual` policy
+- Memory health monitoring — staleness + cosine-conflict detection; dashboard badges, conflict panel, edit/archive actions
+- L1 strategic SOUL suggestions — keyword-frequency clustering → diff-style amendments with mandatory approval gate
+- Delta-cursor memory retrieval — `created_after` filter on memU `/retrieve`, cursor in `workspace-state.json`, `max_snapshots` pruning
 
 Known limitations:
 - Gateway startup is manual (runtime dependency)
 - COM-04 snapshot capture cannot be E2E tested when workspace is a git submodule
 - CLI routing replaces lane queue REST API (accepted spec deviation)
-- Pre-existing TypeScript errors in unrelated connector/test files (occc)
+- `workspace/` path divergence: runtime state at `data/workspace/.openclaw/` vs code-resolved `OPENCLAW_ROOT/workspace/.openclaw/` — pre-existing, candidate for v1.5 config unification
+- Human verification pending for live Docker/browser tests (SIGTERM E2E, memory health UI, suggestions UI)
 
 ## Requirements
 
@@ -107,9 +105,14 @@ Known limitations:
 - ✓ RET-01 through RET-05: Pre-spawn retrieval, SOUL injection, budget cap, graceful degradation, in-execution queries — v1.3
 - ✓ DSH-11 through DSH-14: Memory page, semantic search, delete action, metadata display — v1.3
 
+- ✓ REL-04 through REL-08: SIGTERM graceful shutdown, pool recovery scan, configurable recovery policy, memorize drain — v1.4
+- ✓ QUAL-01 through QUAL-06: Memory health scan (staleness + conflict detection), PUT update endpoint, dashboard badges + conflict panel + settings — v1.4
+- ✓ ADV-01 through ADV-06: Pattern extraction engine, SOUL diff amendments, pending suggestions store, accept/reject pipeline with approval gate, dashboard suggestions UI — v1.4
+- ✓ PERF-05 through PERF-08: Memory cursors in state.json, cursor-aware pre-spawn retrieval, `created_after` filter on memU, `max_snapshots` pruning — v1.4
+
 ### Active
 
-(Defining requirements for v1.4 Operational Maturity)
+(No active requirements — v1.4 complete, next milestone not yet defined)
 
 ### Out of Scope
 
@@ -156,6 +159,12 @@ Known limitations:
 | Sync httpx for pre-spawn retrieval (not asyncio) | ✓ Good — avoids RuntimeError in async context | v1.3 |
 | CATEGORY_SECTION_MAP for memory routing | ✓ Good — explicit three-bucket output, clean routing | v1.3 |
 | 2,000-char SOUL memory budget (hardcoded) | ✓ Good — simple, prevents template bloat | v1.3 |
+| `loop.add_signal_handler` for SIGTERM drain (not `signal.signal`) | ✓ Good — avoids fcntl deadlock risk with asyncio event loop | v1.4 |
+| Idempotency guard on `register_shutdown_handler()` | ✓ Good — safe to call from multiple code paths without double-drain | v1.4 |
+| Cosine similarity for conflict detection (threshold 0.92) | ⚠️ Revisit — threshold needs empirical tuning under real workload | v1.4 |
+| Keyword-frequency clustering for SOUL suggestions (≥3 cluster threshold) | ✓ Good — low false-positive rate; may need keyword-frequency fallback at scale | v1.4 |
+| SHA-based commit cursor for delta snapshot retrieval | ✓ Good — ISO timestamp cursor in state.json, graceful fallback to full fetch on error | v1.4 |
+| Approval gate validates SOUL diff before write (structural injection prevention) | ✓ Good — rejects shell commands, safety constraint removal, >100 lines | v1.4 |
 
 ## Primary Docs
 
@@ -165,4 +174,4 @@ Known limitations:
 - DEV_WF_FINDINGS.md
 
 ---
-*Last updated: 2026-02-24 after v1.4 milestone start*
+*Last updated: 2026-02-25 after v1.4 milestone*

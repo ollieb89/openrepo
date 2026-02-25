@@ -72,3 +72,21 @@
 
 ---
 
+
+## v1.4 Operational Maturity (Shipped: 2026-02-25)
+
+**Phases:** 39-44 | **Plans:** 16 executed | **Timeline:** 1 day (2026-02-24 → 2026-02-25)
+**Requirements:** 21/21 satisfied | **Tests:** 148/148 passing | **Integration:** 21/21 wired, 5/5 E2E flows
+
+**Key accomplishments:**
+- SIGTERM graceful shutdown for L3 containers — bash trap writes `interrupted` to Jarvis state, kills child process cleanly (exit code 143, not 137)
+- Fire-and-forget memorize drain on shutdown — asyncio tasks tracked in `_pending_memorize_tasks` and drained via 30s `gather` using `loop.add_signal_handler` (avoids fcntl deadlock)
+- Pool startup recovery scan — detects orphaned tasks in `in_progress`/`interrupted`/`starting` states, applies configurable `mark_failed`/`auto_retry`/`manual` policy per project
+- Memory health monitoring — staleness + cosine-conflict detection (3 new FastAPI endpoints + PUT update), dashboard badges, conflict resolution panel, edit/archive/dismiss actions
+- L1 strategic SOUL suggestions — keyword-frequency clustering over rejection memories → diff-style amendments with mandatory approval gate; structural injection prevented at API layer; dashboard accept/reject flow
+- Delta-cursor memory retrieval — `created_after` filter on memU `/retrieve`, cursor tracked in `workspace-state.json`, `max_snapshots` pruning wired into `capture_semantic_snapshot`
+
+**Git range:** `feat(39-01)` → `docs(phase-44)` | **LOC:** ~28K Python, ~27K TypeScript/TSX
+
+---
+
