@@ -6,9 +6,16 @@ Produces human-friendly, actionable error messages — not raw KeyError tracebac
 
 Implements REL-02 (project.json schema validation) and REL-03 (agent hierarchy
 validation for openclaw.json reports_to chains and level constraints).
+
+CONF-02 / CONF-06: validate_openclaw_config() and validate_project_config_schema()
+use jsonschema Draft202012Validator for machine-validated schema enforcement.
 """
 
+import re
+import sys
 from typing import Any, Dict, List
+
+from jsonschema import Draft202012Validator
 
 from .logging import get_logger
 
@@ -143,6 +150,126 @@ def _validate_pool_config(l3_overrides: Dict[str, Any], manifest_path: str) -> N
                 "project.json pool config warning: queue_timeout_s must be a positive integer — will use default (300)",
                 extra={"manifest_path": manifest_path, "got": val},
             )
+
+
+def _extract_additional_property(message: str) -> str:
+    """Extract unknown field name from additionalProperties error message."""
+    m = re.search(r"\('(.+?)' was unexpected\)", message)
+    return m.group(1) if m else message
+
+
+def _hint_for_field(field_path: str) -> str:
+    """Return an example value string for the given dot-separated field path."""
+    _HINTS = {
+        "gateway.port": '"port": 18789',
+        "agents":       '"agents": {"list": [], "defaults": {}}',
+        "agents.list":  '"list": []',
+    }
+    return _HINTS.get(field_path, f'"{field_path.split(".")[-1]}": <value>')
+
+
+def validate_openclaw_config(
+    config: dict, config_path: str
+) -> tuple:
+    """
+    Validate config dict against OPENCLAW_JSON_SCHEMA.
+
+    Returns (fatal_errors, warnings).
+    - fatal_errors: non-empty list means caller must sys.exit(1)
+    - warnings: always print but continue startup
+
+    Does NOT call sys.exit() — that is the caller's responsibility.
+    """
+    from openclaw.config import OPENCLAW_JSON_SCHEMA  # lazy — avoids circular import
+
+    validator = Draft202012Validator(OPENCLAW_JSON_SCHEMA)
+    fatal: List[str] = []
+    warnings: List[str] = []
+
+    for error in validator.iter_errors(config):
+        path = ".".join(str(p) for p in error.absolute_path)
+
+        if error.validator == "additionalProperties":
+            field = _extract_additional_property(error.message)
+            warnings.append(
+                f"openclaw.json contains unknown field '{field}'"
+            )
+        elif error.validator == "required":
+            # error.message is "'<field>' is a required property"
+            missing = error.message.split("'")[1]
+            parent = f"{path}." if path else ""
+            example = _hint_for_field(parent + missing)
+            fatal.append(
+                f"config/openclaw.json is missing required field "
+                f"'{parent}{missing}'. Add it: {example}"
+            )
+        elif error.validator == "type":
+            expected = error.schema.get("type", "?")
+            got = type(error.instance).__name__
+            fatal.append(
+                f"config/openclaw.json field '{path}' must be "
+                f"{expected}, got {got}"
+            )
+        else:
+            fatal.append(f"config/openclaw.json: {error.message}")
+
+    return fatal, warnings
+
+
+def validate_project_config_schema(config: dict, manifest_path: str) -> None:
+    """
+    Run a jsonschema pass on project.json to detect unknown fields.
+
+    Complements the existing validate_project_config() which checks required
+    fields with hand-coded messages. This function adds unknown-field warnings
+    using the PROJECT_JSON_SCHEMA additionalProperties constraint.
+
+    Raises:
+        ConfigValidationError: If required fields (workspace, tech_stack) are
+            missing or wrong type per schema. Existing hand-coded checks in
+            validate_project_config() remain the primary required-field gate;
+            this function provides a second schema-level pass.
+    """
+    from openclaw.config import PROJECT_JSON_SCHEMA  # lazy — avoids circular import
+
+    validator = Draft202012Validator(PROJECT_JSON_SCHEMA)
+    fatal: List[str] = []
+    warnings: List[str] = []
+
+    for error in validator.iter_errors(config):
+        path = ".".join(str(p) for p in error.absolute_path)
+
+        if error.validator == "additionalProperties":
+            field = _extract_additional_property(error.message)
+            # Log as warning (non-fatal for project.json unknown fields)
+            logger.warning(
+                "project.json contains unknown field '%s' — possible typo",
+                field,
+                extra={"manifest_path": manifest_path},
+            )
+            warnings.append(f"project.json contains unknown field '{field}'")
+        elif error.validator == "required":
+            missing = error.message.split("'")[1]
+            parent = f"{path}." if path else ""
+            fatal.append(
+                f"project.json ({manifest_path}) is missing required field '{parent}{missing}'"
+            )
+        elif error.validator == "type":
+            expected = error.schema.get("type", "?")
+            got = type(error.instance).__name__
+            fatal.append(
+                f"project.json ({manifest_path}) field '{path}' must be {expected}, got {got}"
+            )
+        else:
+            fatal.append(f"project.json ({manifest_path}): {error.message}")
+
+    if fatal:
+        for err in fatal:
+            logger.error(
+                "Project config schema error",
+                extra={"error": err, "manifest_path": manifest_path},
+            )
+        raise ConfigValidationError(fatal)
 
 
 def validate_agent_hierarchy(config: Dict[str, Any], config_path: str) -> None:
