@@ -64,6 +64,14 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="OpenClaw Config Tools",
         formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""\
+Environment variables (override config file values):
+  OPENCLAW_ROOT             Project root directory (default: ~/.openclaw)
+  OPENCLAW_PROJECT          Active project ID (default: openclaw.json active_project)
+  OPENCLAW_LOG_LEVEL        Log verbosity: DEBUG|INFO|WARNING|ERROR (default: INFO)
+  OPENCLAW_ACTIVITY_LOG_MAX Max activity log entries per task (default: 100)
+  OPENCLAW_STATE_FILE       Workspace state file path (L3 containers only)
+""",
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Subcommand to run")

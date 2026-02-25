@@ -14,6 +14,7 @@ from typing import Any, Dict, Optional
 
 from .config import (
     get_project_root,
+    get_active_project_env,
     DEFAULT_POOL_MAX_CONCURRENT,
     DEFAULT_POOL_MODE,
     DEFAULT_POOL_OVERFLOW_POLICY,
@@ -91,8 +92,8 @@ def load_and_validate_openclaw_config() -> Dict[str, Any]:
 
 
 def get_active_project_id() -> str:
-    """Read the active project ID from openclaw.json or OPENCLAW_PROJECT env var."""
-    env_project = os.environ.get("OPENCLAW_PROJECT")
+    """Read the active project ID from OPENCLAW_PROJECT env var or openclaw.json."""
+    env_project = get_active_project_env()  # routes through config.py
     if env_project:
         return env_project
 
