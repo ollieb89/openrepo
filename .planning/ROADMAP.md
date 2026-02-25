@@ -115,7 +115,7 @@ See: `.planning/milestones/v1.4-ROADMAP.md` for full phase details.
   1. Operator can call `get_state_path()` and `get_snapshot_dir()` and the returned paths match where L3 containers actually write — no divergence between runtime and code-resolved paths
   2. `grep`-ing the codebase for pool defaults, lock timeouts, cache TTL, log levels, and memory budget cap returns only `config.py` as the source — no duplicated literals across modules
   3. All call sites (state_engine, spawn, pool, monitor, snapshot) import constants from `config.py` rather than defining their own
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 45-01-PLAN.md — Add path resolver functions + consolidated constants to config.py
@@ -174,7 +174,7 @@ Plans:
 | 19-25 | v1.2 | 14/14 | ✓ Complete | 2026-02-24 |
 | 26-38 | v1.3 | 19/19 | ✓ Complete | 2026-02-24 |
 | 39-44 | v1.4 | 16/16 | ✓ Complete | 2026-02-25 |
-| 45. Path Resolver + Constants Foundation | v1.5 | 0/? | Not started | - |
+| 45. Path Resolver + Constants Foundation | 1/2 | In Progress|  | - |
 | 46. Schema Validation + Fail-Fast Startup | v1.5 | 0/? | Not started | - |
 | 47. Env Var Precedence + Migration CLI | v1.5 | 0/? | Not started | - |
 | 48. Config Integration Tests | v1.5 | 0/? | Not started | - |

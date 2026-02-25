@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.5 Config Consolidation — Phase 45 ready to plan
+**Current focus:** v1.5 Config Consolidation — Phase 45 Plan 01 complete
 
 ## Current Position
 
 Phase: 45 of 49 (Path Resolver + Constants Foundation)
-Plan: — (not yet planned)
-Status: Ready to plan
-Last activity: 2026-02-25 — v1.5 roadmap created (5 phases, 10 requirements)
+Plan: 2 of 2 (45-01 complete, 45-02 next)
+Status: In progress
+Last activity: 2026-02-25 — 45-01 complete: path resolver functions and consolidated constants added to config.py
 
-Progress: [░░░░░░░░░░] 0% — Not started
+Progress: [#░░░░░░░░░] 10% — Phase 45 Plan 01/02 done
 
 ## Performance Metrics
 
@@ -36,6 +36,11 @@ Notable for v1.5:
 - `workspace/` path divergence (runtime `data/workspace/.openclaw/` vs code-resolved `OPENCLAW_ROOT/workspace/.openclaw/`) — addressed in Phase 45
 - Phase 49 depends on Phase 45 (shares OPENCLAW_ROOT plumbing) but is independent of Phases 46-48
 
+**45-01 decisions:**
+- get_state_path() and get_snapshot_dir() require project_id — no Optional default, no active-project fallback
+- OPENCLAW_STATE_FILE env var takes priority in get_state_path() to align with container entrypoint.sh behavior
+- _find_project_root() never uses Path(__file__).parent — resolves to site-packages, not live project root
+
 ### Pending Todos
 
 None.
@@ -47,5 +52,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: v1.5 roadmap written — ROADMAP.md, STATE.md, REQUIREMENTS.md updated
-Resume: Run `/gsd:plan-phase 45` to plan Phase 45
+Stopped at: 45-01 complete — config.py has path resolver functions and consolidated constants
+Resume: Run `/gsd:execute-plan 45 02` to execute Phase 45 Plan 02 (call site migration)
