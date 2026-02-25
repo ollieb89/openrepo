@@ -231,8 +231,11 @@ Plans:
   8. Sidebar badge shows correct pending suggestion count
   9. POST `/api/suggestions` invokes `suggest.py` and returns results
 
+**Plans:** 2 plans
+
 Plans:
-- [ ] 52-01-PLAN.md — Dashboard + memU live verification (9 tests)
+- [ ] 52-01-PLAN.md — Environment setup + known code fixes (memU rebuild, seed data, localStorage persistence, auto-rescan)
+- [ ] 52-02-PLAN.md — Execute all 9 verification tests with structured logging + human review
 
 ### Phase 50: Notion Kanban Sync
 **Goal**: OpenClaw events (phase lifecycle, container lifecycle, project registration) automatically mirror to a Notion kanban board; conversational capture routes life tasks to the same board; reconcile detects and corrects drift — all idempotent, field-ownership-respecting, and observable
