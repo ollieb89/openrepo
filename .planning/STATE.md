@@ -76,6 +76,8 @@ Notable for v1.5:
 - [Phase 50-05]: _parse_batch sentence heuristic skips comma-split when '. ', '? ', or '! ' present — avoids splitting natural language sentences
 - [Phase 50-05]: Status ownership on capture update: explicit status in payload respected directly; no _is_openclaw_linked guard needed for capture cards (Capture Hash is our ownership marker)
 - [Phase 50-05]: card_type=Task for Dev area, Life Task for all others — consistent with Cards DB schema options
+- [Phase 50]: [Phase 50-04]: _should_write_status() is canonical status ownership guard — _is_openclaw_linked() delegates to it for backward compat
+- [Phase 50]: [Phase 50-04]: container child cards use upsert_by_dedupe on OpenClaw Event Anchor for idempotent replay
 
 ### Pending Todos
 
