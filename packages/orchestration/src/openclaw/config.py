@@ -27,6 +27,22 @@ DEFAULT_POOL_RECOVERY_POLICY = "mark_failed"
 # Memory injection — hard cap in characters for SOUL memory section
 MEMORY_CONTEXT_BUDGET = 2000
 
+# Memory conflict detection — cosine similarity threshold (QUAL-07)
+# New memories whose cosine similarity to an existing memory meets or exceeds this
+# value are treated as conflicts: the write is skipped and the event is logged.
+# The existing memory is kept; the new one is dropped.
+#
+# Rationale for 0.85 default (no production data available as of v1.5):
+#   - text-embedding-3-small (1536-dim) typically scores 0.90–0.99 for near-duplicate
+#     text and 0.70–0.85 for related-but-distinct content (OpenAI docs + benchmarks).
+#   - 0.85 sits at the boundary of the "related" → "duplicate" transition zone.
+#   - Conservative choice: prefer false negatives (missing a conflict) over false
+#     positives (incorrectly dropping distinct memories), because missed conflicts
+#     are recoverable via the health scan endpoint whereas dropped memories are not.
+#   - Operator can tune via openclaw.json memory.conflict_threshold once production
+#     data is available.
+MEMORY_CONFLICT_THRESHOLD = 0.85
+
 
 # JSON Schema for openclaw.json validation (CONF-02)
 # Defines required fields, types, and allowed top-level keys.
@@ -64,7 +80,14 @@ OPENCLAW_JSON_SCHEMA: dict = {
                 "auth": {"type": "object"},
             },
         },
-        "memory":  {"type": "object"},
+        "memory": {
+            "type": "object",
+            "properties": {
+                "memu_api_url":       {"type": "string"},
+                "enabled":            {"type": "boolean"},
+                "conflict_threshold": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+            },
+        },
         "plugins": {"type": "object"},
     },
 }
