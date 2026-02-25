@@ -1,0 +1,41 @@
+# Phase 52 Pre-flight Check Log
+# Date: 2026-02-25
+
+## Step 1 — memU Docker image rebuild
+PASS: memU container rebuilt and running (openclaw-memory)
+PASS: PostgreSQL (pgvector) healthy
+
+## Step 2 — memU endpoints verification
+PASS: health-scan endpoint present
+PASS: Available endpoints: /health, /memories, /memories/health-flags, /memories/health-scan, /memories/{memory_id}, /memorize, /retrieve
+
+## Step 3 — Dashboard
+PASS: Dashboard responds on port 6987 (HTTP 200)
+
+## Step 4 — Memory seeding
+PASS: 4 memories seeded for pumplai (direct DB insert — memorize pipeline has ConnectTimeout to OpenAI from Docker)
+  - mem-seed-001: Stripe payment gateway (knowledge)
+  - mem-seed-002: Stripe payment processing (knowledge, similar to 001 for conflict detection)
+  - mem-seed-003: JWT authentication (knowledge)
+  - mem-seed-004: CI/CD deployment (knowledge)
+NOTE: Embeddings are synthetic (random vectors). Conflict detection may need threshold adjustment.
+
+## Step 5 — Activity log seeding
+PASS: 3 failed tasks with "authentication" keyword added to pumplai workspace-state.json
+  - auth-fix-01: JWT token refresh failure
+  - auth-fix-02: Redis TTL mismatch with JWT
+  - auth-fix-03: bcrypt salt mismatch after password reset
+
+## Code Fixes Applied
+FIX 1: MemoryPanel.tsx — healthSettings localStorage persistence
+  - Lazy initializer reads from localStorage('occc-health-settings') on mount
+  - handleSettingsUpdate writes to localStorage on Apply
+FIX 2: MemoryPanel.tsx — auto-rescan after memory edit
+  - handleEditMemory calls runHealthScan() after mutate()
+
+## Known Issues
+- memU memorize pipeline has ConnectTimeout to OpenAI API from Docker container
+  (DNS/network issue — container can reach host but not external APIs)
+- Conflict pre-check has API mismatch: RetrieveMixin.retrieve() signature differs
+  from router's call (query= vs positional). Fails open.
+- Synthetic embeddings mean cosine similarity for conflict detection won't be realistic

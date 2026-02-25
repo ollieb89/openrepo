@@ -72,7 +72,16 @@ export default function MemoryPanel() {
   const [healthFlags, setHealthFlags] = useState<Map<string, HealthFlag>>(new Map());
   const [showOnlyFlagged, setShowOnlyFlagged] = useState(false);
   const [scanRunning, setScanRunning] = useState(false);
-  const [healthSettings, setHealthSettings] = useState<HealthSettings>(DEFAULT_HEALTH_SETTINGS);
+  const [healthSettings, setHealthSettings] = useState<HealthSettings>(() => {
+    if (typeof window === 'undefined') return DEFAULT_HEALTH_SETTINGS;
+    try {
+      const stored = localStorage.getItem('occc-health-settings');
+      if (stored) return { ...DEFAULT_HEALTH_SETTINGS, ...JSON.parse(stored) };
+    } catch {
+      // Ignore parse errors
+    }
+    return DEFAULT_HEALTH_SETTINGS;
+  });
 
   // Conflict panel state
   const [conflictPanel, setConflictPanel] = useState<ConflictPanelState | null>(null);
@@ -240,6 +249,7 @@ export default function MemoryPanel() {
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     await mutate();
+    await runHealthScan();
   }
 
   // Delete memory — remove from health flags and SWR cache
@@ -309,6 +319,11 @@ export default function MemoryPanel() {
   // Settings update
   function handleSettingsUpdate(settings: HealthSettings) {
     setHealthSettings(settings);
+    try {
+      localStorage.setItem('occc-health-settings', JSON.stringify(settings));
+    } catch {
+      // Ignore quota errors
+    }
   }
 
   // Handle open settings
