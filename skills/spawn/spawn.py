@@ -451,7 +451,7 @@ def spawn_l3_specialist(
         # Volume mounts
         "volumes": {
             workspace_path: {"bind": "/workspace", "mode": "rw"},
-            str(project_root / "packages" / "orchestration" / "src" / "openclaw"): {"bind": "/openclaw", "mode": "ro"},
+            str(project_root / "packages" / "orchestration" / "src"): {"bind": "/openclaw_src", "mode": "ro"},
             str(project_root / "workspace" / ".openclaw"): {"bind": "/workspace/.openclaw", "mode": "rw"},
         },
 

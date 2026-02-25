@@ -9,6 +9,10 @@ RUN apt-get update && apt-get install -y \
     jq \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Python dependencies required by the openclaw package (volume-mounted at runtime)
+RUN pip3 install --no-cache-dir --break-system-packages \
+    jsonschema>=4.26.0
+
 # Create non-root user (UID 1000 to match host)
 RUN useradd -m -u 1000 -s /bin/bash l3worker
 

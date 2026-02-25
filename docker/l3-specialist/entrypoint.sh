@@ -17,8 +17,8 @@ update_state() {
   local status="$1"
   local message="$2"
   python3 -c "
-import sys; sys.path.insert(0, '/openclaw')
-from state_engine import JarvisState
+import sys; sys.path.insert(0, '/openclaw_src')
+from openclaw.state_engine import JarvisState
 js = JarvisState('${STATE_FILE}')
 js.update_task('${TASK_ID}', '${status}', '${message}')
 "
@@ -96,7 +96,17 @@ fi
 update_state "in_progress" "Executing task with ${CLI_RUNTIME}..."
 
 if command -v "${CLI_RUNTIME}" &>/dev/null; then
-  "${CLI_RUNTIME}" "${SOUL_ARGS[@]}" --task "${TASK_DESCRIPTION}" 2>&1 | tee /tmp/task-output.log &
+  # AI CLI runtimes (claude-code, gemini-cli, codex) accept --task flag.
+  # Other commands (e.g. sleep for testing) are called with positional args only.
+  case "${CLI_RUNTIME}" in
+    claude-code|gemini-cli|codex)
+      "${CLI_RUNTIME}" "${SOUL_ARGS[@]}" --task "${TASK_DESCRIPTION}" 2>&1 | tee /tmp/task-output.log &
+      ;;
+    *)
+      # For non-AI runtimes, pass TASK_DESCRIPTION as a positional argument (supports testing with sleep, bash, etc.)
+      "${CLI_RUNTIME}" "${TASK_DESCRIPTION}" 2>&1 | tee /tmp/task-output.log &
+      ;;
+  esac
   _child_pid=$!
   wait $_child_pid || true
   EXIT_CODE=$?
