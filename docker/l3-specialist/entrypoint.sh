@@ -49,6 +49,11 @@ git config --global user.email "l3@openclaw.local"
 # 1. Report startup
 update_state "starting" "Container initialized. Skill: ${SKILL_HINT}, Runtime: ${CLI_RUNTIME}"
 
+# Write sentinel file for Docker health check (REL-09).
+# Written after startup initialization completes — represents "container initialized and ready".
+# Docker checks for this file every 30s; health status visible in `docker ps`.
+touch /tmp/openclaw-healthy
+
 # 2. Create staging branch
 cd /workspace
 if git show-ref --verify --quiet "refs/heads/${STAGING_BRANCH}"; then

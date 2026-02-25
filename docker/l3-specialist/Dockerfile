@@ -26,6 +26,13 @@ RUN chmod +x /entrypoint.sh
 LABEL openclaw.tier="l3"
 LABEL openclaw.component="specialist"
 
+# Health check — verifies container entrypoint has completed initialization.
+# Sentinel file /tmp/openclaw-healthy is written by entrypoint.sh after startup.
+# cap_drop ALL safe: uses /bin/sh -c "test ..." (shell builtin, no capabilities needed).
+# start_period=30s gives the entrypoint time to configure git, checkout branch, and write the sentinel.
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 --start-period=30s \
+    CMD test -f /tmp/openclaw-healthy || exit 1
+
 # Switch to non-root user
 USER l3worker
 
