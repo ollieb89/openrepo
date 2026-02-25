@@ -115,7 +115,11 @@ See: `.planning/milestones/v1.4-ROADMAP.md` for full phase details.
   1. Operator can call `get_state_path()` and `get_snapshot_dir()` and the returned paths match where L3 containers actually write — no divergence between runtime and code-resolved paths
   2. `grep`-ing the codebase for pool defaults, lock timeouts, cache TTL, log levels, and memory budget cap returns only `config.py` as the source — no duplicated literals across modules
   3. All call sites (state_engine, spawn, pool, monitor, snapshot) import constants from `config.py` rather than defining their own
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 45-01-PLAN.md — Add path resolver functions + consolidated constants to config.py
+- [ ] 45-02-PLAN.md — Migrate all call sites to import from config.py, remove duplicates
 
 ### Phase 46: Schema Validation + Fail-Fast Startup
 **Goal**: `openclaw.json` has a documented, machine-validated schema, and OpenClaw refuses to start with a clear actionable error if either config file is malformed or missing required fields
