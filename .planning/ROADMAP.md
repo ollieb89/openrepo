@@ -99,10 +99,10 @@ See: `.planning/milestones/v1.3-ROADMAP.md` for full phase details.
   1. `Makefile` and `README.md` document that `OPENCLAW_ROOT` must be exported before starting the dashboard — no silent path failure on fresh deployments
   2. `SummaryStream.tsx` has no parse errors (unterminated string literal on line 44 resolved)
   3. All `orchestration.*` patch paths in `test_l2_review_memorization.py` and `test_pool_memorization.py` reflect the current package structure — `uv run pytest` passes with no patch warnings
-**Plans:** 0/1 plans complete
+**Plans:** 1 plan
 
 Plans:
-- [ ] 44-01-PLAN.md — OPENCLAW_ROOT docs + SummaryStream.tsx fix + stale test patch audit
+- [ ] 44-01-PLAN.md — OPENCLAW_ROOT guard (Makefile + README) + SummaryStream.tsx parse error fix + stale patch audit closure
 
 ### Phase 43: v1.4 Gap Closure
 **Goal:** Close all gaps identified by milestone audit — fix two broken dashboard subprocess paths and wire the SIGTERM drain handler into the production runtime
