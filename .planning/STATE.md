@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.4 Gap Closure — Phase 43: v1.4 Audit Gap Closure (Plan 01 complete)
+**Current focus:** v1.4 Tech Debt Cleanup — Phase 44: Plan 01 complete
 
 ## Current Position
 
-Phase: 43 of 43 (v1.4 Gap Closure) — IN PROGRESS
+Phase: 44 of 44 (v1.4 Tech Debt Cleanup) — COMPLETE
 Plan: 1 of 1 complete in current phase
-Status: Plan 01 complete — dashboard subprocess path fixes (ADV-01..04) + SIGTERM drain wiring (REL-08), 148/148 tests green
-Last activity: 2026-02-25 — Phase 43 Plan 01 complete: ORCHESTRATION_ROOT path fix + register_shutdown_handler wiring + regression test
+Status: Plan 01 complete — OPENCLAW_ROOT Makefile guard, README fix, SummaryStream.tsx parse error, stale-patch audit closure; 148/148 tests green
+Last activity: 2026-02-25 — Phase 44 Plan 01 complete: v1.4 tech debt cleanup (TECH-DEBT-44-A, B, C)
 
-Progress: [██████████] 100% (Phase 43 Plan 01 complete)
+Progress: [██████████] 100% (Phase 44 Plan 01 complete)
 
 ## Performance Metrics
 
@@ -124,6 +124,10 @@ v1.4 research flags to carry into planning:
 - Module-level _shutdown_handler_registered flag (not closure) — accessible by patch.object in tests, reset per test
 - rerenderSoul() try/catch semantics preserved — consistent with Phase 41 Plan 02 decision
 
+**Phase 44 Plan 01 decisions:**
+- Used hard exit 1 guard (not soft-warn) in Makefile dashboard target — soft-warn allows silent failure, which is the exact ADV-03 issue being fixed
+- Used $$ (double dollar) in Makefile recipe for OPENCLAW_ROOT — single $ expanded by Make to empty string, defeating the guard
+
 ### Pending Todos
 
 None.
@@ -137,5 +141,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: Completed 43-01-PLAN.md — ORCHESTRATION_ROOT path fix + register_shutdown_handler wiring (ADV-01..04, REL-08), 148/148 tests pass
-Resume: Phase 43 Plan 01 complete — phase 43 done (1 plan)
+Stopped at: Completed 44-01-PLAN.md — OPENCLAW_ROOT Makefile guard + README fix + SummaryStream.tsx parse error + stale-patch audit closure (TECH-DEBT-44-A, B, C), 148/148 tests pass
+Resume: Phase 44 Plan 01 complete — phase 44 done (1 plan). v1.4 milestone fully cleaned up.

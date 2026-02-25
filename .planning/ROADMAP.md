@@ -89,7 +89,7 @@ See: `.planning/milestones/v1.3-ROADMAP.md` for full phase details.
 - [x] **Phase 41: L1 Strategic Suggestions** - Pattern extraction engine producing reviewable SOUL amendments with mandatory human approval gate (completed 2026-02-24)
 - [x] **Phase 42: Delta Snapshots** - Cursor-based memory retrieval and configurable snapshot pruning to reduce I/O at scale (completed 2026-02-24)
 - [x] **Phase 43: v1.4 Gap Closure** - Fix two broken dashboard subprocess paths and wire SIGTERM drain handler into production runtime (completed 2026-02-25)
-- [ ] **Phase 44: v1.4 Tech Debt Cleanup** - Document OPENCLAW_ROOT export requirement, fix SummaryStream.tsx parse error, and audit stale test patch targets
+- [x] **Phase 44: v1.4 Tech Debt Cleanup** - Document OPENCLAW_ROOT export requirement, fix SummaryStream.tsx parse error, and audit stale test patch targets (completed 2026-02-25)
 
 ### Phase 44: v1.4 Tech Debt Cleanup
 **Goal:** Close all actionable tech debt items identified by the v1.4 audit — documentation gap, pre-existing dashboard parse error, and stale test patch paths from the repo restructure
@@ -99,7 +99,7 @@ See: `.planning/milestones/v1.3-ROADMAP.md` for full phase details.
   1. `Makefile` and `README.md` document that `OPENCLAW_ROOT` must be exported before starting the dashboard — no silent path failure on fresh deployments
   2. `SummaryStream.tsx` has no parse errors (unterminated string literal on line 44 resolved)
   3. All `orchestration.*` patch paths in `test_l2_review_memorization.py` and `test_pool_memorization.py` reflect the current package structure — `uv run pytest` passes with no patch warnings
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 - [ ] 44-01-PLAN.md — OPENCLAW_ROOT guard (Makefile + README) + SummaryStream.tsx parse error fix + stale patch audit closure
@@ -198,4 +198,4 @@ Plans:
 | 41. L1 Strategic Suggestions | 3/3 | Complete    | 2026-02-24 | - |
 | 42. Delta Snapshots | 3/3 | Complete   | 2026-02-24 | - |
 | 43. v1.4 Gap Closure | 1/1 | Complete    | 2026-02-25 | - |
-| 44. v1.4 Tech Debt Cleanup | 0/1 | Pending | - | - |
+| 44. v1.4 Tech Debt Cleanup | 1/1 | Complete   | 2026-02-25 | - |
