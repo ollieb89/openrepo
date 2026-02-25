@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v2.0 Notion Kanban Sync — Phase 50 COMPLETE (all 6 plans done)
+**Current focus:** v1.5 Config Consolidation — Phase 48 complete (CONF-07 satisfied)
 
 ## Current Position
 
-Phase: 50 of 50 (Notion Kanban Sync)
-Plan: 6 of 6 complete
+Phase: 48 of 49 (Config Integration Tests)
+Plan: 1 of 1 complete
 Status: Complete
-Last activity: 2026-02-25 — 50-06 complete: reconcile handler (drift detection, 4 correction types), test_event_bus.py (6 tests), test_notion_sync.py (41 tests), 214 total passing (NOTION-07, NOTION-02, NOTION-08)
+Last activity: 2026-02-25 — 48-01 complete: test_config_integration.py (15 tests, 4 classes), integration marker registered, valid_openclaw_config fixture, 229 total passing (CONF-07)
 
-Progress: [##########] 100% — Phase 45 done (2/2), Phase 46 done (3/3), Phase 50 done (6/6)
+Progress: [##########] 100% — Phase 45 done (2/2), Phase 46 done (3/3), Phase 47 done (3/3), Phase 48 done (1/1)
 
 ## Performance Metrics
 
@@ -81,6 +81,9 @@ Notable for v1.5:
 - [Phase 50-06]: SyncResult.extra dict added — holds reconcile drift report; included in to_dict() output only when non-empty
 - [Phase 50-06]: _reconcile_status_mismatch is no-op when workspace-state.json unavailable — prevents false corrections against empty baseline
 - [Phase 50-06]: _query_all() paginated helper calls client._request() directly for cursor pagination (query_database() does not expose cursor)
+- [Phase 48-01]: Inner-method imports in integration tests — monkeypatching env vars takes effect before modules are touched
+- [Phase 48-01]: try/finally with importlib.reload(cfg) in finally block restores module-level LOG_LEVEL/ACTIVITY_LOG_MAX after env var tests
+- [Phase 48-01]: Pool config tests write tmp_path/projects/testproject/project.json to match exact path load_project_config() resolves
 
 ### Pending Todos
 
@@ -93,5 +96,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: 50-06 complete — reconcile_handler.py (drift detection, 4 correction types, bulk_mode), test_event_bus.py (6 tests), test_notion_sync.py (41 tests), 214 tests passing. Phase 50 COMPLETE.
-Resume: Phase 50 fully complete. Next milestone planning required.
+Stopped at: 48-01 complete — test_config_integration.py (15 tests, 4 classes), integration marker, valid_openclaw_config fixture. 229 tests passing. Phase 48 COMPLETE.
+Resume: Phase 48 fully complete. Next: Phase 49 (Deferred Items — REL-09, QUAL-07, OBS-05).

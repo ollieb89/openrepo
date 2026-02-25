@@ -103,7 +103,7 @@ See: `.planning/milestones/v1.4-ROADMAP.md` for full phase details.
 - [x] **Phase 45: Path Resolver + Constants Foundation** - Eliminate the workspace path divergence and consolidate all magic values into config.py (completed 2026-02-25)
 - [x] **Phase 46: Schema Validation + Fail-Fast Startup** - Add a documented openclaw.json schema and enforce it at process startup (completed 2026-02-25)
 - [x] **Phase 47: Env Var Precedence + Migration CLI** - Document and enforce env var resolution order; give operators a migration command to upgrade existing configs (completed 2026-02-25)
-- [ ] **Phase 48: Config Integration Tests** - Test suite verifying path resolution, validation, env precedence, and pool config fallback runs clean under pytest
+- [x] **Phase 48: Config Integration Tests** - Test suite verifying path resolution, validation, env precedence, and pool config fallback runs clean under pytest (completed 2026-02-25)
 - [ ] **Phase 49: Deferred Reliability, Quality, and Observability** - Docker health checks for L3 containers, calibrated cosine similarity threshold, and adaptive monitor polling
 
 ## Phase Details
@@ -164,7 +164,7 @@ Plans:
   3. Tests cover fail-fast validation (invalid and missing-field configs trigger the expected errors)
   4. Tests cover env var precedence (env var values override config file values for all four variables)
   5. Tests cover pool config fallback (missing pool config in project.json falls back to defaults from config.py)
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 - [ ] 48-01-PLAN.md — Config integration test suite: pyproject.toml marker, conftest fixture, test_config_integration.py (4 test classes)
@@ -225,6 +225,6 @@ Plans:
 | 45. Path Resolver + Constants Foundation | 2/2 | Complete    | 2026-02-25 | - |
 | 46. Schema Validation + Fail-Fast Startup | 3/3 | Complete    | 2026-02-25 | - |
 | 47. Env Var Precedence + Migration CLI | 3/3 | Complete    | 2026-02-25 | - |
-| 48. Config Integration Tests | v1.5 | 0/1 | Not started | - |
+| 48. Config Integration Tests | 1/1 | Complete   | 2026-02-25 | - |
 | 49. Deferred Reliability, Quality, and Observability | v1.5 | 0/? | Not started | - |
 | 50. Notion Kanban Sync | 6/6 | Complete    | 2026-02-25 | - |
