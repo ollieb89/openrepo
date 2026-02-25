@@ -43,6 +43,7 @@ class SyncResult:
         self.skipped: int = 0
         self.errors: List[str] = []
         self.mutations: List[Dict[str, Any]] = []
+        self.extra: Dict[str, Any] = {}  # handler-specific metadata (e.g., reconcile drift report)
 
     def record_mutation(
         self,
@@ -74,7 +75,7 @@ class SyncResult:
         logger.error("Notion sync error: %s", error_msg)
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        result: Dict[str, Any] = {
             "request_type": self.request_type,
             "result": {
                 "created": self.created,
@@ -84,6 +85,9 @@ class SyncResult:
                 "mutations": self.mutations,
             },
         }
+        if self.extra:
+            result["result"]["extra"] = self.extra
+        return result
 
 
 # ------------------------------------------------------------------
@@ -871,11 +875,22 @@ def handle_capture(payload: Dict[str, Any]) -> Dict[str, Any]:
 def handle_reconcile(payload: Dict[str, Any]) -> Dict[str, Any]:
     """Handle reconcile requests.
 
-    Implemented in Plan 05.
+    Routes to reconcile_handler.handle_reconcile() which detects and corrects
+    drift between OpenClaw project state and Notion:
+    - Creates Projects DB rows for OpenClaw projects missing from Notion
+    - Corrects Status mismatches on OpenClaw-linked cards
+    - Backfills missing Project relations on phase cards
+    - Archives cards pointing to phases that no longer exist in OpenClaw
+
+    Never deletes Notion pages. Never modifies Status on Notion-owned cards.
+    Uses bulk_mode for rate-limited API access.
+
+    Returns SyncResult dict with created/updated/skipped/errors/mutations.
     """
+    from reconcile_handler import handle_reconcile as _do_reconcile  # noqa: PLC0415
+
     result = SyncResult("reconcile")
-    logger.info("handle_reconcile: reconcile not yet implemented (Plan 05)")
-    result.record_skip()
+    _do_reconcile(payload, result)
     return result.to_dict()
 
 
