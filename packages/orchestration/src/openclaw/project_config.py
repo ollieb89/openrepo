@@ -8,6 +8,7 @@ and agent mappings without hardcoding.
 
 import json
 import os
+import sys as _sys
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -19,10 +20,43 @@ from .config import (
     DEFAULT_POOL_QUEUE_TIMEOUT_S,
     DEFAULT_POOL_RECOVERY_POLICY,
 )
-from .config_validator import validate_project_config, validate_agent_hierarchy, ConfigValidationError  # noqa: F401
+from .config_validator import (  # noqa: F401
+    validate_project_config,
+    validate_project_config_schema,
+    validate_openclaw_config,
+    validate_agent_hierarchy,
+    ConfigValidationError,
+)
 from .logging import get_logger
 
 _logger = get_logger("project_config")
+
+
+def _is_tty() -> bool:
+    """Return True if stderr is an interactive TTY."""
+    return hasattr(_sys.stderr, "isatty") and _sys.stderr.isatty()
+
+
+def _emit_validation_results(
+    fatal: list, warnings: list, config_path: str
+) -> None:
+    """
+    Print validation warnings and errors to stderr, then exit if any fatal errors.
+
+    Called before logging is configured — output goes directly to stderr.
+    TTY: coloured labels. Non-TTY: plain text.
+    """
+    red    = "\033[91m" if _is_tty() else ""
+    yellow = "\033[93m" if _is_tty() else ""
+    reset  = "\033[0m"  if _is_tty() else ""
+
+    for w in warnings:
+        print(f"{yellow}WARNING{reset}: {w}", file=_sys.stderr, flush=True)
+    for e in fatal:
+        print(f"{red}ERROR{reset}: {e}", file=_sys.stderr, flush=True)
+    if fatal:
+        _sys.exit(1)
+
 
 _VALID_POOL_MODES = {"shared", "isolated"}
 _VALID_OVERFLOW_POLICIES = {"reject", "wait", "priority"}
@@ -31,7 +65,14 @@ _VALID_RECOVERY_POLICIES = {"mark_failed", "auto_retry", "manual"}
 
 def load_and_validate_openclaw_config() -> Dict[str, Any]:
     """
-    Load openclaw.json and validate agent hierarchy.
+    Load openclaw.json, validate schema, and validate agent hierarchy.
+
+    Schema validation (CONF-02, CONF-06):
+    - Unknown top-level fields -> WARNING to stderr, continue
+    - Missing required fields or wrong types -> ERROR to stderr, sys.exit(1)
+
+    Agent hierarchy validation (REL-02/REL-03 — existing):
+    - Raises ConfigValidationError on bad reports_to chains
 
     Raises:
         FileNotFoundError: If openclaw.json does not exist.
@@ -41,6 +82,10 @@ def load_and_validate_openclaw_config() -> Dict[str, Any]:
     config_path = root / "openclaw.json"
     with open(config_path) as f:
         config = json.load(f)
+    # Schema validation — CONF-02, CONF-06 (must run before agent hierarchy)
+    fatal, warnings = validate_openclaw_config(config, str(config_path))
+    _emit_validation_results(fatal, warnings, str(config_path))
+    # Agent hierarchy validation — existing behaviour preserved
     validate_agent_hierarchy(config, str(config_path))
     return config
 
@@ -92,6 +137,8 @@ def load_project_config(project_id: Optional[str] = None) -> Dict[str, Any]:
         config = json.load(f)
 
     validate_project_config(config, str(manifest_path))
+    # Schema pass: detects unknown fields as warnings, validates types (CONF-06)
+    validate_project_config_schema(config, str(manifest_path))
     return config
 
 
