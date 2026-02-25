@@ -15,7 +15,8 @@ from pathlib import Path
 from typing import Dict, Any, Optional, Tuple
 
 from .state_engine import JarvisState
-from .project_config import load_project_config, get_snapshot_dir
+from .config import get_snapshot_dir
+from .project_config import load_project_config
 from .logging import get_logger
 
 logger = get_logger("snapshot")

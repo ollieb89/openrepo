@@ -14,7 +14,8 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 
 
-from .project_config import get_state_path, get_snapshot_dir
+from .config import get_state_path, get_snapshot_dir
+from .project_config import get_active_project_id
 
 
 class Colors:
@@ -72,11 +73,16 @@ def initialize_workspace(project_root: Optional[Path] = None) -> Dict[str, Any]:
     """
     if project_root is None:
         project_root = find_project_root()
-    
-    snapshots_dir = get_snapshot_dir()
-    
+
+    try:
+        project_id = get_active_project_id()
+    except (ValueError, FileNotFoundError):
+        project_id = "default"
+
+    snapshots_dir = get_snapshot_dir(project_id)
+
     # Ensure the per-project state directory exists
-    get_state_path().parent.mkdir(parents=True, exist_ok=True)
+    get_state_path(project_id).parent.mkdir(parents=True, exist_ok=True)
     
     already_existed = snapshots_dir.exists()
     
@@ -91,16 +97,17 @@ def initialize_workspace(project_root: Optional[Path] = None) -> Dict[str, Any]:
 
     # Generate SOUL.md for active project if not yet written (skip-if-exists, non-fatal)
     soul_written = False
+    # project_id is already resolved above; use it directly
+    soul_project_id: Optional[str] = None
     try:
-        from .project_config import get_active_project_id as _get_pid
-        project_id = _get_pid()
-    except (ImportError, ValueError, FileNotFoundError):
-        project_id = None
+        soul_project_id = get_active_project_id()
+    except (ValueError, FileNotFoundError):
+        soul_project_id = None
 
-    if project_id is not None:
+    if soul_project_id is not None:
         try:
             from .soul_renderer import write_soul
-            soul_path = write_soul(project_id, skip_if_exists=True)
+            soul_path = write_soul(soul_project_id, skip_if_exists=True)
             if soul_path is not None:
                 print(f"{Colors.GREEN}✓{Colors.RESET} Generated SOUL.md: {soul_path}")
                 soul_written = True
@@ -132,13 +139,18 @@ def verify_workspace(project_root: Optional[Path] = None) -> Dict[str, bool]:
     """
     if project_root is None:
         project_root = find_project_root()
-    
+
+    try:
+        project_id = get_active_project_id()
+    except (ValueError, FileNotFoundError):
+        project_id = "default"
+
     results = {}
-    
-    snapshots_dir = get_snapshot_dir()
+
+    snapshots_dir = get_snapshot_dir(project_id)
     results['snapshots_dir'] = snapshots_dir.exists() and snapshots_dir.is_dir()
-    
-    state_file_dir = get_state_path().parent
+
+    state_file_dir = get_state_path(project_id).parent
     results['state_file_dir'] = state_file_dir.exists() and state_file_dir.is_dir()
     
     try:

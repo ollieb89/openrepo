@@ -11,34 +11,22 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from .config import (
+    get_project_root,
+    DEFAULT_POOL_MAX_CONCURRENT,
+    DEFAULT_POOL_MODE,
+    DEFAULT_POOL_OVERFLOW_POLICY,
+    DEFAULT_POOL_QUEUE_TIMEOUT_S,
+    DEFAULT_POOL_RECOVERY_POLICY,
+)
 from .config_validator import validate_project_config, validate_agent_hierarchy, ConfigValidationError  # noqa: F401
 from .logging import get_logger
 
 _logger = get_logger("project_config")
 
-# Pool config defaults — also used by pool.py as fallback reference
-_POOL_CONFIG_DEFAULTS: Dict[str, Any] = {
-    "max_concurrent": 3,
-    "pool_mode": "shared",
-    "overflow_policy": "wait",
-    "queue_timeout_s": 300,
-    "recovery_policy": "mark_failed",
-}
-
 _VALID_POOL_MODES = {"shared", "isolated"}
 _VALID_OVERFLOW_POLICIES = {"reject", "wait", "priority"}
 _VALID_RECOVERY_POLICIES = {"mark_failed", "auto_retry", "manual"}
-
-
-def _find_project_root() -> Path:
-    """Find the OpenClaw project root (directory containing openclaw.json)."""
-    # Check env var first
-    env_root = os.environ.get("OPENCLAW_ROOT")
-    if env_root:
-        return Path(env_root)
-
-    # Walk up from this file: orchestration/ -> project root
-    return Path(__file__).parent.parent
 
 
 def load_and_validate_openclaw_config() -> Dict[str, Any]:
@@ -49,7 +37,7 @@ def load_and_validate_openclaw_config() -> Dict[str, Any]:
         FileNotFoundError: If openclaw.json does not exist.
         ConfigValidationError: If agent hierarchy has invalid reports_to or level constraints.
     """
-    root = _find_project_root()
+    root = get_project_root()
     config_path = root / "openclaw.json"
     with open(config_path) as f:
         config = json.load(f)
@@ -91,7 +79,7 @@ def load_project_config(project_id: Optional[str] = None) -> Dict[str, Any]:
     if project_id is None:
         project_id = get_active_project_id()
 
-    root = _find_project_root()
+    root = get_project_root()
     manifest_path = root / "projects" / project_id / "project.json"
 
     if not manifest_path.exists():
@@ -109,7 +97,7 @@ def load_project_config(project_id: Optional[str] = None) -> Dict[str, Any]:
 
 def get_source_directories() -> list:
     """Get the configured source directories from openclaw.json."""
-    root = _find_project_root()
+    root = get_project_root()
     config_path = root / "openclaw.json"
     with open(config_path) as f:
         config = json.load(f)
@@ -160,7 +148,13 @@ def get_pool_config(project_id: Optional[str] = None) -> Dict[str, Any]:
     Returns:
         Dict with resolved pool configuration.
     """
-    defaults = _POOL_CONFIG_DEFAULTS.copy()
+    defaults = {
+        "max_concurrent": DEFAULT_POOL_MAX_CONCURRENT,
+        "pool_mode": DEFAULT_POOL_MODE,
+        "overflow_policy": DEFAULT_POOL_OVERFLOW_POLICY,
+        "queue_timeout_s": DEFAULT_POOL_QUEUE_TIMEOUT_S,
+        "recovery_policy": DEFAULT_POOL_RECOVERY_POLICY,
+    }
 
     try:
         config = load_project_config(project_id)
@@ -264,7 +258,7 @@ def get_memu_config() -> Dict[str, Any]:
     """
     defaults = {"memu_api_url": "", "enabled": True}
     try:
-        root = _find_project_root()
+        root = get_project_root()
         config_path = root / "openclaw.json"
         with open(config_path) as f:
             cfg = json.load(f)
@@ -286,49 +280,3 @@ def get_memu_config() -> Dict[str, Any]:
 class ProjectNotFoundError(Exception):
     """Raised when project manifest does not exist for a given project_id."""
     pass
-
-
-def get_state_path(project_id: Optional[str] = None) -> Path:
-    """
-    Return the per-project state file path.
-
-    Path: <project_root>/workspace/.openclaw/<project_id>/workspace-state.json
-
-    Raises:
-        ProjectNotFoundError: If project_id has no manifest in projects/<id>/project.json
-        ValueError: If no active project is configured and project_id is None
-    """
-    if project_id is None:
-        project_id = get_active_project_id()
-
-    root = _find_project_root()
-    manifest_path = root / "projects" / project_id / "project.json"
-    if not manifest_path.exists():
-        raise ProjectNotFoundError(
-            f"Project '{project_id}' not found. No manifest at {manifest_path}"
-        )
-
-    return root / "workspace" / ".openclaw" / project_id / "workspace-state.json"
-
-
-def get_snapshot_dir(project_id: Optional[str] = None) -> Path:
-    """
-    Return the per-project snapshot directory path.
-
-    Path: <project_root>/workspace/.openclaw/<project_id>/snapshots/
-
-    Raises:
-        ProjectNotFoundError: If project_id has no manifest in projects/<id>/project.json
-        ValueError: If no active project is configured and project_id is None
-    """
-    if project_id is None:
-        project_id = get_active_project_id()
-
-    root = _find_project_root()
-    manifest_path = root / "projects" / project_id / "project.json"
-    if not manifest_path.exists():
-        raise ProjectNotFoundError(
-            f"Project '{project_id}' not found. No manifest at {manifest_path}"
-        )
-
-    return root / "workspace" / ".openclaw" / project_id / "snapshots"

@@ -10,7 +10,7 @@ submodule imports (e.g., `from openclaw.config import X`).
 """
 
 from .state_engine import JarvisState
-from .config import LOCK_TIMEOUT, POLL_INTERVAL
+from .config import LOCK_TIMEOUT, POLL_INTERVAL, get_state_path, get_snapshot_dir
 from .init import initialize_workspace, verify_workspace
 from .project_config import (
     load_project_config,
@@ -19,8 +19,6 @@ from .project_config import (
     get_tech_stack,
     get_agent_mapping,
     get_active_project_id,
-    get_state_path,
-    get_snapshot_dir,
     get_pool_config,
     ProjectNotFoundError,
 )

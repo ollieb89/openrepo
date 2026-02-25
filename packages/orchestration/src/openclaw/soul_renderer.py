@@ -11,7 +11,8 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from .project_config import load_project_config, _find_project_root
+from .config import get_project_root as _find_project_root
+from .project_config import load_project_config
 
 
 def parse_sections(text: str) -> Tuple[Dict[str, str], List[str]]:
