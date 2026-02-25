@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.4 Operational Maturity — Phase 42: Delta Snapshots (COMPLETE — all 3 plans done)
+**Current focus:** v1.4 Gap Closure — Phase 43: v1.4 Audit Gap Closure (Plan 01 complete)
 
 ## Current Position
 
-Phase: 42 of 42 (Delta Snapshots) — COMPLETE
-Plan: 3 of 3 complete in current phase
-Status: Plan 03 complete — snapshot pruning wired (PERF-08), 13/13 tests green, phase 42 done
-Last activity: 2026-02-25 — Phase 42 Plan 03 complete: capture_semantic_snapshot prune wiring + package rename fixes
+Phase: 43 of 43 (v1.4 Gap Closure) — IN PROGRESS
+Plan: 1 of 1 complete in current phase
+Status: Plan 01 complete — dashboard subprocess path fixes (ADV-01..04) + SIGTERM drain wiring (REL-08), 148/148 tests green
+Last activity: 2026-02-25 — Phase 43 Plan 01 complete: ORCHESTRATION_ROOT path fix + register_shutdown_handler wiring + regression test
 
-Progress: [██████████] 100% (v1.4 COMPLETE)
+Progress: [██████████] 100% (Phase 43 Plan 01 complete)
 
 ## Performance Metrics
 
@@ -25,6 +25,7 @@ Progress: [██████████] 100% (v1.4 COMPLETE)
 - v1.3: 11 phases, 19 plans in 7 days
 
 **v1.4:** 4 phases, TBD plans — 10 plans complete (Phase 39 Plans 01-04, Phase 40 Plans 01-04, Phase 41 Plans 01-02)
+**Phase 43 (Gap Closure):** 1 plan complete
 
 ## Accumulated Context
 
@@ -116,6 +117,13 @@ v1.4 research flags to carry into planning:
 - load_project_config called fresh inside try block — follows get_pool_config() pattern of reading at call time rather than caching
 - PERF-08 test scaffold fixes: mock_branch_detect added as 1st subprocess mock; patch targets updated from orchestration.snapshot.* to openclaw.snapshot.*; sys.path restored for PERF-07 router imports
 
+**Phase 43 Plan 01 decisions:**
+- ORCHESTRATION_ROOT constant derived from OPENCLAW_ROOT at module scope in both route files — single source of truth for post-refactor monorepo path
+- existsSync startup warn in both routes surfaces misconfiguration at server start not at request time
+- asyncio.get_running_loop() used in spawn_task() (not get_event_loop()) — safe inside async context, fast-fails on miscall
+- Module-level _shutdown_handler_registered flag (not closure) — accessible by patch.object in tests, reset per test
+- rerenderSoul() try/catch semantics preserved — consistent with Phase 41 Plan 02 decision
+
 ### Pending Todos
 
 None.
@@ -129,5 +137,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: Completed 42-03-PLAN.md — snapshot pruning wiring (PERF-08), phase 42 complete, v1.4 done
-Resume: N/A — v1.4 Operational Maturity milestone complete (all 4 phases, 42 total phases)
+Stopped at: Completed 43-01-PLAN.md — ORCHESTRATION_ROOT path fix + register_shutdown_handler wiring (ADV-01..04, REL-08), 148/148 tests pass
+Resume: Phase 43 Plan 01 complete — phase 43 done (1 plan)
