@@ -16,7 +16,12 @@ lint: ## Lint Python code
 
 # --- Dashboard (Next.js) ---
 
-dashboard: ## Start dashboard dev server (port 6987)
+dashboard: ## Start dashboard dev server (port 6987) — OPENCLAW_ROOT must be exported
+	@if [ -z "$$OPENCLAW_ROOT" ]; then \
+		echo "ERROR: OPENCLAW_ROOT is not set. The dashboard requires this to locate suggest.py and soul-suggestions.json."; \
+		echo "  Run: export OPENCLAW_ROOT=$$HOME/.openclaw"; \
+		exit 1; \
+	fi
 	cd packages/dashboard && bun install && bun run dev
 
 dashboard-build: ## Build dashboard for production
