@@ -106,6 +106,7 @@ See: `.planning/milestones/v1.4-ROADMAP.md` for full phase details.
 - [x] **Phase 47: Env Var Precedence + Migration CLI** - Document and enforce env var resolution order; give operators a migration command to upgrade existing configs (completed 2026-02-25)
 - [x] **Phase 48: Config Integration Tests** - Test suite verifying path resolution, validation, env precedence, and pool config fallback runs clean under pytest (completed 2026-02-25)
 - [x] **Phase 49: Deferred Reliability, Quality, and Observability** - Docker health checks for L3 containers, calibrated cosine similarity threshold, and adaptive monitor polling (completed 2026-02-25)
+- [ ] **Phase 53: Tech Debt Cleanup** - Fix stale error string in migrate_state.py, remove residual wizard field from openclaw.json, tune suggest.py thresholds for small datasets
 
 ## Phase Details
 
@@ -262,6 +263,16 @@ Plans:
 - [ ] 50-04-PLAN.md — Container event handlers + field ownership carve-out
 - [ ] 50-05-PLAN.md — Conversational capture with area inference + batch parsing
 - [ ] 50-06-PLAN.md — Reconcile handler + unit tests for event bus and sync logic
+
+### Phase 53: Tech Debt Cleanup
+**Goal**: Close accumulated tech debt from v1.5 audit — fix stale references, remove residual config fields, and tune suggestion thresholds
+**Depends on**: Phase 49 (v1.5 core complete)
+**Requirements**: None (tech debt — no new REQ-IDs)
+**Gap Closure**: Closes v1.5 audit tech debt items
+**Success Criteria** (what must be TRUE):
+  1. `migrate_state.py` error message references `config.get_state_path()` instead of stale `project_config.get_state_path()`
+  2. `openclaw.json` no longer contains the `wizard` field — no unknown-field warning on startup
+  3. `suggest.py` MIN_CLUSTER_SIZE defaults work with datasets under 10 memories without requiring manual seeding
 
 ## Progress
 
