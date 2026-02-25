@@ -178,6 +178,92 @@ class TestHandleCaptureRouting:
         assert args1[0]["area"] == "Health"
 
 
+class TestProcessSingleCapture:
+    """Tests for _process_single_capture."""
+
+    def setup_method(self):
+        import notion_sync
+        notion_sync._project_page_id_cache.clear()
+
+    @patch("capture_handler._load_config")
+    @patch("notion_client.NotionClient")
+    def test_process_single_capture_create(self, mock_client_class, mock_load_config):
+        mock_load_config.return_value = {"area_keywords": _make_area_keywords()}
+        
+        mock_client = mock_client_class.return_value
+        mock_client._get_db_ids.return_value = ("proj_db", "proj_ds", "cards_db", "cards_ds")
+        
+        # Mock not finding existing capture
+        mock_client.query_database.return_value = []
+        
+        mock_client.create_page.return_value = {"id": "capture-page-1"}
+        
+        from capture_handler import _process_single_capture
+        from notion_sync import SyncResult
+        
+        capture = {
+            "title": "renew gym",
+            "notes": "check prices"
+        }
+        res = SyncResult("capture")
+        
+        _process_single_capture(capture, res)
+        
+        # Verify area was inferred and card created
+        mock_client.create_page.assert_called_once()
+        create_args = mock_client.create_page.call_args[0]
+        assert create_args[0] == "cards_db"
+        
+        props = create_args[1]
+        assert props["Name"]["title"][0]["text"]["content"] == "renew gym"
+        assert props["Area"]["select"]["name"] == "Health"
+        assert props["Status"]["select"]["name"] == "Backlog"
+        assert props["Notes"]["rich_text"][0]["text"]["content"] == "check prices (area inferred)"
+        
+        assert res.created == 1
+        assert res.mutations[0]["area_inferred"] is True
+
+    @patch("capture_handler._load_config")
+    @patch("notion_client.NotionClient")
+    def test_process_single_capture_update(self, mock_client_class, mock_load_config):
+        mock_load_config.return_value = {"area_keywords": _make_area_keywords()}
+        
+        mock_client = mock_client_class.return_value
+        mock_client._get_db_ids.return_value = ("proj_db", "proj_ds", "cards_db", "cards_ds")
+        
+        # Mock finding existing capture
+        existing_card = {
+            "id": "capture-page-1",
+            "properties": {
+                "Notes": {"rich_text": [{"plain_text": "existing notes"}]}
+            }
+        }
+        mock_client.query_database.return_value = [existing_card]
+        
+        from capture_handler import _process_single_capture
+        from notion_sync import SyncResult
+        
+        capture = {
+            "title": "renew gym",
+            "notes": "new notes",
+            "status": "This Week"
+        }
+        res = SyncResult("capture")
+        
+        _process_single_capture(capture, res)
+        
+        mock_client.update_page.assert_called_once()
+        update_args = mock_client.update_page.call_args[0]
+        assert update_args[0] == "capture-page-1"
+        
+        props = update_args[1]
+        assert "Last Synced" in props
+        assert props["Notes"]["rich_text"][0]["text"]["content"] == "existing notes\nnew notes"
+        assert props["Status"]["select"]["name"] == "This Week"
+        
+        assert res.updated == 1
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
