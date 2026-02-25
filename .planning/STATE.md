@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.5 Config Consolidation — Phase 45 Plan 01 complete
+**Current focus:** v1.5 Config Consolidation — Phase 45 complete, Phase 46 next
 
 ## Current Position
 
-Phase: 45 of 49 (Path Resolver + Constants Foundation)
-Plan: 2 of 2 (45-01 complete, 45-02 next)
+Phase: 46 of 49 (Schema Validation + Fail-Fast Startup)
+Plan: 1 of ? (Phase 45 complete)
 Status: In progress
-Last activity: 2026-02-25 — 45-01 complete: path resolver functions and consolidated constants added to config.py
+Last activity: 2026-02-25 — 45-02 complete: all call sites migrated to config.py, zero duplicated constants remain
 
-Progress: [#░░░░░░░░░] 10% — Phase 45 Plan 01/02 done
+Progress: [##░░░░░░░░] 20% — Phase 45 Plans 01/02 done
 
 ## Performance Metrics
 
@@ -41,6 +41,11 @@ Notable for v1.5:
 - OPENCLAW_STATE_FILE env var takes priority in get_state_path() to align with container entrypoint.sh behavior
 - _find_project_root() never uses Path(__file__).parent — resolves to site-packages, not live project root
 
+**45-02 decisions:**
+- pool.py init builds defaults dict inline from DEFAULT_POOL_* constants — no separate dict variable needed
+- init.py resolves project_id via get_active_project_id() with "default" fallback for path function calls
+- soul_renderer.py aliases get_project_root as _find_project_root to minimize diff while aligning to config source
+
 ### Pending Todos
 
 None.
@@ -52,5 +57,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: 45-01 complete — config.py has path resolver functions and consolidated constants
-Resume: Run `/gsd:execute-plan 45 02` to execute Phase 45 Plan 02 (call site migration)
+Stopped at: 45-02 complete — all call sites migrated to config.py, CONF-01 and CONF-05 satisfied
+Resume: Run `/gsd:execute-plan 46 01` to execute Phase 46 Plan 01 (Schema Validation + Fail-Fast Startup)
