@@ -34,6 +34,12 @@ from .snapshot import (
 )
 from .soul_renderer import render_soul, write_soul
 from .logging import get_logger
+from .autonomy import (
+    AutonomyState,
+    AutonomyContext,
+    StateMachine,
+    AutonomyReporter,
+)
 
 __all__ = [
     # State engine
@@ -44,6 +50,9 @@ __all__ = [
 
     # Logging
     'get_logger',
+
+    # Autonomy framework
+    'AutonomyState', 'AutonomyContext', 'StateMachine', 'AutonomyReporter',
 
     # Workspace lifecycle
     'initialize_workspace', 'verify_workspace',
