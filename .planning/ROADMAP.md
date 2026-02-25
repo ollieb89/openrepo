@@ -210,8 +210,10 @@ Plans:
   2. SIGTERM sent while L3 is mid-memorize → pending memorize call completes before container exits
   3. `unset OPENCLAW_ROOT && make dashboard` → prints ERROR and does not start bun dev server
 
+**Plans:** 1 plan
+
 Plans:
-- [ ] 51-01-PLAN.md — Docker graceful shutdown + SIGTERM drain + Makefile guard verification
+- [ ] 51-01-PLAN.md — Docker graceful shutdown + SIGTERM drain + Makefile guard verification (pre-flight, 3 tests, VERIFICATION.md, human checkpoint)
 
 ### Phase 52: Live Verification — Dashboard & memU
 **Goal**: Confirm v1.4 dashboard and memory features work end-to-end with live services — health scan badges, conflict panel, suggestion acceptance, sidebar counts, and settings persistence
