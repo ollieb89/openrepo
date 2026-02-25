@@ -147,7 +147,7 @@ Plans:
   2. Running `openclaw config migrate --dry-run` on an older config file prints a human-readable diff of what would change without modifying the file
   3. Running `openclaw config migrate` on an older config file produces a valid config that passes Phase 46's schema validation
   4. The resolution order (`OPENCLAW_ROOT` → `OPENCLAW_PROJECT` → `OPENCLAW_LOG_LEVEL` → `OPENCLAW_ACTIVITY_LOG_MAX`) is documented in the config file itself via comments or an adjacent README
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
 - [ ] 47-01-PLAN.md — Env var uniformity: get_active_project_env() in config.py, _find_project_root() auto-create, precedence comment block, openclaw.json.example + cli/config.py epilog
@@ -221,7 +221,7 @@ Plans:
 | 39-44 | v1.4 | 16/16 | ✓ Complete | 2026-02-25 |
 | 45. Path Resolver + Constants Foundation | 2/2 | Complete    | 2026-02-25 | - |
 | 46. Schema Validation + Fail-Fast Startup | 3/3 | Complete    | 2026-02-25 | - |
-| 47. Env Var Precedence + Migration CLI | v1.5 | 0/? | Not started | - |
+| 47. Env Var Precedence + Migration CLI | 1/3 | In Progress|  | - |
 | 48. Config Integration Tests | v1.5 | 0/? | Not started | - |
 | 49. Deferred Reliability, Quality, and Observability | v1.5 | 0/? | Not started | - |
 | 50. Notion Kanban Sync | 2/6 | In Progress|  | - |

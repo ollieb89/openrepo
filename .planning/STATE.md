@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v2.0 Notion Kanban Sync — Phase 50, Plan 01 complete
+**Current focus:** v1.5 Config Consolidation — Phase 47 Plan 01 complete (CONF-04)
 
 ## Current Position
 
-Phase: 50 of 50 (Notion Kanban Sync)
-Plan: 2 of 6 complete
+Phase: 47 of 50 (Env Var Precedence + Migration CLI)
+Plan: 1 of 1 complete
 Status: Ready
-Last activity: 2026-02-25 — 50-02 complete: notion-kanban-sync skill skeleton + NotionClient with retry/backoff/bootstrap (NOTION-08, NOTION-11)
+Last activity: 2026-02-25 — 47-01 complete: OPENCLAW_PROJECT centralised in config.py, get_active_project_env(), precedence comment block, CLI epilog, json.example docs
 
 Progress: [#####░░░░░] 50% — Phase 45 done (2/2), Phase 46 done (3/3), Phase 50 in progress (2/6)
 
@@ -66,6 +66,8 @@ Notable for v1.5:
 - [Phase 50-01]: Each emit() handler gets its own daemon thread — no shared thread pool needed
 - [Phase 50-notion-kanban-sync]: data_source_id used for queries, database_id for creates — API 2025-09-03 splits ID space; both cached in config.json
 - [Phase 50-notion-kanban-sync]: Module-level threading.Lock() in notion_client.py prevents concurrent bootstrap race creating duplicate Notion DBs
+- [Phase 47-env-var-precedence-migration-cli]: get_active_project_env() returns None (not empty string) when OPENCLAW_PROJECT unset — or None idiom coerces empty string
+- [Phase 47-env-var-precedence-migration-cli]: mkdir auto-create in _find_project_root() applies only to OPENCLAW_ROOT env var path, not ~/.openclaw fallback
 
 ### Pending Todos
 
@@ -78,5 +80,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: 50-02 complete — notion-kanban-sync skill skeleton + NotionClient (retry/backoff/bootstrap/upsert), NOTION-08 + NOTION-11 done
-Resume: Run `/gsd:execute-plan 50 03` to execute Phase 50 Plan 03 (next plan)
+Stopped at: 47-01 complete — CONF-04 done, all OPENCLAW_* env var reads centralised in config.py, 158 tests passing
+Resume: Phase 47 complete (only 1 plan). Run next phase plan as needed.
