@@ -189,7 +189,7 @@ Plans:
 
 **Milestone Goal:** Live-environment verification of v1.4 Operational Maturity features that require Docker, memU, and dashboard services running — 12 manual tests across graceful shutdown, memory health, suggestions, and config guards.
 
-- [ ] **Phase 51: Live Verification — Docker & Sentinel** — Graceful shutdown, SIGTERM drain, Makefile OPENCLAW_ROOT guard (3 tests)
+- [x] **Phase 51: Live Verification — Docker & Sentinel** — Graceful shutdown, SIGTERM drain, Makefile OPENCLAW_ROOT guard (3 tests) (completed 2026-02-25)
 - [ ] **Phase 52: Live Verification — Dashboard & memU** — Memory health scan, conflict panel, suggestions E2E, sidebar badge, threshold settings (9 tests)
 
 ### v2.0 Notion Kanban Sync (Planned)
@@ -210,7 +210,7 @@ Plans:
   2. SIGTERM sent while L3 is mid-memorize → pending memorize call completes before container exits
   3. `unset OPENCLAW_ROOT && make dashboard` → prints ERROR and does not start bun dev server
 
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 - [ ] 51-01-PLAN.md — Docker graceful shutdown + SIGTERM drain + Makefile guard verification (pre-flight, 3 tests, VERIFICATION.md, human checkpoint)
@@ -278,5 +278,5 @@ Plans:
 | 48. Config Integration Tests | 1/1 | Complete    | 2026-02-25 | - |
 | 49. Deferred Reliability, Quality, and Observability | 3/3 | Complete    | 2026-02-25 | - |
 | 50. Notion Kanban Sync | 6/6 | Complete    | 2026-02-25 | - |
-| 51. Live Verification — Docker & Sentinel | 0/1 | Pending | - | - |
+| 51. Live Verification — Docker & Sentinel | 1/1 | Complete   | 2026-02-25 | - |
 | 52. Live Verification — Dashboard & memU | 1/2 | In Progress|  | - |
