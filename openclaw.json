@@ -1,0 +1,123 @@
+{
+  "meta": {
+    "lastTouchedVersion": "2026.2.23",
+    "lastTouchedAt": "2026-02-25T03:26:34.250Z"
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "google-gemini-cli/gemini-2.5-flash"
+      },
+      "models": {
+        "google-gemini-cli/gemini-3-pro-preview": {
+          "params": {
+            "temperature": 0.4,
+            "topP": 0.9
+          }
+        },
+        "google-gemini-cli/gemini-2.5-flash": {
+          "params": {
+            "temperature": 0.7
+          }
+        }
+      },
+      "memorySearch": {
+        "enabled": true
+      },
+      "maxConcurrent": 4,
+      "subagents": {
+        "maxConcurrent": 8
+      },
+      "sandbox": {
+        "mode": "non-main",
+        "workspaceAccess": "none",
+        "scope": "session"
+      }
+    },
+    "list": [
+      {
+        "id": "main",
+        "name": "Central Core"
+      },
+      {
+        "id": "clawdia_prime",
+        "name": "Head of Development",
+        "sandbox": {
+          "mode": "off"
+        }
+      },
+      {
+        "id": "pumplai_pm",
+        "name": "PumpLAI Project Manager",
+        "sandbox": {
+          "mode": "all"
+        }
+      },
+      {
+        "id": "nextjs_pm",
+        "name": "Frontend Architect",
+        "sandbox": {
+          "mode": "all"
+        }
+      },
+      {
+        "id": "python_backend_worker",
+        "name": "ML Pipeline Worker",
+        "sandbox": {
+          "mode": "off"
+        }
+      },
+      {
+        "id": "l3_specialist",
+        "name": "L3 Specialist Executor",
+        "sandbox": {
+          "mode": "all"
+        }
+      },
+      {
+        "id": "agent",
+        "name": "Dispatch Bridge",
+        "sandbox": {
+          "mode": "all"
+        }
+      }
+    ]
+  },
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto",
+    "restart": true,
+    "ownerDisplay": "raw"
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "dmPolicy": "pairing",
+      "botToken": "${OPENCLAW_TELEGRAM_BOT_TOKEN}",
+      "groupPolicy": "allowlist",
+      "streaming": "partial"
+    }
+  },
+  "gateway": {
+    "port": 18789,
+    "mode": "local",
+    "bind": "loopback",
+    "auth": {
+      "mode": "token",
+      "token": "${OPENCLAW_GATEWAY_TOKEN}"
+    }
+  },
+  "memory": {
+    "memu_api_url": "http://localhost:18791"
+  },
+  "plugins": {
+    "entries": {
+      "telegram": {
+        "enabled": true
+      },
+      "google-gemini-cli-auth": {
+        "enabled": true
+      }
+    }
+  }
+}

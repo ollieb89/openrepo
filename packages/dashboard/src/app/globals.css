@@ -1,17 +1,124 @@
+@import url('https://fonts.googleapis.com/css2?family=Recursive:wght@300;400;500;600;700&family=Spectral:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+:root {
+  color-scheme: dark;
+  --bg-deep: #030812;
+  --bg-layer: #0c1728;
+  --bg-muted: rgba(255, 255, 255, 0.02);
+  --text-primary: #eff4ff;
+  --text-muted: #a4afcb;
+  --accent: #ffd47f;
+  --accent-strong: #ffb147;
+  --border: rgba(255, 255, 255, 0.08);
+  --glow: 0 35px 55px rgba(3, 8, 18, 0.7);
+  --noise: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160"%3E%3Cfilter id="noise"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="160" height="160" filter="url(%23noise)" opacity="0.25" /%3E%3C/svg%3E');
 }
 
-/* Custom scrollbar */
+*,
+*::before,
+*::after {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease,
+    transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+body {
+  min-height: 100vh;
+  font-family: 'Spectral', 'Times New Roman', serif;
+  background-color: var(--bg-deep);
+  background-image: radial-gradient(circle at 15% -5%, rgba(109, 244, 255, 0.25), transparent 40%),
+    radial-gradient(circle at 80% 0%, rgba(255, 155, 59, 0.4), transparent 50%),
+    linear-gradient(180deg, rgba(3, 8, 18, 0.85), rgba(12, 23, 40, 0.95));
+  color: var(--text-primary);
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: var(--noise);
+  mix-blend-mode: screen;
+  opacity: 0.35;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 20vh 0 0;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.08), transparent 60%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+#__next {
+  position: relative;
+  z-index: 1;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: 'Recursive', 'Space Mono', sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+p {
+  color: var(--text-muted);
+  line-height: 1.75;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  position: relative;
+}
+
+a::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+a:hover::after {
+  opacity: 1;
+}
+
+.glow-sheen {
+  box-shadow: var(--glow), inset 0 0 60px rgba(255, 255, 255, 0.08);
+}
+
+.grid-framed {
+  border: 1px solid var(--border);
+  border-radius: 1.5rem;
+  background: rgba(12, 23, 40, 0.75);
+  backdrop-filter: blur(24px);
+  position: relative;
+  overflow: hidden;
+}
+
+.grid-framed::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.05), transparent 45%),
+    radial-gradient(circle at 80% 0%, rgba(255, 255, 255, 0.06), transparent 40%);
+}
+
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -19,10 +126,6 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 dark:bg-gray-600 rounded-full;
-}
-
-/* Smooth theme transitions */
-* {
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05));
+  border-radius: 999px;
 }

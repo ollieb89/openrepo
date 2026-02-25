@@ -28,6 +28,8 @@ from typing import Dict, List, Optional
 
 REJECTION_QUERY = "task failed rejected error agent mistake"
 MIN_CLUSTER_SIZE = 3           # ADV-01 requirement: ≥3 similar rejections
+MIN_CLUSTER_SIZE_SMALL = 2     # Relaxed threshold for small datasets (<10 items)
+SMALL_DATASET_THRESHOLD = 10   # Memories below this count use relaxed threshold
 DEFAULT_LOOKBACK_DAYS = 30
 MAX_CLUSTER_FRACTION = 0.5     # Discard clusters spanning >50% of memories (Pitfall 2)
 DOMAIN_STOPWORDS = {           # Domain-specific stopwords beyond length filter
@@ -135,6 +137,19 @@ def _extract_keywords(text: str) -> List[str]:
 # Clustering
 # ---------------------------------------------------------------------------
 
+def _get_min_cluster_size(memory_count: int) -> int:
+    """
+    Return adaptive min cluster size based on dataset scale.
+
+    Small datasets (<10 memories) use relaxed threshold (2)
+    to avoid filtering out all suggestions.
+    Larger datasets use strict threshold (3) per ADV-01.
+    """
+    if memory_count < SMALL_DATASET_THRESHOLD:
+        return MIN_CLUSTER_SIZE_SMALL
+    return MIN_CLUSTER_SIZE
+
+
 def _cluster_memories(
     memories: List[dict],
     lookback_days: int,
@@ -179,8 +194,8 @@ def _cluster_memories(
         # Discard too-generic clusters
         if len(mems) >= MAX_CLUSTER_FRACTION * total:
             continue
-        # Keep only clusters meeting minimum threshold
-        if len(mems) >= MIN_CLUSTER_SIZE:
+        # Keep only clusters meeting adaptive minimum threshold
+        if len(mems) >= _get_min_cluster_size(total):
             result[kw] = mems
 
     return result

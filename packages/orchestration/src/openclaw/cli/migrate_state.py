@@ -104,7 +104,7 @@ def main():
         "new_path": str(new_path),
         "error": (
             f"This state file has been migrated to {new_path}. "
-            "Update callers to use project_config.get_state_path()."
+            "Update callers to use config.get_state_path()."
         )
     }
     with open(old_path, 'w') as f:

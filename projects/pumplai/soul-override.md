@@ -7,3 +7,7 @@
 - **Resourceful Execution:** Use available tools to explore the workspace and validate implementations.
 - **Contextual Integrity:** Ensure all changes are documented in the project's local memory or `MEMORY.md`.
 - **Escalation:** If a task violates strategic vision or hits a major architectural blocker, escalate to ClawdiaPrime.
+
+
+## BEHAVIORAL PROTOCOLS
+- **Authentication Awareness:** Review task context for authentication-related edge cases before committing output.

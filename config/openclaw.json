@@ -27,7 +27,7 @@
         }
       },
       "memorySearch": {
-        "enabled": false
+        "enabled": true
       },
       "sandbox": {
         "mode": "non-main",
@@ -72,14 +72,14 @@
         "reports_to": "clawdia_prime",
         "project": "pumplai",
         "sandbox": {
-          "mode": "off"
+          "mode": "all"
         }
       },
       {
         "id": "python_backend_worker",
         "name": "ML Pipeline Worker",
         "level": 3,
-        "reports_to": "pumplai_pm",
+        "reports_to": "agent",
         "project": "pumplai",
         "sandbox": {
           "mode": "off"
@@ -90,6 +90,16 @@
         "name": "L3 Specialist Executor",
         "level": 3,
         "reports_to": "pumplai_pm",
+        "sandbox": {
+          "mode": "all"
+        }
+      },
+      {
+        "id": "agent",
+        "name": "Dispatch Bridge",
+        "level": 2,
+        "reports_to": "clawdia_prime",
+        "project": "pumplai",
         "sandbox": {
           "mode": "all"
         }

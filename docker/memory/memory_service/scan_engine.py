@@ -89,7 +89,7 @@ def _check_staleness(
     if item_age_days < retrieval_window_days:
         return None
 
-    age_score = item_age_days / age_threshold_days
+    age_score = item_age_days / age_threshold_days if age_threshold_days > 0 else item_age_days + 1.0
     return age_score
 
 

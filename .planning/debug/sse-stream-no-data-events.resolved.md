@@ -50,6 +50,6 @@ root_cause: |
   thin notification requiring the client to make a SECOND HTTP request to /api/swarm to get actual data.
   The working /api/logs endpoint streams actual log content directly.
 
-fix: (not yet applied)
-verification: (not yet verified)
-files_changed: []
+fix: Code was completely rewritten during dashboard rework. The polling/mtime approach was replaced with direct container log streaming via streamContainerLogs() using ReadableStream + AbortSignal. All 3 bugs are gone.
+verification: Confirmed 2026-02-25 — packages/dashboard/src/app/api/swarm/stream/route.ts no longer contains any of the original buggy patterns (no mtime polling, no keepalive counter, no thin notification payloads).
+files_changed: [packages/dashboard/src/app/api/swarm/stream/route.ts]
