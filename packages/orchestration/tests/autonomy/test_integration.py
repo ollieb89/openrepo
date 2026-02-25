@@ -9,6 +9,7 @@ import pytest
 from datetime import datetime
 from unittest.mock import patch, MagicMock
 
+import openclaw.event_bus
 from openclaw.autonomy.types import AutonomyContext, AutonomyState
 from openclaw.autonomy.state import StateMachine
 from openclaw.autonomy.events import (
@@ -37,9 +38,10 @@ class TestEventSystemIntegration:
             received_events.append(envelope)
         
         # Patch the event bus to use our mock
-        with patch('openclaw.autonomy.events.event_bus') as mock_eb:
-            mock_eb.subscribe = mock_event_bus.subscribe
-            mock_eb.emit = mock_event_bus.emit
+        with patch('openclaw.event_bus.emit') as mock_emit, \
+             patch('openclaw.event_bus.subscribe') as mock_subscribe:
+            mock_subscribe.side_effect = mock_event_bus.subscribe
+            mock_emit.side_effect = mock_event_bus.emit
             
             AutonomyEventBus.subscribe(EVENT_STATE_CHANGED, handler)
             
@@ -53,8 +55,8 @@ class TestEventSystemIntegration:
 
     def test_confidence_update_debouncing(self, mock_event_bus):
         """Confidence updates are debounced to prevent flooding."""
-        with patch('openclaw.autonomy.events.event_bus') as mock_eb:
-            mock_eb.emit = mock_event_bus.emit
+        with patch('openclaw.event_bus.emit') as mock_emit:
+            mock_emit.side_effect = mock_event_bus.emit
             
             # Emit multiple confidence updates rapidly
             for i in range(5):
@@ -71,8 +73,8 @@ class TestEventSystemIntegration:
 
     def test_confidence_significant_change_bypasses_debounce(self, mock_event_bus):
         """Large confidence changes bypass debounce."""
-        with patch('openclaw.autonomy.events.event_bus') as mock_eb:
-            mock_eb.emit = mock_event_bus.emit
+        with patch('openclaw.event_bus.emit') as mock_emit:
+            mock_emit.side_effect = mock_event_bus.emit
             
             # First update
             AutonomyEventBus.emit(AutonomyConfidenceUpdated(
@@ -93,8 +95,8 @@ class TestEventSystemIntegration:
 
     def test_escalation_event_emitted(self, mock_event_bus):
         """Escalation triggers AutonomyEscalationTriggered event."""
-        with patch('openclaw.autonomy.events.event_bus') as mock_eb:
-            mock_eb.emit = mock_event_bus.emit
+        with patch('openclaw.event_bus.emit') as mock_emit:
+            mock_emit.side_effect = mock_event_bus.emit
             
             AutonomyEventBus.emit(AutonomyEscalationTriggered(
                 task_id="escalation-test",
@@ -108,8 +110,8 @@ class TestEventSystemIntegration:
 
     def test_retry_event_emitted(self, mock_event_bus):
         """Retry attempts emit AutonomyRetryAttempted events."""
-        with patch('openclaw.autonomy.events.event_bus') as mock_eb:
-            mock_eb.emit = mock_event_bus.emit
+        with patch('openclaw.event_bus.emit') as mock_emit:
+            mock_emit.side_effect = mock_event_bus.emit
             
             AutonomyEventBus.emit(AutonomyRetryAttempted(
                 task_id="retry-test",
@@ -213,10 +215,10 @@ class TestHooksIntegration:
 class TestMemoryStoreIntegration:
     """Integration tests for memU persistence."""
 
-    def test_save_context_persists_data(self, mock_memu, clear_hooks_store):
-        """save_context persists context to memU."""
+    def test_save_context_persists_data(self, mock_memu):
+        """save_context stores serialized context and metadata."""
         with patch('openclaw.autonomy.memory.AutonomyMemoryStore._memorize') as mock_save:
-            mock_save.side_effect = mock_memu.memorize
+            mock_save.side_effect = lambda content, metadata: mock_memu.memorize(content, MEMORY_CATEGORY, metadata)
             
             context = AutonomyContext(
                 task_id="mem-test-1",
@@ -270,7 +272,7 @@ class TestMemoryStoreIntegration:
     def test_archive_context_marks_archived(self, mock_memu):
         """archive_context marks context as archived."""
         with patch('openclaw.autonomy.memory.AutonomyMemoryStore._memorize') as mock_save:
-            mock_save.side_effect = mock_memu.memorize
+            mock_save.side_effect = lambda content, metadata: mock_memu.memorize(content, MEMORY_CATEGORY, metadata)
             
             context = AutonomyContext(
                 task_id="archive-test",
@@ -289,7 +291,7 @@ class TestMemoryStoreIntegration:
     def test_query_filters_by_project(self, mock_memu):
         """query filters contexts by project."""
         with patch('openclaw.autonomy.memory.AutonomyMemoryStore._memorize') as mock_save:
-            mock_save.side_effect = mock_memu.memorize
+            mock_save.side_effect = lambda content, metadata: mock_memu.memorize(content, MEMORY_CATEGORY, metadata)
             
             # Save contexts for different projects
             ctx1 = AutonomyContext(task_id="query-1", state=AutonomyState.COMPLETE)
@@ -312,8 +314,8 @@ class TestEndToEndLifecycle:
 
     def test_full_happy_path(self, mock_event_bus, clear_hooks_store):
         """Complete happy path: spawn -> healthy -> complete."""
-        with patch('openclaw.autonomy.events.event_bus') as mock_eb:
-            mock_eb.emit = mock_event_bus.emit
+        with patch('openclaw.event_bus.emit') as mock_emit:
+            mock_emit.side_effect = mock_event_bus.emit
             
             # 1. Task spawned
             context = hooks.on_task_spawn("e2e-happy", {"max_retries": 1})
@@ -338,8 +340,8 @@ class TestEndToEndLifecycle:
 
     def test_full_retry_path(self, mock_event_bus, clear_hooks_store):
         """Complete retry path: spawn -> fail -> retry -> complete."""
-        with patch('openclaw.autonomy.events.event_bus') as mock_eb:
-            mock_eb.emit = mock_event_bus.emit
+        with patch('openclaw.event_bus.emit') as mock_emit:
+            mock_emit.side_effect = mock_event_bus.emit
             
             # Setup with 1 retry
             hooks.on_task_spawn("e2e-retry", {"max_retries": 1})
@@ -358,8 +360,8 @@ class TestEndToEndLifecycle:
 
     def test_full_escalation_path(self, mock_event_bus, clear_hooks_store):
         """Complete escalation path: spawn -> fail -> escalate."""
-        with patch('openclaw.autonomy.events.event_bus') as mock_eb:
-            mock_eb.emit = mock_event_bus.emit
+        with patch('openclaw.event_bus.emit') as mock_emit:
+            mock_emit.side_effect = mock_event_bus.emit
             
             # Setup with no retries
             hooks.on_task_spawn("e2e-escalate", {"max_retries": 0})
@@ -413,7 +415,7 @@ class TestErrorHandling:
 
     def test_event_bus_unavailable_graceful(self):
         """Event bus unavailability doesn't block execution."""
-        with patch('openclaw.autonomy.events.event_bus') as mock_eb:
+        with patch('openclaw.event_bus') as mock_eb:
             mock_eb.emit.side_effect = Exception("Event bus down")
             
             # Should not raise

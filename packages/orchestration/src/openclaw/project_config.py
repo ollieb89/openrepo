@@ -350,3 +350,146 @@ def get_conflict_threshold() -> float:
 class ProjectNotFoundError(Exception):
     """Raised when project manifest does not exist for a given project_id."""
     pass
+
+
+# Valid values for autonomy config
+_VALID_CONFIDENCE_CALCULATORS = {"threshold", "adaptive"}
+
+# Autonomy config defaults
+DEFAULT_ESCALATION_THRESHOLD = 0.6
+DEFAULT_CONFIDENCE_CALCULATOR = "threshold"
+DEFAULT_MAX_RETRIES = 1
+DEFAULT_BLOCKED_TIMEOUT_MINUTES = 30
+
+
+def get_autonomy_config() -> Dict[str, Any]:
+    """
+    Read autonomy configuration from openclaw.json.
+
+    Returns:
+        Dict with autonomy configuration. Returns defaults on any error.
+        Never raises -- callers receive a usable config.
+
+    Resolution order:
+    1. openclaw.json autonomy.* settings
+    2. OPENCLAW_ESCALATION_THRESHOLD env var (overrides escalation_threshold)
+    3. Module defaults (defined above)
+    """
+    defaults = {
+        "escalation_threshold": DEFAULT_ESCALATION_THRESHOLD,
+        "confidence_calculator": DEFAULT_CONFIDENCE_CALCULATOR,
+        "max_retries": DEFAULT_MAX_RETRIES,
+        "blocked_timeout_minutes": DEFAULT_BLOCKED_TIMEOUT_MINUTES,
+    }
+
+    try:
+        root = get_project_root()
+        config_path = root / "openclaw.json"
+        with open(config_path) as f:
+            cfg = json.load(f)
+
+        autonomy_cfg = cfg.get("autonomy", {})
+        result = defaults.copy()
+
+        # escalation_threshold: float 0.0-1.0
+        if "escalation_threshold" in autonomy_cfg:
+            val = autonomy_cfg["escalation_threshold"]
+            if isinstance(val, (int, float)) and 0.0 <= val <= 1.0:
+                result["escalation_threshold"] = float(val)
+            else:
+                _logger.warning(
+                    "Invalid autonomy config: escalation_threshold must be 0.0-1.0 -- using default",
+                    extra={"got": val, "default": defaults["escalation_threshold"]},
+                )
+
+        # confidence_calculator: enum "threshold" or "adaptive"
+        if "confidence_calculator" in autonomy_cfg:
+            val = autonomy_cfg["confidence_calculator"]
+            if isinstance(val, str) and val in _VALID_CONFIDENCE_CALCULATORS:
+                result["confidence_calculator"] = val
+            else:
+                _logger.warning(
+                    "Invalid autonomy config: confidence_calculator must be one of %s -- using default",
+                    sorted(_VALID_CONFIDENCE_CALCULATORS),
+                    extra={"got": val, "default": defaults["confidence_calculator"]},
+                )
+
+        # max_retries: non-negative int
+        if "max_retries" in autonomy_cfg:
+            val = autonomy_cfg["max_retries"]
+            if isinstance(val, int) and val >= 0:
+                result["max_retries"] = val
+            else:
+                _logger.warning(
+                    "Invalid autonomy config: max_retries must be >= 0 -- using default",
+                    extra={"got": val, "default": defaults["max_retries"]},
+                )
+
+        # blocked_timeout_minutes: positive int
+        if "blocked_timeout_minutes" in autonomy_cfg:
+            val = autonomy_cfg["blocked_timeout_minutes"]
+            if isinstance(val, int) and val >= 1:
+                result["blocked_timeout_minutes"] = val
+            else:
+                _logger.warning(
+                    "Invalid autonomy config: blocked_timeout_minutes must be >= 1 -- using default",
+                    extra={"got": val, "default": defaults["blocked_timeout_minutes"]},
+                )
+
+        # Env var override for escalation_threshold
+        env_threshold = os.environ.get("OPENCLAW_ESCALATION_THRESHOLD")
+        if env_threshold is not None:
+            try:
+                val = float(env_threshold)
+                if 0.0 <= val <= 1.0:
+                    result["escalation_threshold"] = val
+                else:
+                    _logger.warning(
+                        "Invalid OPENCLAW_ESCALATION_THRESHOLD env var: must be 0.0-1.0 -- using config/default",
+                        extra={"got": env_threshold},
+                    )
+            except ValueError:
+                _logger.warning(
+                    "Invalid OPENCLAW_ESCALATION_THRESHOLD env var: not a number -- using config/default",
+                    extra={"got": env_threshold},
+                )
+
+        return result
+    except Exception as exc:
+        _logger.warning(
+            "Failed to read autonomy config -- using defaults",
+            extra={"error": str(exc)},
+        )
+        return defaults
+
+
+def get_escalation_threshold() -> float:
+    """
+    Return the escalation threshold for autonomy decisions.
+
+    Resolution order:
+    1. OPENCLAW_ESCALATION_THRESHOLD env var
+    2. openclaw.json autonomy.escalation_threshold
+    3. Module default (0.6)
+
+    Never raises -- returns the default on any read/parse error.
+    """
+    cfg = get_autonomy_config()
+    return cfg.get("escalation_threshold", DEFAULT_ESCALATION_THRESHOLD)
+
+
+def get_confidence_calculator_type() -> str:
+    """
+    Return the confidence calculator type.
+
+    Resolution order:
+    1. openclaw.json autonomy.confidence_calculator
+    2. Module default ("threshold")
+
+    Returns:
+        str: Either "threshold" or "adaptive"
+
+    Never raises -- returns the default on any read/parse error.
+    """
+    cfg = get_autonomy_config()
+    return cfg.get("confidence_calculator", DEFAULT_CONFIDENCE_CALCULATOR)

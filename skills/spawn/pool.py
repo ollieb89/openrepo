@@ -43,6 +43,7 @@ from openclaw.config import (
     DEFAULT_POOL_RECOVERY_POLICY,
 )
 from openclaw.project_config import get_active_project_id, get_workspace_path, get_pool_config, get_memu_config
+from openclaw.config import get_autonomy_config
 from openclaw.logging import get_logger
 
 logger = get_logger("pool")
@@ -147,6 +148,19 @@ class L3ContainerPool:
         """
         # Get timeout for this skill
         timeout_seconds = get_skill_timeout(skill_hint)
+        
+        # Autonomy Integration: Spawn Hook
+        autonomy_cfg = get_autonomy_config()
+        if autonomy_cfg.get("enabled", False):
+            try:
+                from openclaw.autonomy import on_task_spawn
+                on_task_spawn(task_id, {
+                    "max_retries": autonomy_cfg.get("max_retries", 1),
+                    "description": task_description,
+                    "skill": skill_hint
+                })
+            except Exception as e:
+                logger.error("Failed to initialize autonomy context", extra={"task_id": task_id, "error": str(e)})
 
         # Read overflow policy from attached config
         overflow_policy = self._pool_config.get("overflow_policy", DEFAULT_POOL_OVERFLOW_POLICY)
@@ -308,6 +322,15 @@ class L3ContainerPool:
         finally:
             # Release semaphore slot — mirrors the behaviour of `async with self.semaphore:`
             self.semaphore.release()
+            
+            # Autonomy Integration: Cleanup Hook
+            autonomy_cfg = get_autonomy_config()
+            if autonomy_cfg.get("enabled", False):
+                try:
+                    from openclaw.autonomy import on_task_removed
+                    on_task_removed(task_id, archive=True)
+                except Exception as e:
+                    logger.error("Failed to remove autonomy context", extra={"task_id": task_id, "error": str(e)})
 
     async def _acquire_semaphore_direct(self) -> bool:
         """Acquire the semaphore directly (used by the reject policy when a slot is available)."""
@@ -404,6 +427,15 @@ class L3ContainerPool:
             jarvis.set_task_metric(task_id, "container_started_at", container_started_at)
             lock_wait_total_ms += (time.time() - t0) * 1000
 
+            # Autonomy Integration: Executing Hook
+            autonomy_cfg = get_autonomy_config()
+            if autonomy_cfg.get("enabled", False):
+                try:
+                    from openclaw.autonomy import on_container_healthy
+                    on_container_healthy(task_id)
+                except Exception as e:
+                    logger.error("Failed to transition autonomy to executing", extra={"task_id": task_id, "error": str(e)})
+
             # Monitor container execution
             monitor_result = await self.monitor_container(
                 container=container,
@@ -435,6 +467,15 @@ class L3ContainerPool:
                 )
                 lock_wait_total_ms += (time.time() - t0) * 1000
 
+                # Autonomy Integration: Complete Hook
+                autonomy_cfg = get_autonomy_config()
+                if autonomy_cfg.get("enabled", False):
+                    try:
+                        from openclaw.autonomy import on_task_complete
+                        on_task_complete(task_id, {"status": "success", "exit_code": result["exit_code"]})
+                    except Exception as e:
+                        logger.error("Failed to transition autonomy to complete", extra={"task_id": task_id, "error": str(e)})
+
                 # Fire-and-forget memorization (MEM-01): non-blocking, runs concurrently after slot release
                 snapshot_path = get_snapshot_dir(self.project_id) / f"{task_id}.diff"
                 snapshot_content = snapshot_path.read_text() if snapshot_path.exists() else f"Task {task_id} completed (no snapshot available)"
@@ -453,6 +494,15 @@ class L3ContainerPool:
                     activity_entry=f"Task failed (exit code: {result['exit_code']}, retry: {retry_count}). Logs: {last_logs[:200]}",
                 )
                 lock_wait_total_ms += (time.time() - t0) * 1000
+                
+                # Autonomy Integration: Failed Hook
+                autonomy_cfg = get_autonomy_config()
+                if autonomy_cfg.get("enabled", False):
+                    try:
+                        from openclaw.autonomy import on_task_failed
+                        on_task_failed(task_id, f"Task failed with exit code {result['exit_code']}")
+                    except Exception as e:
+                        logger.error("Failed to transition autonomy to failed", extra={"task_id": task_id, "error": str(e)})
 
             # Emit container lifecycle event (fire-and-forget, never raises)
             try:

@@ -96,6 +96,16 @@ OPENCLAW_JSON_SCHEMA: dict = {
                 "conflict_threshold": {"type": "number", "minimum": 0.0, "maximum": 1.0},
             },
         },
+        "autonomy": {
+            "type": "object",
+            "properties": {
+                "enabled":                 {"type": "boolean", "default": False},
+                "escalation_threshold":    {"type": "number", "minimum": 0.0, "maximum": 1.0, "default": 0.6},
+                "confidence_calculator":   {"type": "string", "enum": ["threshold", "adaptive"], "default": "threshold"},
+                "max_retries":             {"type": "integer", "minimum": 0, "default": 1},
+                "blocked_timeout_minutes": {"type": "integer", "minimum": 1, "default": 30},
+            },
+        },
         "plugins": {"type": "object"},
     },
 }
@@ -200,6 +210,27 @@ def get_snapshot_dir(project_id: str) -> Path:
     validate that the path exists.
     """
     return _find_project_root() / "workspace" / ".openclaw" / project_id / "snapshots"
+
+
+def get_autonomy_config() -> dict:
+    """Return the autonomy configuration from openclaw.json with defaults applied.
+    
+    If the config cannot be loaded, returns safe defaults (autonomy disabled).
+    """
+    try:
+        from openclaw.project_config import load_and_validate_openclaw_config
+        config = load_and_validate_openclaw_config()
+        autonomy = config.get("autonomy", {})
+    except Exception:
+        autonomy = {}
+        
+    return {
+        "enabled": autonomy.get("enabled", False),
+        "escalation_threshold": autonomy.get("escalation_threshold", 0.6),
+        "confidence_calculator": autonomy.get("confidence_calculator", "threshold"),
+        "max_retries": autonomy.get("max_retries", 1),
+        "blocked_timeout_minutes": autonomy.get("blocked_timeout_minutes", 30),
+    }
 
 
 def get_active_project_env() -> "str | None":

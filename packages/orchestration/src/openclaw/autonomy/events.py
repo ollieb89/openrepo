@@ -244,9 +244,13 @@ class AutonomyEventBus:
         # Import here to avoid circular imports at module level
         from openclaw import event_bus
         
-        # Convert to envelope dict and emit
-        envelope = event.to_dict()
-        event_bus.emit(envelope)
+        try:
+            # Convert to envelope dict and emit
+            envelope = event.to_dict()
+            event_bus.emit(envelope)
+        except Exception:
+            # Events should be fire-and-forget, don't block on bus failures
+            pass
     
     @classmethod
     def _should_emit_confidence(cls, event: AutonomyConfidenceUpdated) -> bool:

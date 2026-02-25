@@ -233,43 +233,61 @@ def on_task_failed(task_id: str, error: str) -> None:
     
     old_state = context.state.value
     
-    # Determine if we can retry
-    if state_machine.can_retry():
-        # Transition to BLOCKED first (retry logic handles next step)
-        state_machine.transition(
-            AutonomyState.BLOCKED,
-            reason=f"Task failed: {error}"
-        )
-        
-        # Emit state change event
+    # Always transition to BLOCKED on failure
+    state_machine.transition(
+        AutonomyState.BLOCKED,
+        reason=f"Task failed: {error}"
+    )
+    
+    # Emit state change event for BLOCKED
+    AutonomyEventBus.emit(AutonomyStateChanged(
+        task_id=task_id,
+        old_state=old_state,
+        new_state=AutonomyState.BLOCKED.value,
+        reason=f"Task failed, entering blocked state: {error}",
+    ))
+    
+    # Let the state machine handle retry vs escalation
+    # It will transition to either EXECUTING or ESCALATING
+    state_machine.handle_blocked(reason=error)
+    
+    # Check what state we ended up in
+    new_state = context.state
+    if new_state == AutonomyState.EXECUTING:
+        logger.info(f"Task {task_id} failed, retry attempt {context.retry_count}")
+        # Emit state change event for retry
         AutonomyEventBus.emit(AutonomyStateChanged(
             task_id=task_id,
-            old_state=old_state,
-            new_state=AutonomyState.BLOCKED.value,
-            reason=f"Task failed, entering blocked state: {error}",
+            old_state=AutonomyState.BLOCKED.value,
+            new_state=AutonomyState.EXECUTING.value,
+            reason=f"Retry attempt {context.retry_count}: {error}",
         ))
         
-        # Handle retry (this may transition to EXECUTING or ESCALATING)
-        state_machine.handle_blocked(reason=error)
-        
-        logger.info(f"Task {task_id} failed, retry attempt {context.retry_count}")
-    else:
-        # Max retries exceeded - escalate
-        context.escalation_reason = error
-        state_machine.transition(
-            AutonomyState.ESCALATING,
-            reason=f"Max retries exceeded, escalating: {error}"
-        )
-        
-        # Emit state change event
+        # Emit retry attempted event
+        from .events import AutonomyRetryAttempted
+        AutonomyEventBus.emit(AutonomyRetryAttempted(
+            task_id=task_id,
+            attempt_number=context.retry_count,
+            max_retries=state_machine.max_retries,
+            reason=error,
+        ))
+    elif new_state == AutonomyState.ESCALATING:
+        logger.warning(f"Task {task_id} escalated after max retries: {error}")
+        # Emit state change event for escalation
         AutonomyEventBus.emit(AutonomyStateChanged(
             task_id=task_id,
-            old_state=old_state,
+            old_state=AutonomyState.BLOCKED.value,
             new_state=AutonomyState.ESCALATING.value,
             reason=f"Max retries exceeded, escalating: {error}",
         ))
         
-        logger.warning(f"Task {task_id} escalated after max retries: {error}")
+        # Emit escalation triggered event
+        from .events import AutonomyEscalationTriggered
+        AutonomyEventBus.emit(AutonomyEscalationTriggered(
+            task_id=task_id,
+            reason=error,
+            confidence=context.confidence_score,
+        ))
 
 
 def on_task_removed(task_id: str, archive: bool = True) -> Optional[AutonomyContext]:

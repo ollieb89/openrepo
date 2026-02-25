@@ -1,8 +1,8 @@
 {
   "_comment": "openclaw.json schema reference — copy and remove _comment_* keys for your config",
-  "_schema_version": "1.5",
+  "_schema_version": "1.6",
 
-  "_comment_env_vars": "Env var overrides (first set wins): OPENCLAW_ROOT → project root, OPENCLAW_PROJECT → active_project, OPENCLAW_LOG_LEVEL → log verbosity, OPENCLAW_ACTIVITY_LOG_MAX → activity log limit, OPENCLAW_STATE_FILE → state file path (L3 only)",
+  "_comment_env_vars": "Env var overrides (first set wins): OPENCLAW_ROOT → project root, OPENCLAW_PROJECT → active_project, OPENCLAW_LOG_LEVEL → log verbosity, OPENCLAW_ACTIVITY_LOG_MAX → activity log limit, OPENCLAW_STATE_FILE → state file path (L3 only), OPENCLAW_ESCALATION_THRESHOLD → autonomy escalation threshold",
 
   "_comment_meta": "OPTIONAL object — metadata about when the config was last modified",
   "meta": {
@@ -93,10 +93,26 @@
   "_comment_memory": "OPTIONAL object — memU memory service config. If omitted or memu_api_url is empty, memory features are disabled",
   "memory": {
     "_comment_memu_api_url": "OPTIONAL string — URL of the memU API service. Default: empty string (memory disabled). Example: 'http://localhost:18791'",
-    "memu_api_url": "http://localhost:18791"
+    "memu_api_url": "http://localhost:18791",
+    "_comment_conflict_threshold": "OPTIONAL number 0.0-1.0 — cosine similarity threshold for memory conflict detection. Default: 0.85",
+    "conflict_threshold": 0.85
   },
 
-  "_comment_plugins": "OPTIONAL object — plugin enable/disable registry for integrations",
+  "_comment_autonomy": "OPTIONAL object — L3 agent autonomy configuration for confidence-based decision making",
+  "autonomy": {
+    "_comment_enabled": "OPTIONAL boolean — Enable autonomy features. Default: false",
+    "enabled": false,
+    "_comment_escalation_threshold": "OPTIONAL number 0.0-1.0 — confidence score below which tasks escalate to human. Default: 0.6. Override with OPENCLAW_ESCALATION_THRESHOLD env var",
+    "escalation_threshold": 0.6,
+    "_comment_confidence_calculator": "OPTIONAL string — 'threshold' (default) for heuristic-based or 'adaptive' for ML-based (placeholder)",
+    "confidence_calculator": "threshold",
+    "_comment_max_retries": "OPTIONAL integer — Number of times an L3 agent will automatically retry from a BLOCKED state. Default: 1",
+    "max_retries": 1,
+    "_comment_blocked_timeout_minutes": "OPTIONAL integer — Minutes before a BLOCKED task is automatically escalated. Default: 30",
+    "blocked_timeout_minutes": 30
+  },
+
+  "_comment_plugins": "OPTIONAL object — reserved for third-party extensions",
   "plugins": {
     "_comment_entries": "OPTIONAL object — map of plugin IDs to their config. Each entry has at least 'enabled' (boolean)",
     "entries": {

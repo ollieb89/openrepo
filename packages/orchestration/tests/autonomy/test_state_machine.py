@@ -102,11 +102,10 @@ class TestInvalidTransitions:
         with pytest.raises(ValueError, match="Cannot transition from terminal"):
             sm.transition(AutonomyState.EXECUTING)
 
-    def test_escalating_is_terminal(self, sample_context_blocked):
+    def test_escalating_is_terminal(self, sample_context_executing):
         """ESCALATING cannot transition anywhere."""
-        sm = StateMachine(sample_context_blocked, max_retries=0)
+        sm = StateMachine(sample_context_executing, max_retries=0)
         # Transition to blocked first
-        sm.transition(AutonomyState.EXECUTING)
         sm.transition(AutonomyState.BLOCKED)
         # Then escalate
         sm.transition(AutonomyState.ESCALATING)
@@ -278,10 +277,9 @@ class TestIsComplete:
         sm.transition(AutonomyState.COMPLETE)
         assert sm.is_complete()
 
-    def test_complete_after_escalation(self, sample_context_blocked):
+    def test_complete_after_escalation(self, sample_context_executing):
         """ESCALATING state is complete."""
-        sm = StateMachine(sample_context_blocked, max_retries=0)
-        sm.transition(AutonomyState.EXECUTING)
+        sm = StateMachine(sample_context_executing, max_retries=0)
         sm.transition(AutonomyState.BLOCKED)
         sm.transition(AutonomyState.ESCALATING)
         assert sm.is_complete()
@@ -346,6 +344,7 @@ class TestStateMachineIntegration:
         sm.transition(AutonomyState.EXECUTING, "Started")
         
         # EXECUTING -> BLOCKED -> ESCALATING
+        sm.transition(AutonomyState.BLOCKED, "Failed")
         sm.handle_blocked("Critical error")
         
         assert sm.current_state == AutonomyState.ESCALATING
@@ -362,6 +361,7 @@ class TestStateMachineIntegration:
         
         # First failure and retry
         sm.transition(AutonomyState.EXECUTING)
+        sm.transition(AutonomyState.BLOCKED)
         sm.handle_blocked("First error")
         assert sm.context.retry_count == 1
         assert sm.current_state == AutonomyState.EXECUTING

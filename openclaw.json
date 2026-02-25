@@ -107,16 +107,22 @@
       "token": "${OPENCLAW_GATEWAY_TOKEN}"
     }
   },
-  "memory": {
-    "memu_api_url": "http://localhost:18791"
-  },
   "plugins": {
+    "slots": {
+      "memory": "memory-memu"
+    },
     "entries": {
       "telegram": {
         "enabled": true
       },
       "google-gemini-cli-auth": {
         "enabled": true
+      },
+      "memory-memu": {
+        "enabled": true,
+        "config": {
+          "geminiApiKey": "${GEMINI_API_KEY}"
+        }
       }
     }
   }
