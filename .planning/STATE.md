@@ -5,15 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** Planning next milestone (v1.5)
+**Current focus:** v1.5 Config Consolidation — defining requirements
 
 ## Current Position
 
-Phase: v1.4 Operational Maturity — COMPLETE (Phases 39–44)
-Status: All 21 requirements satisfied, 16/16 plans complete, 148/148 tests passing
-Last activity: 2026-02-25 — v1.4 milestone archived and tagged (`openclaw-v1.4`)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-25 — Milestone v1.5 started
 
-Progress: [██████████] 100% — Milestone complete
+Progress: [░░░░░░░░░░] 0% — Not started
 
 ## Performance Metrics
 
@@ -46,4 +47,4 @@ None.
 
 Last session: 2026-02-25
 Stopped at: v1.4 milestone complete — archived, tagged (`openclaw-v1.4`), committed (`6266475`)
-Resume: Start v1.5 milestone planning with `/gsd:new-milestone`
+Resume: Run `/gsd:plan-phase 45` to plan the first phase

@@ -17,6 +17,21 @@ Hierarchical AI orchestration with physical isolation — enabling autonomous, s
 - **Container:** Debian bookworm-slim L3 images, Nvidia Container Toolkit
 - **OS:** Ubuntu 24.04 LTS
 
+## Current Milestone: v1.5 Config Consolidation
+
+**Goal:** Unify the config layer — single source of truth for paths, strict schema validation, consolidated constants, and migration tooling — plus three deferred reliability/quality items.
+
+**Target features:**
+- Workspace path divergence fix — single authoritative path resolver used everywhere
+- `openclaw.json` schema cleanup + migration CLI for existing configs
+- Env var precedence documented and enforced consistently
+- Constants/defaults consolidated into one location
+- Strict fail-fast startup validation for `openclaw.json` and `project.json`
+- Config integration test suite
+- Docker health checks for L3 containers (REL-09)
+- Cosine similarity threshold calibration for memory conflict detection (QUAL)
+- Adaptive monitor poll interval based on activity level (OBS-05)
+
 ## Current State
 
 **Shipped:** v1.4 Operational Maturity (2026-02-25)
@@ -112,7 +127,16 @@ Known limitations:
 
 ### Active
 
-(No active requirements — v1.4 complete, next milestone not yet defined)
+- [ ] CONF-01: Single authoritative workspace path resolver used by all components
+- [ ] CONF-02: `openclaw.json` schema is clean, documented, and validated on load
+- [ ] CONF-03: Migration CLI upgrades existing configs to new schema
+- [ ] CONF-04: Env var precedence is explicit and consistently applied
+- [ ] CONF-05: Constants/defaults consolidated — no duplicated magic values
+- [ ] CONF-06: Strict fail-fast startup validation for both config files
+- [ ] CONF-07: Config integration test suite covering path resolution and validation
+- [ ] REL-09: L3 containers report Docker health status
+- [ ] QUAL-07: Cosine similarity conflict detection threshold empirically calibrated
+- [ ] OBS-05: Monitor poll interval adapts dynamically to activity level
 
 ### Out of Scope
 
@@ -125,7 +149,7 @@ Known limitations:
 - Cross-project agent sharing — conflicts with 1:1 L2-to-project assumption
 - GitPython library adoption — subprocess reduction sufficient for now
 - Prometheus/OpenTelemetry export — overkill for single-host system
-- Docker health checks — defer to container hardening milestone
+- Docker health checks — moved to v1.5 (REL-09 now active)
 
 ## Key Decisions
 
@@ -174,4 +198,4 @@ Known limitations:
 - DEV_WF_FINDINGS.md
 
 ---
-*Last updated: 2026-02-25 after v1.4 milestone*
+*Last updated: 2026-02-25 after v1.5 milestone started*
