@@ -9,7 +9,7 @@
 
 - [x] **CONF-01**: Operator can rely on a single path resolver function for workspace state — `get_state_path()` and `get_snapshot_dir()` return paths that match where L3 containers actually write
 - [x] **CONF-02**: `openclaw.json` has a documented, validated schema for the OpenClaw runtime section; unknown fields are flagged at startup
-- [ ] **CONF-03**: Operator can run `openclaw config migrate` to upgrade an existing `openclaw.json` to the current schema with a dry-run preview
+- [x] **CONF-03**: Operator can run `openclaw config migrate` to upgrade an existing `openclaw.json` to the current schema with a dry-run preview
 - [x] **CONF-04**: Env var precedence is explicitly documented in `openclaw.json` comments and enforced uniformly — `OPENCLAW_ROOT` → `OPENCLAW_PROJECT` → `OPENCLAW_LOG_LEVEL` → `OPENCLAW_ACTIVITY_LOG_MAX` resolution order is consistent across all callers
 - [x] **CONF-05**: All shared constants and defaults (pool config, lock timeouts, cache TTL, log levels, memory budget cap) live in `config.py` — no duplicated magic values across modules
 - [x] **CONF-06**: OpenClaw fails at startup with a clear, actionable error if `openclaw.json` or `project.json` contains missing required fields or invalid types
@@ -71,7 +71,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CONF-05 | Phase 45 | Complete |
 | CONF-02 | Phase 46 | Complete |
 | CONF-06 | Phase 46 | Complete |
-| CONF-03 | Phase 47 | Pending |
+| CONF-03 | Phase 47 | Complete |
 | CONF-04 | Phase 47 | Complete |
 | CONF-07 | Phase 48 | Pending |
 | REL-09  | Phase 49 | Pending |
