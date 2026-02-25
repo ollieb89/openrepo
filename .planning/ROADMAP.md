@@ -8,6 +8,7 @@
 - ✅ **v1.3 Agent Memory** — Phases 26-38 (shipped 2026-02-24)
 - ✅ **v1.4 Operational Maturity** — Phases 39-44 (shipped 2026-02-25)
 - 🚧 **v1.5 Config Consolidation** — Phases 45-49 (in progress)
+- 🚧 **v1.4.1 Human Verification** — Phases 51-52 (gap closure)
 - 🚧 **v2.0 Notion Kanban Sync** — Phase 50 (planned)
 
 ## Phases
@@ -184,6 +185,13 @@ Plans:
 - [ ] 49-02-PLAN.md — QUAL-07: MEMORY_CONFLICT_THRESHOLD in config.py + get_conflict_threshold() + memorize router conflict check
 - [ ] 49-03-PLAN.md — OBS-05: POLL_INTERVAL_ACTIVE/IDLE in config.py + _count_active_l3_containers() + adaptive sleep in tail_state()
 
+### v1.4.1 Human Verification (Gap Closure)
+
+**Milestone Goal:** Live-environment verification of v1.4 Operational Maturity features that require Docker, memU, and dashboard services running — 12 manual tests across graceful shutdown, memory health, suggestions, and config guards.
+
+- [ ] **Phase 51: Live Verification — Docker & Sentinel** — Graceful shutdown, SIGTERM drain, Makefile OPENCLAW_ROOT guard (3 tests)
+- [ ] **Phase 52: Live Verification — Dashboard & memU** — Memory health scan, conflict panel, suggestions E2E, sidebar badge, threshold settings (9 tests)
+
 ### v2.0 Notion Kanban Sync (Planned)
 
 **Milestone Goal:** A reactive L2-level skill that maintains a Notion kanban board as a read-only visibility mirror of OpenClaw state, covering both dev projects and life areas — with event bus infrastructure, Notion DB bootstrap, event sync, conversational capture, reconciliation, and hardening.
@@ -191,6 +199,38 @@ Plans:
 - [x] **Phase 50: Notion Kanban Sync** — Full end-to-end delivery: event bus, Notion client, schema bootstrap, event sync, conversational capture, reconcile, and hardening (completed 2026-02-25)
 
 ## Phase Details
+
+### Phase 51: Live Verification — Docker & Sentinel
+**Goal**: Confirm v1.4 Docker-related features work in a live environment — graceful shutdown produces exit 143 + interrupted state, SIGTERM drain completes pending memorize before exit, and Makefile guards against missing OPENCLAW_ROOT
+**Depends on**: Phase 44 (v1.4 shipped)
+**Requirements**: v1.4 gap closure (no new REQ-IDs)
+**Gap Closure**: Closes v1.4 human verification tests 1, 12, 13
+**Success Criteria** (what must be TRUE):
+  1. `docker stop` on a running L3 container → exit code 143, workspace state shows `interrupted`
+  2. SIGTERM sent while L3 is mid-memorize → pending memorize call completes before container exits
+  3. `unset OPENCLAW_ROOT && make dashboard` → prints ERROR and does not start bun dev server
+
+Plans:
+- [ ] 51-01-PLAN.md — Docker graceful shutdown + SIGTERM drain + Makefile guard verification
+
+### Phase 52: Live Verification — Dashboard & memU
+**Goal**: Confirm v1.4 dashboard and memory features work end-to-end with live services — health scan badges, conflict panel, suggestion acceptance, sidebar counts, and settings persistence
+**Depends on**: Phase 51
+**Requirements**: v1.4 gap closure (no new REQ-IDs)
+**Gap Closure**: Closes v1.4 human verification tests 2-11
+**Success Criteria** (what must be TRUE):
+  1. Health scan populates flag badges on memories with issues
+  2. Archive stale flag PUT succeeds, flag removed, toast appears
+  3. Conflict badge click opens ConflictPanel with side-by-side diff
+  4. Editing a flagged memory triggers re-scan automatically
+  5. Threshold adjustment in settings page persists across refresh
+  6. `/suggestions` page renders without errors
+  7. Accepting a suggestion appends to `soul-override.md` and re-renders SOUL
+  8. Sidebar badge shows correct pending suggestion count
+  9. POST `/api/suggestions` invokes `suggest.py` and returns results
+
+Plans:
+- [ ] 52-01-PLAN.md — Dashboard + memU live verification (9 tests)
 
 ### Phase 50: Notion Kanban Sync
 **Goal**: OpenClaw events (phase lifecycle, container lifecycle, project registration) automatically mirror to a Notion kanban board; conversational capture routes life tasks to the same board; reconcile detects and corrects drift — all idempotent, field-ownership-respecting, and observable
@@ -233,3 +273,5 @@ Plans:
 | 48. Config Integration Tests | 1/1 | Complete    | 2026-02-25 | - |
 | 49. Deferred Reliability, Quality, and Observability | 3/3 | Complete    | 2026-02-25 | - |
 | 50. Notion Kanban Sync | 6/6 | Complete    | 2026-02-25 | - |
+| 51. Live Verification — Docker & Sentinel | 0/1 | Pending | - | - |
+| 52. Live Verification — Dashboard & memU | 0/1 | Pending | - | - |
