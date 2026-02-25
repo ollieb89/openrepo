@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.5 Config Consolidation — Phase 48 complete (CONF-07 satisfied)
+**Current focus:** v1.5 Config Consolidation — Phase 49 in progress (REL-09 complete, QUAL-07/OBS-05 pending Wave 2)
 
 ## Current Position
 
-Phase: 48 of 49 (Config Integration Tests)
-Plan: 1 of 1 complete
-Status: Complete
-Last activity: 2026-02-25 — 48-01 complete: test_config_integration.py (15 tests, 4 classes), integration marker registered, valid_openclaw_config fixture, 229 total passing (CONF-07)
+Phase: 49 of 49 (Deferred Reliability, Quality, and Observability)
+Plan: 1 of 3 complete
+Status: In Progress
+Last activity: 2026-02-25 — 49-01 complete: test_phase49.py (8 tests RED scaffold), Dockerfile HEALTHCHECK, entrypoint.sh sentinel. 2 pass (REL-09), 6 fail (Wave 2). 262 total passing.
 
-Progress: [##########] 100% — Phase 45 done (2/2), Phase 46 done (3/3), Phase 47 done (3/3), Phase 48 done (1/1)
+Progress: [##########] 100% — Phase 45 done (2/2), Phase 46 done (3/3), Phase 47 done (3/3), Phase 48 done (1/1), Phase 49 in progress (1/3)
 
 ## Performance Metrics
 
@@ -84,6 +84,7 @@ Notable for v1.5:
 - [Phase 48-01]: Inner-method imports in integration tests — monkeypatching env vars takes effect before modules are touched
 - [Phase 48-01]: try/finally with importlib.reload(cfg) in finally block restores module-level LOG_LEVEL/ACTIVITY_LOG_MAX after env var tests
 - [Phase 48-01]: Pool config tests write tmp_path/projects/testproject/project.json to match exact path load_project_config() resolves
+- [Phase 49-deferred-reliability-quality-and-observability]: HEALTHCHECK shell form (CMD test -f) not exec form — Debian bookworm-slim test is bash builtin; sentinel placed after update_state starting before staging branch
 
 ### Pending Todos
 
@@ -96,5 +97,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: 48-01 complete — test_config_integration.py (15 tests, 4 classes), integration marker, valid_openclaw_config fixture. 229 tests passing. Phase 48 COMPLETE.
-Resume: Phase 48 fully complete. Next: Phase 49 (Deferred Items — REL-09, QUAL-07, OBS-05).
+Stopped at: 49-01 complete — test_phase49.py (8 tests RED scaffold), Dockerfile HEALTHCHECK, entrypoint.sh sentinel. REL-09 COMPLETE. 262 tests passing.
+Resume: Phase 49 plan 01 done. Next: Plan 02 (QUAL-07 — MEMORY_CONFLICT_THRESHOLD constant, get_conflict_threshold(), schema expansion) then Plan 03 (OBS-05 — adaptive polling).

@@ -17,7 +17,7 @@
 
 ### Reliability (REL)
 
-- [ ] **REL-09**: L3 containers expose a Docker health check endpoint so `docker ps` and monitoring show container health status (healthy/unhealthy/starting)
+- [x] **REL-09**: L3 containers expose a Docker health check endpoint so `docker ps` and monitoring show container health status (healthy/unhealthy/starting)
 
 ### Quality (QUAL)
 
@@ -74,7 +74,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CONF-03 | Phase 47 | Complete |
 | CONF-04 | Phase 47 | Complete |
 | CONF-07 | Phase 48 | Complete |
-| REL-09  | Phase 49 | Pending |
+| REL-09  | Phase 49 | Complete |
 | QUAL-07 | Phase 49 | Pending |
 | OBS-05  | Phase 49 | Pending |
 
