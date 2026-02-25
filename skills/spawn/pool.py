@@ -72,7 +72,7 @@ class L3ContainerPool:
     cached self.state_file attribute.
     """
 
-    def __init__(self, max_concurrent: int = 3, project_id: Optional[str] = None):
+    def __init__(self, max_concurrent: int = DEFAULT_POOL_MAX_CONCURRENT, project_id: Optional[str] = None):
         """
         Initialize the container pool.
 

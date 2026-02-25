@@ -18,7 +18,14 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
 
 from openclaw.state_engine import JarvisState
-from openclaw.config import POLL_INTERVAL, get_project_root, get_state_path
+from openclaw.config import (
+    DEFAULT_POOL_MAX_CONCURRENT,
+    DEFAULT_POOL_MODE,
+    DEFAULT_POOL_OVERFLOW_POLICY,
+    POLL_INTERVAL,
+    get_project_root,
+    get_state_path,
+)
 from openclaw.logging import get_logger
 from openclaw.project_config import get_pool_config
 
@@ -600,9 +607,9 @@ def show_pool_utilization(project_filter: Optional[str] = None) -> None:
             proj_pool_mode = pool_cfg["pool_mode"]
             proj_overflow_policy = pool_cfg["overflow_policy"]
         except Exception:
-            proj_max_concurrent = 3  # fallback if config unavailable
-            proj_pool_mode = "shared"
-            proj_overflow_policy = "wait"
+            proj_max_concurrent = DEFAULT_POOL_MAX_CONCURRENT
+            proj_pool_mode = DEFAULT_POOL_MODE
+            proj_overflow_policy = DEFAULT_POOL_OVERFLOW_POLICY
 
         if not state_file.exists():
             # Include project with zeroes — it exists but no tasks yet
