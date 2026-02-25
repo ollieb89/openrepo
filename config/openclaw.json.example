@@ -1,0 +1,106 @@
+{
+  "_comment": "openclaw.json schema reference — copy and remove _comment_* keys for your config",
+  "_schema_version": "1.5",
+
+  "_comment_meta": "OPTIONAL object — metadata about when the config was last modified",
+  "meta": {
+    "lastTouchedVersion": "2026.2.15",
+    "lastTouchedAt": "2026-02-17T00:00:00.000Z"
+  },
+
+  "_comment_active_project": "OPTIONAL string — active project ID; override with OPENCLAW_PROJECT env var",
+  "active_project": "myproject",
+
+  "_comment_source_directories": "OPTIONAL array of strings — root directories where project workspaces live. First entry is used as default workspace parent for new projects",
+  "source_directories": [
+    "/home/user/Development/Projects",
+    "/home/user/Development/Tools"
+  ],
+
+  "_comment_gateway": "REQUIRED object — OpenClaw gateway process config. Must contain 'port'",
+  "gateway": {
+    "_comment_port": "REQUIRED integer (1-65535) — port the gateway listens on. Example: 18789",
+    "port": 18789,
+    "_comment_mode": "OPTIONAL string — 'local' (default) or 'remote'",
+    "mode": "local",
+    "_comment_bind": "OPTIONAL string — 'loopback' (default, localhost only) or 'any' (all interfaces)",
+    "bind": "loopback",
+    "_comment_auth": "OPTIONAL object — auth mode and token. Use env var placeholder ${OPENCLAW_GATEWAY_TOKEN} for the token value to avoid storing secrets in config",
+    "auth": {
+      "mode": "token",
+      "token": "${OPENCLAW_GATEWAY_TOKEN}"
+    }
+  },
+
+  "_comment_agents": "REQUIRED object — agent registry. Must contain 'list' array. Optionally contains 'defaults' object",
+  "agents": {
+    "_comment_defaults": "OPTIONAL object — default model, sandbox, and concurrency settings applied to all agents unless overridden per-agent",
+    "defaults": {
+      "model": {
+        "primary": "google-gemini-cli/gemini-2.5-flash"
+      },
+      "sandbox": {
+        "mode": "non-main",
+        "workspaceAccess": "none",
+        "scope": "session"
+      },
+      "maxConcurrent": 4
+    },
+    "_comment_list": "REQUIRED array — list of agent definitions. Each agent needs: id (string), name (string), level (int 1-3), reports_to (string or null). Level 1 agents must have reports_to: null. Each agent must report to a higher-tier (lower level number) agent",
+    "list": [
+      {
+        "id": "l1_orchestrator",
+        "name": "Strategic Orchestrator",
+        "level": 1,
+        "reports_to": null
+      },
+      {
+        "id": "myproject_pm",
+        "name": "MyProject Project Manager",
+        "level": 2,
+        "reports_to": "l1_orchestrator",
+        "project": "myproject"
+      },
+      {
+        "id": "l3_specialist",
+        "name": "L3 Specialist Executor",
+        "level": 3,
+        "reports_to": "myproject_pm"
+      }
+    ]
+  },
+
+  "_comment_commands": "OPTIONAL object — native command and skill discovery settings",
+  "commands": {
+    "_comment_native": "OPTIONAL string — 'auto' (default) to auto-discover native commands",
+    "native": "auto",
+    "_comment_nativeSkills": "OPTIONAL string — 'auto' (default) to auto-discover skills directory",
+    "nativeSkills": "auto"
+  },
+
+  "_comment_channels": "OPTIONAL object — external channel integrations (e.g. telegram for notifications and commands)",
+  "channels": {
+    "telegram": {
+      "_comment_enabled": "OPTIONAL boolean — enable or disable the telegram integration",
+      "enabled": true,
+      "_comment_botToken": "OPTIONAL string — Telegram bot token. Use env var placeholder to avoid storing secrets in config",
+      "botToken": "${OPENCLAW_TELEGRAM_BOT_TOKEN}"
+    }
+  },
+
+  "_comment_memory": "OPTIONAL object — memU memory service config. If omitted or memu_api_url is empty, memory features are disabled",
+  "memory": {
+    "_comment_memu_api_url": "OPTIONAL string — URL of the memU API service. Default: empty string (memory disabled). Example: 'http://localhost:18791'",
+    "memu_api_url": "http://localhost:18791"
+  },
+
+  "_comment_plugins": "OPTIONAL object — plugin enable/disable registry for integrations",
+  "plugins": {
+    "_comment_entries": "OPTIONAL object — map of plugin IDs to their config. Each entry has at least 'enabled' (boolean)",
+    "entries": {
+      "telegram": {
+        "enabled": true
+      }
+    }
+  }
+}
