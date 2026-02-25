@@ -53,22 +53,22 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CONF-01 | — | Pending |
-| CONF-02 | — | Pending |
-| CONF-03 | — | Pending |
-| CONF-04 | — | Pending |
-| CONF-05 | — | Pending |
-| CONF-06 | — | Pending |
-| CONF-07 | — | Pending |
-| REL-09  | — | Pending |
-| QUAL-07 | — | Pending |
-| OBS-05  | — | Pending |
+| CONF-01 | Phase 45 | Pending |
+| CONF-05 | Phase 45 | Pending |
+| CONF-02 | Phase 46 | Pending |
+| CONF-06 | Phase 46 | Pending |
+| CONF-03 | Phase 47 | Pending |
+| CONF-04 | Phase 47 | Pending |
+| CONF-07 | Phase 48 | Pending |
+| REL-09  | Phase 49 | Pending |
+| QUAL-07 | Phase 49 | Pending |
+| OBS-05  | Phase 49 | Pending |
 
 **Coverage:**
 - v1.5 requirements: 10 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 10 ⚠️
+- Mapped to phases: 10/10 ✓
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-02-25*
-*Last updated: 2026-02-25 after initial definition*
+*Last updated: 2026-02-25 after v1.5 roadmap creation*
