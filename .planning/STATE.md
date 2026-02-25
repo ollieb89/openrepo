@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v2.0 Notion Kanban Sync — Phase 50, Plan 03 complete; Phase 47-03 complete (CONF-03, CONF-04 tests)
+**Current focus:** v2.0 Notion Kanban Sync — Phase 50, Plan 05 complete (conversational capture handler)
 
 ## Current Position
 
 Phase: 50 of 50 (Notion Kanban Sync)
-Plan: 3 of 6 complete
+Plan: 5 of 6 complete
 Status: Ready
-Last activity: 2026-02-25 — 50-03 complete: event sync handlers (project/phase lifecycle), SyncResult builder, field ownership guards, event_bus_hook.py (NOTION-01, NOTION-02, NOTION-03, NOTION-09, NOTION-10)
+Last activity: 2026-02-25 — 50-05 complete: conversational capture handler (area inference, capture hash dedupe, batch parsing) wired into notion_sync.py dispatcher (NOTION-04)
 
-Progress: [#####░░░░░] 50% — Phase 45 done (2/2), Phase 46 done (3/3), Phase 50 in progress (3/6)
+Progress: [########░░] 83% — Phase 45 done (2/2), Phase 46 done (3/3), Phase 50 in progress (5/6)
 
 ## Performance Metrics
 
@@ -73,6 +73,9 @@ Notable for v1.5:
 - [Phase 50-03]: _safe_set_status is exclusive — if not openclaw-linked, Status key is absent from update dict (Notion's value is untouched)
 - [Phase 50-03]: activity append is best-effort — failure logs warning but never aborts the main Cards DB mutation
 - [Phase 50-03]: Module-level _project_page_id_cache dict avoids repeated Projects DB queries within one process lifetime
+- [Phase 50-05]: _parse_batch sentence heuristic skips comma-split when '. ', '? ', or '! ' present — avoids splitting natural language sentences
+- [Phase 50-05]: Status ownership on capture update: explicit status in payload respected directly; no _is_openclaw_linked guard needed for capture cards (Capture Hash is our ownership marker)
+- [Phase 50-05]: card_type=Task for Dev area, Life Task for all others — consistent with Cards DB schema options
 
 ### Pending Todos
 
@@ -85,5 +88,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: 47-03 complete — CONF-03/CONF-04 test cases appended to test_config_validator.py (9 new functions, 16/16 pass, 167 total passing). Phase 47 complete.
-Resume: Run `/gsd:execute-plan 50 04` to execute Phase 50 Plan 04 (next plan)
+Stopped at: 50-05 complete — capture_handler.py (area inference, capture hash dedupe, batch parsing), notion_sync.handle_capture wired, 167 tests passing.
+Resume: Run `/gsd:execute-plan 50 06` to execute Phase 50 Plan 06 (reconcile drift detection — final plan)

@@ -221,7 +221,7 @@ Plans:
 | 39-44 | v1.4 | 16/16 | ✓ Complete | 2026-02-25 |
 | 45. Path Resolver + Constants Foundation | 2/2 | Complete    | 2026-02-25 | - |
 | 46. Schema Validation + Fail-Fast Startup | 3/3 | Complete    | 2026-02-25 | - |
-| 47. Env Var Precedence + Migration CLI | 3/3 | Complete   | 2026-02-25 | - |
+| 47. Env Var Precedence + Migration CLI | 3/3 | Complete    | 2026-02-25 | - |
 | 48. Config Integration Tests | v1.5 | 0/? | Not started | - |
 | 49. Deferred Reliability, Quality, and Observability | v1.5 | 0/? | Not started | - |
-| 50. Notion Kanban Sync | 3/6 | In Progress|  | - |
+| 50. Notion Kanban Sync | 5/6 | In Progress|  | - |
