@@ -28,6 +28,68 @@ DEFAULT_POOL_RECOVERY_POLICY = "mark_failed"
 MEMORY_CONTEXT_BUDGET = 2000
 
 
+# JSON Schema for openclaw.json validation (CONF-02)
+# Defines required fields, types, and allowed top-level keys.
+# Unknown top-level fields generate a WARNING at startup; missing required fields
+# or wrong types cause sys.exit(1) before any work is done (CONF-06).
+#
+# Required (missing = exit): gateway.port (int), agents.list (array)
+# Optional: all other fields — sensible defaults apply
+OPENCLAW_JSON_SCHEMA: dict = {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["gateway", "agents"],
+    "additionalProperties": False,
+    "properties": {
+        "meta":               {"type": "object"},
+        "active_project":     {"type": "string"},
+        "source_directories": {"type": "array", "items": {"type": "string"}},
+        "agents": {
+            "type": "object",
+            "required": ["list"],
+            "properties": {
+                "list":     {"type": "array"},
+                "defaults": {"type": "object"},
+            },
+        },
+        "commands":  {"type": "object"},
+        "channels":  {"type": "object"},
+        "gateway": {
+            "type": "object",
+            "required": ["port"],
+            "properties": {
+                "port": {"type": "integer", "minimum": 1, "maximum": 65535},
+                "mode": {"type": "string"},
+                "bind": {"type": "string"},
+                "auth": {"type": "object"},
+            },
+        },
+        "memory":  {"type": "object"},
+        "plugins": {"type": "object"},
+    },
+}
+
+# JSON Schema for project.json validation (CONF-06 lazy validation)
+# Validated when a project is first accessed, not at startup.
+# Known top-level fields determined from inspection of all 9 real project.json files.
+# Required: workspace (non-empty string), tech_stack (object)
+PROJECT_JSON_SCHEMA: dict = {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["workspace", "tech_stack"],
+    "additionalProperties": False,
+    "properties": {
+        "id":                 {"type": "string"},
+        "name":               {"type": "string"},
+        "agent_display_name": {"type": "string"},
+        "workspace":          {"type": "string", "minLength": 1},
+        "tech_stack":         {"type": "object"},
+        "agents":             {"type": "object"},
+        "l3_overrides":       {"type": "object"},
+    },
+}
+
+
 def _find_project_root() -> Path:
     """Resolve the OpenClaw project root directory.
 
