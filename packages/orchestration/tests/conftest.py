@@ -30,3 +30,14 @@ _packages_memory_service_dir = PROJECT_ROOT / "packages" / "memory" / "memory_se
 for _d in (_docker_memory_service_dir, _packages_memory_service_dir):
     if _d.exists() and str(_d) not in sys.path:
         sys.path.insert(0, str(_d))
+
+import pytest
+
+
+@pytest.fixture
+def valid_openclaw_config():
+    """Minimal valid openclaw.json dict matching OPENCLAW_JSON_SCHEMA. Tests copy and modify."""
+    return {
+        "gateway": {"port": 18789},
+        "agents": {"list": []},
+    }

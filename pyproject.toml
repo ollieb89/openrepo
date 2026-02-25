@@ -10,3 +10,6 @@ members = ["packages/orchestration"]
 [tool.pytest.ini_options]
 testpaths = ["packages/orchestration/tests"]
 asyncio_mode = "auto"
+markers = [
+    "integration: integration tests that touch the filesystem",
+]
