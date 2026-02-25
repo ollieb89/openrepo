@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-25)
 ## Current Position
 
 Phase: 50 of 50 (Notion Kanban Sync)
-Plan: 1 of 6 complete
+Plan: 2 of 6 complete
 Status: Ready
-Last activity: 2026-02-25 — 50-01 complete: event_bus.py + 5 hook sites wired, NOTION-01..11 requirements defined
+Last activity: 2026-02-25 — 50-02 complete: notion-kanban-sync skill skeleton + NotionClient with retry/backoff/bootstrap (NOTION-08, NOTION-11)
 
-Progress: [#####░░░░░] 50% — Phase 45 done (2/2), Phase 46 done (3/3), Phase 50-01 done (1/6)
+Progress: [#####░░░░░] 50% — Phase 45 done (2/2), Phase 46 done (3/3), Phase 50 in progress (2/6)
 
 ## Performance Metrics
 
@@ -64,6 +64,8 @@ Notable for v1.5:
 - config/openclaw.json.example documents all 9 schema properties including nested gateway.auth, agents.defaults, channels.telegram
 - [Phase 50-01]: event_bus.py has zero openclaw imports at module level to avoid circular imports
 - [Phase 50-01]: Each emit() handler gets its own daemon thread — no shared thread pool needed
+- [Phase 50-notion-kanban-sync]: data_source_id used for queries, database_id for creates — API 2025-09-03 splits ID space; both cached in config.json
+- [Phase 50-notion-kanban-sync]: Module-level threading.Lock() in notion_client.py prevents concurrent bootstrap race creating duplicate Notion DBs
 
 ### Pending Todos
 
@@ -76,5 +78,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: 50-01 complete — event_bus.py + 5 hook sites wired, NOTION-01..11 requirements defined, 158 tests passing
-Resume: Run `/gsd:execute-plan 50 02` to execute Phase 50 Plan 02 (Skill skeleton + Notion client wrapper)
+Stopped at: 50-02 complete — notion-kanban-sync skill skeleton + NotionClient (retry/backoff/bootstrap/upsert), NOTION-08 + NOTION-11 done
+Resume: Run `/gsd:execute-plan 50 03` to execute Phase 50 Plan 03 (next plan)
