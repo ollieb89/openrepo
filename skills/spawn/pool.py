@@ -33,20 +33,21 @@ from spawn import (
     spawn_l3_specialist,
 )
 from openclaw.state_engine import JarvisState
-from openclaw.project_config import get_active_project_id, get_workspace_path, get_state_path, get_pool_config, get_memu_config, get_snapshot_dir
+from openclaw.config import (
+    get_state_path,
+    get_snapshot_dir,
+    DEFAULT_POOL_MAX_CONCURRENT,
+    DEFAULT_POOL_MODE,
+    DEFAULT_POOL_OVERFLOW_POLICY,
+    DEFAULT_POOL_QUEUE_TIMEOUT_S,
+    DEFAULT_POOL_RECOVERY_POLICY,
+)
+from openclaw.project_config import get_active_project_id, get_workspace_path, get_pool_config, get_memu_config
 from openclaw.logging import get_logger
 
 logger = get_logger("pool")
 
 _shutdown_handler_registered = False  # module-level idempotency guard — prevents double-registration if spawn_task() called multiple times
-
-_POOL_DEFAULTS = {
-    "max_concurrent": 3,
-    "pool_mode": "shared",
-    "overflow_policy": "wait",
-    "queue_timeout_s": 300,
-    "recovery_policy": "mark_failed",
-}
 
 
 class PoolOverflowError(Exception):
@@ -78,7 +79,7 @@ class L3ContainerPool:
         Args:
             max_concurrent: Maximum number of concurrent containers. Should be sourced
                             from project.json l3_overrides.max_concurrent via get_pool_config().
-                            Defaults to 3 (matches _POOL_DEFAULTS["max_concurrent"]).
+                            Defaults to 3 (matches DEFAULT_POOL_MAX_CONCURRENT).
             project_id: Project scope for this pool. If None, resolved lazily
                         from the active project at first use.
         """
@@ -93,8 +94,14 @@ class L3ContainerPool:
         self._saturated: bool = False
 
         # Pool mode and config (set by PoolRegistry; overflow policy read from _pool_config)
-        self._pool_mode: str = _POOL_DEFAULTS["pool_mode"]
-        self._pool_config: Dict[str, Any] = _POOL_DEFAULTS.copy()
+        self._pool_mode: str = DEFAULT_POOL_MODE
+        self._pool_config: Dict[str, Any] = {
+            "max_concurrent": DEFAULT_POOL_MAX_CONCURRENT,
+            "pool_mode": DEFAULT_POOL_MODE,
+            "overflow_policy": DEFAULT_POOL_OVERFLOW_POLICY,
+            "queue_timeout_s": DEFAULT_POOL_QUEUE_TIMEOUT_S,
+            "recovery_policy": DEFAULT_POOL_RECOVERY_POLICY,
+        }
 
         # Priority queue for "priority" overflow policy.
         # Entries: (priority_num, task_id). Lower number = higher priority.
@@ -141,8 +148,8 @@ class L3ContainerPool:
         timeout_seconds = get_skill_timeout(skill_hint)
 
         # Read overflow policy from attached config
-        overflow_policy = self._pool_config.get("overflow_policy", _POOL_DEFAULTS["overflow_policy"])
-        queue_timeout_s = self._pool_config.get("queue_timeout_s", _POOL_DEFAULTS["queue_timeout_s"])
+        overflow_policy = self._pool_config.get("overflow_policy", DEFAULT_POOL_OVERFLOW_POLICY)
+        queue_timeout_s = self._pool_config.get("queue_timeout_s", DEFAULT_POOL_QUEUE_TIMEOUT_S)
 
         # Track queued tasks and detect saturation onset
         self.queued_count += 1
@@ -688,7 +695,7 @@ class L3ContainerPool:
         Returns:
             Summary dict with scanned, mark_failed, retried, manual counts.
         """
-        recovery_policy = self._pool_config.get("recovery_policy", _POOL_DEFAULTS["recovery_policy"])
+        recovery_policy = self._pool_config.get("recovery_policy", DEFAULT_POOL_RECOVERY_POLICY)
 
         scanned = 0
         mark_failed_count = 0
@@ -876,7 +883,7 @@ class PoolRegistry:
         # Global shared semaphore for projects in "shared" pool_mode.
         # Created lazily on first shared-mode pool request.
         self._shared_semaphore: Optional[asyncio.Semaphore] = None
-        self._shared_max: int = _POOL_DEFAULTS["max_concurrent"]
+        self._shared_max: int = DEFAULT_POOL_MAX_CONCURRENT
 
     def get_pool(self, project_id: str) -> L3ContainerPool:
         """Get or create pool for a project, reading config fresh on every call.
@@ -906,10 +913,16 @@ class PoolRegistry:
                 "Failed to load pool config — using defaults",
                 extra={"project_id": project_id, "error": str(exc)},
             )
-            cfg = _POOL_DEFAULTS.copy()
+            cfg = {
+                "max_concurrent": DEFAULT_POOL_MAX_CONCURRENT,
+                "pool_mode": DEFAULT_POOL_MODE,
+                "overflow_policy": DEFAULT_POOL_OVERFLOW_POLICY,
+                "queue_timeout_s": DEFAULT_POOL_QUEUE_TIMEOUT_S,
+                "recovery_policy": DEFAULT_POOL_RECOVERY_POLICY,
+            }
 
         new_max = cfg["max_concurrent"]
-        new_pool_mode = cfg.get("pool_mode", _POOL_DEFAULTS["pool_mode"])
+        new_pool_mode = cfg.get("pool_mode", DEFAULT_POOL_MODE)
 
         if project_id not in self._pools:
             # Create new pool with config-driven max_concurrent
@@ -1093,8 +1106,14 @@ async def spawn_task(
         pool_cfg = get_pool_config(project_id)
         max_concurrent = pool_cfg["max_concurrent"]
     except Exception:
-        pool_cfg = _POOL_DEFAULTS.copy()
-        max_concurrent = _POOL_DEFAULTS["max_concurrent"]
+        pool_cfg = {
+            "max_concurrent": DEFAULT_POOL_MAX_CONCURRENT,
+            "pool_mode": DEFAULT_POOL_MODE,
+            "overflow_policy": DEFAULT_POOL_OVERFLOW_POLICY,
+            "queue_timeout_s": DEFAULT_POOL_QUEUE_TIMEOUT_S,
+            "recovery_policy": DEFAULT_POOL_RECOVERY_POLICY,
+        }
+        max_concurrent = DEFAULT_POOL_MAX_CONCURRENT
 
     pool = L3ContainerPool(max_concurrent=max_concurrent, project_id=project_id)
     pool._pool_config = pool_cfg

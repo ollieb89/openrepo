@@ -20,12 +20,12 @@ import httpx
 import docker
 from docker.types import DeviceRequest
 from openclaw.state_engine import JarvisState
+from openclaw.config import get_project_root, get_state_path, MEMORY_CONTEXT_BUDGET
 from openclaw.project_config import (
     get_active_project_id,
     load_project_config,
     get_workspace_path,
     get_agent_mapping,
-    get_state_path,
     get_memu_config,
 )
 from openclaw.snapshot import _detect_default_branch
@@ -39,7 +39,7 @@ _PROJECT_ID_PATTERN = re.compile(r'^[a-zA-Z0-9-]{1,20}$')
 _docker_client: Optional[docker.DockerClient] = None
 
 # Memory retrieval + SOUL injection constants
-MEMORY_CONTEXT_BUDGET = 2000  # Hard cap in characters for injected memory section
+# MEMORY_CONTEXT_BUDGET is imported from openclaw.config — single source of truth
 _RETRIEVE_TIMEOUT = httpx.Timeout(3.0, connect=2.0)  # Match memory_client.py pattern
 _RETRIEVE_LIMIT = 10  # Max items to request from memU
 SOUL_CONTAINER_PATH = "/run/openclaw/soul.md"  # Container-side path for augmented SOUL
@@ -128,7 +128,7 @@ def load_l3_config(project_id: Optional[str] = None) -> Dict[str, Any]:
     except (FileNotFoundError, ValueError):
         l3_agent_id = "l3_specialist"
 
-    config_path = Path(__file__).parent.parent.parent / "agents" / l3_agent_id / "config.json"
+    config_path = get_project_root() / "agents" / l3_agent_id / "config.json"
     with open(config_path) as f:
         config = json.load(f)
 
@@ -430,7 +430,7 @@ def spawn_l3_specialist(
     container_name = f"openclaw-{project_id}-l3-{task_id}"
 
     # Get project root for orchestration mount
-    project_root = Path(__file__).parent.parent.parent
+    project_root = get_project_root()
 
     # Load L3 config for hierarchy metadata (pass project_id for overrides)
     l3_config = load_l3_config(project_id)
@@ -464,6 +464,7 @@ def spawn_l3_specialist(
             "CLI_RUNTIME": cli_runtime,
             "TASK_DESCRIPTION": task_description,
             "OPENCLAW_PROJECT": project_id,
+            # Container-internal path — host equivalent is config.get_state_path(project_id)
             "OPENCLAW_STATE_FILE": f"/workspace/.openclaw/{project_id}/workspace-state.json",
             "MEMU_API_URL": _rewrite_memu_url_for_container(get_memu_config().get("memu_api_url", "")),
             "MEMU_AGENT_ID": "l3_specialist",

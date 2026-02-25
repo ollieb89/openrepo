@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
 
 from openclaw.state_engine import JarvisState
-from openclaw.config import POLL_INTERVAL
+from openclaw.config import POLL_INTERVAL, get_project_root, get_state_path
 from openclaw.logging import get_logger
 from openclaw.project_config import get_pool_config
 
@@ -62,8 +62,7 @@ def _discover_projects(project_filter: Optional[str] = None) -> List[Tuple[str, 
     State files that don't exist yet are included (exists=False) so
     caller can decide whether to skip or show 'No tasks'.
     """
-    root = Path(__file__).parent.parent
-    projects_dir = root / "projects"
+    projects_dir = get_project_root() / "projects"
     results: List[Tuple[str, Path]] = []
     if not projects_dir.exists():
         return results
@@ -72,7 +71,7 @@ def _discover_projects(project_filter: Optional[str] = None) -> List[Tuple[str, 
             continue
         if project_filter and entry.name != project_filter:
             continue
-        state_file = root / "workspace" / ".openclaw" / entry.name / "workspace-state.json"
+        state_file = get_state_path(entry.name)
         results.append((entry.name, state_file))
     return results
 

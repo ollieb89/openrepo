@@ -22,9 +22,9 @@ from spawn import (
     _write_soul_tempfile,
     _write_soul_file,
     _rewrite_memu_url_for_container,
-    MEMORY_CONTEXT_BUDGET,
     CATEGORY_SECTION_MAP,
 )
+from openclaw.config import MEMORY_CONTEXT_BUDGET
 
 
 # ---------------------------------------------------------------------------
