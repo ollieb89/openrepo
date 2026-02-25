@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.5 Config Consolidation — Phase 47 Plan 01 complete (CONF-04)
+**Current focus:** v2.0 Notion Kanban Sync — Phase 50, Plan 03 complete
 
 ## Current Position
 
-Phase: 47 of 50 (Env Var Precedence + Migration CLI)
-Plan: 1 of 1 complete
+Phase: 50 of 50 (Notion Kanban Sync)
+Plan: 3 of 6 complete
 Status: Ready
-Last activity: 2026-02-25 — 47-01 complete: OPENCLAW_PROJECT centralised in config.py, get_active_project_env(), precedence comment block, CLI epilog, json.example docs
+Last activity: 2026-02-25 — 50-03 complete: event sync handlers (project/phase lifecycle), SyncResult builder, field ownership guards, event_bus_hook.py (NOTION-01, NOTION-02, NOTION-03, NOTION-09, NOTION-10)
 
-Progress: [#####░░░░░] 50% — Phase 45 done (2/2), Phase 46 done (3/3), Phase 50 in progress (2/6)
+Progress: [#####░░░░░] 50% — Phase 45 done (2/2), Phase 46 done (3/3), Phase 50 in progress (3/6)
 
 ## Performance Metrics
 
@@ -68,6 +68,10 @@ Notable for v1.5:
 - [Phase 50-notion-kanban-sync]: Module-level threading.Lock() in notion_client.py prevents concurrent bootstrap race creating duplicate Notion DBs
 - [Phase 47-env-var-precedence-migration-cli]: get_active_project_env() returns None (not empty string) when OPENCLAW_PROJECT unset — or None idiom coerces empty string
 - [Phase 47-env-var-precedence-migration-cli]: mkdir auto-create in _find_project_root() applies only to OPENCLAW_ROOT env var path, not ~/.openclaw fallback
+- [Phase 47-02-migration-cli]: shutil.copy2 backup in helpers (_migrate_one_*) not in cmd_migrate — cleaner separation; _migrate_one_project_json catches ConfigValidationError (raise pattern), not (fatal, warnings) tuple
+- [Phase 50-03]: _safe_set_status is exclusive — if not openclaw-linked, Status key is absent from update dict (Notion's value is untouched)
+- [Phase 50-03]: activity append is best-effort — failure logs warning but never aborts the main Cards DB mutation
+- [Phase 50-03]: Module-level _project_page_id_cache dict avoids repeated Projects DB queries within one process lifetime
 
 ### Pending Todos
 
@@ -80,5 +84,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: 47-01 complete — CONF-04 done, all OPENCLAW_* env var reads centralised in config.py, 158 tests passing
-Resume: Phase 47 complete (only 1 plan). Run next phase plan as needed.
+Stopped at: 50-03 complete — event sync handlers (project_registered, project_removed, phase_started, phase_completed, phase_blocked), SyncResult, field ownership guards, event_bus_hook.py. 158 tests passing.
+Resume: Run `/gsd:execute-plan 50 04` to execute Phase 50 Plan 04 (next plan)
