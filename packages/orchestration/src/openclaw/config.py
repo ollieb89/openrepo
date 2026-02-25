@@ -90,12 +90,28 @@ PROJECT_JSON_SCHEMA: dict = {
 }
 
 
+# ── Env Var Precedence ────────────────────────────────────────────────────────
+# The following environment variables override their config-file counterparts.
+# Resolution order (first set wins):
+#
+#   OPENCLAW_ROOT             → project root directory (default: ~/.openclaw)
+#   OPENCLAW_PROJECT          → active project ID (default: openclaw.json active_project)
+#   OPENCLAW_LOG_LEVEL        → log verbosity: DEBUG|INFO|WARNING|ERROR (default: INFO)
+#   OPENCLAW_ACTIVITY_LOG_MAX → max activity log entries per task (default: 100)
+#   OPENCLAW_STATE_FILE       → workspace state file path (L3 containers only)
+#
+# All env var reads are centralised in this module. No component should call
+# os.environ directly for OpenClaw configuration values.
+# ─────────────────────────────────────────────────────────────────────────────
+
+
 def _find_project_root() -> Path:
     """Resolve the OpenClaw project root directory.
 
     Resolution order:
     1. OPENCLAW_ROOT env var — used by Docker containers and CI environments
-       to point at the mounted openclaw directory.
+       to point at the mounted openclaw directory. Auto-creates the directory
+       if it does not exist (first-run behaviour when env var is set explicitly).
     2. ~/.openclaw — the conventional home-directory install location.
 
     Never uses Path(__file__).parent — that resolves to the package install
@@ -103,7 +119,9 @@ def _find_project_root() -> Path:
     """
     env_root = os.environ.get("OPENCLAW_ROOT")
     if env_root:
-        return Path(env_root)
+        root = Path(env_root)
+        root.mkdir(parents=True, exist_ok=True)
+        return root
     return Path.home() / ".openclaw"
 
 
@@ -151,3 +169,16 @@ def get_snapshot_dir(project_id: str) -> Path:
     validate that the path exists.
     """
     return _find_project_root() / "workspace" / ".openclaw" / project_id / "snapshots"
+
+
+def get_active_project_env() -> "str | None":
+    """Return the OPENCLAW_PROJECT env var value, or None if not set.
+
+    Part of the env var precedence chain:
+      OPENCLAW_ROOT → OPENCLAW_PROJECT → OPENCLAW_LOG_LEVEL → OPENCLAW_ACTIVITY_LOG_MAX
+
+    The file-based fallback (openclaw.json active_project) is handled by
+    project_config.get_active_project_id(). This function handles the env
+    var half only — callers must not read OPENCLAW_PROJECT directly.
+    """
+    return os.environ.get("OPENCLAW_PROJECT") or None
