@@ -1135,3 +1135,181 @@ class TestContainerHandlers:
         assert upsert_args[4]["Card Type"]["select"]["name"] == "Bug"
         
         assert result.created == 1
+
+
+# ---------------------------------------------------------------------------
+# Reconcile Handler tests
+# ---------------------------------------------------------------------------
+
+class TestReconcileHandler:
+    """Tests for reconcile handler and its 4 correction types."""
+
+    def setup_method(self):
+        import notion_sync
+        notion_sync._project_page_id_cache.clear()
+
+    @patch("reconcile_handler._read_openclaw_projects")
+    @patch("notion_client.NotionClient")
+    def test_reconcile_missing_projects(self, mock_client_class, mock_read_projects):
+        """OpenClaw projects not in Notion -> create Projects DB rows."""
+        mock_client = mock_client_class.return_value
+        mock_client._get_db_ids.return_value = ("proj_db", "proj_ds", "cards_db", "cards_ds")
+        
+        # Mock OpenClaw projects
+        mock_read_projects.return_value = [
+            {"project_id": "newproj", "name": "New Project", "workspace": "/path/new"}
+        ]
+        
+        # Mock Notion query (empty - no existing projects)
+        mock_client._request.return_value = {"results": [], "has_more": False}
+        
+        mock_client.create_page.return_value = {"id": "new-proj-page-1"}
+        
+        from reconcile_handler import _reconcile_missing_projects
+        from notion_sync import SyncResult
+        
+        result = SyncResult("reconcile")
+        notion_project_ids = set()  # Empty - no projects exist
+        
+        _reconcile_missing_projects(
+            mock_read_projects.return_value,
+            notion_project_ids,
+            mock_client,
+            "proj_db",
+            "proj_ds",
+            result
+        )
+        
+        mock_client.create_page.assert_called_once()
+        create_args = mock_client.create_page.call_args[0]
+        assert create_args[0] == "proj_db"
+        assert create_args[1]["OpenClaw ID"]["rich_text"][0]["text"]["content"] == "newproj"
+        
+        assert result.created == 1
+        assert result.mutations[0]["dedupe_key"] == "newproj"
+
+    @patch("reconcile_handler._get_workspace_phase_statuses")
+    @patch("notion_client.NotionClient")
+    def test_reconcile_status_mismatch(self, mock_client_class, mock_get_statuses):
+        """Status mismatch on OpenClaw-linked cards -> correct to match OpenClaw."""
+        mock_client = mock_client_class.return_value
+        
+        # OpenClaw says phase should be "In Progress"
+        mock_get_statuses.return_value = {"pumplai:45": "In Progress"}
+        
+        # Notion card with wrong status
+        notion_card = _make_card(openclaw_phase_id="pumplai:45")
+        notion_card["id"] = "phase-card-1"
+        # Add a Status select property
+        notion_card["properties"]["Status"] = {"select": {"name": "Backlog"}}
+        
+        from reconcile_handler import _reconcile_status_mismatch
+        from notion_sync import SyncResult
+        
+        result = SyncResult("reconcile")
+        openclaw_projects = [{"project_id": "pumplai", "name": "PumpLAI"}]
+        
+        _reconcile_status_mismatch(
+            openclaw_projects,
+            [notion_card],
+            mock_client,
+            result
+        )
+        
+        mock_client.update_page.assert_called_once()
+        update_args = mock_client.update_page.call_args[0]
+        assert update_args[0] == "phase-card-1"
+        assert update_args[1]["Status"]["select"]["name"] == "In Progress"
+        
+        assert result.updated == 1
+
+    @patch("notion_client.NotionClient")
+    def test_reconcile_missing_relations(self, mock_client_class):
+        """Cards with Phase ID but no Project relation -> backfill relation."""
+        mock_client = mock_client_class.return_value
+        
+        # Card with Phase ID but empty relation
+        notion_card = _make_card(openclaw_phase_id="pumplai:45")
+        notion_card["id"] = "phase-card-1"
+        notion_card["properties"]["Project"] = {"relation": []}  # Empty relation
+        
+        from reconcile_handler import _reconcile_missing_relations
+        from notion_sync import SyncResult
+        
+        result = SyncResult("reconcile")
+        notion_projects_by_id = {"pumplai": "proj-page-1"}
+        
+        _reconcile_missing_relations(
+            [notion_card],
+            notion_projects_by_id,
+            mock_client,
+            result
+        )
+        
+        mock_client.update_page.assert_called_once()
+        update_args = mock_client.update_page.call_args[0]
+        assert update_args[0] == "phase-card-1"
+        assert update_args[1]["Project"]["relation"][0]["id"] == "proj-page-1"
+        
+        assert result.updated == 1
+
+    @patch("notion_client.NotionClient")
+    def test_reconcile_dangling_cards(self, mock_client_class):
+        """Cards pointing to non-existent phases -> archive (set Status=Archived)."""
+        mock_client = mock_client_class.return_value
+        
+        # Card with Phase ID pointing to deleted phase
+        notion_card = _make_card(openclaw_phase_id="oldproj:99")
+        notion_card["id"] = "old-phase-card"
+        notion_card["properties"]["Status"] = {"select": {"name": "In Progress"}}
+        
+        from reconcile_handler import _reconcile_dangling_cards
+        from notion_sync import SyncResult
+        
+        result = SyncResult("reconcile")
+        openclaw_project_ids = {"pumplai", "smartai"}  # "oldproj" is NOT in this set
+        openclaw_phase_keys = {"pumplai:45", "smartai:12"}  # "oldproj:99" is NOT here
+        
+        _reconcile_dangling_cards(
+            [notion_card],
+            openclaw_project_ids,
+            openclaw_phase_keys,
+            mock_client,
+            result
+        )
+        
+        mock_client.update_page.assert_called_once()
+        update_args = mock_client.update_page.call_args[0]
+        assert update_args[0] == "old-phase-card"
+        assert update_args[1]["Status"]["select"]["name"] == "Archived"
+        
+        assert result.updated == 1
+
+    @patch("notion_client.NotionClient")
+    def test_reconcile_dangling_cards_already_archived(self, mock_client_class):
+        """Dangling cards already Archived -> skip."""
+        mock_client = mock_client_class.return_value
+        
+        # Card already Archived
+        notion_card = _make_card(openclaw_phase_id="oldproj:99")
+        notion_card["id"] = "old-phase-card"
+        notion_card["properties"]["Status"] = {"select": {"name": "Archived"}}
+        
+        from reconcile_handler import _reconcile_dangling_cards
+        from notion_sync import SyncResult
+        
+        result = SyncResult("reconcile")
+        openclaw_project_ids = {"pumplai"}
+        openclaw_phase_keys = set()
+        
+        _reconcile_dangling_cards(
+            [notion_card],
+            openclaw_project_ids,
+            openclaw_phase_keys,
+            mock_client,
+            result
+        )
+        
+        mock_client.update_page.assert_not_called()
+        assert result.skipped == 1
+
