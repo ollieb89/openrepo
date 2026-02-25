@@ -32,6 +32,8 @@ from notion_sync import (
     SyncResult,
     _evaluate_meaningful_rule,
     _should_write_status,
+    _is_openclaw_linked,
+    _safe_set_status,
     handle_event_sync,
 )
 from unittest.mock import patch
@@ -499,6 +501,50 @@ class TestShouldWriteStatusUnlinked:
         """Card with no properties dict → _should_write_status returns False (safe default)."""
         card = {"id": "page-789"}
         assert _should_write_status(card) is False
+
+
+class TestIsOpenClawLinked:
+    """test_is_openclaw_linked — delegates to _should_write_status."""
+
+    def test_delegates_to_should_write_status(self):
+        """_is_openclaw_linked behaves exactly like _should_write_status."""
+        linked_card = _make_card(openclaw_phase_id="pumplai:45")
+        unlinked_card = _make_card()
+        
+        assert _is_openclaw_linked(linked_card) is True
+        assert _is_openclaw_linked(unlinked_card) is False
+
+
+class TestSafeSetStatus:
+    """test_safe_set_status — applies status ownership rules."""
+
+    def test_writes_status_when_linked(self):
+        """OpenClaw-linked card gets Status added to properties dict."""
+        card = _make_card(openclaw_phase_id="pumplai:45")
+        props = {"Name": {"title": [{"text": {"content": "Test"}}]}}
+        
+        result_props = _safe_set_status(props, card, "Done")
+        
+        assert "Status" in result_props
+        assert result_props["Status"]["select"]["name"] == "Done"
+        assert result_props["Name"]["title"][0]["text"]["content"] == "Test"
+
+    @patch("notion_sync.logger.info")
+    def test_skips_status_when_unlinked_and_logs(self, mock_logger):
+        """Notion-owned card (unlinked) does not get Status added; logs skip message."""
+        card = _make_card()
+        card["id"] = "page-unlinked-123"
+        props = {"Name": {"title": [{"text": {"content": "Test"}}]}}
+        
+        result_props = _safe_set_status(props, card, "Done")
+        
+        assert "Status" not in result_props
+        assert result_props["Name"]["title"][0]["text"]["content"] == "Test"
+        
+        mock_logger.assert_called_once()
+        log_args = mock_logger.call_args[0]
+        assert "Skipping Status write" in log_args[0]
+        assert "page-unlinked-123" in log_args
 
 
 # ---------------------------------------------------------------------------
