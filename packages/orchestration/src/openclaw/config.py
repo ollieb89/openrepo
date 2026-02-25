@@ -6,7 +6,15 @@ LOCK_TIMEOUT = 5  # seconds
 LOCK_RETRY_ATTEMPTS = 3
 
 # Polling configuration
-POLL_INTERVAL = 1.0  # seconds
+POLL_INTERVAL = 1.0  # seconds — legacy single-file mode default; also used as --interval CLI arg default
+
+# Adaptive monitor polling intervals (OBS-05)
+# Multi-project tail_state() uses these instead of POLL_INTERVAL.
+# Active = any running openclaw-managed L3 containers; idle = none.
+# Hardcoded per locked decision — not configurable in openclaw.json.
+# Transition lag: up to 30s when swarm goes idle → active (acceptable).
+POLL_INTERVAL_ACTIVE = 2.0   # seconds when L3 containers are running
+POLL_INTERVAL_IDLE   = 30.0  # seconds when swarm is quiescent
 
 # Cache configuration
 CACHE_TTL_SECONDS = 5.0  # Max age before forced re-read (safety net; mtime is primary)
