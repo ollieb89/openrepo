@@ -9,9 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-25)
 
 ## Current Position
 
-Milestone: v1.6 Agent Autonomy — PLANNING
-Status: Planning (v1.5 archived, phases 54+ starting)
-Next: Autonomy framework formulation
+Phase: 54+ (autonomy framework implemented, tests pending)
+Plan: 54-01 through 54-04 complete, integration phase starting
+Status: Active — fixing test failures and wiring spawn flow integration
+Last activity: 2026-02-26 — Started v1.6 milestone formalization
 
 ## Performance Metrics
 

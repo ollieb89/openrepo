@@ -17,9 +17,19 @@ Hierarchical AI orchestration with physical isolation — enabling autonomous, s
 - **Container:** Debian bookworm-slim L3 images, Nvidia Container Toolkit
 - **OS:** Ubuntu 24.04 LTS
 
-## Current Milestone: v1.6 Agent Autonomy — PLANNING
+## Current Milestone: v1.6 Agent Autonomy — ACTIVE
 
-**Next up:** Enabling L3 agents to self-direct their work with minimal L1/L2 intervention. Focus on self-directed planning, confidence-based escalation, and autonomous handoff.
+**Goal:** Enable L3 agents to self-direct their work with confidence-based decision making and autonomous escalation.
+
+**Target Features:**
+- Self-directed task breakdown and planning (AUTO-01)
+- Confidence-based escalation with configurable thresholds (AUTO-02)
+- Context-aware tool selection for L3 agents (AUTO-03)
+- Progress self-monitoring with course correction (AUTO-04)
+- Autonomous handoff to L2 when blocked or complete (AUTO-05)
+- Dashboard visibility into autonomy state and escalations
+
+**Current Status:** Phase 54 autonomy framework implemented. Fixing test failures and integrating hooks into spawn flow.
 
 ## Current State
 

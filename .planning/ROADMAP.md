@@ -8,7 +8,8 @@
 - ✅ **v1.3 Agent Memory** — Phases 26-38 (shipped 2026-02-24)
 - ✅ **v1.4 Operational Maturity** — Phases 39-44 (shipped 2026-02-25)
 - ✅ **v1.5 Config Consolidation** — Phases 45-53 (shipped 2026-02-25)
-- � **v2.0 Notion Kanban Sync** — Phase 50 (planned)
+- 🚧 **v1.6 Agent Autonomy** — Phases 54-58 (active)
+- 📋 **v2.0 Notion Kanban Sync** — Phase 50 (planned)
 
 ## Phases
 
@@ -113,21 +114,15 @@ See: `.planning/milestones/v1.5-ROADMAP.md` for full phase details.
 
 </details>
 
-### 🚧 v1.6 Agent Autonomy (Planning)
+### 🚧 v1.6 Agent Autonomy (Active)
 
-- [ ] Phase 54: Autonomy Framework Formulation (1 plan)
+- [/] Phase 54: Autonomy Framework Formulation (4/4 plans) — implemented, tests pending
 - [ ] Phase 55: Self-Directed Task Decomposition (plan pending)
-- [ ] Phase 56: Confidence-Based Escalation Logic (plan pending)
+- [ ] Phase 56: Confidence-Based Escalation Logic (plan pending)  
 - [ ] Phase 57: Context-Aware Tool Selection (plan pending)
 - [ ] Phase 58: Progress Self-Monitoring (plan pending)
-
-### 🚧 v1.6 Agent Autonomy (Planning)
-
-- [ ] Phase 54: Autonomy Framework Formulation (1 plan)
-- [ ] Phase 55: Self-Directed Task Decomposition (plan pending)
-- [ ] Phase 56: Confidence-Based Escalation Logic (plan pending)
-- [ ] Phase 57: Context-Aware Tool Selection (plan pending)
-- [ ] Phase 58: Progress Self-Monitoring (plan pending)
+- [ ] Phase 59: Dashboard Autonomy UI (plan pending)
+- [ ] Phase 60: E2E Verification & Hardening (plan pending)
 
 ### 📋 Next Milestone
 
@@ -287,6 +282,20 @@ Plans:
 - [ ] 50-05-PLAN.md — Conversational capture with area inference + batch parsing
 - [ ] 50-06-PLAN.md — Reconcile handler + unit tests for event bus and sync logic
 
+### Phase 54: Autonomy Framework Formulation
+**Goal**: Implement the 4-state autonomy machine with confidence scoring, event system, and L3 self-reporting — foundation for agent self-direction
+**Depends on**: Phase 53 (v1.5 shipped)
+**Requirements**: AUTO-02, AUTO-04, AUTO-05
+**Success Criteria** (what must be TRUE):
+  1. `from openclaw.autonomy import AutonomyState, StateMachine, AutonomyContext` works — all types and state machine available
+  2. State machine validates transitions: PLANNING→EXECUTING→BLOCKED→EXECUTING→COMPLETE (or ESCALATING after max retries)
+  3. Confidence scoring produces 0.0-1.0 scores based on task complexity, ambiguity, past success, time estimate
+  4. Events emitted on state changes with debouncing for confidence updates (5s window, 0.1 threshold bypass)
+  5. Hooks integrate with spawn flow: `on_task_spawn()` creates context, `on_container_healthy()` starts EXECUTING
+  6. L3 `AutonomyClient` reports state via HTTP with sentinel file fallback when orchestrator unavailable
+  7. memU persistence stores autonomy contexts with category="AUTONOMY_STATE" and metadata for queries
+**Plans**: 4/4 plans complete — 54-01 (types/state), 54-02 (confidence/config), 54-03 (hooks/integration), 54-04 (docs/verification)
+
 ### Phase 53: Tech Debt Cleanup
 **Goal**: Close accumulated tech debt from v1.5 audit — fix stale references, remove residual config fields, and tune suggestion thresholds
 **Depends on**: Phase 49 (v1.5 core complete)
@@ -307,4 +316,4 @@ Plans:
 | 26-38 | v1.3 | 19/19 | ✓ Complete | 2026-02-24 |
 | 39-44 | v1.4 | 16/16 | ✓ Complete | 2026-02-25 |
 | 45-53 | v1.5 | 22/22 | ✓ Complete | 2026-02-25 |
-| 54 | v1.6 | 0/1 | Not started | - |
+| 54 | v1.6 | 4/4 | [/] Active (tests pending) | 2026-02-26 |
