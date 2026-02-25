@@ -180,7 +180,7 @@ Plans:
 
 **Milestone Goal:** A reactive L2-level skill that maintains a Notion kanban board as a read-only visibility mirror of OpenClaw state, covering both dev projects and life areas — with event bus infrastructure, Notion DB bootstrap, event sync, conversational capture, reconciliation, and hardening.
 
-- [ ] **Phase 50: Notion Kanban Sync** — Full end-to-end delivery: event bus, Notion client, schema bootstrap, event sync, conversational capture, reconcile, and hardening
+- [x] **Phase 50: Notion Kanban Sync** — Full end-to-end delivery: event bus, Notion client, schema bootstrap, event sync, conversational capture, reconcile, and hardening (completed 2026-02-25)
 
 ## Phase Details
 
@@ -224,4 +224,4 @@ Plans:
 | 47. Env Var Precedence + Migration CLI | 3/3 | Complete    | 2026-02-25 | - |
 | 48. Config Integration Tests | v1.5 | 0/? | Not started | - |
 | 49. Deferred Reliability, Quality, and Observability | v1.5 | 0/? | Not started | - |
-| 50. Notion Kanban Sync | 5/6 | In Progress|  | - |
+| 50. Notion Kanban Sync | 6/6 | Complete   | 2026-02-25 | - |
