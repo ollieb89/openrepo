@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.5 Config Consolidation — Phase 45 complete, Phase 46 next
+**Current focus:** v1.5 Config Consolidation — Phase 45 complete, Phase 46 Plan 02 complete
 
 ## Current Position
 
 Phase: 46 of 49 (Schema Validation + Fail-Fast Startup)
-Plan: 2 of 3
+Plan: 3 of 3
 Status: In progress
-Last activity: 2026-02-25 — 46-01 complete: 7-test RED suite for schema validation (CONF-02, CONF-06)
+Last activity: 2026-02-25 — 46-02 complete: schema validation implementation GREEN (CONF-02, CONF-06)
 
-Progress: [###░░░░░░░] 30% — Phase 45 done (2/2), Phase 46 Plan 01/03 done
+Progress: [####░░░░░░] 40% — Phase 45 done (2/2), Phase 46 Plans 01-02/03 done
 
 ## Performance Metrics
 
@@ -51,6 +51,12 @@ Notable for v1.5:
 - validate_project_config_schema is a separate entry point for project.json — raises exception on failure
 - test_project_json_missing_required uses pytest.raises(Exception) broadly — exact exception type is Plan 02's decision
 
+**46-02 decisions (schema implementation GREEN):**
+- additionalProperties violations are warnings not fatal errors — unknown fields may be forward-compatible
+- sys.exit(1) fires in _emit_validation_results() at call site in project_config.py, not inside the validator
+- OPENCLAW_JSON_SCHEMA and PROJECT_JSON_SCHEMA imported lazily inside validator functions to avoid circular imports
+- Draft202012Validator.iter_errors() collect-all strategy — user sees all errors at once
+
 ### Pending Todos
 
 None.
@@ -62,5 +68,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: 46-01 complete — 7-test TDD RED suite for schema validation (CONF-02, CONF-06)
-Resume: Run `/gsd:execute-plan 46 02` to execute Phase 46 Plan 02 (Schema Validation Implementation — GREEN)
+Stopped at: 46-02 complete — schema validation implementation GREEN, 158 tests passing (CONF-02, CONF-06)
+Resume: Run `/gsd:execute-plan 46 03` to execute Phase 46 Plan 03 (final integration verification)
