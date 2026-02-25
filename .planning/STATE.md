@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.5 Config Consolidation — Phase 45 complete, Phase 46 Plan 02 complete
+**Current focus:** v1.5 Config Consolidation — Phase 45 complete, Phase 46 complete, Phase 47 next
 
 ## Current Position
 
-Phase: 46 of 49 (Schema Validation + Fail-Fast Startup)
-Plan: 3 of 3
-Status: In progress
-Last activity: 2026-02-25 — 46-02 complete: schema validation implementation GREEN (CONF-02, CONF-06)
+Phase: 47 of 49 (Env Var Precedence + Migration CLI)
+Plan: 1 of 3
+Status: Ready
+Last activity: 2026-02-25 — 46-03 complete: openclaw-config CLI + schema documentation, Phase 46 done (CONF-02, CONF-06)
 
-Progress: [####░░░░░░] 40% — Phase 45 done (2/2), Phase 46 Plans 01-02/03 done
+Progress: [#####░░░░░] 50% — Phase 45 done (2/2), Phase 46 done (3/3)
 
 ## Performance Metrics
 
@@ -57,6 +57,12 @@ Notable for v1.5:
 - OPENCLAW_JSON_SCHEMA and PROJECT_JSON_SCHEMA imported lazily inside validator functions to avoid circular imports
 - Draft202012Validator.iter_errors() collect-all strategy — user sees all errors at once
 
+**46-03 decisions (CLI + documentation):**
+- openclaw-config show calls load_and_validate_openclaw_config() — reuses existing validation path rather than loading config directly
+- FileNotFoundError caught separately from generic Exception in cmd_show for actionable error messages
+- _comment_* JSON keys pattern used for inline schema documentation (standard JSON workaround, file remains parseable)
+- config/openclaw.json.example documents all 9 schema properties including nested gateway.auth, agents.defaults, channels.telegram
+
 ### Pending Todos
 
 None.
@@ -68,5 +74,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: 46-02 complete — schema validation implementation GREEN, 158 tests passing (CONF-02, CONF-06)
-Resume: Run `/gsd:execute-plan 46 03` to execute Phase 46 Plan 03 (final integration verification)
+Stopped at: 46-03 complete — openclaw-config CLI + openclaw.json.example, Phase 46 done (CONF-02, CONF-06), 158 tests passing
+Resume: Run `/gsd:execute-plan 47 01` to execute Phase 47 Plan 01 (Env Var Precedence + Migration CLI)

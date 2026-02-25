@@ -100,7 +100,7 @@ See: `.planning/milestones/v1.4-ROADMAP.md` for full phase details.
 **Milestone Goal:** Unify the config layer — single source of truth for paths, strict schema validation, consolidated constants, and migration tooling — plus three deferred reliability/quality/observability items.
 
 - [x] **Phase 45: Path Resolver + Constants Foundation** - Eliminate the workspace path divergence and consolidate all magic values into config.py (completed 2026-02-25)
-- [ ] **Phase 46: Schema Validation + Fail-Fast Startup** - Add a documented openclaw.json schema and enforce it at process startup
+- [x] **Phase 46: Schema Validation + Fail-Fast Startup** - Add a documented openclaw.json schema and enforce it at process startup (completed 2026-02-25)
 - [ ] **Phase 47: Env Var Precedence + Migration CLI** - Document and enforce env var resolution order; give operators a migration command to upgrade existing configs
 - [ ] **Phase 48: Config Integration Tests** - Test suite verifying path resolution, validation, env precedence, and pool config fallback runs clean under pytest
 - [ ] **Phase 49: Deferred Reliability, Quality, and Observability** - Docker health checks for L3 containers, calibrated cosine similarity threshold, and adaptive monitor polling
@@ -130,7 +130,7 @@ Plans:
   2. Removing a required field from `openclaw.json` or `project.json` causes the process to exit before doing any work, with an error message naming the missing field and the config file
   3. The schema for `openclaw.json`'s OpenClaw runtime section is written down in a human-readable form that operators can consult
   4. Existing valid configs continue to load without error after the validation change
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 46-01-PLAN.md — Write failing schema validation test suite (TDD RED state)
@@ -180,7 +180,7 @@ Plans:
 | 26-38 | v1.3 | 19/19 | ✓ Complete | 2026-02-24 |
 | 39-44 | v1.4 | 16/16 | ✓ Complete | 2026-02-25 |
 | 45. Path Resolver + Constants Foundation | 2/2 | Complete    | 2026-02-25 | - |
-| 46. Schema Validation + Fail-Fast Startup | 2/3 | In Progress|  | - |
+| 46. Schema Validation + Fail-Fast Startup | 3/3 | Complete   | 2026-02-25 | - |
 | 47. Env Var Precedence + Migration CLI | v1.5 | 0/? | Not started | - |
 | 48. Config Integration Tests | v1.5 | 0/? | Not started | - |
 | 49. Deferred Reliability, Quality, and Observability | v1.5 | 0/? | Not started | - |
