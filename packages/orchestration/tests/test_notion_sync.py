@@ -772,3 +772,239 @@ class TestPhaseHandlers:
         
         assert result.updated == 1
         assert len(result.mutations) == 1
+
+
+# ---------------------------------------------------------------------------
+# Container Handlers tests
+# ---------------------------------------------------------------------------
+
+class TestContainerHandlers:
+    """Tests for container_completed and container_failed handlers."""
+
+    def setup_method(self):
+        import notion_sync
+        notion_sync._project_page_id_cache.clear()
+
+    @patch("notion_sync._load_config")
+    @patch("notion_client.NotionClient")
+    def test_sync_container_completed_routine(self, mock_client_class, mock_load_config):
+        """Routine container -> only appends to Activity, no card created."""
+        mock_load_config.return_value = {"meaningful_container_runtime_min": 10}
+        
+        mock_client = mock_client_class.return_value
+        mock_client._get_db_ids.return_value = ("proj_db", "proj_ds", "cards_db", "cards_ds")
+        
+        # Mock finding the parent phase card
+        parent_card = _make_card(openclaw_phase_id="pumplai:45")
+        parent_card["id"] = "parent-phase-1"
+        mock_client.query_database.return_value = [parent_card]
+        
+        from notion_sync import _sync_container_completed, SyncResult
+        
+        event = {
+            "project_id": "pumplai",
+            "phase_id": "45",
+            "container_id": "l3-abc",
+            "payload": {
+                "runtime_seconds": 30, # < 600s, so not meaningful
+                "requires_human_review": False
+            }
+        }
+        result = SyncResult("event_sync")
+        
+        _sync_container_completed(event, result)
+        
+        # Verify no card was created
+        mock_client.upsert_by_dedupe.assert_not_called()
+        
+        # Verify activity was appended to parent
+        mock_client.append_activity.assert_called_once_with(
+            "parent-phase-1", 
+            "container_completed: l3-abc (30s)"
+        )
+        
+        assert result.skipped == 1
+        assert result.created == 0
+
+    @patch("notion_sync._load_config")
+    @patch("notion_client.NotionClient")
+    def test_sync_container_completed_meaningful(self, mock_client_class, mock_load_config):
+        """Meaningful container -> creates card and appends to Activity."""
+        mock_load_config.return_value = {"meaningful_container_runtime_min": 10}
+        
+        mock_client = mock_client_class.return_value
+        mock_client._get_db_ids.return_value = ("proj_db", "proj_ds", "cards_db", "cards_ds")
+        
+        # Mock finding the parent phase card AND the project page
+        parent_card = _make_card(openclaw_phase_id="pumplai:45")
+        parent_card["id"] = "parent-phase-1"
+        
+        mock_client.query_database.side_effect = [
+            [parent_card],           # 1. find parent phase card
+            [{"id": "proj-page-1"}]  # 2. find project page id
+        ]
+        
+        mock_client.upsert_by_dedupe.return_value = {"action": "created", "page_id": "child-card-1"}
+        
+        from notion_sync import _sync_container_completed, SyncResult
+        
+        event = {
+            "project_id": "pumplai",
+            "phase_id": "45",
+            "container_id": "l3-abc",
+            "payload": {
+                "runtime_seconds": 700, # > 600s, so meaningful!
+                "requires_human_review": False
+            }
+        }
+        result = SyncResult("event_sync")
+        
+        _sync_container_completed(event, result)
+        
+        # Verify child card was created
+        mock_client.upsert_by_dedupe.assert_called_once()
+        upsert_args = mock_client.upsert_by_dedupe.call_args[0]
+        assert upsert_args[0] == "cards_db"
+        assert upsert_args[2] == "OpenClaw Event Anchor"
+        assert upsert_args[3] == "pumplai:l3-abc:container_completed"
+        assert upsert_args[4]["Status"]["select"]["name"] == "Done"
+        
+        # Verify activity was appended to parent
+        mock_client.append_activity.assert_called_once_with(
+            "parent-phase-1", 
+            "container_completed: l3-abc (700s)"
+        )
+        
+        assert result.created == 1
+        assert result.skipped == 0
+        assert len(result.mutations) == 1
+
+    @patch("notion_sync._load_config")
+    @patch("notion_client.NotionClient")
+    def test_sync_container_failed_routine_retries_remaining(self, mock_client_class, mock_load_config):
+        """Routine failure, retries remaining -> append activity only."""
+        mock_load_config.return_value = {"meaningful_container_runtime_min": 10, "retry_max_attempts": 3}
+        
+        mock_client = mock_client_class.return_value
+        mock_client._get_db_ids.return_value = ("proj_db", "proj_ds", "cards_db", "cards_ds")
+        
+        parent_card = _make_card(openclaw_phase_id="pumplai:45")
+        parent_card["id"] = "parent-phase-1"
+        mock_client.query_database.return_value = [parent_card]
+        
+        from notion_sync import _sync_container_failed, SyncResult
+        
+        event = {
+            "project_id": "pumplai",
+            "phase_id": "45",
+            "container_id": "l3-abc",
+            "payload": {
+                "exit_code": 1,
+                "retry_count": 1, # < 3, retries remaining
+                "runtime_seconds": 30,
+                "failure_category": "network_error" # not actionable
+            }
+        }
+        result = SyncResult("event_sync")
+        
+        _sync_container_failed(event, result)
+        
+        mock_client.upsert_by_dedupe.assert_not_called()
+        mock_client.update_page.assert_not_called() # parent not updated
+        
+        mock_client.append_activity.assert_called_once_with(
+            "parent-phase-1", 
+            "container_failed: l3-abc (exit 1)"
+        )
+        
+        assert result.skipped == 1
+
+    @patch("notion_sync._load_config")
+    @patch("notion_client.NotionClient")
+    def test_sync_container_failed_retries_exhausted(self, mock_client_class, mock_load_config):
+        """Retries exhausted -> update parent phase to Waiting."""
+        mock_load_config.return_value = {"meaningful_container_runtime_min": 10, "retry_max_attempts": 3}
+        
+        mock_client = mock_client_class.return_value
+        mock_client._get_db_ids.return_value = ("proj_db", "proj_ds", "cards_db", "cards_ds")
+        
+        parent_card = _make_card(openclaw_phase_id="pumplai:45")
+        parent_card["id"] = "parent-phase-1"
+        mock_client.query_database.return_value = [parent_card]
+        
+        from notion_sync import _sync_container_failed, SyncResult
+        
+        event = {
+            "project_id": "pumplai",
+            "phase_id": "45",
+            "container_id": "l3-abc",
+            "payload": {
+                "exit_code": 1,
+                "retry_count": 3, # >= 3, retries exhausted
+                "runtime_seconds": 30,
+                "failure_category": "network_error"
+            }
+        }
+        result = SyncResult("event_sync")
+        
+        _sync_container_failed(event, result)
+        
+        mock_client.upsert_by_dedupe.assert_not_called()
+        
+        # Verify parent status was updated to Waiting
+        mock_client.update_page.assert_called_once()
+        update_args = mock_client.update_page.call_args[0]
+        assert update_args[0] == "parent-phase-1"
+        assert update_args[1]["Status"]["select"]["name"] == "Waiting"
+        
+        # Verify both activities appended
+        assert mock_client.append_activity.call_count == 2
+        mock_client.append_activity.assert_any_call("parent-phase-1", "container_failed: l3-abc (exit 1)")
+        mock_client.append_activity.assert_any_call("parent-phase-1", "retries exhausted — phase blocked")
+        
+        assert result.updated == 1
+
+    @patch("notion_sync._load_config")
+    @patch("notion_client.NotionClient")
+    def test_sync_container_failed_meaningful(self, mock_client_class, mock_load_config):
+        """Meaningful failure (tests failed) -> create bug card."""
+        mock_load_config.return_value = {"meaningful_container_runtime_min": 10, "retry_max_attempts": 3}
+        
+        mock_client = mock_client_class.return_value
+        mock_client._get_db_ids.return_value = ("proj_db", "proj_ds", "cards_db", "cards_ds")
+        
+        parent_card = _make_card(openclaw_phase_id="pumplai:45")
+        parent_card["id"] = "parent-phase-1"
+        
+        mock_client.query_database.side_effect = [
+            [parent_card],           # 1. find parent phase card
+            [{"id": "proj-page-1"}]  # 2. find project page id
+        ]
+        
+        mock_client.upsert_by_dedupe.return_value = {"action": "created", "page_id": "bug-card-1"}
+        
+        from notion_sync import _sync_container_failed, SyncResult
+        
+        event = {
+            "project_id": "pumplai",
+            "phase_id": "45",
+            "container_id": "l3-abc",
+            "payload": {
+                "exit_code": 1,
+                "retry_count": 0,
+                "runtime_seconds": 30,
+                "failure_category": "tests_failed" # Actionable!
+            }
+        }
+        result = SyncResult("event_sync")
+        
+        _sync_container_failed(event, result)
+        
+        # Verify bug card was created
+        mock_client.upsert_by_dedupe.assert_called_once()
+        upsert_args = mock_client.upsert_by_dedupe.call_args[0]
+        assert upsert_args[0] == "cards_db"
+        assert upsert_args[4]["Status"]["select"]["name"] == "Waiting"
+        assert upsert_args[4]["Card Type"]["select"]["name"] == "Bug"
+        
+        assert result.created == 1
