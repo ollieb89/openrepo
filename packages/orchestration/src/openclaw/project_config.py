@@ -316,6 +316,8 @@ def get_memu_config() -> Dict[str, Any]:
             result["memu_api_url"] = memory_cfg["memu_api_url"]
         if "enabled" in memory_cfg:
             result["enabled"] = bool(memory_cfg["enabled"])
+        if "conflict_threshold" in memory_cfg:
+            result["conflict_threshold"] = float(memory_cfg["conflict_threshold"])
         return result
     except Exception as exc:
         _logger.warning(
@@ -323,6 +325,26 @@ def get_memu_config() -> Dict[str, Any]:
             extra={"error": str(exc)},
         )
         return defaults
+
+
+def get_conflict_threshold() -> float:
+    """Return the cosine similarity conflict detection threshold.
+
+    Resolution order:
+    1. openclaw.json memory.conflict_threshold (operator override)
+    2. config.MEMORY_CONFLICT_THRESHOLD (default: 0.85)
+
+    Never raises — returns the config.py default on any read/parse error.
+    """
+    try:
+        cfg = get_memu_config()
+        override = cfg.get("conflict_threshold")
+        if override is not None:
+            return float(override)
+    except Exception:
+        pass
+    from openclaw.config import MEMORY_CONFLICT_THRESHOLD
+    return MEMORY_CONFLICT_THRESHOLD
 
 
 class ProjectNotFoundError(Exception):
