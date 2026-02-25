@@ -27,7 +27,21 @@
 
 - [ ] **OBS-05**: Monitor poll interval adapts dynamically — shorter interval when L3 tasks are active, longer interval when swarm is idle — reducing CPU load during quiet periods
 
-## v2 Requirements
+## v2.0 Requirements
+
+### Notion Kanban Sync (NOTION)
+
+- [ ] **NOTION-01**: Phase lifecycle events create/update Notion cards with correct status transitions
+- [ ] **NOTION-02**: Replay of same event produces no duplicates (idempotent via dedupe keys)
+- [ ] **NOTION-03**: New project registration creates Projects DB row + triage card
+- [ ] **NOTION-04**: Conversational capture creates cards with correct area inference and dedupe
+- [ ] **NOTION-05**: Container events append to activity log without spamming new cards (meaningful rule enforced)
+- [ ] **NOTION-06**: Unlinked cards have Notion-owned Status — OpenClaw never overwrites
+- [ ] **NOTION-07**: Reconcile detects drift, applies only allowed corrections, never deletes
+- [ ] **NOTION-08**: DB discovery works on first run; cached IDs used on subsequent runs
+- [ ] **NOTION-09**: Field ownership respected — every write checks ownership before touching a field
+- [ ] **NOTION-10**: Structured result returned for every invocation with created/updated/skipped/errors
+- [ ] **NOTION-11**: 429/5xx errors handled with retry + backoff; failures recorded in Sync Error
 
 ### Advanced Memory
 
@@ -64,9 +78,23 @@ Which phases cover which requirements. Updated during roadmap creation.
 | QUAL-07 | Phase 49 | Pending |
 | OBS-05  | Phase 49 | Pending |
 
+| NOTION-01 | Phase 50 | Pending |
+| NOTION-02 | Phase 50 | Pending |
+| NOTION-03 | Phase 50 | Pending |
+| NOTION-04 | Phase 50 | Pending |
+| NOTION-05 | Phase 50 | Pending |
+| NOTION-06 | Phase 50 | Pending |
+| NOTION-07 | Phase 50 | Pending |
+| NOTION-08 | Phase 50 | Pending |
+| NOTION-09 | Phase 50 | Pending |
+| NOTION-10 | Phase 50 | Pending |
+| NOTION-11 | Phase 50 | Pending |
+
 **Coverage:**
 - v1.5 requirements: 10 total
 - Mapped to phases: 10/10 ✓
+- v2.0 NOTION requirements: 11 total
+- Mapped to phases: 11/11 ✓
 - Unmapped: 0 ✓
 
 ---
