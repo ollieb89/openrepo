@@ -147,7 +147,12 @@ Plans:
   2. Running `openclaw config migrate --dry-run` on an older config file prints a human-readable diff of what would change without modifying the file
   3. Running `openclaw config migrate` on an older config file produces a valid config that passes Phase 46's schema validation
   4. The resolution order (`OPENCLAW_ROOT` → `OPENCLAW_PROJECT` → `OPENCLAW_LOG_LEVEL` → `OPENCLAW_ACTIVITY_LOG_MAX`) is documented in the config file itself via comments or an adjacent README
-**Plans**: TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 47-01-PLAN.md — Env var uniformity: get_active_project_env() in config.py, _find_project_root() auto-create, precedence comment block, openclaw.json.example + cli/config.py epilog
+- [ ] 47-02-PLAN.md — Migration CLI: cmd_migrate() + migrate subparser in cli/config.py (dry-run, backup, unknown-field removal, project.json scope)
+- [ ] 47-03-PLAN.md — Tests: extend test_config_validator.py with CONF-03 and CONF-04 test cases
 
 ### Phase 48: Config Integration Tests
 **Goal**: An automated test suite verifies path resolution, schema validation, env var precedence, and pool config fallback — giving the operator confidence the config layer is correct and will stay correct
