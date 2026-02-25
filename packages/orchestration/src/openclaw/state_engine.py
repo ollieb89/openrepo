@@ -374,6 +374,28 @@ class JarvisState:
                         except Exception as e:
                             logger.error(f"Memory trigger failed: {e}")
                             
+                        # Emit phase lifecycle event (fire-and-forget, never raises)
+                        try:
+                            from .event_bus import emit
+                            from datetime import datetime, timezone
+                            _status_to_event = {
+                                "in_progress": "phase_started",
+                                "completed": "phase_completed",
+                                "waiting": "phase_blocked",
+                            }
+                            evt_type = _status_to_event.get(status)
+                            if evt_type and task_id:
+                                emit({
+                                    "event_type": evt_type,
+                                    "occurred_at": datetime.now(timezone.utc).isoformat(),
+                                    "project_id": get_active_project_id(),
+                                    "phase_id": task_id.split("-")[0] if "-" in task_id else task_id,
+                                    "container_id": None,
+                                    "payload": {"task_id": task_id, "status": status, "activity_entry": activity_entry},
+                                })
+                        except Exception:
+                            logger.debug("Event emission failed (non-blocking)", exc_info=True)
+
                         # Break out of retry loop on success; rotation runs after
                         break
 

@@ -308,6 +308,21 @@ def cmd_init(args: argparse.Namespace) -> int:
     except Exception:
         pass  # Non-fatal
 
+    # Emit project_registered event (fire-and-forget, must not fail CLI)
+    try:
+        from openclaw.event_bus import emit
+        from datetime import datetime, timezone
+        emit({
+            "event_type": "project_registered",
+            "occurred_at": datetime.now(timezone.utc).isoformat(),
+            "project_id": project_id,
+            "phase_id": None,
+            "container_id": None,
+            "payload": {"name": project_name, "workspace_path": str(workspace_path)},
+        })
+    except Exception:
+        pass  # CLI must not fail due to event emission
+
     print(
         f"{Colors.GREEN}Created project '{project_id}' (now active){Colors.RESET}"
     )
@@ -454,6 +469,21 @@ def cmd_remove(args: argparse.Namespace) -> int:
 
     # Delete projects/<id>/ directory
     shutil.rmtree(project_dir)
+
+    # Emit project_removed event (fire-and-forget, must not fail CLI)
+    try:
+        from openclaw.event_bus import emit
+        from datetime import datetime, timezone
+        emit({
+            "event_type": "project_removed",
+            "occurred_at": datetime.now(timezone.utc).isoformat(),
+            "project_id": project_id,
+            "phase_id": None,
+            "container_id": None,
+            "payload": {},
+        })
+    except Exception:
+        pass
 
     print(
         f"{Colors.GREEN}Removed project '{project_id}' "

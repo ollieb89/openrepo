@@ -454,6 +454,30 @@ class L3ContainerPool:
                 )
                 lock_wait_total_ms += (time.time() - t0) * 1000
 
+            # Emit container lifecycle event (fire-and-forget, never raises)
+            try:
+                from openclaw.event_bus import emit
+                from datetime import datetime, timezone
+                runtime_seconds = round((completed_at - spawn_requested_at), 1) if completed_at and spawn_requested_at else 0
+                evt_type = "container_completed" if result["status"] == "completed" else "container_failed"
+                emit({
+                    "event_type": evt_type,
+                    "occurred_at": datetime.now(timezone.utc).isoformat(),
+                    "project_id": self.project_id,
+                    "phase_id": task_id.split("-")[0] if "-" in task_id else task_id,
+                    "container_id": container.name if container else None,
+                    "payload": {
+                        "task_id": task_id,
+                        "runtime_seconds": runtime_seconds,
+                        "exit_code": result.get("exit_code"),
+                        "retry_count": retry_count,
+                        "failure_category": None,
+                        "requires_human_review": False,
+                    },
+                })
+            except Exception:
+                logger.debug("Event emission failed (non-blocking)", exc_info=True)
+
             # Persist cumulative lock wait
             jarvis.set_task_metric(task_id, "lock_wait_ms", round(lock_wait_total_ms, 2))
 
