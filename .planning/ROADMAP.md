@@ -8,6 +8,7 @@
 - ✅ **v1.3 Agent Memory** — Phases 26-38 (shipped 2026-02-24)
 - ✅ **v1.4 Operational Maturity** — Phases 39-44 (shipped 2026-02-25)
 - 🚧 **v1.5 Config Consolidation** — Phases 45-49 (in progress)
+- 🚧 **v2.0 Notion Kanban Sync** — Phase 50 (planned)
 
 ## Phases
 
@@ -170,6 +171,40 @@ Plans:
   3. The monitor poll interval shortens when L3 tasks are actively running and lengthens when the swarm is idle — CPU usage during quiet periods is measurably lower than with a fixed interval
 **Plans**: TBD
 
+### v2.0 Notion Kanban Sync (Planned)
+
+**Milestone Goal:** A reactive L2-level skill that maintains a Notion kanban board as a read-only visibility mirror of OpenClaw state, covering both dev projects and life areas — with event bus infrastructure, Notion DB bootstrap, event sync, conversational capture, reconciliation, and hardening.
+
+- [ ] **Phase 50: Notion Kanban Sync** — Full end-to-end delivery: event bus, Notion client, schema bootstrap, event sync, conversational capture, reconcile, and hardening
+
+## Phase Details
+
+### Phase 50: Notion Kanban Sync
+**Goal**: OpenClaw events (phase lifecycle, container lifecycle, project registration) automatically mirror to a Notion kanban board; conversational capture routes life tasks to the same board; reconcile detects and corrects drift — all idempotent, field-ownership-respecting, and observable
+**Depends on**: None (independent of v1.5)
+**Requirements**: NOTION-01, NOTION-02, NOTION-03, NOTION-04, NOTION-05, NOTION-06, NOTION-07, NOTION-08, NOTION-09, NOTION-10, NOTION-11
+**Success Criteria** (what must be TRUE):
+  1. Phase lifecycle events (started/completed/blocked) create/update Notion cards with correct status transitions
+  2. Replay of the same event produces no duplicates (idempotent via dedupe keys)
+  3. New project registration creates Projects DB row + triage card
+  4. Conversational capture creates cards with correct area inference and dedupe
+  5. Container events append to activity log without spamming new cards (meaningful rule enforced)
+  6. Unlinked cards have Notion-owned Status — OpenClaw never overwrites
+  7. Reconcile detects drift, applies only allowed corrections, never deletes
+  8. DB discovery works on first run; cached IDs used on subsequent runs
+  9. Field ownership respected — every write checks ownership before touching a field
+  10. Structured result returned for every invocation with created/updated/skipped/errors
+  11. 429/5xx errors handled with retry + backoff; failures recorded in Sync Error
+**Plans**: 6 plans
+
+Plans:
+- [ ] 50-01-PLAN.md — Event bus infrastructure + hook sites in state_engine, pool, project_cli
+- [ ] 50-02-PLAN.md — Skill skeleton + Notion client wrapper + bootstrap/discovery
+- [ ] 50-03-PLAN.md — Event sync handlers for project + phase lifecycle events
+- [ ] 50-04-PLAN.md — Container event handlers + field ownership carve-out
+- [ ] 50-05-PLAN.md — Conversational capture with area inference + batch parsing
+- [ ] 50-06-PLAN.md — Reconcile handler + unit tests for event bus and sync logic
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -184,3 +219,4 @@ Plans:
 | 47. Env Var Precedence + Migration CLI | v1.5 | 0/? | Not started | - |
 | 48. Config Integration Tests | v1.5 | 0/? | Not started | - |
 | 49. Deferred Reliability, Quality, and Observability | v1.5 | 0/? | Not started | - |
+| 50. Notion Kanban Sync | v2.0 | 0/6 | Not started | - |
