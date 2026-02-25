@@ -102,7 +102,7 @@ See: `.planning/milestones/v1.4-ROADMAP.md` for full phase details.
 
 - [x] **Phase 45: Path Resolver + Constants Foundation** - Eliminate the workspace path divergence and consolidate all magic values into config.py (completed 2026-02-25)
 - [x] **Phase 46: Schema Validation + Fail-Fast Startup** - Add a documented openclaw.json schema and enforce it at process startup (completed 2026-02-25)
-- [ ] **Phase 47: Env Var Precedence + Migration CLI** - Document and enforce env var resolution order; give operators a migration command to upgrade existing configs
+- [x] **Phase 47: Env Var Precedence + Migration CLI** - Document and enforce env var resolution order; give operators a migration command to upgrade existing configs (completed 2026-02-25)
 - [ ] **Phase 48: Config Integration Tests** - Test suite verifying path resolution, validation, env precedence, and pool config fallback runs clean under pytest
 - [ ] **Phase 49: Deferred Reliability, Quality, and Observability** - Docker health checks for L3 containers, calibrated cosine similarity threshold, and adaptive monitor polling
 
@@ -147,7 +147,7 @@ Plans:
   2. Running `openclaw config migrate --dry-run` on an older config file prints a human-readable diff of what would change without modifying the file
   3. Running `openclaw config migrate` on an older config file produces a valid config that passes Phase 46's schema validation
   4. The resolution order (`OPENCLAW_ROOT` → `OPENCLAW_PROJECT` → `OPENCLAW_LOG_LEVEL` → `OPENCLAW_ACTIVITY_LOG_MAX`) is documented in the config file itself via comments or an adjacent README
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 47-01-PLAN.md — Env var uniformity: get_active_project_env() in config.py, _find_project_root() auto-create, precedence comment block, openclaw.json.example + cli/config.py epilog
@@ -221,7 +221,7 @@ Plans:
 | 39-44 | v1.4 | 16/16 | ✓ Complete | 2026-02-25 |
 | 45. Path Resolver + Constants Foundation | 2/2 | Complete    | 2026-02-25 | - |
 | 46. Schema Validation + Fail-Fast Startup | 3/3 | Complete    | 2026-02-25 | - |
-| 47. Env Var Precedence + Migration CLI | 2/3 | In Progress|  | - |
+| 47. Env Var Precedence + Migration CLI | 3/3 | Complete   | 2026-02-25 | - |
 | 48. Config Integration Tests | v1.5 | 0/? | Not started | - |
 | 49. Deferred Reliability, Quality, and Observability | v1.5 | 0/? | Not started | - |
 | 50. Notion Kanban Sync | 3/6 | In Progress|  | - |

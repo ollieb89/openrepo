@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v2.0 Notion Kanban Sync — Phase 50, Plan 03 complete
+**Current focus:** v2.0 Notion Kanban Sync — Phase 50, Plan 03 complete; Phase 47-03 complete (CONF-03, CONF-04 tests)
 
 ## Current Position
 
@@ -69,6 +69,7 @@ Notable for v1.5:
 - [Phase 47-env-var-precedence-migration-cli]: get_active_project_env() returns None (not empty string) when OPENCLAW_PROJECT unset — or None idiom coerces empty string
 - [Phase 47-env-var-precedence-migration-cli]: mkdir auto-create in _find_project_root() applies only to OPENCLAW_ROOT env var path, not ~/.openclaw fallback
 - [Phase 47-02-migration-cli]: shutil.copy2 backup in helpers (_migrate_one_*) not in cmd_migrate — cleaner separation; _migrate_one_project_json catches ConfigValidationError (raise pattern), not (fatal, warnings) tuple
+- [Phase 47-03-tests]: get_active_project_env() tests do not need importlib.reload — function reads os.environ at call time; test_get_active_project_id_uses_env_var uses reload in try/finally for OPENCLAW_ROOT override
 - [Phase 50-03]: _safe_set_status is exclusive — if not openclaw-linked, Status key is absent from update dict (Notion's value is untouched)
 - [Phase 50-03]: activity append is best-effort — failure logs warning but never aborts the main Cards DB mutation
 - [Phase 50-03]: Module-level _project_page_id_cache dict avoids repeated Projects DB queries within one process lifetime
@@ -84,5 +85,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: 50-03 complete — event sync handlers (project_registered, project_removed, phase_started, phase_completed, phase_blocked), SyncResult, field ownership guards, event_bus_hook.py. 158 tests passing.
+Stopped at: 47-03 complete — CONF-03/CONF-04 test cases appended to test_config_validator.py (9 new functions, 16/16 pass, 167 total passing). Phase 47 complete.
 Resume: Run `/gsd:execute-plan 50 04` to execute Phase 50 Plan 04 (next plan)
