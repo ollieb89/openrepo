@@ -5,19 +5,60 @@ This module provides thread-safe state management using fcntl file locking
 to enable multiple L3 containers to safely read and write shared state.
 """
 
+import asyncio
 import copy
 import fcntl
 import json
 import os
 import shutil
+import threading
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from .config import LOCK_TIMEOUT, LOCK_RETRY_ATTEMPTS, CACHE_TTL_SECONDS, ACTIVITY_LOG_MAX_ENTRIES
 from .logging import get_logger
+from .project_config import get_active_project_id, get_memu_config
 
 logger = get_logger("state_engine")
+
+def _run_memory_injector(project_id: str, memu_url: str, agent_type: str, task_desc: str, workspace_path: Path) -> None:
+    from .memory_injector import generate_memory_context
+    from .memory_client import AgentType
+    
+    agent_enum = AgentType.L2_PM
+    if agent_type == "code":
+        agent_enum = AgentType.L3_CODE
+    elif agent_type == "test":
+        agent_enum = AgentType.L3_TEST
+        
+    def _run():
+        try:
+            asyncio.run(generate_memory_context(project_id, agent_enum, task_desc, workspace_path, memu_url))
+        except Exception as e:
+            logger.error(f"Memory injector failed: {e}")
+            
+    t = threading.Thread(target=_run, daemon=True)
+    t.start()
+
+def _run_memory_extractor(project_id: str, memu_url: str, agent_type: str, status: str, task_result: Dict[str, Any]) -> None:
+    from .memory_extractor import extract_and_memorize
+    from .memory_client import AgentType
+    
+    agent_enum = AgentType.L2_PM
+    if agent_type == "code":
+        agent_enum = AgentType.L3_CODE
+    elif agent_type == "test":
+        agent_enum = AgentType.L3_TEST
+        
+    def _run():
+        try:
+            asyncio.run(extract_and_memorize(project_id, agent_enum, task_result, status, memu_url))
+        except Exception as e:
+            logger.error(f"Memory extractor failed: {e}")
+            
+    t = threading.Thread(target=_run, daemon=True)
+    t.start()
 
 
 class JarvisState:
@@ -290,9 +331,13 @@ class JarvisState:
                         if task_id not in state['tasks']:
                             state['tasks'][task_id] = {
                                 'status': 'pending',
+                                'skill_hint': 'code',
                                 'activity_log': [],
                                 'created_at': time.time()
                             }
+                            
+                        old_status = state['tasks'][task_id].get('status', 'pending')
+                        skill_hint = state['tasks'][task_id].get('skill_hint', 'code')
 
                         # Update status
                         state['tasks'][task_id]['status'] = status
@@ -311,6 +356,24 @@ class JarvisState:
                         # Atomic write
                         self._write_state_locked(f, state)
                         logger.info("Task updated", extra={"task_id": task_id, "status": status})
+                        
+                        # Trigger memory operations
+                        try:
+                            project_id = get_active_project_id()
+                            memu_url = get_memu_config().get("url", "http://localhost:18791")
+                            workspace_path = self.state_file.parent
+                            
+                            if old_status != 'in_progress' and status == 'in_progress':
+                                _run_memory_injector(project_id, memu_url, skill_hint, activity_entry, workspace_path)
+                            elif status in ('completed', 'failed', 'rejected'):
+                                task_result = {
+                                    "description": activity_entry,
+                                    "summary": activity_entry
+                                }
+                                _run_memory_extractor(project_id, memu_url, skill_hint, status, task_result)
+                        except Exception as e:
+                            logger.error(f"Memory trigger failed: {e}")
+                            
                         # Break out of retry loop on success; rotation runs after
                         break
 
