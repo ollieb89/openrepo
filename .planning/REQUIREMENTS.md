@@ -31,7 +31,7 @@
 
 ### Notion Kanban Sync (NOTION)
 
-- [ ] **NOTION-01**: Phase lifecycle events create/update Notion cards with correct status transitions
+- [x] **NOTION-01**: Phase lifecycle events create/update Notion cards with correct status transitions
 - [ ] **NOTION-02**: Replay of same event produces no duplicates (idempotent via dedupe keys)
 - [ ] **NOTION-03**: New project registration creates Projects DB row + triage card
 - [ ] **NOTION-04**: Conversational capture creates cards with correct area inference and dedupe
@@ -78,7 +78,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | QUAL-07 | Phase 49 | Pending |
 | OBS-05  | Phase 49 | Pending |
 
-| NOTION-01 | Phase 50 | Pending |
+| NOTION-01 | Phase 50 | Complete |
 | NOTION-02 | Phase 50 | Pending |
 | NOTION-03 | Phase 50 | Pending |
 | NOTION-04 | Phase 50 | Pending |

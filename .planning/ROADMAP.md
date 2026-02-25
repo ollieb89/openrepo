@@ -219,4 +219,4 @@ Plans:
 | 47. Env Var Precedence + Migration CLI | v1.5 | 0/? | Not started | - |
 | 48. Config Integration Tests | v1.5 | 0/? | Not started | - |
 | 49. Deferred Reliability, Quality, and Observability | v1.5 | 0/? | Not started | - |
-| 50. Notion Kanban Sync | v2.0 | 0/6 | Not started | - |
+| 50. Notion Kanban Sync | 1/6 | In Progress|  | - |

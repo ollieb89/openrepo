@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.5 Config Consolidation — Phase 45 complete, Phase 46 complete, Phase 47 next
+**Current focus:** v2.0 Notion Kanban Sync — Phase 50, Plan 01 complete
 
 ## Current Position
 
-Phase: 47 of 49 (Env Var Precedence + Migration CLI)
-Plan: 1 of 3
+Phase: 50 of 50 (Notion Kanban Sync)
+Plan: 1 of 6 complete
 Status: Ready
-Last activity: 2026-02-25 — 46-03 complete: openclaw-config CLI + schema documentation, Phase 46 done (CONF-02, CONF-06)
+Last activity: 2026-02-25 — 50-01 complete: event_bus.py + 5 hook sites wired, NOTION-01..11 requirements defined
 
-Progress: [#####░░░░░] 50% — Phase 45 done (2/2), Phase 46 done (3/3)
+Progress: [#####░░░░░] 50% — Phase 45 done (2/2), Phase 46 done (3/3), Phase 50-01 done (1/6)
 
 ## Performance Metrics
 
@@ -62,6 +62,8 @@ Notable for v1.5:
 - FileNotFoundError caught separately from generic Exception in cmd_show for actionable error messages
 - _comment_* JSON keys pattern used for inline schema documentation (standard JSON workaround, file remains parseable)
 - config/openclaw.json.example documents all 9 schema properties including nested gateway.auth, agents.defaults, channels.telegram
+- [Phase 50-01]: event_bus.py has zero openclaw imports at module level to avoid circular imports
+- [Phase 50-01]: Each emit() handler gets its own daemon thread — no shared thread pool needed
 
 ### Pending Todos
 
@@ -74,5 +76,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: 46-03 complete — openclaw-config CLI + openclaw.json.example, Phase 46 done (CONF-02, CONF-06), 158 tests passing
-Resume: Run `/gsd:execute-plan 47 01` to execute Phase 47 Plan 01 (Env Var Precedence + Migration CLI)
+Stopped at: 50-01 complete — event_bus.py + 5 hook sites wired, NOTION-01..11 requirements defined, 158 tests passing
+Resume: Run `/gsd:execute-plan 50 02` to execute Phase 50 Plan 02 (Skill skeleton + Notion client wrapper)
