@@ -164,7 +164,10 @@ Plans:
   3. Tests cover fail-fast validation (invalid and missing-field configs trigger the expected errors)
   4. Tests cover env var precedence (env var values override config file values for all four variables)
   5. Tests cover pool config fallback (missing pool config in project.json falls back to defaults from config.py)
-**Plans**: TBD
+**Plans:** 1 plan
+
+Plans:
+- [ ] 48-01-PLAN.md — Config integration test suite: pyproject.toml marker, conftest fixture, test_config_integration.py (4 test classes)
 
 ### Phase 49: Deferred Reliability, Quality, and Observability
 **Goal**: Three items deferred from earlier milestones are delivered — L3 containers report health status, the cosine similarity conflict threshold is evidence-based and configurable, and the monitor adapts its poll rate to swarm activity
@@ -222,6 +225,6 @@ Plans:
 | 45. Path Resolver + Constants Foundation | 2/2 | Complete    | 2026-02-25 | - |
 | 46. Schema Validation + Fail-Fast Startup | 3/3 | Complete    | 2026-02-25 | - |
 | 47. Env Var Precedence + Migration CLI | 3/3 | Complete    | 2026-02-25 | - |
-| 48. Config Integration Tests | v1.5 | 0/? | Not started | - |
+| 48. Config Integration Tests | v1.5 | 0/1 | Not started | - |
 | 49. Deferred Reliability, Quality, and Observability | v1.5 | 0/? | Not started | - |
 | 50. Notion Kanban Sync | 6/6 | Complete    | 2026-02-25 | - |
