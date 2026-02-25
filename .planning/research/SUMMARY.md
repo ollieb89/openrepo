@@ -1,167 +1,227 @@
 # Project Research Summary
 
-**Project:** OpenClaw v1.4 Operational Maturity
-**Domain:** AI Swarm Orchestration — production hardening of an existing Docker-based agent system
-**Researched:** 2026-02-24
+**Project:** OpenClaw v1.5 Config Consolidation
+**Domain:** AI Swarm Orchestration — configuration hardening and operational polish
+**Researched:** 2026-02-25
 **Confidence:** HIGH
 
 ## Executive Summary
 
-OpenClaw v1.4 is not a greenfield build — it is a hardening milestone applied to a shipped, working system. The four feature areas (graceful shutdown with task recovery, memory health monitoring, L1 SOUL suggestion engine, and delta memory snapshots) all build directly on v1.3 infrastructure. Research confirms that zero new external dependencies are required for three of the four features; the only optional addition is `deepdiff>=8.6.1` for delta snapshot rehydration, and only if complex patch reversal becomes a requirement. The recommended approach is to use stdlib-only implementations (signal, asyncio, collections, statistics, re) and maintain the zero-dep principle that has governed the orchestration layer throughout v1.0–v1.3.
+OpenClaw v1.5 is a technical debt clearance milestone, not a feature milestone. Four milestones of organic growth left the system with three independent path resolution strategies, constants scattered across four modules, config schema that is only partially validated at startup, and three deferred operational items (Docker health checks, cosine threshold calibration, adaptive polling). Research confirms all of this is fixable without new external services and with only one net-new dependency (`jsonschema>=4.26.0`). The recommended approach is a strict build order: consolidate the foundations first (path resolver, constants), then add schema validation and migration tooling, then implement the deferred operational features. The integration test suite ships last to verify the whole config layer end-to-end.
 
-The most critical finding is the SIGTERM signal delivery problem: the current `docker/l3-specialist/entrypoint.sh` uses shell form, meaning SIGTERM from `docker stop` is absorbed by bash (PID 1) and never forwarded to the Python/Claude process inside the container. This is the single most important fix — all graceful shutdown and state dehydration logic is unreachable until this one-line `exec` change is made in the entrypoint. The second critical finding is that SIGTERM signal handlers must not call `JarvisState.update_task()` directly due to `fcntl.flock()` re-entrancy on Linux; the correct pattern is a flag + asyncio-scheduled coroutine via `loop.add_signal_handler()`.
+The primary risk in this milestone is the path resolver consolidation. A known divergence exists between where code expects state files and where runtime writes them (`data/workspace/` vs `OPENCLAW_ROOT/workspace/`). Implementing the resolver without a data migration step first will silently discard live state files and reset all delta-sync cursors across all nine registered projects. The mitigation is explicit and non-negotiable: build and validate the migration CLI before touching the path resolver code. Two secondary risks deserve attention: strict startup validation must not block the pool's orphan recovery scan (two-pass startup sequence required), and adaptive polling must define activity as task-status-map diff rather than mtime change (mtime thrashes from activity log rotation every 100 entries).
 
-The highest-risk feature is the L1 SOUL suggestion engine. Research from Palo Alto Unit 42 and a paper specifically targeting OpenClaw's architecture documents a viable indirect prompt injection path: malicious task output stored in memU surfaces during L1 pattern analysis, and if suggestions are auto-applied, it modifies SOUL templates governing all future L3 behavior. The mandatory mitigation is a human approval gate — suggestions must only be written to a pending `soul-suggestions.json` file and never applied without explicit operator confirmation. Build the approval gate before the suggestion generation pipeline, not after.
+The deferred operational items (REL-09, QUAL-07, OBS-05) are self-contained and can be implemented in any order once the constants foundation is in place. Docker health checks require a capability-free, lock-free sentinel file approach (not HTTP) because L3 containers have no HTTP server and run with `cap_drop ALL`. Cosine threshold calibration must use real memory exports from a live memU instance — synthetic calibration data does not reflect the actual embedding distribution of structured task-description strings.
 
 ## Key Findings
 
 ### Recommended Stack
 
-The v1.4 stack is almost entirely the existing stack. Features 1, 2, and 3 require only Python stdlib additions (signal, asyncio, collections, statistics, re) to the existing orchestration layer. Feature 4 (delta snapshots) is implementable with a pure Python dict-comparison function and zero new imports. The only new dependency consideration is `deepdiff>=8.6.1` — recommended only if delta reversal (reconstructing old state from patch chains) becomes a requirement. The current state file structure (shallow JSON dicts, <10KB) does not need it.
+The v1.5 stack is almost entirely the existing stack. The sole net-new dependency is `jsonschema>=4.26.0`, which replaces the existing hand-rolled field-by-field config validator with declarative `Draft7Validator` schema checks. This is the right call at v1.5 scope: the current `config_validator.py` was appropriate when validating two fields, but CONF-02 adds 8+ schema constraints making declarative validation the lower-maintenance choice. All other v1.5 features are stdlib-only: `time.monotonic()` for adaptive polling, Dockerfile `HEALTHCHECK` instruction for REL-09, and pure Python precision/recall math for QUAL-07 calibration.
 
-**Core technologies (net new for v1.4):**
-- `signal` + `asyncio.add_signal_handler` (stdlib): SIGTERM handling in pool.py — asyncio-safe; never use `signal.signal()` in an async context
-- `collections.Counter` + `statistics` (stdlib): task pattern frequency analysis for L1 suggestion engine — sufficient at current task corpus size (tens to hundreds per project)
-- `exec` form in `entrypoint.sh`: one-line change that makes Python the PID 1 process inside L3 containers, enabling SIGTERM delivery — zero library change
-- `deepdiff>=8.6.1` (optional, defer): structured delta generation if rehydration semantics needed; start with pure Python Approach A
-- Existing `httpx` + `/memories` REST API: memory health monitoring uses already-deployed memU endpoints with no new HTTP client
+**Core technologies:**
+- `jsonschema>=4.26.0`: Config validation — replaces hand-rolled `config_validator.py` field checks with `Draft7Validator`; pure Python, no C extensions, Python >=3.10 compatible
+- `docker>=7.1.0` (existing): Container health status — `container.attrs["State"]["Health"]["Status"]` added via `container.reload()` in existing pool.py client; no version change needed
+- `time.monotonic()` (stdlib): Adaptive polling — immune to system clock adjustments; already used in state_engine.py context
+- `test -f /tmp/openclaw-healthy` (bash builtin): Docker HEALTHCHECK — capability-free, lock-free, no tool dependencies; appropriate for task-runner containers with no HTTP endpoint
+- `argparse` (stdlib): Migration CLI — consistent with all existing CLI modules; do not introduce `click`
+
+**What NOT to use:** `pydantic` (refactors all dict-access callers), `numpy` in orchestration package (15MB+ dep; calibration runs in memory service container where numpy is already present), HTTP `HEALTHCHECK` with `curl` (L3 containers have no port), `APScheduler` (5-line stdlib backoff loop is sufficient).
 
 ### Expected Features
 
-**Must have (table stakes for "Operational Maturity" to be true):**
-- SIGTERM handler + task dehydration — any production container process must handle graceful shutdown; unhandled SIGTERM leaves tasks permanently stuck in `in_progress` and blocks pool slots
-- Interrupted task recovery loop — pool restart without manual intervention; scans JarvisState for orphaned tasks on startup with configurable recovery policy (mark_failed / auto_retry / manual)
-- Memory health scan (Python module) — batch staleness and conflict detection via pgvector similarity and structural checks; returns scored flag list for the dashboard
-- Memory health dashboard UI — extends existing `/memory` page with health badges, flagged items, and manual override (edit + dismiss); requires new `PUT /memories/:id` endpoint in the memory service
+The v1.5 feature set divides cleanly into two groups: seven config consolidation items that are the core deliverable, and three deferred v1.4 items that fit naturally here.
 
-**Should have (competitive differentiators):**
-- Delta memory retrieval — `last_memory_retrieval_at` cursor in state.json + `created_after` filter on memU `/retrieve`; measurable latency reduction at high task frequency
-- L1 SOUL suggestion engine — pattern extraction from JarvisState task history + memU rejection clusters; generates reviewable SOUL amendments; closes the failure-to-behavior-change loop
+**Must have (table stakes — the "Config Consolidation" label requires all seven):**
+- CONF-01: Single authoritative path resolver (`get_project_root()` in `project_config.py`; all callers updated) — three divergent strategies currently exist; `spawn.py` line 433 uses a hardcoded depth traversal that breaks on package relocation
+- CONF-02: `openclaw.json` schema validation — `gateway`, `memory`, `source_directories`, `channels` fields currently have no validation; bad values propagate silently to runtime errors
+- CONF-03: Migration CLI (`openclaw-migrate --dry-run`) — operators need a non-destructive upgrade path; without it, every config schema change is a manual edit risk
+- CONF-04: Env var precedence documented and enforced — `OPENCLAW_STATE_FILE` is read in `entrypoint.sh` but ignored by Python; this discrepancy must be resolved, not just documented
+- CONF-05: Constants consolidated into `config.py` — pool defaults duplicated in `project_config.py` and `pool.py`; cosine thresholds hardcoded in `scan_engine.py`; `MEMORY_CONTEXT_BUDGET` hardcoded in `spawn.py`
+- CONF-06: Strict fail-fast startup validation — both `openclaw.json` and `project.json`; two-pass sequence (parse-permissive before recovery scan, strict before accepting new spawns)
+- CONF-07: Config integration test suite — path resolver agreement, validation error messages, env var override semantics, migration CLI idempotency
+
+**Should have (deferred from v1.4, high value-to-cost ratio):**
+- REL-09: Docker health checks for L3 containers — file-based sentinel (`touch /tmp/openclaw-healthy`), `--start-period=15s`, capability-free; surfaces in dashboard container list
+- QUAL-07: Cosine similarity threshold calibration — `openclaw-health calibrate-thresholds` CLI; outputs recommendations from real memU export; operator decides, system does not auto-adjust
+- OBS-05: Adaptive monitor poll interval — 0.5s when active tasks detected, 1.0s in cooldown window (10s after last activity), 5.0s when truly idle; activity signal is task-status-map diff, not mtime
 
 **Defer (v2+):**
-- Cross-project memory health aggregation — breaks per-project isolation; add as explicit opt-in when multi-project workflows mature
-- SOUL versioning / automatic rollback — would require git-tracking `soul-override.md`; exceeds v1.4 scope
-- TTL / forgetting policies — memory volume not yet high enough to warrant automatic expiry
+- Config versioning / changelog (track which schema version each config file was last migrated to)
+- Multi-environment config files (`openclaw.prod.json`) — `${ENV_VAR}` placeholder pattern is the correct existing mechanism
+- Auto-hot-reload of `openclaw.json` — startup-time dependencies legitimately require restart
+- Automatic cosine threshold learning — no labeled "true conflict" corpus exists yet
 
 ### Architecture Approach
 
-v1.4 is additive: two new Python modules (`orchestration/memory_health.py`, `orchestration/suggestion_engine.py`), four new Next.js API routes, and surgical modifications to `pool.py`, `entrypoint.sh`, `state_engine.py`, `snapshot.py`, and `memory_client.py`. Nothing is rewritten. The existing JarvisState primitives (`update_task`, `set_task_metric`, `list_all_tasks`), `MemoryClient` (`health`, `retrieve`), and `soul_renderer.py` are all reused without interface changes. Two new architectural patterns are introduced: on-demand health check with 5-minute server-side cache (avoids background polling complexity), and suggestion-as-file (`soul-suggestions.json` in the project state directory, consistent with the existing `workspace-state.json` pattern).
+v1.5 makes targeted surgical changes to the existing architecture. Two new modules are created as foundations (`constants.py` for all consolidated constants, `path_resolver.py` as the single authoritative path resolver), and `config.py` becomes a backward-compatible re-export shim from `constants.py`. Five existing modules receive additive or import-change modifications. Core components (`state_engine.py`, `snapshot.py`, `memory_client.py`, `soul_renderer.py`) are explicitly untouched. The dashboard receives one additive change: a health status badge on the container list component using `container.attrs["State"]["Health"]["Status"]` already available via the Docker SDK.
 
 **Major components:**
-1. `orchestration/memory_health.py` (NEW) — connectivity, staleness, conflict, volume, and orphan checks against memU; writes `memory-health.json` to project state dir
-2. `orchestration/suggestion_engine.py` (NEW) — reads JarvisState task outcomes + memU rejection memories; produces `SuggestionItem` proposals; writes `soul-suggestions.json`
-3. `skills/spawn_specialist/pool.py` (MODIFIED) — SIGTERM handler via `loop.add_signal_handler`; dehydration drain; startup recovery loop; delta snapshot path in `_memorize_snapshot_fire_and_forget`; pending-task tracking set for clean shutdown
-4. `docker/l3-specialist/entrypoint.sh` (MODIFIED) — `trap cleanup SIGTERM` + `exec`-form final command so Python/Claude process is PID 1 and receives signals
-5. `workspace/occc` dashboard (MODIFIED) — health banner on `/memory` page; SOUL suggestions panel on `/settings` page; new `/api/memory/health` and `/api/suggestions` routes
+1. `constants.py` (new) — canonical location for all tunable constants; must have zero import-time I/O; config.py re-exports from here for backward compat
+2. `path_resolver.py` (new) — single authoritative resolver for `workspace-state.json`, snapshot dirs, soul files; reads optional `data_dir` from `openclaw.json` to resolve the existing `workspace/` vs `data/workspace/` divergence
+3. `config_validator.py` (extended) — `validate_openclaw_config()` added alongside existing `validate_project_config()`; two-pass startup: parse-permissive before pool recovery, strict before spawn acceptance
+4. `migrate_config.py` (new) — `openclaw-migrate` CLI; acquires `fcntl.LOCK_SH` on source state files; includes container pre-flight check; dry-run mode required
+5. `test_config_integration.py` (new) — end-to-end tests for path resolution, validation, env var precedence, migration idempotency; builds last, verifies everything above
 
 ### Critical Pitfalls
 
-1. **SIGTERM absorbed by shell-form entrypoint** — Fix: add `exec` before the final CLI runtime call in `entrypoint.sh` so Python/Claude becomes PID 1. Verify with `docker stop` producing exit code 143, not 137 (SIGKILL). Must be done before any dehydration logic is written — all dehydration code is unreachable without this fix.
+1. **Path resolver consolidation discards live state files** — the known `workspace/` vs `data/workspace/` divergence means changing the resolver without a data migration step silently returns an empty new path for every project, resetting all task history and delta-sync cursors. Prevention: build and validate the migration CLI (CONF-03) before writing any path resolver code (CONF-01); add a hard failure in `get_state_path()` when the old path exists but the new path does not.
 
-2. **Signal handler deadlocks on `fcntl.flock()`** — Fix: SIGTERM handler must only set a module-level flag (`_shutdown_requested = True`). Schedule actual dehydration as `asyncio.create_task(graceful_shutdown())` via `loop.add_signal_handler()`. Never call `update_task()` directly from signal handler context — re-entrancy causes deadlock on Linux.
+2. **Migration CLI corrupts state during active L3 spawns** — `shutil.copy2()` is not fcntl-aware; copying a state file being written by an active container produces truncated or stale JSON at the destination. Prevention: migration CLI must acquire `fcntl.LOCK_SH` before reading source files; add a container pre-flight check that aborts if any `openclaw-*-l3-*` containers are running; validate destination JSON before declaring success.
 
-3. **Recovery loop re-spawns tasks with existing git commits** — Fix: check whether staging branch `l3/task-{task_id}` exists before re-spawning. Only recover tasks flagged `recovery_safe: true` (set during clean SIGTERM dehydration). Tasks killed by SIGKILL (no `recovery_safe` flag) require manual decision or are marked `failed`.
+3. **Strict startup validation blocks orphan recovery scan** — if `ConfigValidationError` is raised before the pool recovery scan runs, orphaned tasks accumulate indefinitely and may be re-spawned on the next valid start. Prevention: two-pass startup sequence — parse-permissive first (only JSON parse failures abort), recovery scan second, strict schema validation third (blocks new spawn acceptance only).
 
-4. **Memory health monitor false positives from semantic similarity** — Fix: use cosine similarity only as a pre-filter for candidate conflict pairs, not as a final verdict. Define staleness operationally (not retrieved in top-10 results for N days), not by age alone. Define conflicts structurally (same task_id, different verdict in `review_decision` memories). Never auto-delete — always flag for human review.
+4. **Adaptive polling thrashes on activity log rotation** — `workspace-state.json` mtime changes on every activity log rotation (every 100 entries), keeping the monitor in 0.5s fast-poll mode permanently if mtime is used as the activity signal. Prevention: activity detection must compare the task-status-map between polls, not mtime change alone.
 
-5. **L1 suggestions modify SOUL via indirect prompt injection** — Fix: mandatory human approval gate must be the first thing built in the L1 suggestion phase. Suggestions write to `soul-suggestions.json` only. The apply API route validates the diff (no safety constraint removal, no shell commands, max 100 lines) before writing to `soul-override.md`. SOUL files are read-only except via the explicit apply code path.
+5. **Docker HEALTHCHECK contends with fcntl lock during SIGTERM drain** — a health check that reads `workspace-state.json` would block on `fcntl.LOCK_EX` held by the SIGTERM handler's `update_task()` call. Prevention: health check must be read-only and lock-free; use `test -f /tmp/openclaw-healthy` sentinel file written by `entrypoint.sh` on startup and removed on SIGTERM.
 
-6. **Fire-and-forget memorize tasks lost on event loop shutdown** — Fix: track all `asyncio.create_task(_memorize_...)` calls in a module-level set. SIGTERM handler awaits `asyncio.gather(*_pending_memorize_tasks, return_exceptions=True)` with a 5-second timeout before the loop stops. Set `--stop-timeout 30` in `docker run` config to give the grace period enough room.
+6. **Constants consolidation introduces import-time I/O** — moving constants from literal values to computed-from-config values at module import time breaks any test that imports orchestration modules without a valid `openclaw.json`. Prevention: `constants.py` must be provably importable with no `OPENCLAW_ROOT` set; validate with a CI smoke test.
+
+7. **Cosine threshold calibration on synthetic data produces wrong threshold** — OpenClaw memories cluster at 0.75–0.92 cosine similarity even when semantically distinct (shared structural patterns). Prevention: calibrate against real memU export of at least 50 memories from an active project; never calibrate against random vectors or manually crafted sentences.
 
 ## Implications for Roadmap
 
-Based on research, the four features decompose into a natural 4-phase build order. Features 1 and 2 are foundational reliability (ship first); features 3 and 4 are operational intelligence (ship after reliable baseline). Within each pair, the simpler backend-only feature precedes the one requiring dashboard components.
+Based on research, the architecture's dependency graph mandates a strict 6-phase build order. Foundation phases must precede feature phases; migration tooling must precede the resolver change it enables.
 
-### Phase 1: Graceful Shutdown and Task Recovery
+### Phase 1: Constants and Path Resolver Foundations (CONF-01 partial, CONF-05)
 
-**Rationale:** This is the hard blocker. Without SIGTERM handling and a recovery loop, any deployment restart leaves tasks permanently in `in_progress`, blocking pool slots and corrupting dashboard state. It is also the foundation that makes subsequent phases safe — the memory health monitor and suggestion engine both read task history, which is only clean if shutdown is handled correctly. The entrypoint `exec` fix must come first, before the dehydration logic, because that logic is unreachable until signals are delivered correctly.
-**Delivers:** SIGTERM-safe L3 containers; clean `interrupted` task status on shutdown; pool startup recovery scan with configurable `recovery_policy`; pending-memorize task tracking set for clean shutdown; `--stop-timeout 30` in docker run
-**Addresses:** SIGTERM handler + dehydration (P1 must-have), interrupted task recovery loop (P1 must-have)
-**Avoids:** Shell-form entrypoint signal absorption; fcntl deadlock in signal handler; fire-and-forget task loss on shutdown; recovery re-spawning tasks with existing git commits on the staging branch
+**Rationale:** Everything else imports from `constants.py` or calls `path_resolver.py`. Building these first eliminates the need for partial rework in every subsequent phase. This is also the lowest-risk phase: moving literal values between modules and creating a new module that delegates to an existing private function.
 
-### Phase 2: Delta Memory Snapshots
+**Delivers:** `constants.py` with all consolidated constants (pool defaults, memory budget, cosine thresholds, poll intervals); `path_resolver.py` as a public wrapper around `_find_project_root()`; `config.py` becomes a thin re-export shim; `spawn.py` and `pool.py` imports updated; `monitor.py` `_discover_projects()` uses path resolver instead of `Path(__file__).parent.parent`.
 
-**Rationale:** Pure backend optimization with no dashboard dependency — simplest change to validate independently. Building this immediately after Phase 1 while pool.py changes are fresh avoids later merge conflicts (both phases touch `_memorize_snapshot_fire_and_forget`). The pure Python Approach A (`_compute_task_delta()` dict comprehension) is strongly recommended over deepdiff to maintain the zero-dep principle. Zero behavioral change for single-commit tasks; multi-commit tasks get the optimization automatically.
-**Delivers:** `capture_delta_snapshot()` in snapshot.py; `last_memorized_commit` metric tracked in state engine; delta-only memorize payloads for multi-commit tasks; fallback to full diff when no prior commit tracked
-**Uses:** stdlib only; existing `JarvisState.set_task_metric()`; existing `git diff` subprocess pattern
-**Avoids:** Snapshot base using mtime instead of immutable SHA; concurrent write producing torn deltas (snapshot deferred until after `container.wait()` returns — already current behavior)
+**Addresses:** CONF-01, CONF-05
 
-### Phase 3: Memory Health Monitoring
+**Avoids:** Pitfall 7 (import-time I/O) — constants are literal values; CI smoke test gates the phase.
 
-**Rationale:** Self-contained backend + API + minimal dashboard extension. Prerequisite for Phase 4 (L1 suggestions) because the suggestion engine clusters rejection patterns from the same memU data that health monitoring queries. Building health monitoring first validates the pgvector similarity query patterns and establishes `memory_health.py` infrastructure that `suggestion_engine.py` will reuse. The new `PUT /memories/:id` endpoint in the memory service must be implemented here.
-**Delivers:** `orchestration/memory_health.py` with staleness / conflict / volume / orphan checks; `GET /api/memory/health` Next.js route with 5-minute server-side cache; health banner on `/memory` page; flagged items panel with delete / edit / dismiss actions; `PUT /memories/:id` in memory service
-**Implements:** On-demand health check with server-side cache pattern; structural (not purely semantic) conflict detection
-**Avoids:** O(N²) pairwise similarity scan (scope to top-50 per category); auto-deletion of flagged memories; cross-project memory exposure in health API routes
+---
 
-### Phase 4: L1 Strategic SOUL Suggestion Engine
+### Phase 2: Schema Validation and Env Var Audit (CONF-02, CONF-04, CONF-06)
 
-**Rationale:** Highest complexity; spans four components; requires clean task history (Phase 1), cleaner memory payloads (Phase 2), and validated memU query patterns (Phase 3) to produce useful suggestions. Build the human approval gate and SOUL validation layer first — do not test suggestion generation until safety controls are in place, because test data is real task output that may contain injection payloads.
-**Delivers:** `orchestration/suggestion_engine.py` with pattern extraction (task outcomes + memU rejection clusters); `soul-suggestions.json` pending file in project state dir; GET/POST suggestion API routes; SOUL suggestions review/apply panel in `/settings` page; diff-based suggestion display; structural validation on apply (no safety constraint removal, no shell commands, max 100 lines)
-**Avoids:** Auto-applying suggestions without human approval; SOUL suggestion XSS in dashboard (render as `<pre>`, escape HTML); cross-project memory leakage in L1 analysis; SOUL modifications from unauthenticated API calls; LLM calls inside `suggestion_engine.py` (keep analysis deterministic and stdlib-only)
+**Rationale:** Depends on `constants.py` for threshold defaults. Defines "what valid looks like" before the migration CLI references it. Env var audit must be done before documentation is written — the `OPENCLAW_STATE_FILE` inconsistency (read in `entrypoint.sh`, ignored in Python) must be resolved here alongside the path consolidation from Phase 1.
+
+**Delivers:** `validate_openclaw_config()` in `config_validator.py` covering gateway, memory, source_directories; `openclaw.schema.json` as formal documentation; two-pass startup sequence (parse-permissive before recovery scan, strict before spawn); env var precedence documented with `OPENCLAW_STATE_FILE` disposition explicitly decided; optional `data_dir` and `memory.conflict_threshold` added to `openclaw.json`.
+
+**Addresses:** CONF-02, CONF-04, CONF-06
+
+**Avoids:** Pitfall 3 (strict validation blocking recovery scan); Pitfall 8 (env var documentation contradictions).
+
+---
+
+### Phase 3: Cosine Similarity Threshold Calibration (QUAL-07)
+
+**Rationale:** Depends on `constants.py` (CONF-05) for `MEMORY_CONFLICT_SIMILARITY_THRESHOLD` and on the `openclaw.json` memory stanza extensions from Phase 2 to support `conflict_threshold` override. Self-contained change to `memory_health.py` (parameterize threshold) plus new `cli/health.py`.
+
+**Delivers:** `memory_health.py` accepts `conflict_threshold` as a parameter; `get_memory_health_config()` helper in `project_config.py`; `openclaw-health calibrate-thresholds --project <id>` CLI that exports real memory embeddings, computes pairwise similarities, and outputs a precision/recall tradeoff table.
+
+**Addresses:** QUAL-07
+
+**Avoids:** Pitfall 6 (synthetic calibration data) — CLI designed for real memU exports; production threshold requires operator action against live data.
+
+---
+
+### Phase 4: Docker Health Checks for L3 Containers (REL-09)
+
+**Rationale:** Self-contained Dockerfile and entrypoint.sh changes. Isolated from all other v1.5 phases once `constants.py` provides the health check timeout values. Building fourth allows prior phases to stabilize before adding the container rebuild cost.
+
+**Delivers:** `HEALTHCHECK --interval=15s --timeout=5s --start-period=15s --retries=3 CMD test -f /tmp/openclaw-healthy` in Dockerfile; `touch /tmp/openclaw-healthy` after staging branch setup in `entrypoint.sh`; `rm -f` in SIGTERM handler; `healthStatus` field in dashboard container API response; health badge in container list component.
+
+**Addresses:** REL-09
+
+**Avoids:** Pitfall 5 (HEALTHCHECK contending with fcntl lock) — sentinel file approach is lock-free; documented as observability-only (not for Docker Compose `service_healthy` dependency chaining).
+
+---
+
+### Phase 5: Adaptive Monitor Poll Interval (OBS-05)
+
+**Rationale:** Depends on `constants.py` (CONF-05) for `POLL_INTERVAL_ACTIVE`, `POLL_INTERVAL_IDLE`, `POLL_BACKOFF_FACTOR`. Change is entirely self-contained within `monitor.py:tail_state()`. Building fifth avoids conflating the path resolver changes in Phase 1 (which also modifies `monitor.py`) with the adaptive logic.
+
+**Delivers:** `_compute_adaptive_interval()` helper in `monitor.py` using task-status-map diff as activity signal; 0.5s fast-poll when active tasks detected, 1.0s cooldown for 10s after last activity, 5.0s idle; `--interval` CLI arg becomes the floor override; CPU usage during sustained idle drops ~70% vs fixed 1.0s polling.
+
+**Addresses:** OBS-05
+
+**Avoids:** Pitfall 4 (adaptive polling thrashes on log rotation) — activity signal is status-map comparison, not mtime; max idle interval capped at 5s.
+
+---
+
+### Phase 6: Migration CLI and Integration Test Suite (CONF-03, CONF-07)
+
+**Rationale:** Migration CLI must reference the final schema (Phase 2) and the canonical path (Phase 1). Integration tests verify the entire config layer end-to-end and can only pass once all prior phases are complete.
+
+**Delivers:** `migrate_config.py` (`openclaw-migrate` CLI) with dry-run mode, `fcntl.LOCK_SH` acquisition, container pre-flight check, destination JSON validation, and backup creation; `test_config_integration.py` covering path resolver agreement across all 9 registered projects, `ConfigValidationError` on bad schemas, env var override semantics, migration idempotency; CI smoke test for import-time I/O safety.
+
+**Addresses:** CONF-03, CONF-07
+
+**Avoids:** Pitfall 1 (path resolver discards state files) — migration CLI is the prevention mechanism; Pitfall 2 (migration corrupts state) — `fcntl.LOCK_SH` and container pre-flight check are the deliverables.
+
+---
 
 ### Phase Ordering Rationale
 
-- Phase 1 must come first: it is the only phase modifying `pool.py` and `entrypoint.sh` in ways all other phases depend on. Building Phases 2 and 3 while Phase 1's pool.py changes are in-flight creates merge conflicts and untestable states.
-- Phase 2 groups immediately after Phase 1: both touch `_memorize_snapshot_fire_and_forget` in pool.py — doing them together while the context is fresh minimizes conflict risk.
-- Phase 3 before Phase 4 is a hard dependency: the suggestion engine's rejection pattern queries reuse the `MemoryClient` query infrastructure and `memory_health.py` module built in Phase 3. Phase 3 also validates the pgvector similarity thresholds that Phase 4 relies on.
-- Phase 4 is deferred to last because getting the safety controls wrong has irreversible consequences (SOUL mutation affects all future L3 tasks). Deferring it ensures the system has accumulated real task history before the first suggestion run and that the clean-history invariant from Phase 1 is established.
+- Phases 1 and 2 are non-negotiable prerequisites: every subsequent phase either imports from `constants.py` or references the canonical schema shape.
+- Phase 6 (migration CLI) must be designed in Phase 1 (to understand the path divergence) but fully implemented in Phase 6 (after the final schema is known). The PITFALLS research is explicit: "CONF-03 must be built and validated before CONF-01 is implemented" — Phase 6 delivers the CLI that validates the Phase 1 resolver change is safe to deploy.
+- Phases 3, 4, 5 are independent once foundations are in place and can be reordered or parallelized.
+- Integration tests (CONF-07) ship in Phase 6 to validate the complete system rather than serving as aspirational specs.
 
 ### Research Flags
 
-Phases likely needing deeper research or careful specification during planning:
-- **Phase 1 (Graceful Shutdown):** asyncio SIGTERM + fcntl interaction is subtle; the dehydration-safe write design should be prototyped in isolation before the full pool.py integration. The recovery eligibility rules (`recovery_safe` flag, staging branch check, `dehydrated_at` timestamp) need explicit specification before coding the recovery loop — a loop without eligibility checks is more dangerous than no recovery at all.
-- **Phase 4 (L1 Suggestions):** The SOUL diff validation rules (what constitutes a safe vs unsafe suggestion) need explicit specification before building the validation layer. Cluster quality depends on memU embedding quality, which has not been tested at scale for this codebase — track cluster hit rate during early Phase 4 testing and add fallback to keyword frequency if clustering yields no clusters.
+Phases needing attention during implementation (not additional external research):
 
-Phases with well-documented patterns (can skip research-phase):
-- **Phase 2 (Delta Snapshots):** Git SHA-based delta tracking is a standard pattern; the implementation is mechanical once the pure Python approach decision is confirmed.
-- **Phase 3 (Memory Health):** The on-demand API + server-side cache pattern is straightforward Next.js; the staleness and structural conflict detection heuristics are fully defined in the research with no open design decisions.
+- **Phase 1:** Verify `python3 -c "from openclaw.config import LOCK_TIMEOUT"` with no `OPENCLAW_ROOT` before the phase is complete. Confirm actual runtime data path by inspecting `ls /home/ollie/.openclaw/` to resolve the `workspace/` vs `data/workspace/` question before writing `path_resolver.py`.
+- **Phase 2:** `OPENCLAW_STATE_FILE` disposition requires a design decision during implementation (promote to Python or mark container-internal). No external research needed — architectural judgment call.
+- **Phase 3:** Calibration tool must be run against a live memU instance with real project memories before committing the updated `MEMORY_CONFLICT_SIMILARITY_THRESHOLD` constant. Operator action, not a code question.
+- **Phase 4:** Verify health check command accessibility under UID 1000 with `cap_drop ALL` during integration testing: `docker exec --user 1000 <container> test -f /tmp/openclaw-healthy`.
+- **Phase 6:** Migration CLI must be smoke-tested against the actual `data/workspace/` divergence on the live `.openclaw` instance before being declared production-ready.
+
+Phases with well-documented standard patterns (no additional research needed):
+- **Phase 5 (adaptive polling):** Exponential backoff is a well-established pattern; activity signal definition is a straightforward implementation detail.
+- **Phase 4 (Docker HEALTHCHECK):** File-based sentinel pattern is verified from official Docker documentation.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | All net-new stack needs verified against PyPI, official Python docs, and direct codebase inspection. Zero new mandatory deps confirmed for Features 1–3. deepdiff 8.6.1 version confirmed on PyPI 2026-02-24. |
-| Features | HIGH | Feature scope derived from direct codebase gap analysis of v1.3 deferred work (REL-04/05/06/07, PERF-05/06, ADV-01). Feature behavior patterns verified against Docker docs, Python asyncio docs, HaluMem paper, and SCOPE/multi-agent research. |
-| Architecture | HIGH | All integration points verified against direct codebase inspection of pool.py, state_engine.py, snapshot.py, memory_client.py, entrypoint.sh, and memory service routers. No assumptions about undocumented APIs. |
-| Pitfalls | HIGH | Critical pitfalls verified via direct code inspection (shell-form entrypoint confirmed present) + high-confidence external sources (Docker PID 1 docs, Python asyncio docs, fcntl Linux man page, Palo Alto Unit 42 research specifically targeting OpenClaw architecture). Similarity threshold values (0.75, 0.92) are MEDIUM — reasonable starting points needing empirical tuning. |
+| Stack | HIGH | All stack decisions verified against codebase, PyPI, and official docs. One new dependency (`jsonschema>=4.26.0`) is unambiguous. `numpy` exclusion from orchestration confirmed as correct. |
+| Features | HIGH | All 10 features (CONF-01..07, REL-09, QUAL-07, OBS-05) verified against codebase and requirement IDs in PROJECT.md. Feature dependencies mapped from actual import analysis. Anti-features explicitly confirmed (hot-reload, pydantic, CWD auto-detection). |
+| Architecture | HIGH | All integration points verified via direct code inspection. File structure delta, build order, and component boundaries derived from actual module analysis. `state_engine.py`, `snapshot.py`, `memory_client.py`, `soul_renderer.py` confirmed untouched. |
+| Pitfalls | HIGH (code-derived), MEDIUM (operational) | Code-derived pitfalls (path divergence, import-time I/O, fcntl contention) are HIGH — verified from codebase. Operational pitfalls (cosine threshold distribution, Docker HEALTHCHECK signal interaction) are MEDIUM — well-sourced but require empirical confirmation. |
 
-**Overall confidence:** HIGH
+**Overall confidence: HIGH**
 
 ### Gaps to Address
 
-- **Similarity threshold tuning for conflict detection:** The 0.92 near-duplicate and 0.75–0.91 conflict range thresholds are starting points from the HaluMem paper. Plan a validation step during Phase 3: run the health monitor against a known ground-truth test set (known good and known bad pairs) before running against the production memory store.
+- **`data/workspace/` vs `OPENCLAW_ROOT/workspace/` canonical path:** The exact resolution strategy for the `data_dir` field in `openclaw.json` must be confirmed against the actual runtime data location before Phase 1 code is written. Run `ls /home/ollie/.openclaw/` to determine where state files actually live.
 
-- **L1 suggestion cluster quality at current data scale:** The suggestion engine requires ≥3 similar rejections per cluster to generate a proposal. At current project scale, the rejection corpus may be too small for meaningful clustering. Track cluster hit rate during early Phase 4 testing; adjust threshold or fall back to keyword frequency if clustering consistently yields no results.
+- **`OPENCLAW_STATE_FILE` disposition:** Before Phase 2 documentation is written, decide whether this env var is promoted to Python-level support (requires `get_state_path()` update) or marked as container-internal only (requires `entrypoint.sh` rename or documentation caveat). Both paths are valid; the decision just needs to be explicit.
 
-- **`PUT /memories/:id` endpoint schema:** The memory service has GET and DELETE for memory items but no PUT/update. The exact schema for the update body (`resource_url` as content carrier vs a dedicated `content` field) should be confirmed against the existing `memory_item` model before Phase 3 implementation to avoid a later schema migration.
+- **Cosine threshold production value:** QUAL-07 can be implemented fully in Phase 3, but the `MEMORY_CONFLICT_SIMILARITY_THRESHOLD` constant cannot be updated from its current value (0.92) until the calibration tool is run against real memU data. This is an operator action that may lag Phase 3 code completion.
 
-- **Docker `--stop-timeout` in pool.py:** The current L3 container run command uses skill timeout (600s for code, 300s for test). The SIGTERM-to-SIGKILL grace period (`docker stop --time`) is separate and defaults to 10 seconds. This must be explicitly set to at least 30 seconds in the `docker run` call within pool.py, or the entire graceful shutdown design is moot — all dehydration must complete within this window.
+- **`pool.py` `_POOL_DEFAULTS` vs `project_config.py` `_POOL_CONFIG_DEFAULTS` divergence check:** Both dicts exist and may have diverged. Verify their contents are identical before Phase 1 consolidation to confirm the merge is lossless: `grep -A10 "_POOL_DEFAULTS\|_POOL_CONFIG_DEFAULTS" packages/orchestration/src/openclaw/project_config.py skills/spawn/pool.py`.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- Direct codebase inspection: `orchestration/state_engine.py`, `skills/spawn_specialist/pool.py`, `skills/spawn_specialist/spawn.py`, `orchestration/snapshot.py`, `orchestration/memory_client.py`, `docker/l3-specialist/entrypoint.sh`, `docker/memory/memory_service/routers/memories.py`, `docker/memory/memory_service/routers/retrieve.py`, `workspace/memory/src/memu/database/postgres/repositories/memory_item_repo.py`
-- Python 3 official docs: `asyncio-eventloop.html` (loop.add_signal_handler, Unix-only constraint), `signal.html` (SIGTERM, signal.signal)
-- PyPI deepdiff 8.6.1 — verified latest version September 2025, Python >=3.9, numpy not mandatory for core
-- Palo Alto Unit 42: "Indirect Prompt Injection Poisons AI Long-Term Memory" — directly relevant threat model
-- Penligent: "The OpenClaw Prompt Injection Problem" — paper specifically targeting OpenClaw's SOUL.md persistence architecture
-- OWASP LLM01:2025 Prompt Injection — standard threat classification
-- Docker SIGTERM and PID 1 signal handling: Peter Malmgren, OneUptime, Hynek, CloudBees — consistent findings on shell-form vs exec-form
-- Python asyncio signal docs: loop.add_signal_handler() for safe async SIGTERM handling
-- fcntl(2) Linux manual page — LOCK_EX re-entrancy behavior on Linux
+- `/home/ollie/.openclaw/packages/orchestration/src/openclaw/config.py` — confirmed all current constants and `POLL_INTERVAL = 1.0` as the fixed baseline
+- `/home/ollie/.openclaw/packages/orchestration/src/openclaw/project_config.py` — confirmed `_find_project_root()` canonical strategy and `_POOL_CONFIG_DEFAULTS` location
+- `/home/ollie/.openclaw/packages/orchestration/src/openclaw/config_validator.py` — confirmed current hand-rolled validation scope (agent hierarchy only)
+- `/home/ollie/.openclaw/packages/orchestration/src/openclaw/cli/monitor.py` — confirmed fixed `time.sleep(interval)` and `POLL_INTERVAL` import
+- `/home/ollie/.openclaw/skills/spawn/spawn.py` — confirmed hardcoded `Path(__file__).parent.parent.parent` at line 433
+- `/home/ollie/.openclaw/docker/l3-specialist/Dockerfile` — confirmed no HEALTHCHECK, `l3worker` non-root user, `bash /entrypoint.sh` entrypoint
+- `/home/ollie/.openclaw/docker/memory/memory_service/scan_engine.py` — confirmed `similarity_min=0.75`, `similarity_max=0.92` hardcoded
+- PyPI jsonschema 4.26.0 — pure Python, no C extensions, MIT license, Python >=3.10 compatible (Jan 7 2026)
+- [jsonschema official docs](https://python-jsonschema.readthedocs.io/en/stable/validate/) — `Draft7Validator`, `iter_errors()`, `best_match()`
+- [Docker HEALTHCHECK docs](https://docs.docker.com/reference/dockerfile/#healthcheck) — `--interval`, `--timeout`, `--start-period`, `--retries`
 
 ### Secondary (MEDIUM confidence)
-- HaluMem: Evaluating Hallucinations in Memory Systems of Agents (arXiv 2025) — similarity thresholds for conflict detection
-- SCOPE: Prompt Evolution for Enhancing Agent Effectiveness (arXiv 2025) — SOUL injection patterns
-- Multi-Agent Design: Optimizing Agents with Better Prompts and Topologies (arXiv 2025) — agent behavioral improvement patterns
-- Self-Evolving Agents — Autonomous Agent Retraining (OpenAI Cookbook 2025) — L1 suggestion engine patterns
-- pgvector production patterns: Ivan Turkovic, Crunchy Data, Medium — similarity query performance and HNSW index usage
-- Incremental snapshot consistency: Debezium, Delta Lake — SHA-based delta base tracking principles
+- docker-py SDK docs (7.1.0) — `container.attrs["State"]["Health"]["Status"]` values ("starting"/"healthy"/"unhealthy"/"none")
+- [Docker HEALTHCHECK best practices 2026 — OneUptime](https://oneuptime.com/blog/post/2026-01-30-docker-health-check-best-practices/view) — file-based vs HTTP check patterns
+- [Docker graceful shutdown and signal handling — OneUptime](https://oneuptime.com/blog/post/2026-01-16-docker-graceful-shutdown-signals/view) — HEALTHCHECK interaction with SIGTERM drain window
+- [Cosine similarity thresholds — OpenAI community](https://community.openai.com/t/rule-of-thumb-cosine-similarity-thresholds/693670) — domain-specific calibration required, no universal value
+- [Exponential backoff — Better Stack](https://betterstack.com/community/guides/monitoring/exponential-backoff/) — standard adaptive polling pattern
+- ACL/EMNLP literature on cosine similarity thresholds — domain-specific calibration required; [0.75, 0.85] typical for sentence embeddings
 
 ### Tertiary (LOW confidence)
-- WebSearch: Python SIGTERM Docker PID 1 patterns 2025/2026 — corroborates exec-form fix (covered more reliably by primary sources)
-- WebSearch: deepdiff delta serialization flat dicts — corroborated by PyPI docs
+- Schema evolution patterns from migration literature — applied by analogy; OpenClaw config migration is simpler than database schema evolution and specific patterns need validation during implementation
 
 ---
-*Research completed: 2026-02-24*
+*Research completed: 2026-02-25*
 *Ready for roadmap: yes*

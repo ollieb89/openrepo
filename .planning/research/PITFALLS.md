@@ -1,194 +1,232 @@
 # Pitfalls Research
 
-**Domain:** Adding Operational Maturity to an existing Docker-based AI swarm orchestration system (OpenClaw v1.4)
-**Researched:** 2026-02-24
-**Confidence:** HIGH — derived from direct codebase inspection of v1.3 implementation (state_engine.py, spawn.py, pool.py, snapshot.py, memory_client.py), targeted web research on Docker signal handling, pgvector production patterns, agentic AI security, and delta snapshot consistency
+**Domain:** Adding config consolidation, adaptive polling, Docker health checks, and cosine threshold calibration to existing OpenClaw swarm orchestration system (v1.5)
+**Researched:** 2026-02-25
+**Confidence:** HIGH — derived from direct codebase inspection of `project_config.py`, `config.py`, `config_validator.py`, `state_engine.py`, `monitor.py`, `scan_engine.py`, `pool.py`, `docker/l3-specialist/Dockerfile` and `entrypoint.sh`, plus targeted research on Docker HEALTHCHECK signal interactions, adaptive polling backoff patterns, and vector similarity threshold calibration
 
 ---
 
 ## Critical Pitfalls
 
-### Pitfall 1: SIGTERM Never Reaches Python — Shell Form Entrypoint Absorbs the Signal
+### Pitfall 1: Path Resolver Consolidation Breaks Existing State Files and Cached State
 
 **What goes wrong:**
-The L3 container `entrypoint.sh` is launched via the Docker `CMD` or `ENTRYPOINT` instruction. If these use **shell form** (e.g., `CMD entrypoint.sh`), Docker spawns `/bin/sh -c entrypoint.sh` as PID 1. The shell becomes PID 1 and receives SIGTERM. Bash does not automatically forward signals to child processes — it absorbs SIGTERM and either ignores it or handles it itself without propagating to the Python/Claude process running inside. The Claude Code subprocess running the agent task is never signalled. Docker times out after 10 seconds (the `docker stop` grace period) and sends SIGKILL, which tears down the container without any state dehydration.
+The v1.5 goal is a single authoritative workspace path resolver. The current system has a known divergence: runtime state is written at `data/workspace/.openclaw/` while code resolves to `OPENCLAW_ROOT/workspace/.openclaw/`. Consolidating to one path without migrating existing state files causes the new resolver to compute a path that does not contain the live `workspace-state.json`. The pool's startup recovery scan reads the state path from the new resolver, finds no file, creates a fresh state file, and silently discards all task history and cursor positions for every registered project. The memory delta cursor (introduced in v1.4 as a SHA stored in state.json) is also lost — all projects revert to full memory fetches on next spawn.
 
-The L2 pool manager (`pool.py`) also uses `asyncio.wait_for(loop.run_in_executor(None, container.wait), timeout=timeout_seconds)`. If the host process itself receives SIGTERM (e.g., when OpenClaw is restarted), the asyncio event loop does not automatically cancel in-flight `run_in_executor` threads because Python's default SIGTERM handling does not inject a CancellationError into the event loop. In-flight pool slots appear to still hold tasks, but the state file never gets updated to a clean terminal status.
+The mtime-based state cache in `JarvisState` compounds this: if any component holds a cached `JarvisState` instance pointing to the old path, writes go to the old path while reads from the new path return a freshly created empty file. Components see divergent state with no error raised.
 
 **Why it happens:**
-Docker's shell form is the path of least resistance and is used in most tutorials. The distinction between shell form (`CMD script.sh`) and exec form (`CMD ["script.sh"]`) is easily overlooked. Python signal handlers (`signal.signal(SIGTERM, handler)`) only work if the Python process is PID 1 or receives the forwarded signal — neither is guaranteed when wrapped in a shell. Developers test shutdown manually (`Ctrl+C` → SIGINT), which Python handles differently than SIGTERM, masking the problem.
+The divergence was pre-existing and accepted as technical debt. When the consolidation is implemented, developers update `_find_project_root()` and `get_state_path()` but do not perform a data migration step — the old state files remain at the old path, unreachable by the new resolver. This is the standard "moved the pointer but not the data" config migration failure.
 
 **How to avoid:**
-- Use **exec form** in the L3 Dockerfile: `ENTRYPOINT ["bash", "/entrypoint.sh"]` rather than `ENTRYPOINT /entrypoint.sh`. This makes bash PID 1 directly.
-- Inside `entrypoint.sh`, use `exec python3 ...` (or `exec claude-code ...`) for the final command. `exec` replaces the shell process with the child, making the Python/Claude process PID 1 and receiving signals directly.
-- Add a SIGTERM handler to the L2 Python pool manager using `loop.add_signal_handler(signal.SIGTERM, shutdown_callback)` — this is the asyncio-safe way to register signal handlers (not `signal.signal()`, which is not safe in async loops).
-- Verify signal delivery by testing with `docker stop <container>` and checking exit code — graceful shutdown produces exit code 0 or 143, SIGKILL produces exit code 137.
+- Define the canonical path first. Document it explicitly before writing any code.
+- Write the migration CLI (CONF-03) before the path resolver change. The migration must: (a) discover all existing state files at the old path, (b) copy them to the new canonical path, (c) verify checksums, (d) print a migration report. Only then should the resolver code change.
+- In `get_state_path()`, add a one-time check: if the old path contains a state file and the new path does not, log a CRITICAL warning and raise an error rather than silently returning an empty new path. Force the operator to run the migration CLI explicitly.
+- Integration test: verify that `get_state_path()` returns the same path before and after the resolver change when called with the same `project_id`. Run this test against real files, not just the function's return value.
+- Never silently create a missing state file during `get_state_path()` — a missing state file after a resolver change is always a symptom of migration failure, not a normal "first run" condition.
 
 **Warning signs:**
-- `docker stop <container>` takes exactly 10 seconds (the default grace period) before the container dies — this means SIGTERM was never processed and Docker fell back to SIGKILL
-- Exit code 137 in container exit records (137 = 128 + 9 = SIGKILL)
-- State file (`workspace-state.json`) shows tasks stuck in `in_progress` after a container is force-stopped
-- No log entries from the SIGTERM handler code path appearing in structured logs during shutdown
+- After deploying the path resolver change, `openclaw-monitor status` shows zero tasks for all projects despite active work
+- Pool startup recovery scan finds no orphaned tasks even when the system was interrupted mid-task before deployment
+- Memory retrieval on first spawn after the change fetches a full memory set (cursor reset to None) for every project
+- `get_state_path()` returns a path that does not yet exist on disk for projects that have been running for weeks
 
-**Phase to address:** SIGTERM/Graceful Shutdown phase — the exec form change must be made in the Dockerfile and entrypoint before any state dehydration logic is built, or the dehydration code will never be reached
+**Phase to address:** CONF-01 (path resolver) — the migration CLI from CONF-03 must be built and validated before CONF-01 is implemented. Do not reverse this order.
 
 ---
 
-### Pitfall 2: State Dehydration Inside a SIGTERM Handler Deadlocks on the fcntl Lock
+### Pitfall 2: Migration CLI Overwrites Live State During Active Spawns
 
 **What goes wrong:**
-The graceful shutdown plan requires the L3 container to write its current task state (dehydrate) to `workspace-state.json` when it receives SIGTERM. The `JarvisState.update_task()` method acquires `LOCK_EX` via `fcntl.flock()`. If the L3 container was in the middle of an `update_task()` call when SIGTERM arrived (e.g., writing a progress update), the lock is already held by the same process. A re-entrant call to `update_task()` from the signal handler attempts to acquire `LOCK_EX` on the same file descriptor held by the outer call — on Linux, `fcntl.flock()` is NOT re-entrant for the same process/thread. The result is a deadlock: the signal handler waits for a lock held by itself, the outer call never completes because the signal handler is blocking, and Docker's grace period expires with SIGKILL.
+The migration CLI copies state files from the old path to the new canonical path. If run while a project has active L3 containers, the source state file is being written to by those containers via `JarvisState.update_task()` with `fcntl.LOCK_EX`. The migration CLI's copy operation is not fcntl-aware — it does a standard `shutil.copy2()` or equivalent, which does not acquire the flock before reading. The copy captures a mid-write state: the destination file contains a valid JSON prefix followed by truncated bytes (the interrupted write from the lock holder), or it captures a state that is one or more `update_task()` calls behind.
 
-Additionally, `fcntl.flock()` in Python uses blocking I/O. Python signal handlers (registered via `signal.signal()`) are called between bytecode instructions but cannot interrupt a blocking I/O syscall already in progress. If the process is blocked on `flock()` waiting for another process's lock when SIGTERM arrives, the signal is deferred until the flock call returns — which may never happen if the lock holder also received SIGTERM and is itself deadlocked.
+After migration, the new resolver reads the destination file. If the JSON is truncated, the state engine falls back to the `.bak` recovery path. If the JSON is valid but stale, in-flight tasks show `in_progress` without the most recent status updates, confusing the recovery scan.
 
 **Why it happens:**
-Signal handler re-entrancy is a non-obvious constraint. The `JarvisState` class was designed for sequential use (call update_task, call read_state, etc.) and has no re-entrancy guard. Developers writing SIGTERM handlers typically call the same state update functions used in normal execution, without realising that the signal may interrupt an in-progress state write.
+Configuration migration tools are typically written as one-shot scripts with no awareness of the application's own locking protocol. The `fcntl.LOCK_SH` / `fcntl.LOCK_EX` locks used by `JarvisState` are process-level file advisory locks — they are invisible to `cp` and `shutil.copy2()`.
 
 **How to avoid:**
-- Use a **flag + main-loop check pattern** instead of performing I/O directly in the signal handler: the signal handler sets a module-level `_shutdown_requested = True` flag only. The main execution loop checks this flag at safe checkpoints (between LLM calls, after file writes) and performs dehydration at those points.
-- Alternative for asyncio: use `loop.add_signal_handler(signal.SIGTERM, lambda: asyncio.create_task(graceful_shutdown()))` — this schedules the shutdown coroutine in the event loop rather than running it synchronously in the signal handler context, avoiding re-entrancy.
-- Add a `is_shutdown_requested()` check at the top of `update_task()` — if shutdown is in progress, skip the write and log a warning rather than blocking.
-- Design the dehydration payload to be written to a **separate file** (`soul-<task_id>.shutdown.json`) that does NOT require the main state lock, avoiding any lock contention during shutdown.
+- The migration CLI must acquire `fcntl.LOCK_SH` on the source state file before reading it, and release after the copy is complete. Use the same lock acquisition code as `JarvisState._read_state_locked()`.
+- Alternatively, document clearly that the migration CLI must only be run when all L3 containers are stopped (`docker ps` shows no `openclaw-*-l3-*` containers). Add an explicit pre-flight check in the migration CLI that aborts if any running containers match the OpenClaw naming pattern.
+- Include a dry-run mode (`--dry-run`) that prints what would be migrated without writing anything.
+- After the copy, verify the destination is valid JSON before declaring success. If not, delete the destination and report failure.
 
 **Warning signs:**
-- Container hangs for exactly the Docker grace period (10s) after SIGTERM and then exits via SIGKILL
-- Structured logs show the SIGTERM handler was entered but no subsequent log entries appear (deadlock)
-- `workspace-state.json` is truncated or zero-length after a forced shutdown (interrupted mid-write)
-- `ps aux` inside a hung container shows the Python process in `D` state (uninterruptible sleep on a syscall)
+- Migration CLI exits successfully but `state_engine.py` falls back to `.bak` recovery on first read of the migrated file
+- `workspace-state.json` at the new path has a file size smaller than the `.bak` at the old path
+- Tasks that were `in_progress` during migration show as `in_progress` at the new path but are actually completed (their containers exited while the migration copy captured a stale snapshot)
 
-**Phase to address:** SIGTERM/Graceful Shutdown phase — design the dehydration-safe state write before implementing the signal handler; never call `update_task()` directly from signal handler context
+**Phase to address:** CONF-03 (migration CLI) — add the `fcntl.LOCK_SH` acquisition and container pre-flight check before the CLI is usable in production.
 
 ---
 
-### Pitfall 3: Recovery Loop Re-Spawns a Task Whose State Is Irrecoverably Stale
+### Pitfall 3: Strict Fail-Fast Startup Validation Kills the Daemon Before State Recovery Can Run
 
 **What goes wrong:**
-The automated recovery loop reads `workspace-state.json` to find tasks in `in_progress` state after a restart and re-queues them. However, `in_progress` in the state file does not distinguish between three very different situations:
-1. **Container was mid-task, made no git commits** — safe to re-spawn from scratch
-2. **Container committed partial work to the staging branch** — re-spawning creates a second set of commits on `l3/task-{task_id}`, which may conflict with or duplicate the first set
-3. **Container completed the task but died before marking it `completed`** — re-spawning wastes a full L3 slot re-doing completed work, and the second run's git diff will conflict with the first run's commits
+CONF-06 requires fail-fast startup validation: if `openclaw.json` or `project.json` is invalid, the process must abort immediately. However, the pool's startup recovery scan (implemented in v1.4) needs to run at startup to detect orphaned tasks and apply the configured `recovery_policy`. If strict validation happens first and a schema violation is present (e.g., a partially migrated config from CONF-03), the process exits before the recovery scan runs. Orphaned tasks from the pre-restart run are never cleaned up — they remain `in_progress` in the state file indefinitely. On the next start (after the config is fixed), the recovery scan sees these as new orphans and processes them again, potentially re-spawning work that was completed before the aborted restart.
 
-The recovery loop cannot distinguish these three cases by reading state.json alone — all three look identical: `status: "in_progress"`, no `completed_at` timestamp.
+Additionally, the existing `config_validator.py` raises `ConfigValidationError` on schema violations. If startup validation calls `load_and_validate_openclaw_config()` before pool initialization, any config issue prevents the pool from ever starting — including issues that would not affect spawning (e.g., an unknown field added by a future version of the schema).
 
 **Why it happens:**
-State file design in v1.0-v1.3 uses status as a simple enum. The `in_progress` state was sufficient when tasks were ephemeral and non-recoverable. Adding recovery without adding more state transitions creates an ambiguity that the recovery loop cannot resolve safely.
+Fail-fast validation is the right design for config errors that would cause runtime failures. But startup sequencing is subtle: recovery must run even when config is degraded, and validation must distinguish "fatal for spawning" errors from "advisory warnings about unknown fields".
 
 **How to avoid:**
-- Add a `recovery_safe` boolean field to task state, defaulted to `false` and set to `true` only during SIGTERM dehydration when the container confirms no git commits have been made to the staging branch yet. Recovery loop only re-spawns tasks where `recovery_safe: true`.
-- Before re-spawning, check whether the staging branch `l3/task-{task_id}` exists in git. If it does, it contains partial or complete work — do not blindly re-spawn; require human decision (mark as `needs_review` in state).
-- Add a `dehydrated_at` timestamp field. Tasks without this field were killed mid-execution (SIGKILL path), not gracefully dehydrated — treat differently from tasks with a clean dehydration record.
-- Set a maximum re-spawn count per task (default 1). After one recovery re-spawn, if the task fails again, mark it `failed_unrecoverable` and alert.
+- Define a clear startup sequence: (1) load config with recovery-mode permissiveness — any parse error is fatal, but schema warnings are non-fatal; (2) run pool recovery scan; (3) apply strict validation before accepting new spawn requests.
+- Distinguish between "cannot operate" errors (missing `active_project`, unparseable JSON) and "schema advisory" warnings (unknown fields, deprecated keys). Only "cannot operate" errors abort before recovery.
+- Add a `--recover-only` flag to the pool CLI that runs only the recovery scan and exits, bypassing all validation. This allows operators to manually drain orphans even when the config is broken.
+- Never call `validate_agent_hierarchy()` before pool recovery — agent hierarchy validation is only needed for dispatch, not for reading existing state.
 
 **Warning signs:**
-- Staging branch `l3/task-T001` exists with commits AND state shows `in_progress` — recovery loop is about to re-spawn a task that has already done work
-- A task appears twice in the git log (duplicate commit messages differing only by `(retry)` suffix)
-- `merge_staging` fails with a conflict on a task that "should have been clean" — caused by two runs committing different implementations of the same file
+- After a config schema change, the process cannot start even though the previous config was valid — the migration CLI introduced a new required field that the old config lacks
+- Pool startup logs show `ConfigValidationError` followed by exit, with no recovery scan log entries
+- Tasks that were `in_progress` before the config was broken accumulate indefinitely without cleanup
 
-**Phase to address:** Task Recovery (sub-phase within Graceful Shutdown) — define the recovery eligibility rules and state transitions before implementing the recovery loop; a loop without eligibility checks is more dangerous than no recovery at all
+**Phase to address:** CONF-06 (fail-fast validation) — define the startup sequence explicitly before implementing validation. Recovery must be sequenced before strict validation of spawn-time config.
 
 ---
 
-### Pitfall 4: Memory Health Monitor Triggers False Positives on Semantically Valid Duplicates
+### Pitfall 4: Adaptive Polling Misses State Transitions During the Cooldown Window
 
 **What goes wrong:**
-The memory health monitor must detect "stale" and "conflicting" memories. The naive implementation computes cosine similarity between all pairs of memory embeddings and flags pairs above a threshold (e.g., 0.95) as duplicates or conflicts. However, OpenClaw's memory store contains many legitimately similar entries: multiple L3 task outcomes for the same type of task (e.g., "refactored Python module to use dataclasses") have very similar embeddings but are not stale — they are distinct historical events. Flagging them as conflicts causes the operator to delete valid memory and degrades the agent's ability to pattern-match on recurring task types.
+OBS-05 requires the monitor poll interval to adapt dynamically to activity level: fast polling when tasks are active, slow polling during idle periods. The naive implementation backs off to a long interval (e.g., 10 seconds) after N idle polls. If a new task is spawned during the idle period, the monitor does not detect it until the next poll fires — up to 10 seconds later. For the CLI monitor, this is acceptable latency. For the dashboard SSE stream, it causes the "task started" event to appear late, making the dashboard feel unresponsive.
 
-The opposite problem also exists: a memory entry that is genuinely stale ("never use asyncio.run() inside pool.py") may have a moderate similarity score to a newer contradicting entry ("asyncio.run() is now used in the CLI entrypoint for standalone spawning") but because they are about different contexts, the conflict detector does not flag them.
+A worse failure: if adaptive polling uses a wall-clock timer to determine the next poll time, and the state file is modified at exactly the start of a long cooldown window, the monitor may report the old state for the full cooldown duration. This manifests as tasks appearing "stuck" at their previous status in the dashboard.
+
+The thrashing problem is the inverse: if the threshold for "active" detection is too sensitive (e.g., any state file mtime change triggers fast mode), the monitor may never leave fast mode, burning CPU at 1-second intervals even when only background writes (e.g., activity log rotation) are touching the file.
 
 **Why it happens:**
-Vector similarity is a proxy for semantic relatedness, not semantic contradiction. High similarity means the content is about the same topic — not that one entry is wrong and one is right. Contradiction detection requires semantic reasoning (i.e., an LLM comparing the two entries), not just embedding distance. Developers building health monitors rely on embedding distance because it is cheap and scalable, but the signal quality is wrong for the conflict detection use case.
+Adaptive polling requires two thresholds: (1) what counts as "activity" to trigger fast mode, and (2) how long to stay in fast mode after the last activity. Setting both thresholds correctly requires understanding the actual write frequency of `workspace-state.json` in normal operation — which includes activity log rotation writes that are not task-status changes. Developers typically set thresholds based on intuition, not measurement.
 
 **How to avoid:**
-- Do NOT use cosine similarity alone for conflict detection. Use it only as a **pre-filter** to find candidate pairs, then use an LLM (via a quick structured prompt) to assess whether the candidates actually conflict.
-- Define "stale" operationally, not semantically: a memory entry is stale if it has not appeared in the top-10 retrieve results for any task in the past N days (configurable, default 30). This recency-based staleness metric avoids the similarity problem entirely.
-- Define "conflicting" as: two entries in the same category (`review_decision`, `task_outcome`) for the same task_id with different verdicts/outcomes. This is a simple structural check that does not require vector comparison.
-- Expose the "flag for review" action, not "auto-delete". The health monitor should surface candidates for human review in the dashboard `/memory` page — not autonomously delete or modify entries.
+- Define "activity" precisely: a task status change (`starting`, `in_progress`, `completed`, `failed`, `interrupted`) counts as activity. An activity log rotation write does not. Implement this by comparing the current task status map against the previous poll's task status map, not by mtime change alone.
+- Use a hysteresis approach: enter fast mode (1s interval) on any task status change. Return to slow mode (5s interval — not 10s) only after N consecutive polls with no status change. Keep slow mode fast enough that spawned tasks are visible within 5 seconds.
+- Cap the maximum poll interval at 5 seconds regardless of idle duration. A 10-second cap is too long for a monitoring tool and offers minimal CPU savings over 5 seconds.
+- Never use mtime change alone as the activity signal — log rotation, `.bak` writes, and cursor updates all touch mtime without changing task status.
+- Write a test that verifies: if a task status changes during a simulated idle period, the next poll always detects it within `max_slow_interval + 1` seconds.
 
 **Warning signs:**
-- Memory health monitor reports 40%+ of the memory store as "conflicting" on first run — this is almost certainly false positives from similarity threshold that is too low
-- After health monitor runs, agent task success rate drops (deleted valid context entries)
-- Operator reports "the monitor keeps flagging the same entries every run" — health monitor is not recording which entries have been reviewed and dismissed
+- Dashboard shows a task as "not started" for more than 5 seconds after `spawn_task()` returns successfully
+- Monitor CPU usage is consistently 100% even with no active containers (thrashing on non-task mtime changes)
+- Monitor remains in "slow mode" while containers are actively running (threshold misconfigured: activity detection too strict)
+- Two consecutive polls return identical state but the state file mtime changed between them (mtime used as activity signal rather than status comparison)
 
-**Phase to address:** Memory Health Monitoring phase — define staleness and conflict detection metrics before writing the detector; validate the detector against synthetic ground-truth data (known good/bad pairs) before running against the production memory store
+**Phase to address:** OBS-05 (adaptive polling) — define the activity detection strategy and interval bounds before implementation. Validate that the activity signal (status change, not mtime) eliminates false positives from activity log rotation.
 
 ---
 
-### Pitfall 5: L1 Strategic Suggestions Modify SOUL Templates at Runtime — Prompt Injection Attack Surface
+### Pitfall 5: Docker HEALTHCHECK Exits Unhealthy During SIGTERM Drain Window
 
 **What goes wrong:**
-The L1 suggestion engine reads recurring task failure/success patterns from memU and generates SOUL template modifications to improve L3 agent behavior. If these suggestions are written directly to `agents/l3_specialist/agent/SOUL.md` (or a project's `soul-override.md`) without human review, an adversarial memory entry can cause L1 to suggest a SOUL modification that changes agent behavior in unintended ways.
+REL-09 adds Docker `HEALTHCHECK` to L3 containers. A typical health check script verifies the container is "alive" — e.g., checks that the entrypoint process is running and the state file is readable. During graceful shutdown (when `docker stop` sends SIGTERM), the entrypoint's `_trap_sigterm` handler is executing: it calls `update_state "interrupted" ...` and then `exit 143`. This execution takes 1-3 seconds. During this window, the health check fires and may observe a degraded state: the task output log has been flushed, the child PID (`_child_pid`) has been killed, and the state file may be mid-write.
 
-Concrete threat: a prompt injection payload stored in a memory entry (e.g., via a malicious task description processed by L3) surfaces during L1's pattern analysis. L1 interprets it as a legitimate behavioral pattern and suggests adding a SOUL instruction such as "always commit changes to main branch directly without creating a staging branch". If auto-applied, this breaks the L2 review workflow — permanently and silently.
+The health check reports unhealthy. Docker's response to an unhealthy container depends on how it is run: in a `docker run` context (OpenClaw's current usage), an unhealthy status has no automatic effect. But if the system is ever placed behind Docker Compose with `depends_on: condition: service_healthy`, the unhealthy status during shutdown will cause cascading restarts of dependent services.
 
-This is not a theoretical concern: Palo Alto Unit 42 research documents exactly this class of attack against agent memory systems, and a security research paper specifically targeting OpenClaw-style SOUL.md persistence was published in 2025.
+A secondary issue: the health check script itself may require tools (`curl`, `python3`, `jq`) that are installed in the L3 image but run as UID 1000 (non-root). If the health check script is placed at a path only readable by root, or if the tools require elevated capabilities (removed by `cap_drop ALL`), the health check permanently fails.
 
 **Why it happens:**
-The L1 suggestion pipeline reads from memU (which contains content generated by AI agents and external task descriptions), processes it through an LLM, and produces output that modifies files that govern other agents' behavior. This is an indirect prompt injection path: untrusted content (task descriptions, L3 outputs) → memU storage → L1 retrieval → L1 LLM processing → SOUL file modification. Each step appears legitimate in isolation; the end-to-end injection path is only visible when viewing the full pipeline.
+HEALTHCHECK is typically added for liveness verification during normal operation. Its interaction with the shutdown sequence is an afterthought. The L3 container's security hardening (`no-new-privileges`, `cap_drop ALL`) makes tool availability in health checks non-obvious — `curl` and `python3` are present in the image but some tools invoke capabilities that are dropped.
 
 **How to avoid:**
-- **Mandatory human approval gate**: L1 suggestions must NEVER be auto-applied. All suggestions are written to a `suggestions/` directory (e.g., `workspace/.openclaw/<project_id>/soul-suggestions/`) and displayed in the dashboard for human review. The operator explicitly approves each suggestion before it is applied.
-- **Diff-based review**: present the suggestion as a git-style diff against the current SOUL file, not as free-form text. This makes the exact proposed change visible and auditable.
-- **Structural validation**: before offering a suggestion for review, validate it against a SOUL schema. A valid suggestion must: (a) not remove existing safety constraints, (b) not add instructions that reference file paths or shell commands, (c) not exceed a maximum diff size (100 lines). Reject suggestions failing validation without presenting them to the operator.
-- **Read-only SOUL during normal operation**: `SOUL.md` files should be writable only by the explicit "apply suggestion" code path, not by any agent-triggered code path. L3 containers mount SOUL as read-only (`"mode": "ro"` — already the case in v1.3 spawn.py).
-- **Sanitize memory before L1 analysis**: when L1 retrieves memories for pattern analysis, strip any content that contains markdown headings (`#`), code fences (`` ` ``), or template variable patterns (`$`, `{{}}`), which are injection vectors.
+- Use a minimal, capability-free health check: `HEALTHCHECK CMD ["python3", "-c", "import os; os.path.exists('/workspace')"]` or a simple shell `test -f /workspace/.openclaw/*/workspace-state.json || exit 1`. Avoid `curl` entirely (requires network capabilities that may be restricted).
+- The health check script must not touch the state file with write operations — read-only check only. The state file is protected by `fcntl.flock()` and a read-blocking health check would contend with the SIGTERM handler's write.
+- Set `HEALTHCHECK --start-period=10s` to prevent the health check from firing during the entrypoint initialization phase (git checkout, state setup).
+- Set `HEALTHCHECK --interval=15s` — L3 containers are ephemeral and short-lived (typically 5-60 minutes). A 15-second interval is sufficient and reduces health check overhead.
+- Test the health check explicitly during a `docker stop` sequence: the container should show unhealthy for at most one health check interval during shutdown, then exit with code 143. This is acceptable behavior for ephemeral containers.
+- Document that the health check is for observability only, not for Docker Compose `service_healthy` dependency chaining — L3 containers are not appropriate health-gate targets.
 
 **Warning signs:**
-- A SOUL suggestion contains the phrase "always", "never", or "override" — these are high-risk behavioral absolutes that warrant extra scrutiny
-- A suggestion proposes adding a new `$variable` placeholder — this could be an attempt to inject dynamic content at render time
-- After applying a suggestion, agent task success rate drops or L2 rejection rate increases significantly
-- A SOUL suggestion references a specific task ID or project name — legitimate behavioral patterns are general, not task-specific
+- Health check always fails immediately after container start — the `--start-period` is too short and fires before git checkout completes
+- `docker inspect` shows health status as `unhealthy` even when the container is running a task normally — the health check command is using a dropped capability
+- `docker stop <l3-container>` causes health check to report unhealthy and a Compose restart loop fires (if the system has been placed under Compose `service_healthy` conditions)
+- Health check script exits with error code 2 (invalid usage) — shell form vs exec form mismatch in HEALTHCHECK instruction
 
-**Phase to address:** L1 Strategic Suggestions phase — the human approval gate must be the first thing built; do not implement the suggestion generation pipeline until the approval + validation workflow is in place, or the feature is unsafe to test
+**Phase to address:** REL-09 (Docker health checks) — design the health check command to be capability-free and read-only before adding it to the Dockerfile. Explicitly test behavior during `docker stop` shutdown sequence.
 
 ---
 
-### Pitfall 6: Delta Snapshot Reads Against a File Currently Being Written — Torn Snapshot
+### Pitfall 6: Cosine Threshold Calibration Uses Synthetic Data That Doesn't Reflect Real Embedding Distribution
 
 **What goes wrong:**
-The delta snapshot system computes the diff between the staging branch and the default branch (`git diff main...HEAD`). The current `capture_semantic_snapshot()` runs a `subprocess.run(['git', 'diff', ...])` call. If an L3 container is still actively writing to the workspace while the snapshot is captured (e.g., finishing a file write between two git operations), the snapshot captures an inconsistent state: some files include the container's partial changes, others do not. The resulting diff is not a coherent semantic unit.
+QUAL-07 requires empirical calibration of the cosine similarity conflict detection threshold (currently 0.92 based on the v1.4 implementation note "threshold needs empirical tuning under real workload"). The calibration approach that fails: generate synthetic memory pairs with known ground truth (similar = conflict, dissimilar = distinct), run `_find_conflicts()` against them, and tune the `similarity_min`/`similarity_max` window.
 
-More specifically, the delta snapshot design for v1.4 tracks changes since the last snapshot (not since `main`). If the previous snapshot's hash is used as the base (`git diff <prev-snapshot-sha>...HEAD`), and a concurrent write happens between reading `<prev-snapshot-sha>` from the last snapshot file and executing the diff, the base may not reflect the true previous state, producing a delta that appears to contain changes that were already in the previous snapshot.
+Synthetic pairs generated as random vectors or manually crafted sentences do not reflect the real embedding distribution of OpenClaw memory entries. OpenClaw memories are short structured strings (`"L3 task completed: refactored payment module. 3 files changed."`) encoded by the embedding model used in memU. The actual cosine similarity distribution of real memories clusters around 0.75-0.92 for semantically distinct same-category entries (because they share structural patterns: "L3 task...", "L2 review...", category headers). Synthetic calibration against random vectors produces a threshold that is too high and misses real conflicts, or calibration against manually similar sentences produces a threshold that is too low and triggers false positives on structurally similar but semantically distinct real entries.
+
+The second failure mode: the threshold is calibrated once on the current memory store and never re-evaluated. As more memories accumulate, the embedding distribution shifts (more entries cluster together as the system learns a narrower vocabulary of patterns). The threshold becomes miscalibrated without any warning signal.
 
 **Why it happens:**
-`subprocess.run` calls to `git` are not transactional. The delta snapshot adds a new state dimension (tracking previous snapshot SHA) that the current single-snapshot-per-task design does not have. Developers implementing delta snapshots naturally reuse the existing `capture_semantic_snapshot()` function, adding only the base SHA parameter, without considering concurrent writes or the atomicity requirements of the diff operation.
+Developers calibrate on what is available and easy to generate — synthetic data. The actual embedding distribution of domain-specific short structured strings is not obvious without running the real embedding model over real data. This is the same problem as calibrating anomaly detection thresholds on laboratory data vs. production traffic.
 
 **How to avoid:**
-- Take the diff **after** the L3 container has exited (in `_attempt_task` after `container.wait()` returns), not while it is running. At this point, there are no concurrent writes — the container is stopped. The current v1.3 design already does this; ensure the delta snapshot design preserves this constraint.
-- Store the previous snapshot's git commit SHA (not a file path or mtime) as the delta base. Git commit SHAs are immutable — there is no TOCTOU race between reading the SHA and using it for a diff.
-- Use `git diff --stat <base-sha>..<head-sha>` with explicit immutable SHAs rather than relative refs like `HEAD~1`, which can change meaning between the stat call and the diff call.
-- Acquire the `fcntl.LOCK_SH` on the state file before reading the previous snapshot SHA, and release it only after the diff command completes. This prevents a concurrent `update_task()` write from changing the state file mid-diff.
+- Calibrate using real memory entries. Export at least 50 real memories from the production memU instance (or a staging replica), compute all pairwise cosine similarities, and plot the distribution. The conflict threshold should be set just above the natural cluster boundary for "same-type, different-task" entries.
+- Implement threshold calibration as an operator tool, not a unit test: `openclaw-memory calibrate-thresholds --project <id>` that exports, computes, and recommends threshold values with a precision/recall tradeoff table.
+- Add a monitoring counter: `health_scan_conflict_rate = conflicts_found / total_pairs`. If this rate exceeds 20% on any scan, log a WARNING that the threshold may be too loose. If it is 0% for 30 consecutive days, log an INFO suggesting the threshold may be too tight.
+- The `similarity_min`/`similarity_max` window in `_find_conflicts()` already exists — use it correctly. Values below `similarity_min` are "definitely different", values above `similarity_max` are "definitely duplicates". The conflict window (between min and max) should be narrow (e.g., 0.75-0.92) not wide.
+- Do not use the same threshold for all embedding models. If the embedding model is changed in a future memU upgrade, the calibration must be repeated.
 
 **Warning signs:**
-- Two consecutive delta snapshots for the same task show overlapping changes (the same file modification appears in both the N and N+1 delta)
-- A delta snapshot shows zero changes but the git staging branch has new commits — the diff base SHA is pointing at the wrong commit
-- Snapshot files on disk are larger than full snapshots (delta is larger than the full diff from `main`) — this indicates the base SHA is too far back
+- First production health scan returns conflict rate > 25% — threshold is too loose and catching structurally similar but semantically distinct entries
+- Health scan returns 0 conflicts despite the memory store containing known contradictory entries added during development — threshold is too tight
+- After a memU embedding model upgrade, the conflict rate changes dramatically without any real change in memory content
+- Calibration test suite passes but production scan behaves differently — test data (synthetic) does not match production embedding distribution
 
-**Phase to address:** Delta Snapshot phase — design the delta base tracking strategy (commit SHA, not mtime) before implementing the capture function; validate that delta N+1 = full snapshot N+1 - full snapshot N for a known test sequence before wiring into the pool
+**Phase to address:** QUAL-07 (threshold calibration) — run the calibration tool against real memory entries from a staging or production memU export before setting the threshold. Do not rely on the test suite's synthetic data for production threshold selection.
 
 ---
 
-### Pitfall 7: asyncio.create_task() for Fire-and-Forget Memorization Is Lost on Event Loop Shutdown
+### Pitfall 7: Constants Consolidation Introduces Import-Time Side Effects That Break Isolated Test Modules
 
 **What goes wrong:**
-`pool.py` uses `asyncio.create_task(self._memorize_snapshot_fire_and_forget(...))` to memorize task outcomes without blocking the pool slot release. This pattern works correctly during normal operation. However, when the pool is shutting down (e.g., receiving SIGTERM), the asyncio event loop may be cancelled before all fire-and-forget tasks complete. `asyncio.create_task()` tasks that are still pending when the event loop is cancelled are aborted — their coroutines receive `CancelledError` and halt mid-execution. The memorization call is silently lost with no record in state.json (because the memorize failure path only logs a warning, not updating state).
+CONF-05 consolidates all constants and defaults into one location (likely a new version of `config.py` or a new `defaults.py`). The current `config.py` is minimal and safe to import anywhere. The new consolidated constants module may import from `project_config.py` (to provide project-specific defaults) or from `state_engine.py` (to provide state-related defaults). This introduces import-time I/O — the `_find_project_root()` function is called, which reads `OPENCLAW_ROOT` from the environment or walks up the filesystem. In CI environments (or test modules that set up their own paths), this import-time filesystem access fails or returns the wrong root.
 
-After a SIGTERM shutdown, the memory store is missing the outcomes of any tasks that completed in the final seconds before shutdown. The recovery loop does not know these tasks were completed — it re-spawns them (if they were flagged as `in_progress`), and they run again unnecessarily.
+The pool.py module duplicates `_POOL_DEFAULTS` (present in both `project_config.py` and `pool.py`). Consolidation will remove one copy. If the remaining copy is imported at module level from the new constants module, and that import transitively triggers `openclaw.json` file reads, every test that imports `pool.py` or `project_config.py` will fail with `FileNotFoundError` unless the test environment includes a valid `openclaw.json`.
 
 **Why it happens:**
-`asyncio.create_task()` is designed for concurrent execution within a running event loop, not for deferred execution across event loop lifecycle boundaries. The pattern is correct for the "slot released immediately, memorize in background" use case but breaks at event loop termination. Standard asyncio shutdown documentation (`loop.run_until_complete()`, `asyncio.run()`) cancels all pending tasks, which is the desired behavior for most cleanup scenarios — but not for fire-and-forget work that must complete before process exit.
+Python's import system executes module-level code eagerly. Moving a constant from "literal value" to "computed from config file at import time" introduces I/O at import time — a subtle change that breaks the implicit contract that `import pool` does not touch the filesystem.
 
 **How to avoid:**
-- Track all fire-and-forget tasks in a module-level set: `_pending_memorize_tasks: set[asyncio.Task] = set()`. In the graceful shutdown handler, `await asyncio.gather(*_pending_memorize_tasks, return_exceptions=True)` with a timeout (5 seconds). This ensures pending memorizations complete if time permits before the event loop is cancelled.
-- Use `task.add_done_callback(_pending_memorize_tasks.discard)` to automatically remove completed tasks from the tracking set, preventing unbounded growth.
-- As a fallback, write a `pending_memorize: true` field to the state file when creating the fire-and-forget task, and clear it when the task completes. On startup, the memory system can re-try any entries with `pending_memorize: true` (though at v1.4 scale this is a MEDIUM priority, not critical).
-- Set the shutdown SIGTERM grace period in Docker (`--stop-timeout`) to at least 15 seconds to allow pending memorization tasks to complete before SIGKILL.
+- Keep the consolidated constants module free of I/O at import time. Constants that require config file reads must remain lazy (computed on first call, not at module import).
+- The `_POOL_DEFAULTS` dict in `project_config.py` (line 20-26) is a safe literal — keep it as a literal dict, not a computed value. Reference it from `pool.py` via explicit import (`from openclaw.project_config import _POOL_CONFIG_DEFAULTS`) rather than duplicating.
+- Test the consolidated constants module in isolation: `python3 -c "from openclaw.config import POLL_INTERVAL"` must succeed with no `OPENCLAW_ROOT` set and no `openclaw.json` present. If it fails, the import has I/O dependencies that need to be removed.
+- Add a conftest fixture that sets `OPENCLAW_ROOT` to a temp directory with a minimal `openclaw.json` — this prevents real-config reads in tests. All existing tests that import orchestration modules should already use this pattern (check the existing `conftest.py`).
 
 **Warning signs:**
-- After a graceful shutdown and restart, `list_active_tasks()` returns tasks that were definitely completed in the last run (because the task was running, pool completed it, but memorize task was cancelled before the fire-and-forget finished and the state update from within `_memorize_snapshot_fire_and_forget` was never persisted — note: in the current code, state IS updated in `_attempt_task` before the fire-and-forget, so this is about memory data loss rather than state data loss — clarify which risk is primary)
-- Memory store shows gaps in coverage around restart events (tasks completed shortly before shutdown have no memory entries)
-- Structured logs show `asyncio.CancelledError` on memorize tasks during shutdown
+- `pytest packages/orchestration/tests/` passes but `python3 -c "from openclaw.config import LOCK_TIMEOUT"` fails with `FileNotFoundError` in a fresh environment
+- A test that previously passed in isolation now fails with `ConfigValidationError` because the new constants module reads `openclaw.json` at import time and the test environment lacks one
+- Import order in tests starts to matter — tests pass when run in a specific order but fail when run individually
 
-**Phase to address:** SIGTERM/Graceful Shutdown phase — implement the pending-task tracking set at the same time as the shutdown handler; these must be built together or the fire-and-forget guarantees are weakened during the exact scenario where they matter most
+**Phase to address:** CONF-05 (constants consolidation) — define the import-time I/O boundary rule before consolidation: all constants in `config.py` must be computable with no filesystem access. Validate with an import smoke test in CI.
+
+---
+
+### Pitfall 8: Env Var Precedence Documentation Creates Contradictions With Existing Behavior
+
+**What goes wrong:**
+CONF-04 requires explicit, consistent env var precedence documentation. The existing precedence is:
+- `OPENCLAW_ROOT` → project root path (in `_find_project_root()`)
+- `OPENCLAW_PROJECT` → active project ID (in `get_active_project_id()`)
+- `OPENCLAW_LOG_LEVEL` → logging level (in `config.py`)
+- `OPENCLAW_ACTIVITY_LOG_MAX` → activity log rotation (in `config.py`)
+- `OPENCLAW_STATE_FILE` → state file path override (in entrypoint.sh only — not in Python)
+
+The `OPENCLAW_STATE_FILE` env var is referenced in `entrypoint.sh` (line 13) but has no corresponding support in the Python `get_state_path()` function. If the operator sets `OPENCLAW_STATE_FILE` expecting it to override the Python resolver, the Python side ignores it. The entrypoint uses it but the Python state engine resolves a different path. Documentation that lists `OPENCLAW_STATE_FILE` as a supported override will mislead operators into believing the Python components respect it.
+
+When CONF-01 consolidates the path resolver, if `OPENCLAW_STATE_FILE` is promoted to a Python-level override for consistency with the entrypoint, it creates a second path for "which state file am I writing to?" that conflicts with the project-scoped path computed from `OPENCLAW_ROOT` + `project_id`. Two components could write to different state files simultaneously.
+
+**Why it happens:**
+The entrypoint.sh was written independently from the Python project_config.py. The `OPENCLAW_STATE_FILE` variable was added to the entrypoint for container-side flexibility without a corresponding Python implementation. Documentation efforts surface this inconsistency for the first time.
+
+**How to avoid:**
+- Before documenting env var precedence, audit every place an env var is read: `grep -r "os.environ.get\|os.getenv\|os.environ\[" packages/ skills/ docker/`. Cross-reference with entrypoint.sh and the docker volume/env injection in `spawn.py`.
+- Decide explicitly: is `OPENCLAW_STATE_FILE` a supported override or a container-internal implementation detail? If the former, implement it in `get_state_path()` with the documented precedence. If the latter, rename it to a less user-facing name (e.g., `_OPENCLAW_INTERNAL_STATE_FILE`) and note it is not a public API.
+- The documented precedence table must list every env var with: (a) which components read it, (b) what it overrides, (c) whether it is a public API or internal.
+- Never add a new env var to the Python config layer without also checking whether the entrypoint.sh or skills need a corresponding update.
+
+**Warning signs:**
+- An operator sets `OPENCLAW_STATE_FILE` based on the documentation but the Python pool reads a different state file — tasks dispatched via `spawn_task()` never appear in the operator's custom state file
+- Two different env var values for the same concept coexist: `OPENCLAW_ROOT=/custom/path` and `OPENCLAW_STATE_FILE=/different/path/state.json` — the system uses one for Python and the other for bash, writing two divergent state files
+- After deploying CONF-04, an existing deployment that relied on undocumented env var behavior breaks because the documented precedence differs from the old implicit behavior
+
+**Phase to address:** CONF-04 (env var precedence) — audit all env var reads across all languages and components before writing documentation. Resolve the `OPENCLAW_STATE_FILE` inconsistency explicitly in the same phase as CONF-01.
 
 ---
 
@@ -198,28 +236,28 @@ Shortcuts that seem reasonable but create long-term problems.
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Auto-apply L1 SOUL suggestions without human review | No approval bottleneck; fully autonomous | Prompt injection path: malicious memory → L1 analysis → SOUL modification → changed agent behavior. One bad suggestion can corrupt all future tasks | Never — human approval gate is non-negotiable for SOUL modifications |
-| Re-spawn any `in_progress` task on recovery | Simple recovery loop, no state analysis required | Re-spawns tasks that already have partial git commits, causing conflicts and duplicated work | Never without checking staging branch existence and `recovery_safe` flag first |
-| Implement SIGTERM handler using `signal.signal()` in an asyncio event loop | Familiar API, works in synchronous Python | Not asyncio-safe: signal handler runs in the main thread and can interrupt the event loop mid-operation, causing data races; use `loop.add_signal_handler()` instead | Never in asyncio contexts |
-| Delta snapshot base = previous snapshot file mtime | No need to store SHA; mtime is automatically available | mtime changes on file system metadata updates that do not change content; delta base becomes incorrect on `touch` or rsync operations | Never — always use git commit SHA as delta base |
-| Health monitor auto-deletes flagged memories | Reduces manual operator burden | Deletes valid memories that are semantically similar but historically distinct; degrades agent pattern-matching capability | Never — always flag for review, never auto-delete |
-| Skip SIGTERM handling in the L3 container entrypoint | Simpler entrypoint code | Any `docker stop` during an L3 task causes SIGKILL, which leaves the state file in `in_progress` forever and the staging branch in a partial state | Never — the entrypoint must handle SIGTERM for the recovery system to work |
+| Skip migration CLI — just document the new canonical path and let operators move files manually | Saves development time | Every deployment breaks silently if the operator misses a project directory; state cursors lost; recovery scan misses orphans | Never — migration must be automated |
+| Set adaptive polling cap at 10s to save CPU | Reduces monitor CPU by ~50% vs 1s polling | Tasks appear "started" up to 10s late in dashboard; monitoring tool feels broken for operators | Never for dashboard SSE — acceptable for CLI-only monitor if documented |
+| Use the same cosine threshold for conflict detection and duplicate detection | One threshold to configure | Conflict window (0.75-0.92) is different from duplicate window (>0.95) — same threshold causes either false positives on conflicts or misses exact duplicates | Never — use separate `similarity_min` and `similarity_max` (already supported in `_find_conflicts()`) |
+| Skip `fcntl.LOCK_SH` in migration CLI — "migration runs when system is idle" | Simpler migration code | If run during active spawns (operator error), state file corruption is possible and silent | Never — add the lock acquisition and document it as defense-in-depth |
+| Health check script reads `workspace-state.json` to verify task is running | Meaningful liveness check | Blocks on `fcntl.LOCK_EX` held by `update_task()` during writes — health check hangs and Docker marks container unhealthy during active writes | Never — health check must be read-only and lock-free |
+| Calibrate cosine threshold in unit tests using random vectors | Tests run without memU dependency | Threshold tuned to synthetic distribution fails on real embedding distribution | Never for production threshold — acceptable for regression testing that the threshold change doesn't break the algorithm |
 
 ---
 
 ## Integration Gotchas
 
-Common mistakes when connecting the new v1.4 features to existing subsystems.
+Common mistakes when connecting the new v1.5 features to the existing system.
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| SIGTERM handler → JarvisState.update_task() | Calling update_task() directly from signal handler — re-entrancy deadlock if a write is already in progress | Set a flag in the handler; check the flag at safe checkpoints in the execution loop; schedule dehydration as an asyncio task via loop.add_signal_handler() |
-| Memory health monitor → pgvector | Running `SELECT` with cosine similarity `<->` over the full memory table at high frequency (e.g., every 5 minutes) | Cache the last health check result for 1 hour minimum; run health checks as a low-priority background job, not on every API request; use the recency-based staleness metric instead of pairwise similarity |
-| L1 suggestion engine → memU retrieve | Retrieving all memories without a project scope for pattern analysis | Always scope to project_id; L1 analyzes patterns per-project, not globally (cross-project contamination risk) |
-| Delta snapshot → state engine read (previous SHA) | Reading previous snapshot SHA from a cached JarvisState instance that may be stale | Read state fresh (with LOCK_SH) immediately before the git diff command; do not use write-through cache values for delta base decisions |
-| Recovery loop → pool.py semaphore | Re-spawning recovered tasks without checking if the pool semaphore was properly released on shutdown | On startup, reset the semaphore to its configured max value — do not carry over the pre-shutdown semaphore state, which is only valid for the previous event loop instance |
-| L1 suggestion dashboard → file write | Next.js API route writing directly to agents/l3_specialist/agent/SOUL.md | Route all SOUL writes through a dedicated Python API endpoint that validates the diff, logs the change, and requires an explicit confirmation token |
-| Health monitor → memory delete action | Calling DELETE /memory/{id} from the monitor without checking if the memory is referenced by any pending task | Soft-delete pattern: mark entry with `deleted: true` in metadata but preserve the record; hard-delete only after 7-day retention window |
+| New path resolver → JarvisState | Passing the new canonical path to `JarvisState.__init__()` when an existing `JarvisState` instance may still hold the old path in a running pool | Ensure pool reinitializes its `JarvisState` instance when the path resolver changes; never cache `JarvisState` across config reloads in a long-running process |
+| Migration CLI → fcntl state files | Using `shutil.copy2()` without acquiring `fcntl.LOCK_SH` first | Acquire `fcntl.LOCK_SH` on source before read; verify destination JSON is valid before declaring success |
+| Adaptive polling → dashboard SSE | Dashboard SSE endpoint polls state at its own interval — adding adaptive polling to the CLI monitor does not affect dashboard SSE latency | Dashboard SSE polling and CLI monitor polling are independent code paths; OBS-05 must address both or document the scope explicitly |
+| Docker HEALTHCHECK → entrypoint SIGTERM handler | Health check fires during the SIGTERM drain window (1-3s) and reports unhealthy — if any restart policy is applied, Docker restarts the container mid-shutdown | Use `--restart=no` for all L3 containers (already the case); document that health check unhealthy status during shutdown is expected and non-actionable |
+| Strict validation (CONF-06) → pool recovery scan | `load_and_validate_openclaw_config()` is called before pool recovery; a schema warning aborts the process before orphans are cleaned up | Recovery scan must run before strict validation of spawn-time config; use two validation passes: minimal (parse-only) before recovery, full after |
+| Threshold calibration → test suite | `test_health_scan.py` uses synthetic embeddings; after calibration, the production threshold differs from the test threshold | Test suite must use the same `similarity_min`/`similarity_max` values as production — inject threshold from config rather than hardcoding in tests |
+| CONF-05 constants consolidation → `pool.py` import | `pool.py` imports `_POOL_DEFAULTS` from two places (its own module-level dict AND `project_config._POOL_CONFIG_DEFAULTS`) — after consolidation, one import path is removed without updating the other | Search all import sites for `_POOL_DEFAULTS` and `_POOL_CONFIG_DEFAULTS` before removing either; verify with `grep -r "_POOL" packages/ skills/` |
 
 ---
 
@@ -229,25 +267,23 @@ Patterns that work at small scale but fail as usage grows.
 
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Memory health check with O(N²) pairwise similarity scan | Dashboard `/memory` health tab takes 30+ seconds to load; PostgreSQL CPU spikes to 100% | Use approximate nearest-neighbor search (HNSW index) with limit=10 for candidate finding, not full table scan; cache results for 1 hour | When memory store exceeds ~500 entries (pairwise scan hits 250K comparisons) |
-| Delta snapshot accumulating unbounded chain of deltas | Snapshot diff files grow nonlinearly; diff computation time increases with chain length | Periodic "rebase" to full snapshot when chain length exceeds 10; store SHAs for only the last 10 deltas | When a single task accumulates more than ~10 delta snapshots |
-| L1 pattern analysis running on every task completion | memU retrieve spikes after every L3 completion; L1 LLM calls queue up | Batch L1 analysis: run once per 24 hours or when triggered manually, not per-task | First concurrent run of 3 L3 tasks completing simultaneously (3x L1 LLM calls in parallel) |
-| SIGTERM grace period too short for state dehydration | Docker kills containers mid-dehydration, leaving state file truncated | Set `--stop-timeout 30` in Docker run config; state dehydration must complete within this window | Any task with a large activity log that takes >10s to serialize and write under lock |
-| Recovery loop running before state file is fully consistent | Recovery loop starts, reads stale in_progress tasks, re-spawns prematurely | Add a startup delay (5s) or a "state file version check" before the recovery loop runs | Any restart scenario where the state file was being written when the process was killed |
+| Adaptive polling thrashes on activity log rotation writes | Monitor CPU stays at 100%; mtime changes from log rotation trigger fast-poll mode indefinitely | Use task-status-map diff as activity signal, not mtime change | Immediately — activity log rotation happens on every task update (ACTIVITY_LOG_MAX_ENTRIES = 100), which means constant mtime churn |
+| Health check script makes Python import per check | Each health check invocation takes 200ms+ (Python startup time); 15-second interval means 1.3% of container lifetime spent on health checks | Use a minimal shell one-liner (`test -d /workspace`) rather than invoking Python; reserve Python health checks for functional probes | Any L3 container with `--interval < 30s` |
+| Cosine similarity scan over full memory store on every health check run | `_find_conflicts()` is O(n*k) — at 1000 memories with k=10, 10K comparisons per scan. If health scan runs on every dashboard load, PostgreSQL CPU spikes | Cache health scan results for minimum 1 hour; run as background job, not on-demand per-request | When memory store exceeds ~500 entries and health scan is triggered by UI refresh |
+| Migration CLI reads all project state files sequentially | Migration takes 30+ seconds for 9 registered projects if state files are large | Migration CLI can process projects in parallel (each state file is independently locked); use `concurrent.futures.ThreadPoolExecutor` | At 9 projects (current scale), sequential is acceptable; document the optimization for when project count grows |
 
 ---
 
 ## Security Mistakes
 
-Domain-specific security issues for v1.4 features.
+Domain-specific security issues for v1.5 features.
 
 | Mistake | Risk | Prevention |
 |---------|------|------------|
-| L1 auto-applies SOUL suggestions without human review | Prompt injection via memory: malicious task output → stored as memory → surfaced to L1 → SOUL modification that changes agent safety constraints | Mandatory human approval gate; SOUL files are write-protected at OS level during normal operation |
-| SOUL suggestion diff displayed in dashboard without escaping | Stored XSS: a SOUL suggestion containing `<script>` tags renders in the dashboard and executes in the operator's browser | Render SOUL diff as plain text in a `<pre>` tag; escape HTML entities before display; use a markdown renderer with XSS sanitization |
-| Memory health monitor exposes full memory content via dashboard API | Full memory dump API endpoint accessible without authentication returns all project memories including agent reasoning about security-sensitive tasks | Dashboard memory API must enforce project scoping and require the same auth as other API routes; never expose a "dump all memories" endpoint |
-| L1 reads memories from all projects for pattern analysis | Cross-project memory leakage: L1 pattern analysis sees memories from other projects and generates suggestions that embed cross-project context | L1 analysis must be strictly project-scoped; query memU with `where.user_id = project_id` filter on every retrieve |
-| Recovery loop re-spawns tasks with original task description | Task description may contain credentials or sensitive data from the original request; re-spawn logs them again in structured logging | Sanitize task description before logging; use task_id as the log identifier, not the full description |
+| Migration CLI does not verify destination path before writing | Path traversal: a malformed `project_id` in `projects/<id>/project.json` could cause the migration to write state files outside the `workspace/.openclaw/` directory | Validate that the computed destination path starts with the canonical `OPENCLAW_ROOT/workspace/.openclaw/` prefix before any write |
+| Env var documentation exposes `OPENCLAW_GATEWAY_TOKEN` semantics | Documentation of env var precedence may inadvertently document how to bypass the gateway auth token | Document only the `OPENCLAW_*` vars relevant to path resolution and logging; do not document security-sensitive vars in the same location as operational vars |
+| HEALTHCHECK script is world-writable after `COPY` | An L3 task that gains write access to the container filesystem can modify the health check script to always return healthy, masking real failures | `COPY entrypoint.sh` already uses `chmod +x` without `chmod o+w`; verify the health check script follows the same pattern: `COPY healthcheck.sh /healthcheck.sh && chmod 500 /healthcheck.sh` (readable and executable only by owner) |
+| Adaptive polling state comparison leaks task descriptions via log output | If the activity detection logic logs the "changed task" object for debugging, task descriptions containing sensitive data appear in monitor logs | Log only `task_id` and `status` fields in the activity detection log entry, never the full task description |
 
 ---
 
@@ -255,14 +291,16 @@ Domain-specific security issues for v1.4 features.
 
 Things that appear complete but are missing critical pieces.
 
-- [ ] **SIGTERM handling:** Docker stop returns within 10s AND exit code is 0 or 143 (not 137) — exit code 137 means SIGKILL, meaning graceful shutdown did not work
-- [ ] **Dehydration safety:** After a SIGTERM shutdown, verify `workspace-state.json` shows the task in `dehydrated` or `interrupted` status (not stuck in `in_progress`) — read the state file directly with `cat` after the container exits
-- [ ] **Recovery eligibility:** Check that the recovery loop only re-spawns tasks where `recovery_safe: true` — verify by manually setting a task to `in_progress` without the flag and confirming the loop skips it
-- [ ] **Memory health monitor false positives:** Run the health monitor against a known-good memory store of 20 entries — it must return 0 conflicts (not falsely flagging all similar entries)
-- [ ] **L1 suggestion gate:** Attempt to auto-apply a suggestion by calling the suggestion API directly (bypassing the dashboard) — the API must return 403 or require an explicit confirmation token
-- [ ] **SOUL validation:** Submit a SOUL suggestion that removes an existing safety constraint — the validation step must reject it before presenting to the operator
-- [ ] **Delta snapshot integrity:** Verify that delta N + delta N+1 applied to the base equals the full snapshot at N+1 — test with a known 2-commit sequence and compare diff outputs
-- [ ] **Fire-and-forget task tracking:** Send SIGTERM while a memorize task is pending — verify the pending task completes (or is logged as incomplete) before the process exits
+- [ ] **Path resolver consolidation (CONF-01):** `get_state_path()` returns a path that contains the live `workspace-state.json` — verify by `ls -la $(python3 -c "from openclaw.project_config import get_state_path; print(get_state_path())")` on a project that has been running
+- [ ] **Migration CLI (CONF-03):** Migration CLI acquires `fcntl.LOCK_SH` before reading source state files — verify by running `strace -e flock python3 migration_cli.py --dry-run` and confirming `flock()` syscalls appear
+- [ ] **Migration CLI (CONF-03):** Old path state files are moved (not just copied) or explicitly archived — verify that no state files remain at the old path after migration completes
+- [ ] **Strict validation (CONF-06):** Recovery scan runs even when `openclaw.json` has a schema advisory warning — verify by temporarily adding an unknown field to `openclaw.json` and confirming pool startup proceeds to recovery scan before rejecting new spawns
+- [ ] **Adaptive polling (OBS-05):** Activity detection uses task-status-map diff, not mtime — verify by checking that an activity log rotation write (updating only `activity_log` in state.json, not any task status) does NOT trigger fast-poll mode
+- [ ] **Docker HEALTHCHECK (REL-09):** Health check does not block on `fcntl` lock — verify by running `docker stop` on an active L3 container and confirming health check does not show lock contention errors in container logs
+- [ ] **Docker HEALTHCHECK (REL-09):** Health check works as UID 1000 with `cap_drop ALL` — verify by running `docker exec --user 1000 <container> /healthcheck.sh` with capabilities dropped
+- [ ] **Threshold calibration (QUAL-07):** Calibration was run against real memory entries (not synthetic) — verify by checking that the calibration report references a non-zero sample size from a real memU export
+- [ ] **Constants consolidation (CONF-05):** `python3 -c "from openclaw.config import LOCK_TIMEOUT"` succeeds with no `OPENCLAW_ROOT` set and no `openclaw.json` present — no import-time I/O
+- [ ] **Env var precedence (CONF-04):** `OPENCLAW_STATE_FILE` disposition is explicitly decided — either Python respects it (with updated `get_state_path()`) or it is documented as container-internal only
 
 ---
 
@@ -272,12 +310,13 @@ When pitfalls occur despite prevention, how to recover.
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| SIGTERM never reaches Python (shell form entrypoint) | LOW | Change entrypoint to exec form in Dockerfile; rebuild L3 image; no data loss |
-| State file stuck in `in_progress` after SIGKILL | LOW | Manually update state file: `python3 -c "import json; ..."` to set task status to `interrupted`; add `recovery_safe: false` to prevent recovery loop from re-spawning |
-| Recovery loop re-spawned a task with existing staging branch | MEDIUM | `git branch -D l3/task-{id}` to delete the duplicate staging branch; review state to determine if either run's work is usable; manually trigger L2 review if commits exist |
-| L1 auto-applied a bad SOUL suggestion | MEDIUM | `git diff` on `agents/l3_specialist/agent/SOUL.md` to see what changed; `git restore` to revert; if suggestion was auto-applied without git tracking, check `soul-suggestions/` directory for the original and manual diff comparison |
-| Memory health monitor deleted valid entries | HIGH | memU PostgreSQL backup restore (if backups are configured); or partially reconstruct from state file activity logs which record task outcomes in plaintext |
-| Delta snapshot chain corrupted (overlapping deltas) | LOW | Fall back to full snapshot for the affected task: run `git diff main...l3/task-{id} > {task_id}.diff` and replace the corrupted delta chain; reset the stored base SHA |
+| Path resolver change discarded existing state files | MEDIUM | Locate state files at old path (`find ~/.openclaw -name "workspace-state.json"`); copy to new canonical paths manually; verify JSON is valid; re-run pool startup |
+| Migration CLI ran during active spawns, produced truncated state file | LOW | State engine's `.bak` recovery kicks in automatically; verify `workspace-state.json.bak` at the old path contains the pre-migration valid state; copy `.bak` to new canonical path |
+| Strict validation blocked recovery scan, orphaned tasks piled up | LOW | Run `openclaw pool --recover-only` (if the flag exists) or manually update task statuses: `python3 -c "from openclaw.state_engine import JarvisState; ..."` to set `in_progress` tasks to `interrupted` |
+| Adaptive polling thrashed on log rotation — monitor process at 100% CPU | LOW | Restart monitor with `--interval 5` override flag to force a fixed interval; then fix the activity detection logic; restart again |
+| HEALTHCHECK reported unhealthy during normal operation | LOW | `docker inspect <container>` to see health check output; fix the health check command (capability or permission issue); rebuild L3 image with `make docker-l3`; no data loss |
+| Cosine threshold miscalibrated — false positive deluge | MEDIUM | Increase `similarity_min` to reduce false positives (push lower bound up); re-run health scan to verify conflict rate drops below 10%; archive falsely flagged entries instead of deleting them |
+| `OPENCLAW_STATE_FILE` env var set by operator, Python ignores it — state divergence | MEDIUM | Identify which state file was actually written by Python (`get_state_path()` call); merge state from operator's expected path into the canonical path manually; update documentation to clarify the env var is container-internal |
 
 ---
 
@@ -287,29 +326,26 @@ How roadmap phases should address these pitfalls.
 
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| SIGTERM absorbed by shell entrypoint | SIGTERM/Graceful Shutdown — Docker entrypoint fix | `docker stop` produces exit code 143 (not 137) within 5s |
-| Signal handler deadlocks on fcntl lock | SIGTERM/Graceful Shutdown — dehydration design | No hung processes after `docker stop`; state file shows clean terminal status |
-| Recovery loop re-spawns partial-work tasks | Task Recovery — eligibility rules | Recovery loop integration test: task with staging branch is NOT re-spawned |
-| Health monitor false positives on similar entries | Memory Health Monitoring — staleness metric design | Zero false positives on 20-entry ground-truth test set |
-| L1 suggestions modify SOUL without approval | L1 Strategic Suggestions — approval gate | Direct API call to apply suggestion returns 403; dashboard approval flow required |
-| Prompt injection via memory → SOUL | L1 Strategic Suggestions — SOUL validation | Injected test payload in memory does not appear in any generated suggestion |
-| Delta snapshot torn during concurrent write | Delta Snapshot — timing constraint | Delta captured after container.wait() returns; SHA-based base tracking |
-| Fire-and-forget tasks lost on event loop shutdown | SIGTERM/Graceful Shutdown — task tracking | Pending memorize tasks complete or are logged as skipped; not silently lost |
+| Path resolver breaks existing state files | CONF-03 (migration CLI) built before CONF-01 (resolver) | `get_state_path()` returns the same absolute path as before on all 9 registered projects |
+| Migration CLI corrupts state during active spawns | CONF-03 — add `fcntl.LOCK_SH` acquisition + container pre-flight check | Run migration with a container active; destination state file is valid JSON matching source |
+| Strict validation blocks recovery scan | CONF-06 — define two-pass startup sequence explicitly | Adding unknown field to `openclaw.json` does not prevent recovery scan from completing |
+| Adaptive polling misses tasks or thrashes on log rotation | OBS-05 — define activity signal as status-map diff, not mtime | Activity log rotation write does not trigger fast-poll mode; spawned task detected within 5s during slow poll |
+| HEALTHCHECK unhealthy during SIGTERM drain | REL-09 — capability-free, lock-free health check with `--start-period=10s` | `docker stop <l3>` exits with code 143; health check shows at most one unhealthy result during drain |
+| Cosine threshold miscalibrated from synthetic data | QUAL-07 — calibrate against real memory export before committing threshold | Calibration report references real sample size; conflict rate on production scan is <15% |
+| Constants consolidation introduces import-time I/O | CONF-05 — import smoke test in CI | `python3 -c "from openclaw.config import LOCK_TIMEOUT"` succeeds without `OPENCLAW_ROOT` or `openclaw.json` |
+| Env var precedence documentation contradicts existing `OPENCLAW_STATE_FILE` behavior | CONF-04 — full env var audit before documentation | Every env var in documentation is verified to be read by the claimed components via `grep` audit |
 
 ---
 
 ## Sources
 
-- Direct codebase inspection: `orchestration/state_engine.py`, `skills/spawn_specialist/spawn.py`, `skills/spawn_specialist/pool.py`, `orchestration/snapshot.py`, `orchestration/memory_client.py`, `docker/l3-specialist/entrypoint.sh` — HIGH confidence
-- Docker SIGTERM and PID 1 signal handling: [PID 1 Signal Handling in Docker — Peter Malmgren](https://petermalmgren.com/signal-handling-docker/), [How to Handle Docker Container Graceful Shutdown and Signal Handling — OneUptime](https://oneuptime.com/blog/post/2026-01-16-docker-graceful-shutdown-signals/view), [Why Your Dockerized Application Isn't Receiving Signals — Hynek](https://hynek.me/articles/docker-signals/), [Trapping Signals in Docker Containers — CloudBees](https://www.cloudbees.com/blog/trapping-signals-in-docker-containers) — HIGH confidence
-- Python asyncio signal handling: [python-graceful-shutdown — GitHub](https://github.com/wbenny/python-graceful-shutdown), [Signal Handling in Python — johal.in](https://johal.in/signal-handling-in-python-custom-handlers-for-graceful-shutdowns/) — HIGH confidence
-- fcntl flock behavior on process termination: [File Locking in Linux — gavv.net](https://gavv.net/articles/file-locks/), [fcntl(2) Linux manual page](https://man7.org/linux/man-pages/man2/fcntl.2.html) — HIGH confidence
-- pgvector production monitoring and staleness: [pgvector for AI Memory in Production — Ivan Turkovic](https://www.ivanturkovic.com/2025/11/16/pgvector-for-ai-memory-in-production-applications/), [Optimizing Vector Search at Scale — Medium](https://medium.com/@dikhyantkrishnadalai/optimizing-vector-search-at-scale-lessons-from-pgvector-supabase-performance-tuning-ce4ada4ba2ed), [Performance Tips Using Postgres and pgvector — Crunchy Data](https://www.crunchydata.com/blog/pgvector-performance-for-developers) — MEDIUM confidence
-- Agentic AI memory and SOUL injection security: [Indirect Prompt Injection Poisons AI Long-Term Memory — Palo Alto Unit 42](https://unit42.paloaltonetworks.com/indirect-prompt-injection-poisons-ai-longterm-memory/), [The OpenClaw Prompt Injection Problem — Penligent](https://www.penligent.ai/hackinglabs/the-openclaw-prompt-injection-problem-persistence-tool-hijack-and-the-security-boundary-that-doesnt-exist/), [OWASP LLM01:2025 Prompt Injection](https://genai.owasp.org/llmrisk/llm01-prompt-injection/) — HIGH confidence (external research specifically targets OpenClaw's architecture)
-- AI agent configuration modification risks: [Agentic AI and Security — Martin Fowler](https://martinfowler.com/articles/agentic-ai-security.html), [Top 10 Agentic AI Security Threats — Lasso Security](https://www.lasso.security/blog/agentic-ai-security-threats-2025) — MEDIUM confidence
-- Delta/incremental snapshot consistency: [Incremental Snapshots in Debezium](https://debezium.io/blog/2021/10/07/incremental-snapshots/), [Concurrency Control — Delta Lake](https://docs.delta.io/concurrency-control/) — MEDIUM confidence (different domain but same consistency principles apply)
-- asyncio task lifecycle and event loop shutdown: [Python asyncio documentation — conceptual overview](https://docs.python.org/3/howto/a-conceptual-overview-of-asyncio.html), [Real Python asyncio walkthrough](https://realpython.com/async-io-python/) — HIGH confidence
+- Direct codebase inspection: `packages/orchestration/src/openclaw/config.py`, `project_config.py`, `config_validator.py`, `state_engine.py`, `cli/monitor.py`, `docker/memory/memory_service/scan_engine.py`, `skills/spawn/pool.py`, `docker/l3-specialist/Dockerfile`, `docker/l3-specialist/entrypoint.sh` — HIGH confidence
+- Docker HEALTHCHECK signal interaction: [Sending a signal to a container with healthcheck affects healthcheck status — docker/for-linux issue #454](https://github.com/docker/for-linux/issues/454), [How to Handle Docker Container Graceful Shutdown and Signal Handling — OneUptime](https://oneuptime.com/blog/post/2026-01-16-docker-graceful-shutdown-signals/view), [Docker Health Check: A Practical Guide — Lumigo](https://lumigo.io/container-monitoring/docker-health-check-a-practical-guide/), [Docker Health Check Best Practices — OneUptime](https://oneuptime.com/blog/post/2026-01-30-docker-health-check-best-practices/view) — MEDIUM confidence
+- Docker STOPSIGNAL and HEALTHCHECK sequencing: [Dockerfile STOPSIGNAL — Dockerpros](https://dockerpros.com/wiki/dockerfile-stopsignal/), [Health Checks in Docker Compose — Tom Vaidyan](https://www.tvaidyan.com/2025/02/13/health-checks-in-docker-compose-a-practical-guide/) — MEDIUM confidence
+- Adaptive polling backoff patterns: [Polling in System Design — GeeksforGeeks](https://www.geeksforgeeks.org/system-design/polling-in-system-design/), [Efficient Kafka Polling in Python — Medium](https://medium.com/@sonal.sadafal/efficient-kafka-polling-in-python-handling-idle-states-gracefully-e6d880663581), [Exponential Backoff in Distributed Systems — Better Stack](https://betterstack.com/community/guides/monitoring/exponential-backoff/) — MEDIUM confidence (polling patterns well established; OpenClaw-specific activity detection logic from codebase analysis)
+- Cosine similarity threshold calibration: [How to Use Cosine Similarity for Vector Search in pgvector — Sarah Glasmacher](https://www.sarahglasmacher.com/how-to-use-cosine-similarity-in-pgvector/), [pgvector GitHub](https://github.com/pgvector/pgvector), [Cosine Similarity Threshold — Emergent Mind](https://www.emergentmind.com/topics/cosine-similarity-threshold) — MEDIUM confidence; production distribution insight from codebase inspection of scan_engine.py and v1.4 calibration note in PROJECT.md
+- Config migration schema evolution: [Schema Evolution in Real-Time Systems — Estuary](https://estuary.dev/blog/real-time-schema-evolution/), [Safe Django migrations without server errors — Loopwerk](https://www.loopwerk.io/articles/2025/safe-django-db-migrations/) — LOW confidence for specific Python config patterns; HIGH confidence from direct code analysis of `_find_project_root()` and path divergence documented in PROJECT.md
 
 ---
-*Pitfalls research for: OpenClaw v1.4 Operational Maturity — Graceful Shutdown, Memory Health, L1 Suggestions, Delta Snapshots*
-*Researched: 2026-02-24*
+*Pitfalls research for: OpenClaw v1.5 Config Consolidation — path resolver migration, adaptive polling, Docker health checks, cosine threshold calibration*
+*Researched: 2026-02-25*
