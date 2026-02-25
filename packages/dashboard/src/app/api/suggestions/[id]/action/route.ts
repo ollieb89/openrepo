@@ -1,10 +1,16 @@
 import fs from 'fs/promises';
+import { existsSync } from 'fs';
 import path from 'path';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { NextRequest } from 'next/server';
 
 const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || '/home/ollie/.openclaw';
+const ORCHESTRATION_ROOT = path.join(OPENCLAW_ROOT, 'packages', 'orchestration', 'src', 'openclaw');
+
+if (!existsSync(path.join(ORCHESTRATION_ROOT, 'soul_renderer.py'))) {
+  console.warn('[suggestions/action] soul_renderer.py not found at expected path — check OPENCLAW_ROOT env var');
+}
 const MAX_DIFF_LINES = 100;
 const FORBIDDEN_PATTERNS: RegExp[] = [
   /cap_drop/i,
@@ -48,7 +54,7 @@ function soulOverridePath(projectId: string): string {
 async function rerenderSoul(projectId: string): Promise<void> {
   const execFileAsync = promisify(execFile);
   await execFileAsync('python3', [
-    path.join(OPENCLAW_ROOT, 'orchestration', 'soul_renderer.py'),
+    path.join(ORCHESTRATION_ROOT, 'soul_renderer.py'),
     '--project', projectId, '--write', '--force',
   ], { cwd: OPENCLAW_ROOT });
 }

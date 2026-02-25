@@ -1,10 +1,17 @@
 import fs from 'fs/promises';
+import { existsSync } from 'fs';
 import path from 'path';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { NextRequest } from 'next/server';
 
 const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || '/home/ollie/.openclaw';
+const ORCHESTRATION_ROOT = path.join(OPENCLAW_ROOT, 'packages', 'orchestration', 'src', 'openclaw');
+
+if (!existsSync(path.join(ORCHESTRATION_ROOT, 'cli', 'suggest.py'))) {
+  console.warn('[suggestions] suggest.py not found at expected path — check OPENCLAW_ROOT env var');
+}
+
 const execFileAsync = promisify(execFile);
 
 function suggestionsPath(projectId: string): string {
@@ -43,7 +50,7 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: 'project query parameter is required' }, { status: 400 });
   }
 
-  const orchestrationPath = path.join(OPENCLAW_ROOT, 'orchestration', 'suggest.py');
+  const orchestrationPath = path.join(ORCHESTRATION_ROOT, 'cli', 'suggest.py');
 
   try {
     await execFileAsync('python3', [orchestrationPath, '--project', projectId], {
