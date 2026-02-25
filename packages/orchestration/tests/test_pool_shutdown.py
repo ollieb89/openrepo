@@ -19,7 +19,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-# conftest.py adds skills/spawn_specialist to sys.path
+# conftest.py adds skills/spawn to sys.path
 from pool import L3ContainerPool, register_shutdown_handler
 
 
@@ -145,3 +145,25 @@ async def test_register_shutdown_handler_sets_signal():
     assert call_args[0][0] == signal.SIGTERM
     # Second arg is the callback (a function)
     assert callable(call_args[0][1])
+
+
+@pytest.mark.asyncio
+async def test_spawn_task_wires_shutdown_handler():
+    """spawn_task() must call register_shutdown_handler() — prevents wiring regression (REL-08)."""
+    from unittest.mock import AsyncMock, MagicMock, patch
+    import pool as pool_module
+
+    mock_pool = MagicMock()
+    mock_pool.run_recovery_scan = AsyncMock()
+    mock_pool.spawn_and_monitor = AsyncMock(return_value={"status": "ok"})
+    mock_pool._pool_config = {}
+
+    with patch.object(pool_module, "_shutdown_handler_registered", False), \
+         patch("pool.L3ContainerPool", return_value=mock_pool), \
+         patch("pool.register_shutdown_handler") as mock_register, \
+         patch("pool.get_workspace_path", return_value="/tmp/workspace"), \
+         patch("pool.get_active_project_id", return_value="test-project"), \
+         patch("pool.get_pool_config", return_value={"max_concurrent": 3}):
+        await pool_module.spawn_task("t1", "code", "do something")
+
+    mock_register.assert_called_once()

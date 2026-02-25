@@ -38,6 +38,8 @@ from openclaw.logging import get_logger
 
 logger = get_logger("pool")
 
+_shutdown_handler_registered = False  # module-level idempotency guard — prevents double-registration if spawn_task() called multiple times
+
 _POOL_DEFAULTS = {
     "max_concurrent": 3,
     "pool_mode": "shared",
@@ -1025,6 +1027,8 @@ def register_shutdown_handler(loop: asyncio.AbstractEventLoop, pool: "L3Containe
     Must be called from within the asyncio event loop context (i.e., inside an
     async function run via asyncio.run()).
     """
+    global _shutdown_handler_registered
+    _shutdown_handler_registered = True
     import signal
 
     _fired = {"flag": False}  # mutable closure for idempotency guard
@@ -1095,6 +1099,14 @@ async def spawn_task(
     pool = L3ContainerPool(max_concurrent=max_concurrent, project_id=project_id)
     pool._pool_config = pool_cfg
     await pool.run_recovery_scan()
+
+    # Wire SIGTERM drain handler — idempotent, uses get_running_loop() (safe inside async context)
+    global _shutdown_handler_registered
+    if not _shutdown_handler_registered:
+        loop = asyncio.get_running_loop()
+        register_shutdown_handler(loop, pool)
+        logger.debug("SIGTERM drain handler registered")
+
     return await pool.spawn_and_monitor(
         task_id=task_id,
         skill_hint=skill_hint,
