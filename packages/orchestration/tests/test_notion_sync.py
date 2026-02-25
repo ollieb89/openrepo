@@ -137,6 +137,47 @@ class TestHandleEventSyncRouting:
         assert res["result"]["skipped"] == 1
 
 
+class TestHandleCaptureRouting:
+    """Tests for the handle_capture routing function."""
+
+    @patch("capture_handler._process_single_capture")
+    def test_routes_single_capture(self, mock_process):
+        from capture_handler import handle_capture
+        from notion_sync import SyncResult
+        
+        payload = {
+            "request_type": "capture",
+            "capture": {"title": "renew gym", "area": "Health"}
+        }
+        res = SyncResult("capture")
+        handle_capture(payload, res)
+        
+        mock_process.assert_called_once()
+        args = mock_process.call_args[0]
+        assert args[0]["title"] == "renew gym"
+        assert args[0]["area"] == "Health"
+        assert args[1] == res
+
+    @patch("capture_handler._process_single_capture")
+    def test_routes_batch_capture(self, mock_process):
+        from capture_handler import handle_capture
+        from notion_sync import SyncResult
+        
+        payload = {
+            "request_type": "capture",
+            "capture": {"title": "gym, taxes, call mom", "area": "Health"} # Area inherited by all
+        }
+        res = SyncResult("capture")
+        handle_capture(payload, res)
+        
+        assert mock_process.call_count == 3
+        
+        # Verify first call
+        args1 = mock_process.call_args_list[0][0]
+        assert args1[0]["title"] == "gym"
+        assert args1[0]["area"] == "Health"
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
