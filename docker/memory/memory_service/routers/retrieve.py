@@ -68,7 +68,7 @@ def _filter_after(items: list, created_after: str) -> list:
         try:
             from datetime import datetime, timezone
             if isinstance(ts, (int, float)):
-                item_dt = datetime.utcfromtimestamp(ts)  # always naive UTC
+                item_dt = datetime.fromtimestamp(ts, timezone.utc).replace(tzinfo=None)  # naive UTC
             else:
                 item_dt = datetime.fromisoformat(str(ts).rstrip("Z"))
                 # Normalize timezone-aware datetimes to naive UTC for comparison

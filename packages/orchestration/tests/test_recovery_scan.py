@@ -22,7 +22,7 @@ from unittest.mock import MagicMock, patch, AsyncMock, call
 
 import pytest
 
-# conftest.py adds skills/spawn_specialist to sys.path
+# conftest.py adds skills/spawn to sys.path
 from pool import L3ContainerPool
 
 
@@ -296,7 +296,7 @@ async def test_recovery_scan_logs_startup_summary():
 @pytest.mark.asyncio
 async def test_spawn_task_calls_recovery_scan():
     """spawn_task() calls run_recovery_scan() once, before spawn_and_monitor()."""
-    # conftest.py adds skills/spawn_specialist to sys.path
+    # conftest.py adds skills/spawn to sys.path
     from pool import spawn_task
 
     call_order = []
@@ -364,19 +364,19 @@ def test_project_config_recovery_policy_validation():
         }
 
     # Case 1: valid "auto_retry"
-    with patch("orchestration.project_config.load_project_config") as mock_load:
+    with patch("openclaw.project_config.load_project_config") as mock_load:
         mock_load.return_value = _make_project_json({"recovery_policy": "auto_retry"})
         cfg = get_pool_config("test-proj")
     assert cfg["recovery_policy"] == "auto_retry", f"Expected auto_retry, got {cfg['recovery_policy']}"
 
     # Case 2: invalid value falls back to default
-    with patch("orchestration.project_config.load_project_config") as mock_load:
+    with patch("openclaw.project_config.load_project_config") as mock_load:
         mock_load.return_value = _make_project_json({"recovery_policy": "invalid"})
         cfg = get_pool_config("test-proj")
     assert cfg["recovery_policy"] == "mark_failed", f"Expected mark_failed default, got {cfg['recovery_policy']}"
 
     # Case 3: no recovery_policy key — should return default
-    with patch("orchestration.project_config.load_project_config") as mock_load:
+    with patch("openclaw.project_config.load_project_config") as mock_load:
         mock_load.return_value = _make_project_json({})
         cfg = get_pool_config("test-proj")
     assert cfg["recovery_policy"] == "mark_failed", f"Expected mark_failed default, got {cfg['recovery_policy']}"

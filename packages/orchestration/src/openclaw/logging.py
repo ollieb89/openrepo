@@ -89,7 +89,7 @@ def get_logger(component: str) -> logging.Logger:
 
     Args:
         component: Short identifier for the component (e.g., "state_engine",
-                   "snapshot", "spawn_specialist"). Used as the `component`
+                   "snapshot", "spawn"). Used as the `component`
                    field in every log line.
 
     Returns:

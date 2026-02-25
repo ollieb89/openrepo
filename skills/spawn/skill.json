@@ -1,5 +1,5 @@
 {
-  "id": "spawn_specialist",
+  "id": "spawn",
   "name": "L3 Specialist Spawner",
   "description": "Spawns isolated L3 specialist containers for task execution. Only L2 (PumplAI_PM) may invoke this skill.",
   "owner": "pumplai_pm",

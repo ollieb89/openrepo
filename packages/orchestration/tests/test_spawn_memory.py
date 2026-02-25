@@ -14,7 +14,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-# conftest.py adds skills/spawn_specialist to sys.path
+# conftest.py adds skills/spawn to sys.path
 from spawn import (
     _retrieve_memories_sync,
     _format_memory_context,
@@ -48,7 +48,7 @@ def test_retrieve_memories_sync_success():
     mock_client_instance.__enter__ = MagicMock(return_value=mock_client_instance)
     mock_client_instance.__exit__ = MagicMock(return_value=False)
 
-    with patch("skills.spawn_specialist.spawn.httpx.Client", return_value=mock_client_instance):
+    with patch("spawn.httpx.Client", return_value=mock_client_instance):
         result = _retrieve_memories_sync("http://localhost:18791", "test-project", "auth module")
 
     # _retrieve_memories_sync now returns (list, bool)
@@ -74,7 +74,7 @@ def test_retrieve_memories_sync_graceful_on_network_error():
     mock_client_instance.__enter__ = MagicMock(return_value=mock_client_instance)
     mock_client_instance.__exit__ = MagicMock(return_value=False)
 
-    with patch("skills.spawn_specialist.spawn.httpx.Client", return_value=mock_client_instance):
+    with patch("spawn.httpx.Client", return_value=mock_client_instance):
         result = _retrieve_memories_sync("http://localhost:18791", "test-project", "query")
 
     # _retrieve_memories_sync now returns (list, bool); ok=False on network error
@@ -86,7 +86,7 @@ def test_retrieve_memories_sync_graceful_on_network_error():
 
 def test_retrieve_memories_sync_empty_url_returns_empty():
     """Empty base_url returns [] immediately without making any HTTP call."""
-    with patch("skills.spawn_specialist.spawn.httpx.Client") as MockClient:
+    with patch("spawn.httpx.Client") as MockClient:
         result = _retrieve_memories_sync("", "test-project", "query")
 
     # _retrieve_memories_sync now returns (list, bool)
@@ -110,7 +110,7 @@ def test_retrieve_memories_sync_dict_response_with_items_key():
     mock_client_instance.__enter__ = MagicMock(return_value=mock_client_instance)
     mock_client_instance.__exit__ = MagicMock(return_value=False)
 
-    with patch("skills.spawn_specialist.spawn.httpx.Client", return_value=mock_client_instance):
+    with patch("spawn.httpx.Client", return_value=mock_client_instance):
         result = _retrieve_memories_sync("http://localhost:18791", "proj", "query")
 
     # _retrieve_memories_sync now returns (list, bool)

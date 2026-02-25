@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-# conftest.py adds skills/spawn_specialist to sys.path
+# conftest.py adds skills/spawn to sys.path
 from pool import L3ContainerPool
 
 
@@ -36,7 +36,7 @@ async def test_memorize_called_on_success(mock_config):
     pool = _make_pool()
     mock_client = _mock_memory_client()
 
-    with patch("orchestration.memory_client.MemoryClient", return_value=mock_client) as MockClass:
+    with patch("openclaw.memory_client.MemoryClient", return_value=mock_client) as MockClass:
         await pool._memorize_snapshot_fire_and_forget("T-001", "diff content here", "code")
 
     mock_client.memorize.assert_called_once()
@@ -50,7 +50,7 @@ async def test_memorize_called_on_success(mock_config):
 async def test_memorize_not_called_when_url_empty(mock_config):
     pool = _make_pool()
 
-    with patch("orchestration.memory_client.MemoryClient") as MockClass:
+    with patch("openclaw.memory_client.MemoryClient") as MockClass:
         await pool._memorize_snapshot_fire_and_forget("T-002", "diff content", "code")
 
     MockClass.assert_not_called()
@@ -63,7 +63,7 @@ async def test_memorize_exception_is_non_blocking(mock_config):
     mock_client = _mock_memory_client()
     mock_client.memorize = AsyncMock(side_effect=Exception("connection refused"))
 
-    with patch("orchestration.memory_client.MemoryClient", return_value=mock_client):
+    with patch("openclaw.memory_client.MemoryClient", return_value=mock_client):
         # Should NOT raise — fire-and-forget semantics
         await pool._memorize_snapshot_fire_and_forget("T-003", "diff content", "code")
 
@@ -75,16 +75,16 @@ async def test_agent_type_code_vs_test(mock_config):
 
     # Test code skill -> L3_CODE
     mock_client_code = _mock_memory_client()
-    with patch("orchestration.memory_client.MemoryClient", return_value=mock_client_code) as MockClass:
-        with patch("orchestration.memory_client.AgentType") as MockAgentType:
+    with patch("openclaw.memory_client.MemoryClient", return_value=mock_client_code) as MockClass:
+        with patch("openclaw.memory_client.AgentType") as MockAgentType:
             MockAgentType.L3_CODE = "l3_code"
             MockAgentType.L3_TEST = "l3_test"
             await pool._memorize_snapshot_fire_and_forget("T-004", "diff", "code")
 
     # Test test skill -> L3_TEST
     mock_client_test = _mock_memory_client()
-    with patch("orchestration.memory_client.MemoryClient", return_value=mock_client_test) as MockClass:
-        with patch("orchestration.memory_client.AgentType") as MockAgentType:
+    with patch("openclaw.memory_client.MemoryClient", return_value=mock_client_test) as MockClass:
+        with patch("openclaw.memory_client.AgentType") as MockAgentType:
             MockAgentType.L3_CODE = "l3_code"
             MockAgentType.L3_TEST = "l3_test"
             await pool._memorize_snapshot_fire_and_forget("T-005", "diff", "test")
@@ -96,7 +96,7 @@ async def test_snapshot_content_includes_header(mock_config):
     pool = _make_pool()
     mock_client = _mock_memory_client()
 
-    with patch("orchestration.memory_client.MemoryClient", return_value=mock_client):
+    with patch("openclaw.memory_client.MemoryClient", return_value=mock_client):
         await pool._memorize_snapshot_fire_and_forget("T-006", "the diff payload", "code")
 
     content_arg = mock_client.memorize.call_args[0][0]

@@ -13,7 +13,7 @@ To translate strategic directives from ClawdiaPrime into actionable technical ta
 
 ## Available Skills
 - **router_skill** — Route directives from L1 (ClawdiaPrime) to appropriate execution paths
-- **spawn_specialist** — Spawn isolated L3 specialist containers for code and test tasks
+- **spawn** — Spawn isolated L3 specialist containers for code and test tasks
 
 ## Tactical Focus
 - **Technical Execution:** Bridge the gap between strategic "What" and technical "How."
@@ -25,7 +25,7 @@ To translate strategic directives from ClawdiaPrime into actionable technical ta
 
 As the exclusive spawn authority for L3 specialists, PumplAI_PM manages the L3 container lifecycle:
 
-- **Spawn Authority:** Only L2 can create L3 specialist containers via the `spawn_specialist` skill
+- **Spawn Authority:** Only L2 can create L3 specialist containers via the `spawn` skill
 - **Concurrency Limit:** Maximum 3 concurrent L3 containers (enforced by semaphore in pool manager)
 - **Task Delegation:** L2 delegates tasks with skill hints (code/test) and task descriptions
 - **Staging Branch Review:** L3 works on isolated `l3/task-{task_id}` branches; L2 reviews git diffs before merging to main

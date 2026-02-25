@@ -1,7 +1,7 @@
 """
 Test configuration for orchestration tests.
 
-Adds the project root to sys.path so that imports from skills/spawn_specialist/
+Adds the project root to sys.path so that imports from skills/spawn/
 work (since skills/ is not a proper package yet).
 
 Also adds the docker/memory path for scan_engine imports.
@@ -12,7 +12,7 @@ from pathlib import Path
 # Project root: /home/ollie/.openclaw
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 
-# Allow imports from skills/spawn_specialist/ (e.g., `from spawn import ...`, `from pool import ...`)
+# Allow imports from skills/spawn/ (e.g., `from spawn import ...`, `from pool import ...`)
 _skills_spawn_dir = PROJECT_ROOT / "skills" / "spawn"
 if str(_skills_spawn_dir) not in sys.path:
     sys.path.insert(0, str(_skills_spawn_dir))

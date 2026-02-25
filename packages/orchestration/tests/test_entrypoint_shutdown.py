@@ -24,7 +24,7 @@ def dockerfile_content():
 
 @pytest.fixture
 def spawn_content():
-    return (PROJECT_ROOT / "skills" / "spawn_specialist" / "spawn.py").read_text()
+    return (PROJECT_ROOT / "skills" / "spawn" / "spawn.py").read_text()
 
 
 def test_entrypoint_has_sigterm_trap(entrypoint_content):

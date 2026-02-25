@@ -53,10 +53,10 @@ def _make_merge_conflict_result():
 # ---------------------------------------------------------------------------
 
 
-@patch("orchestration.project_config.get_memu_config", return_value=_MEMU_CFG_ENABLED)
+@patch("openclaw.project_config.get_memu_config", return_value=_MEMU_CFG_ENABLED)
 def test_memorize_merge_fires_thread(mock_cfg):
     """A daemon thread is created and started for verdict=merge."""
-    with patch("orchestration.snapshot.threading.Thread") as mock_thread_cls:
+    with patch("openclaw.snapshot.threading.Thread") as mock_thread_cls:
         mock_t = MagicMock()
         mock_thread_cls.return_value = mock_t
         _memorize_review_decision(
@@ -71,10 +71,10 @@ def test_memorize_merge_fires_thread(mock_cfg):
         mock_t.start.assert_called_once()
 
 
-@patch("orchestration.project_config.get_memu_config", return_value=_MEMU_CFG_ENABLED)
+@patch("openclaw.project_config.get_memu_config", return_value=_MEMU_CFG_ENABLED)
 def test_memorize_reject_fires_thread(mock_cfg):
     """A daemon thread is created and started for verdict=reject."""
-    with patch("orchestration.snapshot.threading.Thread") as mock_thread_cls:
+    with patch("openclaw.snapshot.threading.Thread") as mock_thread_cls:
         mock_t = MagicMock()
         mock_thread_cls.return_value = mock_t
         _memorize_review_decision(
@@ -89,7 +89,7 @@ def test_memorize_reject_fires_thread(mock_cfg):
         mock_t.start.assert_called_once()
 
 
-@patch("orchestration.project_config.get_memu_config", return_value=_MEMU_CFG_ENABLED)
+@patch("openclaw.project_config.get_memu_config", return_value=_MEMU_CFG_ENABLED)
 def test_memorize_conflict_fires_thread(mock_cfg):
     """A daemon thread is created and started for verdict=conflict; content includes diff summary."""
     captured_content = []
@@ -100,7 +100,7 @@ def test_memorize_conflict_fires_thread(mock_cfg):
         captured_target = target
         return MagicMock(start=MagicMock())
 
-    with patch("orchestration.snapshot.threading.Thread") as mock_thread_cls:
+    with patch("openclaw.snapshot.threading.Thread") as mock_thread_cls:
         mock_t = MagicMock()
         mock_thread_cls.return_value = mock_t
         _memorize_review_decision(
@@ -121,10 +121,10 @@ def test_memorize_conflict_fires_thread(mock_cfg):
 # ---------------------------------------------------------------------------
 
 
-@patch("orchestration.project_config.get_memu_config", return_value=_MEMU_CFG_EMPTY_URL)
+@patch("openclaw.project_config.get_memu_config", return_value=_MEMU_CFG_EMPTY_URL)
 def test_memorize_skipped_when_url_empty(mock_cfg):
     """No thread is created when memu_api_url is empty."""
-    with patch("orchestration.snapshot.threading.Thread") as mock_thread_cls:
+    with patch("openclaw.snapshot.threading.Thread") as mock_thread_cls:
         _memorize_review_decision(
             project_id="proj",
             task_id="t4",
@@ -139,10 +139,10 @@ def test_memorize_skipped_when_url_empty(mock_cfg):
 # ---------------------------------------------------------------------------
 
 
-@patch("orchestration.project_config.get_memu_config", return_value=_MEMU_CFG_ENABLED)
+@patch("openclaw.project_config.get_memu_config", return_value=_MEMU_CFG_ENABLED)
 def test_memorize_skipped_when_project_empty(mock_cfg):
     """No thread is created when project_id is empty."""
-    with patch("orchestration.snapshot.threading.Thread") as mock_thread_cls:
+    with patch("openclaw.snapshot.threading.Thread") as mock_thread_cls:
         _memorize_review_decision(
             project_id="",
             task_id="t5",
@@ -160,7 +160,7 @@ def test_memorize_skipped_when_project_empty(mock_cfg):
 def test_memorize_never_raises():
     """Exceptions from get_memu_config do not propagate to the caller."""
     with patch(
-        "orchestration.project_config.get_memu_config",
+        "openclaw.project_config.get_memu_config",
         side_effect=Exception("openclaw.json missing"),
     ):
         # Must not raise
@@ -177,7 +177,7 @@ def test_memorize_never_raises():
 # ---------------------------------------------------------------------------
 
 
-@patch("orchestration.project_config.get_memu_config", return_value=_MEMU_CFG_ENABLED)
+@patch("openclaw.project_config.get_memu_config", return_value=_MEMU_CFG_ENABLED)
 def test_content_includes_verdict_and_reasoning(mock_cfg):
     """The payload content string includes the verdict and reasoning text."""
     posted_payloads = []
@@ -204,7 +204,7 @@ def test_content_includes_verdict_and_reasoning(mock_cfg):
         m.start = MagicMock()
         return m
 
-    with patch("orchestration.snapshot.threading.Thread", side_effect=fake_post_inside_thread):
+    with patch("openclaw.snapshot.threading.Thread", side_effect=fake_post_inside_thread):
         with patch("httpx.Client") as MockHClient:
             mock_hc = MagicMock()
             MockHClient.return_value.__enter__ = MagicMock(return_value=mock_hc)
@@ -243,9 +243,9 @@ def test_merge_staging_calls_memorize_on_success():
             return MagicMock(returncode=0, stdout="", stderr="")
         return ok
 
-    with patch("orchestration.snapshot.subprocess.run", side_effect=fake_run):
-        with patch("orchestration.snapshot._detect_default_branch", return_value="main"):
-            with patch("orchestration.snapshot._memorize_review_decision") as mock_mem:
+    with patch("openclaw.snapshot.subprocess.run", side_effect=fake_run):
+        with patch("openclaw.snapshot._detect_default_branch", return_value="main"):
+            with patch("openclaw.snapshot._memorize_review_decision") as mock_mem:
                 l2_merge_staging(
                     task_id="t8",
                     workspace_path="/tmp",
@@ -278,9 +278,9 @@ def test_merge_staging_calls_memorize_on_conflict():
             return ok
         return ok
 
-    with patch("orchestration.snapshot.subprocess.run", side_effect=fake_run):
-        with patch("orchestration.snapshot._detect_default_branch", return_value="main"):
-            with patch("orchestration.snapshot._memorize_review_decision") as mock_mem:
+    with patch("openclaw.snapshot.subprocess.run", side_effect=fake_run):
+        with patch("openclaw.snapshot._detect_default_branch", return_value="main"):
+            with patch("openclaw.snapshot._memorize_review_decision") as mock_mem:
                 result = l2_merge_staging(
                     task_id="t9",
                     workspace_path="/tmp",
@@ -303,9 +303,9 @@ def test_reject_staging_calls_memorize():
     """l2_reject_staging invokes _memorize_review_decision with verdict=reject."""
     ok = MagicMock(returncode=0, stdout="", stderr="")
 
-    with patch("orchestration.snapshot.subprocess.run", return_value=ok):
-        with patch("orchestration.snapshot._detect_default_branch", return_value="main"):
-            with patch("orchestration.snapshot._memorize_review_decision") as mock_mem:
+    with patch("openclaw.snapshot.subprocess.run", return_value=ok):
+        with patch("openclaw.snapshot._detect_default_branch", return_value="main"):
+            with patch("openclaw.snapshot._memorize_review_decision") as mock_mem:
                 result = l2_reject_staging(
                     task_id="t10",
                     workspace_path="/tmp",
@@ -326,7 +326,7 @@ def test_reject_staging_calls_memorize():
 # ---------------------------------------------------------------------------
 
 
-@patch("orchestration.project_config.get_memu_config", return_value=_MEMU_CFG_ENABLED)
+@patch("openclaw.project_config.get_memu_config", return_value=_MEMU_CFG_ENABLED)
 def test_diff_summary_truncated_to_500(mock_cfg):
     """Diff summary longer than 500 chars is truncated to 500 in the content string."""
     long_diff = "x" * 1000
@@ -346,7 +346,7 @@ def test_diff_summary_truncated_to_500(mock_cfg):
         m.start = MagicMock()
         return m
 
-    with patch("orchestration.snapshot.threading.Thread", side_effect=fake_thread_factory):
+    with patch("openclaw.snapshot.threading.Thread", side_effect=fake_thread_factory):
         _memorize_review_decision(
             project_id="proj",
             task_id="t11",
@@ -367,7 +367,7 @@ def test_diff_summary_truncated_to_500(mock_cfg):
 # ---------------------------------------------------------------------------
 
 
-@patch("orchestration.project_config.get_memu_config", return_value=_MEMU_CFG_ENABLED)
+@patch("openclaw.project_config.get_memu_config", return_value=_MEMU_CFG_ENABLED)
 def test_memorize_review_decision_sends_category_field(mock_cfg):
     """_memorize_review_decision() sends category='review_decision' at top level of payload."""
     payload_captured = []
@@ -386,7 +386,7 @@ def test_memorize_review_decision_sends_category_field(mock_cfg):
         m.start = MagicMock()
         return m
 
-    with patch("orchestration.snapshot.threading.Thread", side_effect=fake_thread_factory):
+    with patch("openclaw.snapshot.threading.Thread", side_effect=fake_thread_factory):
         _memorize_review_decision(
             project_id="proj",
             task_id="T-001",

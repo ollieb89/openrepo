@@ -96,7 +96,7 @@ def test_retrieve_sends_created_after():
     Also verifies the function accepts a created_after keyword parameter.
     The function must return a (list, bool) tuple — this test checks BOTH conditions.
     """
-    from skills.spawn_specialist.spawn import _retrieve_memories_sync
+    from spawn import _retrieve_memories_sync
 
     mock_response = MagicMock()
     mock_response.json.return_value = []
@@ -109,7 +109,7 @@ def test_retrieve_sends_created_after():
 
     cursor = "2026-02-24T10:00:00+00:00"
 
-    with patch("skills.spawn_specialist.spawn.httpx.Client", return_value=mock_client_instance):
+    with patch("spawn.httpx.Client", return_value=mock_client_instance):
         result = _retrieve_memories_sync(
             "http://fake-memu:18791",
             "testproj",
@@ -135,7 +135,7 @@ def test_cursor_not_updated_on_fetch_failure():
     The caller uses ok to decide whether to advance the cursor — False means
     the cursor must NOT be advanced so the next spawn retries the same window.
     """
-    from skills.spawn_specialist.spawn import _retrieve_memories_sync
+    from spawn import _retrieve_memories_sync
     import httpx
 
     mock_client_instance = MagicMock()
@@ -143,7 +143,7 @@ def test_cursor_not_updated_on_fetch_failure():
     mock_client_instance.__enter__ = MagicMock(return_value=mock_client_instance)
     mock_client_instance.__exit__ = MagicMock(return_value=False)
 
-    with patch("skills.spawn_specialist.spawn.httpx.Client", return_value=mock_client_instance):
+    with patch("spawn.httpx.Client", return_value=mock_client_instance):
         result = _retrieve_memories_sync("http://bad-host:9999", "proj", "query")
 
     assert isinstance(result, tuple), f"Expected tuple, got {type(result)}"
@@ -156,7 +156,7 @@ def test_cursor_updated_after_success():
 
     The caller uses ok=True to advance the cursor after the fetch.
     """
-    from skills.spawn_specialist.spawn import _retrieve_memories_sync
+    from spawn import _retrieve_memories_sync
 
     mock_response = MagicMock()
     mock_response.json.return_value = []
@@ -167,7 +167,7 @@ def test_cursor_updated_after_success():
     mock_client_instance.__enter__ = MagicMock(return_value=mock_client_instance)
     mock_client_instance.__exit__ = MagicMock(return_value=False)
 
-    with patch("skills.spawn_specialist.spawn.httpx.Client", return_value=mock_client_instance):
+    with patch("spawn.httpx.Client", return_value=mock_client_instance):
         result = _retrieve_memories_sync("http://memu:18791", "proj", "query")
 
     assert isinstance(result, tuple), f"Expected tuple, got {type(result)}"

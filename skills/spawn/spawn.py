@@ -1,7 +1,7 @@
 """
 L3 Specialist Container Spawning Module
 
-Implements the spawn_specialist skill for L2 to spawn isolated
+Implements the spawn skill for L2 to spawn isolated
 L3 containers with Docker Python SDK. Handles security isolation, GPU passthrough,
 and state synchronization. Project-aware — resolves project identity at spawn time.
 """

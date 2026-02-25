@@ -1,5 +1,7 @@
 import asyncio
+import os
 
+from dotenv import load_dotenv
 from claude_agent_sdk import (
     AssistantMessage,
     ClaudeAgentOptions,
@@ -9,6 +11,9 @@ from claude_agent_sdk import (
 )
 from memory.local.memorize import memorize
 from memory.local.tools import _get_todos, memu_server
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Set your Anthropic API key here if it's not set in the environment variables
 # os.environ["ANTHROPIC_API_KEY"] = ""
