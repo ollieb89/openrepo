@@ -102,7 +102,7 @@ See: `.planning/milestones/v1.3-ROADMAP.md` for full phase details.
 **Plans:** 1/1 plans complete
 
 Plans:
-- [ ] 44-01-PLAN.md — OPENCLAW_ROOT guard (Makefile + README) + SummaryStream.tsx parse error fix + stale patch audit closure
+- [x] 44-01-PLAN.md — OPENCLAW_ROOT guard (Makefile + README) + SummaryStream.tsx parse error fix + stale patch audit closure (completed 2026-02-25)
 
 ### Phase 43: v1.4 Gap Closure
 **Goal:** Close all gaps identified by milestone audit — fix two broken dashboard subprocess paths and wire the SIGTERM drain handler into the production runtime
@@ -198,4 +198,4 @@ Plans:
 | 41. L1 Strategic Suggestions | 3/3 | Complete    | 2026-02-24 | - |
 | 42. Delta Snapshots | 3/3 | Complete   | 2026-02-24 | - |
 | 43. v1.4 Gap Closure | 1/1 | Complete    | 2026-02-25 | - |
-| 44. v1.4 Tech Debt Cleanup | 1/1 | Complete   | 2026-02-25 | - |
+| 44. v1.4 Tech Debt Cleanup | 1/1 | Complete    | 2026-02-25 | - |
