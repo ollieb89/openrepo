@@ -24,6 +24,7 @@ dev = [
 openclaw-monitor = "openclaw.cli.monitor:main"
 openclaw-project = "openclaw.cli.project:main"
 openclaw-suggest = "openclaw.cli.suggest:main"
+openclaw-config = "openclaw.cli.config:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/openclaw"]
