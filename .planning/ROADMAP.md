@@ -130,7 +130,12 @@ Plans:
   2. Removing a required field from `openclaw.json` or `project.json` causes the process to exit before doing any work, with an error message naming the missing field and the config file
   3. The schema for `openclaw.json`'s OpenClaw runtime section is written down in a human-readable form that operators can consult
   4. Existing valid configs continue to load without error after the validation change
-**Plans**: TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 46-01-PLAN.md — Write failing schema validation test suite (TDD RED state)
+- [ ] 46-02-PLAN.md — Implement OPENCLAW_JSON_SCHEMA + validators + wiring into load paths
+- [ ] 46-03-PLAN.md — Add openclaw-config show CLI and openclaw.json.example schema doc
 
 ### Phase 47: Env Var Precedence + Migration CLI
 **Goal**: Operators know exactly which env vars override which config values and in what order, enforced uniformly across all callers; operators can run one command to upgrade an existing config to the current schema
