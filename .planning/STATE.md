@@ -5,16 +5,13 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.5 Config Consolidation — Phase 49 COMPLETE (REL-09, QUAL-07, OBS-05 all shipped)
+**Current focus:** v1.6 Agent Autonomy — PLANNING
 
 ## Current Position
 
-Phase: 49 of 49 (Deferred Reliability, Quality, and Observability)
-Plan: 3 of 3 complete
-Status: Complete
-Last activity: 2026-02-25 — 49-03 complete: POLL_INTERVAL_ACTIVE/IDLE in config.py, _count_active_l3_containers() + adaptive sleep in monitor.py. All 8 phase 49 tests pass. 268 total passing.
-
-Progress: [##########] 100% — Phase 45 done (2/2), Phase 46 done (3/3), Phase 47 done (3/3), Phase 48 done (1/1), Phase 49 done (3/3)
+Milestone: v1.6 Agent Autonomy — PLANNING
+Status: Planning (v1.5 archived, phases 54+ starting)
+Next: Autonomy framework formulation
 
 ## Performance Metrics
 
@@ -24,6 +21,7 @@ Progress: [##########] 100% — Phase 45 done (2/2), Phase 46 done (3/3), Phase 
 - v1.2: 7 phases, 14 plans in ~1 day
 - v1.3: 11 phases, 19 plans in ~1 day
 - v1.4: 6 phases, 16 plans in ~1 day
+- v1.5: 9 phases, 22 plans in ~1 day
 
 ## Accumulated Context
 
@@ -101,5 +99,4 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: Completed 49-03-PLAN.md — Phase 49 fully done. OBS-05 shipped. All 8 phase 49 tests pass. 268 total passing.
-Resume: Phase 49 complete. v1.5 Config Consolidation milestone complete (phases 45-49, all 10 requirements).
+Resume: v1.5 milestone complete. Starting v1.6 Agent Autonomy.

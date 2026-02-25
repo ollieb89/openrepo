@@ -17,26 +17,15 @@ Hierarchical AI orchestration with physical isolation — enabling autonomous, s
 - **Container:** Debian bookworm-slim L3 images, Nvidia Container Toolkit
 - **OS:** Ubuntu 24.04 LTS
 
-## Current Milestone: v1.5 Config Consolidation
+## Current Milestone: v1.6 Agent Autonomy — PLANNING
 
-**Goal:** Unify the config layer — single source of truth for paths, strict schema validation, consolidated constants, and migration tooling — plus three deferred reliability/quality items.
-
-**Target features:**
-- Workspace path divergence fix — single authoritative path resolver used everywhere
-- `openclaw.json` schema cleanup + migration CLI for existing configs
-- Env var precedence documented and enforced consistently
-- Constants/defaults consolidated into one location
-- Strict fail-fast startup validation for `openclaw.json` and `project.json`
-- Config integration test suite
-- Docker health checks for L3 containers (REL-09)
-- Cosine similarity threshold calibration for memory conflict detection (QUAL)
-- Adaptive monitor poll interval based on activity level (OBS-05)
+**Next up:** Enabling L3 agents to self-direct their work with minimal L1/L2 intervention. Focus on self-directed planning, confidence-based escalation, and autonomous handoff.
 
 ## Current State
 
-**Shipped:** v1.4 Operational Maturity (2026-02-25)
-**LOC:** ~28K Python, ~27K TypeScript/TSX (packages/ only)
-**Tests:** 148/148 passing
+**Shipped:** v1.5 Config Consolidation (2026-02-25)
+**LOC:** ~25K Python, ~30K TypeScript/TSX (packages/ only)
+**Tests:** 268/268 passing
 
 Architecture operational:
 - L1 (ClawdiaPrime) → L2 (PumplAI_PM) → L3 (Ephemeral Specialists) delegation chain
@@ -44,6 +33,8 @@ Architecture operational:
 - Semantic snapshot system with git staging branches
 - occc mission control dashboard with SSE real-time streaming, project switching, and metrics visualization
 - Docker isolation with `no-new-privileges`, `cap_drop ALL`, memory/CPU limits
+- Unified config layer with schema validation, env-var precedence, and migration CLI
+- Notion Kanban Sync (v1.5/v2.0 extension) for real-time project visibility
 
 Multi-project framework (v1.1):
 - Per-project state/snapshot path resolution via `project_config.py`
@@ -119,24 +110,21 @@ Known limitations:
 - ✓ MEM-01 through MEM-04: L3 auto-memorization, L2 review memorization, non-blocking failure, MEMU_API_URL injection — v1.3
 - ✓ RET-01 through RET-05: Pre-spawn retrieval, SOUL injection, budget cap, graceful degradation, in-execution queries — v1.3
 - ✓ DSH-11 through DSH-14: Memory page, semantic search, delete action, metadata display — v1.3
-
 - ✓ REL-04 through REL-08: SIGTERM graceful shutdown, pool recovery scan, configurable recovery policy, memorize drain — v1.4
 - ✓ QUAL-01 through QUAL-06: Memory health scan (staleness + conflict detection), PUT update endpoint, dashboard badges + conflict panel + settings — v1.4
 - ✓ ADV-01 through ADV-06: Pattern extraction engine, SOUL diff amendments, pending suggestions store, accept/reject pipeline with approval gate, dashboard suggestions UI — v1.4
 - ✓ PERF-05 through PERF-08: Memory cursors in state.json, cursor-aware pre-spawn retrieval, `created_after` filter on memU, `max_snapshots` pruning — v1.4
+- ✓ CONF-01 through CONF-07: Config consolidation (path resolver, schema validation, migration CLI, env precedence, integration tests) — v1.5
+- ✓ REL-09, QUAL-07, OBS-05: Docker health checks, calibrated threshold, adaptive polling — v1.5
+- ✓ NOTION-01 through NOTION-11: Notion Kanban Sync (lifecycle events, idempotent capture, reconcile) — v1.5
 
 ### Active
 
-- [ ] CONF-01: Single authoritative workspace path resolver used by all components
-- [ ] CONF-02: `openclaw.json` schema is clean, documented, and validated on load
-- [ ] CONF-03: Migration CLI upgrades existing configs to new schema
-- [ ] CONF-04: Env var precedence is explicit and consistently applied
-- [ ] CONF-05: Constants/defaults consolidated — no duplicated magic values
-- [ ] CONF-06: Strict fail-fast startup validation for both config files
-- [ ] CONF-07: Config integration test suite covering path resolution and validation
-- [ ] REL-09: L3 containers report Docker health status
-- [ ] QUAL-07: Cosine similarity conflict detection threshold empirically calibrated
-- [ ] OBS-05: Monitor poll interval adapts dynamically to activity level
+- [ ] AUTO-01: L3 agents perform self-directed task breakdown and planning — v1.6
+- [ ] AUTO-02: agents self-escalate based on confidence thresholds — v1.6
+- [ ] AUTO-03: Context-aware tool selection based on task intent — v1.6
+- [ ] AUTO-04: Progress self-monitoring and course correction logic — v1.6
+- [ ] AUTO-05: Autonomous handoff to L2 when blocked or complete — v1.6
 
 ### Out of Scope
 
@@ -176,19 +164,24 @@ Known limitations:
 | PoolOverflowError for all overflow scenarios | ✓ Good — single exception type, clear error messages | v1.2 |
 | Shared semaphore lazy-created on first shared-mode call | ✓ Good — no wasted resources for isolated-only projects | v1.2 |
 | JarvisState instance dict local to tail_state() | ✓ Good — implicit teardown on exit, no module-level cache | v1.2 |
-| memU as self-hosted library in standalone Docker service | ✓ Good — avoids unknown Temporal dependency from nevamindai image | v1.3 |
+| memU as self-hosted library in standalone Docker service | ✓ Good — avoids unknown Temporal dependency | v1.3 |
 | PostgreSQL+pgvector for memory storage | ✓ Good — PG17 native vector performance, persistent volume | v1.3 |
 | Per-agent + per-project memory scoping via MemoryClient | ✓ Good — structurally impossible to skip scoping | v1.3 |
 | Fire-and-forget memorization via asyncio.create_task | ✓ Good — non-blocking, pool slot released immediately | v1.3 |
 | Sync httpx for pre-spawn retrieval (not asyncio) | ✓ Good — avoids RuntimeError in async context | v1.3 |
 | CATEGORY_SECTION_MAP for memory routing | ✓ Good — explicit three-bucket output, clean routing | v1.3 |
 | 2,000-char SOUL memory budget (hardcoded) | ✓ Good — simple, prevents template bloat | v1.3 |
-| `loop.add_signal_handler` for SIGTERM drain (not `signal.signal`) | ✓ Good — avoids fcntl deadlock risk with asyncio event loop | v1.4 |
-| Idempotency guard on `register_shutdown_handler()` | ✓ Good — safe to call from multiple code paths without double-drain | v1.4 |
-| Cosine similarity for conflict detection (threshold 0.92) | ⚠️ Revisit — threshold needs empirical tuning under real workload | v1.4 |
-| Keyword-frequency clustering for SOUL suggestions (≥3 cluster threshold) | ✓ Good — low false-positive rate; may need keyword-frequency fallback at scale | v1.4 |
-| SHA-based commit cursor for delta snapshot retrieval | ✓ Good — ISO timestamp cursor in state.json, graceful fallback to full fetch on error | v1.4 |
-| Approval gate validates SOUL diff before write (structural injection prevention) | ✓ Good — rejects shell commands, safety constraint removal, >100 lines | v1.4 |
+| `loop.add_signal_handler` for SIGTERM drain | ✓ Good — avoids fcntl deadlock risk with asyncio loop | v1.4 |
+| Idempotency guard on `register_shutdown_handler()` | ✓ Good — safe to call from multiple code paths | v1.4 |
+| Cosine similarity for conflict detection (0.85) | ✓ Good — Sitting at related-duplicate boundary per benchmarks | v1.5 |
+| Keyword-frequency clustering for SOUL suggestions | ✓ Good — low false-positive rate; adaptive threshold for small sets | v1.5 |
+| SHA-based commit cursor for delta snapshot retrieval | ✓ Good — ISO timestamp cursor in state.json | v1.4 |
+| Approval gate validates SOUL diff before write | ✓ Good — prevents structural injection and safety-constraint removal | v1.4 |
+| Path resolver requires explicit project_id | ✓ Good — no project-id fallback avoids path leakage | v1.5 |
+| validation returns (fatal, warnings) tuple | ✓ Good — testable UI without affecting terminal stdout/stderr logic | v1.5 |
+| additionalProperties violations as warnings | ✓ Good — unknown fields are forward-compatible | v1.5 |
+| Event bus daemon handlers with ImportError guard | ✓ Good — fire-and-forget events never block state mutation | v1.5 |
+| Field ownership check for Notion sync (`_should_write_status`) | ✓ Good — prevents OpenClaw from overwriting user-owned fields | v1.5 |
 
 ## Primary Docs
 
@@ -198,4 +191,4 @@ Known limitations:
 - DEV_WF_FINDINGS.md
 
 ---
-*Last updated: 2026-02-25 after v1.5 milestone started*
+*Last updated: 2026-02-25 after v1.5 milestone completion*

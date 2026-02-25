@@ -90,3 +90,39 @@
 
 ---
 
+
+## v1.5 Config Consolidation (Shipped: 2026-02-25)
+
+**Phases:** 45-53 | **Plans:** 22 executed | **Timeline:** 1 day (2026-02-25)
+**Requirements:** 21/21 satisfied (v1.5 + v2.0 Notion Sync) | **Tests:** 268/268 passing
+
+**Key accomplishments:**
+- Single source of truth for paths — `get_state_path()` and `get_snapshot_dir()` in config.py with OPENCLAW_STATE_FILE priority
+- Documented, machine-validated schema for openclaw.json — unknown fields flagged, missing required fields fatal
+- Migration CLI with dry-run — `openclaw config migrate` upgrades configs to current schema with backup
+- Env var precedence enforced uniformly — OPENCLAW_ROOT → OPENCLAW_PROJECT → OPENCLAW_LOG_LEVEL → OPENCLAW_ACTIVITY_LOG_MAX
+- Config integration test suite — 15 tests covering path resolution, validation, env precedence, pool fallback
+- Docker health checks for L3 containers (REL-09) — `docker ps` shows healthy/unhealthy/starting
+- Cosine similarity threshold calibrated (0.85) for memory conflict detection
+- Adaptive monitor polling — 2s interval when L3 active, 30s when idle
+- Notion Kanban Sync — event bus, Notion client, schema bootstrap, event sync, conversational capture, reconcile
+- Tech debt cleanup — fixed stale error messages, removed residual config fields, tuned suggest.py adaptive thresholds
+
+**Git range:** `feat(45-01)` → `fix(53-01)` | **LOC:** ~25K Python, ~30K TypeScript/TSX
+
+---
+
+
+## v1.6 Agent Autonomy (Active)
+
+**Phases:** 54+ | **Plans:** 0 executed | **Timeline:** TBD
+**Requirements:** TBD | **E2E Flows:** TBD | **Integrations:** TBD
+
+**Key accomplishments:**
+- Self-directed task breakdown and planning
+- Confidence-based escalation decisions
+- Context-aware tool selection
+- Progress self-monitoring and course correction
+- Autonomous handoff to L2 when blocked or complete
+
+---
