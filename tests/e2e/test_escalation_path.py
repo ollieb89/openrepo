@@ -62,7 +62,7 @@ async def test_autonomy_escalation_path(autonomy_stack):
             task_id="e2e-escalation-test",
             confidence_score=0.8  # Start high
         )
-        state_machine = StateMachine(context, max_retries=1)
+        state_machine = StateMachine(context, max_retries=0)  # Escalate immediately, no retries
         
         # Start executing
         state_machine.transition(AutonomyState.EXECUTING, "Starting execution")
@@ -109,14 +109,11 @@ async def test_autonomy_escalation_path(autonomy_stack):
         # Transition to BLOCKED (failure path)
         state_machine.transition(AutonomyState.BLOCKED, "Step failed, confidence low")
         
-        # Since confidence is low and retries exhausted, escalate
-        with pytest.raises(ValueError, match="Maximum retries"):
-            state_machine.handle_blocked("Retry would exceed limit")
+        # handle_blocked auto-escalates when max retries reached (no ValueError raised)
+        state_machine.handle_blocked("Retry would exceed limit - should auto-escalate")
         
-        # Escalate instead
-        state_machine.transition(AutonomyState.ESCALATING, "Confidence below threshold, max retries exceeded")
-        
-        assert context.state == AutonomyState.ESCALATING
+        # Verify escalated to ESCALATING
+        assert context.state == AutonomyState.ESCALATING, f"Expected ESCALATING but got {context.state}"
         assert state_machine.is_complete()  # ESCALATING is terminal
         
         # Verify transition history includes escalation
@@ -171,6 +168,7 @@ async def test_escalation_pause_state_simulation(autonomy_stack):
         received_events.append(event)
     
     AutonomyEventBus.subscribe(EVENT_ESCALATION_TRIGGERED, event_handler)
+    AutonomyEventBus.subscribe(EVENT_CONFIDENCE_UPDATED, event_handler)
     AutonomyEventBus.subscribe("autonomy.state_changed", event_handler)
     
     try:
@@ -285,14 +283,12 @@ async def test_max_retries_leads_to_escalation(autonomy_stack):
     assert context.retry_count == 1
     assert context.state == AutonomyState.EXECUTING
     
-    # Second failure - no more retries
+    # Second failure - no more retries, should auto-escalate
     state_machine.transition(AutonomyState.BLOCKED, "Failure 2")
     
-    # handle_blocked should not allow another retry
-    with pytest.raises(ValueError, match="Maximum retries"):
-        state_machine.handle_blocked("Should fail")
+    # handle_blocked auto-escalates when max retries reached (no ValueError raised)
+    state_machine.handle_blocked("Max retries reached - should auto-escalate")
     
-    # Must escalate
-    state_machine.transition(AutonomyState.ESCALATING, "Max retries, escalating to human")
-    assert context.state == AutonomyState.ESCALATING
+    # Verify escalated
+    assert context.state == AutonomyState.ESCALATING, f"Expected ESCALATING but got {context.state}"
     assert context.escalation_reason is not None

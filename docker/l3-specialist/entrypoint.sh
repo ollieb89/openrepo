@@ -95,26 +95,32 @@ fi
 # 3. Execute task based on skill hint
 update_state "in_progress" "Executing task with ${CLI_RUNTIME}..."
 
-if command -v "${CLI_RUNTIME}" &>/dev/null; then
-  # AI CLI runtimes (claude-code, gemini-cli, codex) accept --task flag.
-  # Other commands (e.g. sleep for testing) are called with positional args only.
-  case "${CLI_RUNTIME}" in
-    claude-code|gemini-cli|codex)
-      "${CLI_RUNTIME}" "${SOUL_ARGS[@]}" --task "${TASK_DESCRIPTION}" 2>&1 | tee /tmp/task-output.log &
-      ;;
-    *)
-      # For non-AI runtimes, pass TASK_DESCRIPTION as a positional argument (supports testing with sleep, bash, etc.)
-      "${CLI_RUNTIME}" "${TASK_DESCRIPTION}" 2>&1 | tee /tmp/task-output.log &
-      ;;
-  esac
-  _child_pid=$!
-  wait $_child_pid || true
-  EXIT_CODE=$?
+if [[ "${AUTONOMY_ENABLED:-0}" == "1" ]]; then
+  update_state "in_progress" "Autonomy enabled. Handing off to Python runner..."
+  python3 /openclaw_src/openclaw/autonomy/runner.py 2>&1 | tee /tmp/task-output.log &
 else
-  echo "WARNING: CLI runtime '${CLI_RUNTIME}' not found. Running in dry-run mode."
-  # In dry-run mode, simulate success
-  EXIT_CODE=0
+  if command -v "${CLI_RUNTIME}" &>/dev/null; then
+    # AI CLI runtimes (claude-code, gemini-cli, codex) accept --task flag.
+    # Other commands (e.g. sleep for testing) are called with positional args only.
+    case "${CLI_RUNTIME}" in
+      claude-code|gemini-cli|codex)
+        "${CLI_RUNTIME}" "${SOUL_ARGS[@]:-}" --task "${TASK_DESCRIPTION}" 2>&1 | tee /tmp/task-output.log &
+        ;;
+      *)
+        "${CLI_RUNTIME}" "${TASK_DESCRIPTION}" 2>&1 | tee /tmp/task-output.log &
+        ;;
+    esac
+  else
+    echo "WARNING: CLI runtime '${CLI_RUNTIME}' not found. Running in dry-run mode."
+    # In dry-run mode, simulate success
+    # We run sleep to act as a placeholder
+    sleep 2 &
+  fi
 fi
+
+_child_pid=$!
+wait $_child_pid || true
+EXIT_CODE=$?
 
 # 4. Capture results
 if [ $EXIT_CODE -eq 0 ]; then

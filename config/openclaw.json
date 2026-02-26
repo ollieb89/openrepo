@@ -129,6 +129,9 @@
     }
   },
   "plugins": {
+    "slots": {
+      "memory": "memory-memu"
+    },
     "entries": {
       "telegram": {
         "enabled": true
@@ -144,4 +147,4 @@
       }
     }
   }
-} 
+}

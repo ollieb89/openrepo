@@ -8,6 +8,10 @@ import TaskCard from './TaskCard';
 import ActivityLog from './ActivityLog';
 import StatusBadge from '@/components/common/StatusBadge';
 import Card from '@/components/common/Card';
+import { AutonomyPanel } from '@/components/autonomy/AutonomyPanel';
+import { EscalationContextPanel } from '@/components/autonomy/EscalationContextPanel';
+import { CourseCorrectionHistory } from '@/components/autonomy/CourseCorrectionHistory';
+import type { TaskWithAutonomy } from '@/lib/types/autonomy';
 
 const STATUS_COLUMNS: { status: TaskStatus; label: string }[] = [
   { status: 'pending', label: 'Pending' },
@@ -20,7 +24,7 @@ const STATUS_COLUMNS: { status: TaskStatus; label: string }[] = [
 export default function TaskBoard() {
   const { projectId } = useProject();
   const { tasks, isLoading } = useTasks(projectId);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [selectedTask, setSelectedTask] = useState<TaskWithAutonomy | null>(null);
 
   if (isLoading) {
     return (
@@ -109,11 +113,11 @@ export default function TaskBoard() {
                 {new Date(selectedTask.created_at * 1000).toLocaleString()}
               </p>
             </div>
-            {Object.keys(selectedTask.metadata).length > 0 && (
+            {Object.keys(selectedTask.metadata || {}).length > 0 && (
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Metadata</p>
                 <div className="text-xs font-mono bg-gray-50 dark:bg-gray-900 rounded p-2 space-y-0.5">
-                  {Object.entries(selectedTask.metadata).map(([k, v]) => (
+                  {Object.entries(selectedTask.metadata || {}).map(([k, v]) => (
                     <div key={k}>
                       <span className="text-gray-500">{k}:</span>{' '}
                       <span className="text-gray-900 dark:text-gray-300">{String(v)}</span>
@@ -122,6 +126,14 @@ export default function TaskBoard() {
                 </div>
               </div>
             )}
+
+            {selectedTask.autonomy && (
+              <AutonomyPanel autonomy={selectedTask.autonomy} />
+            )}
+            {selectedTask.autonomy?.escalation && (
+              <EscalationContextPanel task={selectedTask} />
+            )}
+            <CourseCorrectionHistory taskId={selectedTask.id} />
           </div>
 
           <div className="mt-4">

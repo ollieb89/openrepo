@@ -7,6 +7,7 @@ import Header from "@/components/layout/Header";
 import { ToastContainer } from "react-toastify";
 import BackgroundSyncTrigger from "@/components/sync/BackgroundSyncTrigger";
 import SuggestionToast from "@/components/sync/SuggestionToast";
+import { EscalationAlertBanner } from "@/components/autonomy/EscalationAlertBanner";
 
 export const metadata = {
   title: "OCCC - OpenClaw Control Center",
@@ -24,6 +25,7 @@ export default function RootLayout({
         <ThemeProvider>
           <BackgroundSyncTrigger />
           <SuggestionToast />
+          <EscalationAlertBanner />
           <ProjectProvider>
             <div className="flex h-screen overflow-hidden">
               <Sidebar />

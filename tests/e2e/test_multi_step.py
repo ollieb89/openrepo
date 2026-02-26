@@ -16,6 +16,8 @@ from openclaw.autonomy.events import (
     AutonomyProgressUpdated,
     AutonomyCourseCorrection,
     AutonomyEventBus,
+    EVENT_COURSE_CORRECTION,
+    EVENT_PROGRESS_UPDATED,
 )
 
 
@@ -76,7 +78,10 @@ async def test_autonomy_multi_step_with_recovery(autonomy_stack):
     def event_handler(event):
         received_events.append(event)
     
-    AutonomyEventBus.subscribe("autonomy.*", event_handler)
+    AutonomyEventBus.subscribe("autonomy.state_changed", event_handler)
+    AutonomyEventBus.subscribe("autonomy.error_logged", event_handler)
+    AutonomyEventBus.subscribe(EVENT_COURSE_CORRECTION, event_handler)
+    AutonomyEventBus.subscribe(EVENT_PROGRESS_UPDATED, event_handler)
     
     try:
         # Create plan with 5 steps
@@ -339,8 +344,8 @@ async def test_partial_failure_state_preservation(autonomy_stack):
     state_machine.transition(AutonomyState.COMPLETE, "Done")
     assert context.state == AutonomyState.COMPLETE
     
-    # Verify transition history
-    assert len(context.transition_history) == 3
+    # Verify transition history (4 transitions: planning→executing→blocked→executing→complete)
+    assert len(context.transition_history) == 4
     
     # All transitions captured
     transitions = [(t.from_state.value, t.to_state.value) for t in context.transition_history]

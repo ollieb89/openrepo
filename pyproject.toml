@@ -12,4 +12,5 @@ testpaths = ["packages/orchestration/tests"]
 asyncio_mode = "auto"
 markers = [
     "integration: integration tests that touch the filesystem",
+    "e2e: end-to-end tests that use Docker containers",
 ]

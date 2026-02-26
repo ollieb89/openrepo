@@ -20,7 +20,12 @@ import httpx
 import docker
 from docker.types import DeviceRequest
 from openclaw.state_engine import JarvisState
-from openclaw.config import get_project_root, get_state_path, MEMORY_CONTEXT_BUDGET
+from openclaw.config import (
+    get_state_path,
+    get_snapshot_dir,
+    get_autonomy_config,
+    MEMORY_CONTEXT_BUDGET
+)
 from openclaw.project_config import (
     get_active_project_id,
     load_project_config,
@@ -442,6 +447,33 @@ def spawn_l3_specialist(
     except (FileNotFoundError, ValueError):
         spawned_by = l3_config.get("spawned_by", "pumplai_pm")
 
+    # Autonomy feature flag
+    autonomy_cfg = get_autonomy_config()
+    autonomy_enabled = "1" if autonomy_cfg.get("enabled", False) else "0"
+    
+    # Base environment dictionary
+    environment = {
+        "TASK_ID": task_id,
+        "SKILL_HINT": skill_hint,
+        "STAGING_BRANCH": staging_branch,
+        "DEFAULT_BRANCH": default_branch,
+        "CLI_RUNTIME": cli_runtime,
+        "TASK_DESCRIPTION": task_description,
+        "OPENCLAW_PROJECT": project_id,
+        # Container-internal path — host equivalent is config.get_state_path(project_id)
+        "OPENCLAW_STATE_FILE": f"/workspace/.openclaw/{project_id}/workspace-state.json",
+        "MEMU_API_URL": _rewrite_memu_url_for_container(get_memu_config().get("memu_api_url", "")),
+        "MEMU_AGENT_ID": "l3_specialist",
+        "MEMU_PROJECT_ID": project_id,
+        "MEMU_ENABLED": "1",
+        "AUTONOMY_ENABLED": autonomy_enabled,
+        "AUTONOMY_MAX_RETRIES": str(autonomy_cfg.get("max_retries", 1)),
+        "AUTONOMY_CONFIDENCE_THRESHOLD": str(autonomy_cfg.get("confidence_threshold", 0.4)),
+    }
+    
+    if "skill_thresholds" in autonomy_cfg:
+        environment["AUTONOMY_SKILL_THRESHOLDS"] = json.dumps(autonomy_cfg["skill_thresholds"])
+
     # Build container configuration
     container_config = {
         "image": "openclaw-l3-specialist:latest",
@@ -456,21 +488,7 @@ def spawn_l3_specialist(
         },
 
         # Environment variables — OPENCLAW_PROJECT injected for container-side identity
-        "environment": {
-            "TASK_ID": task_id,
-            "SKILL_HINT": skill_hint,
-            "STAGING_BRANCH": staging_branch,
-            "DEFAULT_BRANCH": default_branch,
-            "CLI_RUNTIME": cli_runtime,
-            "TASK_DESCRIPTION": task_description,
-            "OPENCLAW_PROJECT": project_id,
-            # Container-internal path — host equivalent is config.get_state_path(project_id)
-            "OPENCLAW_STATE_FILE": f"/workspace/.openclaw/{project_id}/workspace-state.json",
-            "MEMU_API_URL": _rewrite_memu_url_for_container(get_memu_config().get("memu_api_url", "")),
-            "MEMU_AGENT_ID": "l3_specialist",
-            "MEMU_PROJECT_ID": project_id,
-            "MEMU_ENABLED": "1",
-        },
+        "environment": environment,
 
         # Docker network — enables DNS resolution for openclaw-memory service
         "network": "openclaw-net",

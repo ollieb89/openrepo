@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import type { Project, Task, Agent } from './types';
+import type { TaskWithAutonomy } from './types/autonomy';
 import { minimizePersistenceRecord } from './privacy/minimization';
 import type { PersistedMetadataInput, PersistedMetadataRecord } from './types/privacy';
 
@@ -49,7 +50,56 @@ export async function getActiveProjectId(): Promise<string> {
   return (config.active_project as string) || 'pumplai';
 }
 
-export async function getTaskState(projectId: string): Promise<Task[]> {
+/** Map task status to autonomy state for UI display. */
+function mapStatusToAutonomyState(
+  status: string
+): 'planning' | 'executing' | 'blocked' | 'escalating' | 'complete' {
+  switch (status) {
+    case 'escalating':
+      return 'escalating';
+    case 'pending':
+      return 'planning';
+    case 'in_progress':
+    case 'starting':
+    case 'testing':
+      return 'executing';
+    case 'completed':
+    case 'failed':
+    case 'rejected':
+      return 'complete';
+    default:
+      return 'executing';
+  }
+}
+
+/** Enrich task with autonomy info derived from workspace state. */
+function enrichTaskWithAutonomy(task: Task): TaskWithAutonomy {
+  const meta = task.metadata || {};
+  const autonomyMeta = (meta.autonomy as Record<string, unknown>) || {};
+  const status = task.status;
+  const lastEntry = task.activity_log?.[task.activity_log.length - 1];
+
+  const autonomy = {
+    state: mapStatusToAutonomyState(status),
+    confidence_score: (autonomyMeta.confidence_score as number) ?? (status === 'escalating' ? 0.5 : 1),
+    selected_tools: (autonomyMeta.selected_tools as string[]) ?? [],
+    ...(status === 'escalating' && {
+      escalation: {
+        reason:
+          (autonomyMeta.escalation_reason as string) ?? lastEntry?.entry ?? 'Task escalated',
+        confidence: (autonomyMeta.escalation_confidence as number) ?? 0.5,
+        timestamp: task.updated_at ?? task.created_at ?? 0,
+      },
+    }),
+  };
+
+  return { ...task, title: task.id, autonomy };
+}
+
+export async function getTaskState(
+  projectId: string,
+  options?: { state?: string }
+): Promise<Task[]> {
   const statePath = path.join(
     OPENCLAW_ROOT, 'workspace', '.openclaw', projectId, 'workspace-state.json'
   );
@@ -59,10 +109,15 @@ export async function getTaskState(projectId: string): Promise<Task[]> {
     const state = JSON.parse(raw);
     const tasks = state.tasks || {};
 
-    return Object.entries(tasks).map(([id, data]) => ({
-      id,
-      ...(data as Omit<Task, 'id'>),
-    }));
+    let result = Object.entries(tasks).map(([id, data]) =>
+      enrichTaskWithAutonomy({ id, ...(data as Omit<Task, 'id'>) })
+    );
+
+    if (options?.state) {
+      result = result.filter((t) => t.status === options.state);
+    }
+
+    return result;
   } catch {
     return [];
   }

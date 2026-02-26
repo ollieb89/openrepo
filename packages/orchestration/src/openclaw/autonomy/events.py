@@ -193,6 +193,74 @@ class AutonomyRetryAttempted(AutonomyEvent):
         )
 
 
+@dataclass
+class AutonomyPlanGenerated(AutonomyEvent):
+    """
+    Event emitted when an L3 agent generates its execution plan.
+    
+    Attributes:
+        plan: The generated plan as a dictionary/structure
+    """
+    plan: Dict[str, Any] = field(default_factory=dict)
+    event_type: str = field(default="autonomy.plan_generated", init=False)
+    
+    def to_payload(self) -> Dict[str, Any]:
+        return {
+            "plan": self.plan,
+        }
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "AutonomyPlanGenerated":
+        payload = data.get("payload", {})
+        return cls(
+            task_id=data.get("task_id", ""),
+            timestamp=data.get("timestamp", time.time()),
+            plan=payload.get("plan", {}),
+        )
+
+
+@dataclass
+class AutonomyProgressUpdated(AutonomyEvent):
+    """
+    Event emitted when an L3 agent updates its progress on a planned step.
+    
+    Attributes:
+        step_number: Current step number
+        total_steps: Total steps in the plan
+        status: Status of the step (e.g., "started", "completed", "failed")
+        duration_seconds: Time taken so far
+        output_snippet: Snippet of execution output
+    """
+    step_number: int = 1
+    total_steps: int = 1
+    status: str = "started"
+    duration_seconds: float = 0.0
+    output_snippet: str = ""
+    event_type: str = field(default="autonomy.progress_updated", init=False)
+    
+    def to_payload(self) -> Dict[str, Any]:
+        return {
+            "step_number": self.step_number,
+            "total_steps": self.total_steps,
+            "status": self.status,
+            "duration_seconds": self.duration_seconds,
+            "output_snippet": self.output_snippet,
+        }
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "AutonomyProgressUpdated":
+        payload = data.get("payload", {})
+        return cls(
+            task_id=data.get("task_id", ""),
+            timestamp=data.get("timestamp", time.time()),
+            step_number=payload.get("step_number", 1),
+            total_steps=payload.get("total_steps", 1),
+            status=payload.get("status", "started"),
+            duration_seconds=payload.get("duration_seconds", 0.0),
+            output_snippet=payload.get("output_snippet", ""),
+        )
+
+
 class AutonomyEventBus:
     """
     Event bus wrapper for autonomy events.
@@ -318,6 +386,53 @@ EVENT_STATE_CHANGED = "autonomy.state_changed"
 EVENT_CONFIDENCE_UPDATED = "autonomy.confidence_updated"
 EVENT_ESCALATION_TRIGGERED = "autonomy.escalation_triggered"
 EVENT_RETRY_ATTEMPTED = "autonomy.retry_attempted"
+EVENT_PLAN_GENERATED = "autonomy.plan_generated"
+EVENT_PROGRESS_UPDATED = "autonomy.progress_updated"
+EVENT_TOOLS_SELECTED = "autonomy.tools_selected"
+EVENT_COURSE_CORRECTION = "autonomy.course_correction"
+
+@dataclass
+class AutonomyToolsSelected(AutonomyEvent):
+    task_id: str
+    selected_tools: List[str] = field(default_factory=list)
+    event_type: str = field(default="autonomy.tools_selected", init=False)
+    
+    def to_payload(self) -> Dict[str, Any]:
+        return {
+            "selected_tools": self.selected_tools,
+        }
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "AutonomyToolsSelected":
+        payload = data.get("payload", {})
+        return cls(
+            task_id=data.get("task_id", ""),
+            timestamp=data.get("timestamp", time.time()),
+            selected_tools=payload.get("selected_tools", []),
+        )
+
+@dataclass
+class AutonomyCourseCorrection(AutonomyEvent):
+    task_id: str
+    failed_step: Dict[str, Any] = field(default_factory=dict)
+    recovery_steps: List[Dict[str, Any]] = field(default_factory=list)
+    event_type: str = field(default="autonomy.course_correction", init=False)
+    
+    def to_payload(self) -> Dict[str, Any]:
+        return {
+            "failed_step": self.failed_step,
+            "recovery_steps": self.recovery_steps,
+        }
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "AutonomyCourseCorrection":
+        payload = data.get("payload", {})
+        return cls(
+            task_id=data.get("task_id", ""),
+            timestamp=data.get("timestamp", time.time()),
+            failed_step=payload.get("failed_step", {}),
+            recovery_steps=payload.get("recovery_steps", []),
+        )
 
 
 __all__ = [
@@ -327,6 +442,10 @@ __all__ = [
     "AutonomyConfidenceUpdated",
     "AutonomyEscalationTriggered",
     "AutonomyRetryAttempted",
+    "AutonomyPlanGenerated",
+    "AutonomyProgressUpdated",
+    "AutonomyToolsSelected",
+    "AutonomyCourseCorrection",
     # Event bus
     "AutonomyEventBus",
     # Constants
@@ -334,4 +453,8 @@ __all__ = [
     "EVENT_CONFIDENCE_UPDATED",
     "EVENT_ESCALATION_TRIGGERED",
     "EVENT_RETRY_ATTEMPTED",
+    "EVENT_PLAN_GENERATED",
+    "EVENT_PROGRESS_UPDATED",
+    "EVENT_TOOLS_SELECTED",
+    "EVENT_COURSE_CORRECTION",
 ]

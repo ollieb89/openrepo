@@ -200,12 +200,12 @@ async def test_retry_count_tracking(autonomy_stack):
     # Third failure should escalate (max_retries=2)
     state_machine.transition(AutonomyState.BLOCKED, "Third failure")
     
-    with pytest.raises(ValueError, match="Maximum retries.*exceeded"):
-        state_machine.handle_blocked("Should fail - max retries reached")
+    # handle_blocked should auto-escalate when max retries reached (not raise ValueError)
+    state_machine.handle_blocked("Max retries reached - should escalate")
     
-    # Should escalate instead
-    state_machine.transition(AutonomyState.ESCALATING, "Max retries exceeded")
-    assert context.state == AutonomyState.ESCALATING
+    # Verify escalated to ESCALATING state
+    assert context.state == AutonomyState.ESCALATING, f"Expected ESCALATING but got {context.state}"
+    assert context.retry_count == 2
 
 
 @pytest.mark.e2e

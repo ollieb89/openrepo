@@ -381,6 +381,20 @@ def list_active_contexts() -> Dict[str, AutonomyContext]:
     return dict(_context_store)
 
 
+def _on_escalation_triggered(event: Dict[str, Any]):
+    """Handler for escalation events to simulate a direct ping notification."""
+    payload = event.get("payload", {})
+    task_id = event.get("task_id", "unknown")
+    reason = payload.get("reason", "unknown")
+    score = payload.get("confidence", 0.0)
+    logger.critical(f"[TELEGRAM_PING] TASK {task_id} ESCALATED! Reason: {reason} (Confidence: {score:.2f})")
+
+try:
+    from .events import EVENT_ESCALATION_TRIGGERED, AutonomyEventBus
+    AutonomyEventBus.subscribe(EVENT_ESCALATION_TRIGGERED, _on_escalation_triggered)
+except Exception as e:
+    logger.warning(f"Could not subscribe to escalation events: {e}")
+
 __all__ = [
     "on_task_spawn",
     "get_autonomy_context",
