@@ -17,8 +17,8 @@ update_state() {
   local status="$1"
   local message="$2"
   python3 -c "
-import sys; sys.path.insert(0, '/orchestration')
-from state_engine import JarvisState
+import sys; sys.path.insert(0, '/openclaw_src')
+from openclaw.state_engine import JarvisState
 js = JarvisState('${STATE_FILE}')
 js.update_task('${TASK_ID}', '${status}', '${message}')
 "
@@ -48,6 +48,11 @@ git config --global user.email "l3@openclaw.local"
 
 # 1. Report startup
 update_state "starting" "Container initialized. Skill: ${SKILL_HINT}, Runtime: ${CLI_RUNTIME}"
+
+# Write sentinel file for Docker health check (REL-09).
+# Written after startup initialization completes — represents "container initialized and ready".
+# Docker checks for this file every 30s; health status visible in `docker ps`.
+touch /tmp/openclaw-healthy
 
 # 2. Create staging branch
 cd /workspace
@@ -90,16 +95,32 @@ fi
 # 3. Execute task based on skill hint
 update_state "in_progress" "Executing task with ${CLI_RUNTIME}..."
 
-if command -v "${CLI_RUNTIME}" &>/dev/null; then
-  "${CLI_RUNTIME}" "${SOUL_ARGS[@]}" --task "${TASK_DESCRIPTION}" 2>&1 | tee /tmp/task-output.log &
-  _child_pid=$!
-  wait $_child_pid || true
-  EXIT_CODE=$?
+if [[ "${AUTONOMY_ENABLED:-0}" == "1" ]]; then
+  update_state "in_progress" "Autonomy enabled. Handing off to Python runner..."
+  python3 /openclaw_src/openclaw/autonomy/runner.py 2>&1 | tee /tmp/task-output.log &
 else
-  echo "WARNING: CLI runtime '${CLI_RUNTIME}' not found. Running in dry-run mode."
-  # In dry-run mode, simulate success
-  EXIT_CODE=0
+  if command -v "${CLI_RUNTIME}" &>/dev/null; then
+    # AI CLI runtimes (claude-code, gemini-cli, codex) accept --task flag.
+    # Other commands (e.g. sleep for testing) are called with positional args only.
+    case "${CLI_RUNTIME}" in
+      claude-code|gemini-cli|codex)
+        "${CLI_RUNTIME}" "${SOUL_ARGS[@]:-}" --task "${TASK_DESCRIPTION}" 2>&1 | tee /tmp/task-output.log &
+        ;;
+      *)
+        "${CLI_RUNTIME}" "${TASK_DESCRIPTION}" 2>&1 | tee /tmp/task-output.log &
+        ;;
+    esac
+  else
+    echo "WARNING: CLI runtime '${CLI_RUNTIME}' not found. Running in dry-run mode."
+    # In dry-run mode, simulate success
+    # We run sleep to act as a placeholder
+    sleep 2 &
+  fi
 fi
+
+_child_pid=$!
+wait $_child_pid || true
+EXIT_CODE=$?
 
 # 4. Capture results
 if [ $EXIT_CODE -eq 0 ]; then

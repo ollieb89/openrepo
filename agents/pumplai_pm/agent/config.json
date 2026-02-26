@@ -6,23 +6,23 @@
   "delegates_to": "l3_specialist",
   "identity_ref": "agents/pumplai_pm/agent/IDENTITY.md",
   "skill_registry": {
-    "spawn_specialist": {
+    "spawn": {
       "name": "Spawn Specialist (L3)",
       "description": "Spawns isolated L3 specialist containers for code and test execution",
       "timeout_seconds": 660,
-      "skill_path": "skills/spawn_specialist"
+      "skill_path": "skills/spawn"
     },
     "router": {
       "name": "Task Router",
       "description": "Routes incoming directives from L1 to appropriate L3 skill types",
       "timeout_seconds": 120,
-      "skill_path": "skills/router_skill"
+      "skill_path": "skills/router"
     },
     "review": {
       "name": "L3 Work Review",
       "description": "Reviews L3 git diffs on staging branches and merges or rejects to main",
       "timeout_seconds": 300,
-      "skill_path": "skills/review_skill"
+      "skill_path": "skills/review"
     }
   },
   "max_concurrent": 3,

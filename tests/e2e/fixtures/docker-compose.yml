@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  mock-llm:
+    build:
+      context: ../mock_llm
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - FLASK_ENV=testing
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+    networks:
+      - e2e-network
+
+  orchestrator:
+    build:
+      context: ../../..
+      dockerfile: docker/Dockerfile.orchestrator
+    environment:
+      - AUTONOMY_ENABLED=1
+      - MOCK_LLM_URL=http://mock-llm:8080
+      - OPENCLAW_PROJECT=e2e-test
+      - OPENCLAW_ROOT=/workspace/.openclaw
+    volumes:
+      - workspace-data:/workspace/.openclaw
+    depends_on:
+      mock-llm:
+        condition: service_healthy
+    networks:
+      - e2e-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
+
+networks:
+  e2e-network:
+    driver: bridge
+
+volumes:
+  workspace-data:

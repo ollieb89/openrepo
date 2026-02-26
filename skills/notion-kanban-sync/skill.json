@@ -1,0 +1,16 @@
+{
+  "id": "notion-kanban-sync",
+  "name": "Notion Kanban Sync",
+  "description": "Syncs OpenClaw state to Notion kanban board. Handles event sync, conversational capture, and reconciliation.",
+  "owner": "main",
+  "commands": [
+    {
+      "name": "sync",
+      "description": "Handle an event sync, capture, or reconcile request.",
+      "parameters": {
+        "payload": { "type": "string", "required": true }
+      },
+      "handler": "python3 notion_sync.py"
+    }
+  ]
+}

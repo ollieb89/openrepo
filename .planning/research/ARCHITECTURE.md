@@ -1,31 +1,34 @@
 # Architecture Research
 
-**Domain:** AI Swarm Orchestration — v1.4 Operational Maturity Integration
-**Researched:** 2026-02-24
+**Domain:** AI Swarm Orchestration — v1.5 Config Consolidation Integration
+**Researched:** 2026-02-25
 **Confidence:** HIGH — based on direct codebase analysis of all integration points
 
 ---
 
-## Context: What Already Exists (v1.3)
+## Context: What This Document Covers
 
-This document is scoped exclusively to v1.4 feature integration. It describes how graceful
-shutdown, memory health monitoring, L1 strategic suggestions, and delta-based snapshots
-fit into the existing architecture — what to create new, what to modify surgically, and
-what to leave untouched.
+This document is scoped exclusively to v1.5 feature integration. It describes how config
+consolidation (CONF-01..07), Docker health checks (REL-09), cosine threshold calibration
+(QUAL-07), and adaptive monitor polling (OBS-05) fit into the existing architecture.
 
-### Existing Components (Do Not Rewrite)
+For each feature: what to create new, what to modify surgically, and what to leave untouched.
 
-| Component | File | v1.4 Status |
+### Existing Components (Reference Baseline)
+
+| Component | File | Current Role |
 |-----------|------|-------------|
-| JarvisState | `orchestration/state_engine.py` | Modify: add `interrupted_tasks` tracking + `dehydrate_task()` method |
-| L3ContainerPool | `skills/spawn_specialist/pool.py` | Modify: add SIGTERM handler + interrupted task recovery loop |
-| spawn_l3_specialist | `skills/spawn_specialist/spawn.py` | Modify: pass shutdown context to pool; inject `SHUTDOWN_SIGNAL_FILE` env var |
-| entrypoint.sh | `docker/l3-specialist/entrypoint.sh` | Modify: trap SIGTERM for graceful container-side cleanup |
-| MemoryClient | `orchestration/memory_client.py` | Modify: add `list_all()` + `delete()` + `update()` for health monitor |
-| snapshot.py | `orchestration/snapshot.py` | Modify: `capture_semantic_snapshot()` returns delta relative to last-memorized commit |
-| soul_renderer.py | `orchestration/soul_renderer.py` | Unchanged — L1 suggestion output writes to per-project soul-override.md |
-| monitor.py | `orchestration/monitor.py` | Unchanged — CLI monitor reads state only; health + suggestions go to dashboard |
-| occc dashboard | `workspace/occc/src/` | Modify: add memory health panel to `/memory` page; add suggestion panel to `/settings` page |
+| JarvisState | `packages/orchestration/src/openclaw/state_engine.py` | Cross-container state sync |
+| project_config.py | `packages/orchestration/src/openclaw/project_config.py` | Path resolution, pool config loading |
+| config.py | `packages/orchestration/src/openclaw/config.py` | Runtime constants (LOCK_TIMEOUT, POLL_INTERVAL, etc.) |
+| config_validator.py | `packages/orchestration/src/openclaw/config_validator.py` | project.json + agent hierarchy validation |
+| monitor.py | `packages/orchestration/src/openclaw/cli/monitor.py` | CLI monitor with fixed 1s poll interval |
+| spawn.py | `skills/spawn/spawn.py` | L3 container spawning |
+| pool.py | `skills/spawn/pool.py` | Per-project pool management |
+| Dockerfile | `docker/l3-specialist/Dockerfile` | L3 container image — no HEALTHCHECK |
+| entrypoint.sh | `docker/l3-specialist/entrypoint.sh` | L3 task execution with SIGTERM trap |
+| openclaw.json | `config/openclaw.json` | App-level config: agents, gateway, memory, active_project |
+| project.json | `projects/<id>/project.json` | Per-project: workspace, tech_stack, l3_overrides |
 
 ---
 
@@ -35,305 +38,334 @@ what to leave untouched.
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                         OPENCLAW HOST (Ubuntu 24.04)                         │
 │                                                                               │
-│  ┌──────────────────┐    ┌──────────────────────────────────────────────┐   │
-│  │  L1 ClawdiaPrime │    │  Orchestration Layer (Python)                 │   │
-│  │  (L1 agent)      │    │                                               │   │
-│  │                  │    │  pool.py ←──── SIGTERM handler                │   │
-│  │  receives SOUL   │    │    │   dehydrate → state_engine.py            │   │
-│  │  suggestions     │    │    │   recovery loop on restart               │   │
-│  │  (suggestion_    │    │    │                                           │   │
-│  │   engine.py)     │    │  suggestion_engine.py (NEW)                   │   │
-│  └────────┬─────────┘    │    │   reads JarvisState patterns             │   │
-│           │ CLI call     │    │   reads MemoryClient histories           │   │
-│  ┌────────▼─────────┐    │    │   produces SOUL diff proposals           │   │
-│  │  L2 PumplAI_PM   │    │                                               │   │
-│  │  (L2 agent)      │    │  memory_health.py (NEW)                       │   │
-│  └────────┬─────────┘    │    │   polls memU periodically                │   │
-│           │ spawn        │    │   detects stale/conflicting items        │   │
-│  ┌────────▼─────────┐    │    │   writes health report to state dir      │   │
-│  │  pool.py         │    │                                               │   │
-│  │  PoolRegistry    │    │  snapshot.py (MODIFIED)                       │   │
-│  └────────┬─────────┘    │    │   delta-only diff vs last-memorized      │   │
-│           │              │    │   hash stored in state_engine            │   │
-│  ┌────────▼─────────────────────────────────────────────────────────┐   │   │
-│  │  L3 Containers (openclaw-{project}-l3-{task_id})                 │   │   │
-│  │  entrypoint.sh: trap SIGTERM → git stash + update_state         │   │   │
-│  └─────────────────────────────────────────────────────────────────┘   │   │
-│                                                                           │   │
-│  ┌────────────────────────────────────────────────────────────────────┐  │   │
-│  │  occc Next.js :6987                                                │  │   │
-│  │  /memory page: memory health panel (stale/conflict badges)        │  │   │
-│  │  /settings page: L1 suggestion panel (review/apply proposals)     │  │   │
-│  └────────────────────────────────────────────────────────────────────┘  │   │
-│                                                                            │   │
-│  ┌────────────────────────────────────────────────────────────────────┐  │   │
-│  │  memU Service (Docker: openclaw-net)                               │  │   │
-│  │  memU-server :8765 ←──── health checks from memory_health.py      │  │   │
-│  │  PostgreSQL+pgvector                                               │  │   │
-│  └────────────────────────────────────────────────────────────────────┘  │   │
-└───────────────────────────────────────────────────────────────────────────┘
+│  ┌────────────────────────────────────────────────────────────────────────┐  │
+│  │  Config Layer (v1.5 focus)                                             │  │
+│  │                                                                         │  │
+│  │  openclaw.json ──► openclaw_config.py (NEW: schema + migration)       │  │
+│  │       │            └── validate_on_startup() — fail-fast              │  │
+│  │       │                                                                │  │
+│  │  project.json ──► project_config.py (MODIFY: use path_resolver)      │  │
+│  │       │            └── validate_on_startup()                           │  │
+│  │       │                                                                │  │
+│  │  constants.py (NEW) ──► replaces config.py (DEPRECATE)               │  │
+│  │       │            └── single source for LOCK_TIMEOUT, POLL_INTERVAL  │  │
+│  │       │                                                                │  │
+│  │  path_resolver.py (NEW) ──► authoritative workspace path resolution   │  │
+│  │                 └── used by: spawn.py, pool.py, project_config.py,    │  │
+│  │                              state_engine.py, monitor.py              │  │
+│  └────────────────────────────────────────────────────────────────────────┘  │
+│                                                                               │
+│  ┌────────────────────────────────────────────────────────────────────────┐  │
+│  │  Orchestration Layer                                                    │  │
+│  │  pool.py ──► spawn.py                                                  │  │
+│  │    │         └── L3 containers with HEALTHCHECK (REL-09)              │  │
+│  │    │                                                                    │  │
+│  │  monitor.py (MODIFY: adaptive polling — OBS-05)                        │  │
+│  │    └── idle: 5s interval, active: 0.5s interval                       │  │
+│  └────────────────────────────────────────────────────────────────────────┘  │
+│                                                                               │
+│  ┌────────────────────────────────────────────────────────────────────────┐  │
+│  │  L3 Containers (openclaw-{project}-l3-{task})                          │  │
+│  │  Dockerfile HEALTHCHECK: curl -f /health || exit 1                    │  │
+│  │  entrypoint.sh: writes health sentinel file on startup                │  │
+│  └────────────────────────────────────────────────────────────────────────┘  │
+│                                                                               │
+│  ┌────────────────────────────────────────────────────────────────────────┐  │
+│  │  Memory + Dashboard (unchanged by v1.5)                                │  │
+│  │  memU :18791 │ occc Next.js :6987                                     │  │
+│  └────────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## Feature Integration Analysis
 
-### Feature 1: Graceful Shutdown with Task Recovery
+### Feature 1: Config Consolidation (CONF-01..07)
+
+**Problem being solved:**
+
+The existing codebase has config fragmentation:
+- `config.py` holds runtime constants (POLL_INTERVAL, LOCK_TIMEOUT, CACHE_TTL_SECONDS, ACTIVITY_LOG_MAX_ENTRIES)
+- `project_config.py` holds pool config defaults (`_POOL_CONFIG_DEFAULTS`) — duplicated in `pool.py` (`_POOL_DEFAULTS`)
+- `project_config.py:_find_project_root()` resolves the root via env var + file traversal, but `monitor.py:_discover_projects()` uses a different resolution: `Path(__file__).parent.parent` (resolves relative to monitor.py file location, not OPENCLAW_ROOT)
+- Workspace paths: `project_config.py:get_state_path()` returns `<root>/workspace/.openclaw/<project_id>/workspace-state.json`, but `data/workspace/` is where runtime data actually lives (noted as known limitation in PROJECT.md)
+- `openclaw.json` schema: no formal JSON Schema, validation is only for `agents.list` hierarchy
+- `project.json` validation: requires `workspace` + `tech_stack` but does not validate `workspace` is an existing path
+- Constants are scattered: `MEMORY_CONTEXT_BUDGET = 2000` hardcoded in `spawn.py`, `_RETRIEVE_TIMEOUT` hardcoded in `spawn.py`, pool defaults duplicated in `project_config.py` and `pool.py`
 
 **Integration points:**
 
-The SIGTERM originates at the host process level (pool.py runs inside the L2 agent process).
-L3 containers are separate Docker processes that also need SIGTERM awareness.
-
-**Two-path shutdown:**
-
 ```
-Host SIGTERM received
-    ↓
-pool.py SIGTERM handler fires
-    ├── Dehydrate in-flight tasks → state_engine.py: update status "interrupted"
-    ├── Send SIGTERM to each active Docker container
-    └── Wait up to 30s for containers to exit gracefully
+CONF-01: Single authoritative workspace path resolver
+  New: packages/orchestration/src/openclaw/path_resolver.py
+  Modified: project_config.py (call path_resolver instead of building paths inline)
+  Modified: monitor.py:_discover_projects() (call path_resolver instead of Path(__file__)...)
+  Modified: state_engine.py (if any paths are built inline — currently takes path as argument, OK)
+  Modified: spawn.py (verify it uses get_state_path() consistently — currently does via project_config)
 
-L3 Container receives SIGTERM (from Docker stop or host relay)
-    ↓
-entrypoint.sh trap handler fires
-    ├── git stash current changes (preserves partial work)
-    ├── update_state "interrupted" via Python call
-    └── exit 0 (clean exit — pool.py sees exit code 0 but status=interrupted)
+CONF-02: openclaw.json schema cleanup + documented validation
+  Modified: config_validator.py (add validate_openclaw_config() function)
+  Modified: project_config.py:load_and_validate_openclaw_config() (call new validator)
+  New: config/openclaw.schema.json (JSON Schema for documentation + external tools)
+  No change to openclaw.json itself — schema must accept the current structure
+
+CONF-03: Migration CLI
+  New: packages/orchestration/src/openclaw/cli/migrate_config.py (already exists at migrate_state.py — check)
+  Expose as: openclaw-migrate entry point in pyproject.toml
+
+CONF-04: Env var precedence documented + enforced
+  Modified: project_config.py (audit all os.environ.get() calls, document precedence order)
+  Env vars in use: OPENCLAW_ROOT, OPENCLAW_PROJECT, OPENCLAW_LOG_LEVEL, OPENCLAW_ACTIVITY_LOG_MAX
+  No code structure change needed — precedence is already implemented, needs documentation + test
+
+CONF-05: Constants consolidated
+  New: packages/orchestration/src/openclaw/constants.py
+    — moves all values from config.py
+    — adds MEMORY_CONTEXT_BUDGET (from spawn.py)
+    — resolves _POOL_CONFIG_DEFAULTS duplication (project_config.py vs pool.py)
+  Modified: config.py → thin re-export shim (backward compat, add deprecation comment)
+  Modified: spawn.py (import MEMORY_CONTEXT_BUDGET from constants)
+  Modified: pool.py (import _POOL_DEFAULTS from constants)
+
+CONF-06: Strict fail-fast startup validation
+  Modified: project_config.py:load_project_config() — already calls validate_project_config()
+  Modified: project_config.py:load_and_validate_openclaw_config() — call new validate_openclaw_config()
+  New behavior: both raise ConfigValidationError on missing required fields (already true for project.json)
+  New: validate_openclaw_config() validates: source_directories is list, gateway.port is int, memory.memu_api_url is string
+
+CONF-07: Config integration test suite
+  New: packages/orchestration/tests/test_config_integration.py
+    — tests path resolver with various OPENCLAW_ROOT values
+    — tests validate_openclaw_config() against valid + invalid fixtures
+    — tests validate_project_config() edge cases
+    — tests env var precedence: OPENCLAW_PROJECT > active_project
+    — tests migration CLI with synthetic old-format config
 ```
 
-**Recovery on restart:**
+**Key architectural decision for CONF-01 — path resolver:**
 
+The core path divergence is `<root>/workspace/` in code vs `data/workspace/` at runtime.
+Resolution: `path_resolver.py` must read the actual data directory from config, not assume a
+hardcoded `workspace/` subdirectory. The `OPENCLAW_ROOT` env var (or `_find_project_root()`)
+gives the repo root; the state/snapshot files should live under a configurable `data_dir`
+(default: `<root>/workspace/`).
+
+```python
+# path_resolver.py
+def get_state_file(project_id: str) -> Path:
+    """Single authoritative path for workspace-state.json."""
+    root = _get_openclaw_root()
+    data_dir = _get_data_dir(root)  # reads from config or defaults to root/workspace
+    return data_dir / ".openclaw" / project_id / "workspace-state.json"
+
+def _get_data_dir(root: Path) -> Path:
+    """Reads openclaw.json data_dir field, falls back to root/workspace."""
+    # This resolves the runtime data vs code-resolved path divergence
+    cfg = _load_openclaw_config_cached(root)
+    return Path(cfg.get("data_dir", str(root / "workspace")))
 ```
-pool.py (or PoolRegistry) initialized
-    ↓
-read JarvisState.list_tasks_by_status("interrupted")
-    ↓
-for each interrupted task:
-    - re-spawn with original task_description + skill_hint from state
-    - set retry_count = 0 (fresh attempt)
-    - log "recovered task {task_id} from interrupted state"
-```
 
-**State engine changes required:**
-
-`state_engine.py` needs `interrupted` as a valid task status (currently not in the
-terminal states set). The existing `update_task()` method handles it without code changes —
-only the caller logic needs to understand the new status. However, `list_active_tasks()`
-filters out `completed` and `failed` — `interrupted` should NOT be in terminal states so it
-appears in active task lists for recovery.
-
-**New method needed:** `list_tasks_by_status(status: str) -> List[str]` for recovery loop
-to find exactly the interrupted tasks. Alternatively, `list_all_tasks()` already exists and
-the recovery loop can filter by status client-side.
-
-**Modified files:**
-- `skills/spawn_specialist/pool.py` — SIGTERM handler, dehydration, recovery loop
-- `docker/l3-specialist/entrypoint.sh` — `trap cleanup SIGTERM` before task execution
-- `orchestration/state_engine.py` — `interrupted` status awareness (minor: add to docstring / status constants)
-
-**New files:** None required. The recovery loop lives entirely in pool.py.
+This means:
+- `openclaw.json` gets an optional `data_dir` field (CONF-02 schema cleanup adds this)
+- All path-building code in `project_config.py` delegates to `path_resolver.py`
+- `monitor.py:_discover_projects()` uses `path_resolver.get_state_file(project_id)` instead of `Path(__file__).parent.parent / "workspace"...`
 
 ---
 
-### Feature 2: Memory Health Monitoring
+### Feature 2: Docker Health Checks (REL-09)
+
+**Problem being solved:**
+
+L3 containers have no HEALTHCHECK in the Dockerfile. Docker reports them as healthy by
+default (no health status). Pool.py cannot distinguish "container started but CLI not ready"
+from "container fully initialized." Dashboard container list has no health indicators.
 
 **Integration points:**
 
-The health monitor is a periodic background service that reads memU inventory and applies
-heuristics to detect problems. It is NOT in the hot path (spawn/monitor/review).
-
-**Architecture decision: standalone module, not embedded in MemoryClient**
-
-`orchestration/memory_health.py` (new) — runs either as a background thread started by
-pool.py on init, or as a cron-style invocation from an occc API route. The simpler option
-is an on-demand API route: dashboard calls `/api/memory/health` which runs the health check
-synchronously and caches the result server-side for 5 minutes.
-
-**Health checks:**
-
 ```
-memory_health.py:
+Dockerfile:
+  Add HEALTHCHECK instruction pointing to a sentinel file written by entrypoint.sh
+  Strategy: file-based (not HTTP) because L3 containers have no HTTP server
 
-1. Connectivity check
-   GET /health → memU initialized?
+  HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=3 \
+    CMD test -f /tmp/openclaw-healthy || exit 1
 
-2. Stale memory detection
-   GET all items for project → filter items older than staleness_threshold_days
-   (staleness = item created_at far in the past + low retrieval score)
+entrypoint.sh:
+  Write sentinel file after successful startup checks (after staging branch creation,
+  before task execution):
+    touch /tmp/openclaw-healthy
 
-3. Conflict detection
-   Semantic similarity scan: retrieve items with high cosine similarity but
-   contradictory content (e.g., "always use X" vs "never use X")
-   Strategy: group items by category → compare top-N pairs → flag similarity > 0.92
+  Remove sentinel on SIGTERM handler (signals unhealthy to Docker):
+    rm -f /tmp/openclaw-healthy
 
-4. Volume check
-   Count items per project → warn if > volume_warn_threshold (default: 500)
+spawn.py (optional):
+  After container.run() returns container object, optionally poll container.health
+  for container readiness before marking as started in JarvisState. This is low-priority —
+  current behavior (immediate status update) is acceptable.
 
-5. Orphaned items check
-   Items scoped to project_ids that no longer exist in projects/ directory
+Dashboard:
+  The occc containers endpoint already returns container data from docker.containers.list().
+  Docker SDK container.attrs['State']['Health']['Status'] gives: 'healthy', 'unhealthy',
+  'starting', or absent (no healthcheck). Add health status to the API response and render
+  it as a badge in the container list component.
 ```
 
-**Health report storage:**
+**Minimal viable approach (recommended):**
 
-Write to `workspace/.openclaw/{project_id}/memory-health.json`:
-```json
-{
-  "generated_at": 1234567890.0,
-  "project_id": "pumplai",
-  "status": "warning",
-  "checks": {
-    "connectivity": {"ok": true},
-    "stale_items": {"count": 12, "ids": [...]},
-    "conflicts": {"pairs": [{"id_a": "...", "id_b": "...", "similarity": 0.94}]},
-    "volume": {"total": 347, "warn_at": 500}
-  }
-}
-```
+Phase this feature:
+1. Dockerfile + entrypoint.sh changes only — gives Docker daemon health visibility
+2. Dashboard health badge — surface it in the container list
 
-**Dashboard integration:**
-
-Extend `/memory` page with a health banner (red/yellow/green) reading from
-`/api/memory/health?project={id}`. Health check is on-demand + cached — no background
-polling needed from the dashboard. The "manual override" UI is a delete button on flagged
-items (already possible via existing `/api/memory` DELETE route from v1.3, or a new route
-if that wasn't built).
+Skipping spawn.py readiness-wait: The current spawn flow updates JarvisState immediately
+after `container.run()` returns. Waiting for health=healthy before updating state adds
+latency and complexity (needs a polling loop with timeout). Not worth it — the SIGTERM
+behavior and state engine already handle failure recovery.
 
 **Modified files:**
-- `orchestration/memory_client.py` — add `list_all(project_id)` + `delete(item_id)` methods
-- `workspace/occc/src/app/api/memory/health/route.ts` — new route, on-demand + cached
-- `workspace/occc/src/app/memory/page.tsx` — extend with health banner + flagged items panel
-
-**New files:**
-- `orchestration/memory_health.py` — health check logic, reads via MemoryClient
-
----
-
-### Feature 3: L1 Strategic SOUL Suggestions
-
-**Integration points:**
-
-L1 (ClawdiaPrime) receives suggestions for modifying L2/L3 SOUL templates based on observed
-task failure/success patterns. This is an analytical pipeline — reads patterns, produces
-proposed diffs, surfaces them to L1 via dashboard. L1 reviews and applies.
-
-**Architecture decision: suggestion engine as standalone orchestration module**
-
-The suggestion engine does NOT modify SOUL files automatically. It proposes changes that
-L1 reviews in the dashboard and explicitly approves. This preserves the human-in-loop
-principle for SOUL evolution.
-
-```
-suggestion_engine.py (new):
-
-Input sources:
-  1. JarvisState.list_all_tasks() → task outcomes (completed/failed/timeout/retry_count)
-  2. MemoryClient.retrieve(query="task failures") → L2 review decisions
-  3. Task metadata: skill_hint, description patterns, retry frequency
-
-Analysis:
-  1. Failure pattern detection
-     - Tasks with retry_count > 0 grouped by skill_hint + description keyword
-     - Common failure log substrings extracted from activity_log entries
-
-  2. Success pattern extraction
-     - Tasks completed on first attempt grouped by characteristics
-     - Extract what made them succeed (description structure, skill_hint)
-
-  3. Suggestion generation
-     - If skill=code failure rate > 30%: suggest SOUL amendment adding known pitfall
-     - If review decisions show recurring rejection reason: suggest L3 SOUL clarity change
-     - Output: list of SuggestionItem(section, current_text, proposed_text, confidence, evidence)
-
-Output:
-  workspace/.openclaw/{project_id}/soul-suggestions.json
-  (JSON list of suggestion items, each with section, proposed_change, evidence, applied=false)
-```
-
-**Apply flow:**
-
-```
-Dashboard /settings page → L1 reviews suggestion list
-    ↓
-L1 clicks "Apply" on a suggestion
-    ↓
-POST /api/suggestions/apply {project_id, suggestion_id}
-    ↓
-API route calls soul_renderer.py logic to write to soul-override.md
-  (using existing parse_sections() + merge_sections() pattern)
-    ↓
-soul-override.md updated → next L3 spawn picks it up via existing render_soul()
-```
-
-**This reuses the existing SOUL override mechanism entirely.** `soul_renderer.py` already
-supports per-project `soul-override.md` via `merge_sections()`. Suggestions simply propose
-additions or replacements to sections in that file.
-
-**Modified files:**
-- `workspace/occc/src/app/settings/page.tsx` — extend with suggestions panel (or new `/decisions` page if settings is already complex)
-- `workspace/occc/src/app/api/suggestions/` — new route directory
-
-**New files:**
-- `orchestration/suggestion_engine.py` — pattern analysis + suggestion generation
-- `workspace/occc/src/app/api/suggestions/route.ts` — list suggestions
-- `workspace/occc/src/app/api/suggestions/apply/route.ts` — apply suggestion to soul-override.md
-
----
-
-### Feature 4: Delta-Based Memory Snapshots
-
-**Integration points:**
-
-Currently `pool.py` memorizes the full `.diff` file (entire diff from default branch to
-HEAD) after task completion. For long-running tasks with many commits, this diff grows large
-and contains content already memorized from prior tasks.
-
-**Problem:** The current snapshot in `snapshot.py` produces a diff from `{default_branch}...HEAD`,
-which is the cumulative diff since the L3 branch was created. Each L3 task starts fresh
-from a new staging branch, so the diff is naturally task-scoped already. The actual issue
-is that the diff content passed to memU is the full file snapshot (including metadata
-header), not a delta of what changed since the last memorize call.
-
-**True delta scenario:**
-
-Within a single task, if `pool.py` calls memorize at multiple checkpoints (currently it
-does not — it calls once at completion), a delta would avoid re-memorizing unchanged parts.
-The simpler interpretation is: **delta = only the new commits since the last memorize**,
-useful when a task does multiple git commits during execution.
-
-**Architecture decision: track last-memorized commit hash in state_engine**
-
-```
-state_engine.py:
-  task entry gains optional field: "last_memorized_commit": "<sha>"
-
-snapshot.py — new function:
-  capture_delta_snapshot(task_id, workspace_path, project_id, since_commit=None):
-    if since_commit:
-      diff = git diff {since_commit}...HEAD  # delta since last memorize
-    else:
-      diff = git diff {default_branch}...HEAD  # full diff (first memorize)
-    save to {task_id}-delta-{sha[:8]}.diff
-
-pool.py — modified memorize path:
-  sha = git rev-parse HEAD (sync call)
-  last_sha = jarvis.read_task(task_id).get("last_memorized_commit")
-  content = capture_delta_snapshot(task_id, ..., since_commit=last_sha)
-  await memorize(content)
-  jarvis.set_task_metric(task_id, "last_memorized_commit", sha)
-```
-
-**Practical impact:** For typical short tasks (single git commit), delta = full diff (no
-change in behavior). For long tasks with multiple commits, delta reduces memorize payload
-size. The bookkeeping cost is one extra `git rev-parse HEAD` call and one state engine write.
-
-**Modified files:**
-- `orchestration/snapshot.py` — add `capture_delta_snapshot()` function
-- `orchestration/state_engine.py` — `last_memorized_commit` field in task metadata (no API change needed — `set_task_metric()` handles arbitrary keys)
-- `skills/spawn_specialist/pool.py` — `_memorize_snapshot_fire_and_forget()` uses delta path
+- `docker/l3-specialist/Dockerfile` — add `HEALTHCHECK` instruction
+- `docker/l3-specialist/entrypoint.sh` — `touch /tmp/openclaw-healthy` after staging branch setup
+- `packages/dashboard/src/app/api/swarm/` — return `healthStatus` field in container response
+- `packages/dashboard/src/components/` — add health badge to container row
 
 **New files:** None required.
+
+---
+
+### Feature 3: Cosine Similarity Threshold Calibration (QUAL-07)
+
+**Problem being solved:**
+
+The v1.4 memory conflict detection uses a hardcoded cosine similarity threshold of 0.92
+(noted in PROJECT.md as "Revisit — threshold needs empirical tuning under real workload").
+At 0.92, true duplicates (exact rewrites) are caught but near-conflicts (contradictory
+advice phrased differently) may be missed. At too low a threshold (e.g., 0.7), unrelated
+memories with similar domain vocabulary generate false positives.
+
+**Integration points:**
+
+The threshold is currently hardcoded in `orchestration/memory_health.py` (new in v1.4).
+Calibration means making it configurable + providing tooling to tune it empirically.
+
+```
+constants.py (NEW via CONF-05):
+  MEMORY_CONFLICT_SIMILARITY_THRESHOLD = 0.92  # current default
+  MEMORY_STALENESS_DAYS = 30                   # current default
+
+openclaw.json (CONF-02 schema addition):
+  "memory": {
+    "memu_api_url": "http://localhost:18791",
+    "conflict_threshold": 0.92,   # optional, defaults to constant
+    "staleness_days": 30          # optional, defaults to constant
+  }
+
+project_config.py (new helper):
+  def get_memory_health_config() -> Dict[str, Any]:
+      """Read conflict_threshold and staleness_days from openclaw.json memory section."""
+      # reads memory{} stanza, falls back to constants.py values
+
+memory_health.py (MODIFY):
+  Accept threshold as parameter (not hardcoded):
+    def run_checks(project_id, conflict_threshold=None, staleness_days=None):
+        cfg = get_memory_health_config()
+        threshold = conflict_threshold or cfg["conflict_threshold"]
+        ...
+
+Calibration tooling (CONF-07 test suite can include):
+  New: packages/orchestration/tests/fixtures/memory_calibration/
+    — synthetic memory items with known conflict/non-conflict pairs
+    — test that default threshold correctly classifies them
+    — provides a basis for empirical tuning against real memU data
+```
+
+**Calibration workflow (operational, not code):**
+
+1. Run memory_health.py with threshold 0.85 against real memU data → count flagged pairs
+2. Manual inspection of flagged pairs → calculate precision (true conflicts / flagged)
+3. Repeat with 0.88, 0.92, 0.95 → pick threshold where precision > 80%
+4. Update `openclaw.json memory.conflict_threshold` to calibrated value
+5. Update constant default to match empirical finding
+
+This is an operational concern, not a pure code concern. The code change is: make threshold
+configurable. The calibration itself happens at runtime.
+
+**Modified files:**
+- `packages/orchestration/src/openclaw/constants.py` (new, as part of CONF-05)
+- `packages/orchestration/src/openclaw/project_config.py` — add `get_memory_health_config()`
+- `packages/orchestration/src/openclaw/memory_health.py` — accept threshold as parameter
+- `config/openclaw.json` — add optional `conflict_threshold` + `staleness_days` to memory stanza
+
+**New files:** `packages/orchestration/tests/fixtures/memory_calibration/` (test fixtures)
+
+---
+
+### Feature 4: Adaptive Monitor Polling (OBS-05)
+
+**Problem being solved:**
+
+`monitor.py:tail_state()` polls at a fixed 1-second interval (from `config.POLL_INTERVAL`).
+When the swarm is idle (no active tasks), this wastes CPU and generates noisy debug logs.
+When the swarm is busy, 1 second may feel slow for real-time visibility.
+
+**Integration points:**
+
+The adaptive logic belongs entirely within `tail_state()` in `monitor.py`. No other
+components need to change.
+
+```
+monitor.py:tail_state() — MODIFY:
+
+Current: fixed time.sleep(interval)
+
+New: adaptive interval based on detected activity
+
+def _compute_adaptive_interval(
+    last_seen_active: Optional[float],    # timestamp of last observed in_progress/starting task
+    current_active_count: int,            # tasks currently in active statuses
+    base_interval: float,                 # from constants.POLL_INTERVAL (1.0s)
+    fast_interval: float,                 # from constants.POLL_INTERVAL_ACTIVE (0.5s)
+    idle_interval: float,                 # from constants.POLL_INTERVAL_IDLE (5.0s)
+    cooldown_seconds: float = 10.0,       # stay fast for N seconds after last active task
+) -> float:
+    if current_active_count > 0:
+        return fast_interval
+    if last_seen_active and (time.time() - last_seen_active) < cooldown_seconds:
+        return base_interval   # cooldown: just finished, stay at normal speed
+    return idle_interval       # truly idle
+
+constants.py (NEW):
+  POLL_INTERVAL = 1.0           # base (current behavior)
+  POLL_INTERVAL_ACTIVE = 0.5    # fast mode: active tasks detected
+  POLL_INTERVAL_IDLE = 5.0      # idle mode: no tasks for > cooldown_seconds
+
+config.py (MODIFY: re-export from constants, add new names):
+  from .constants import POLL_INTERVAL, POLL_INTERVAL_ACTIVE, POLL_INTERVAL_IDLE
+```
+
+**State tracking needed in tail_state():**
+
+```python
+# Within the while True loop:
+total_active = sum(
+    1 for proj_id, _ in projects
+    for task in js_instances.get(proj_id, ...)
+    if task.get("status") in ACTIVE_STATUSES
+)
+if total_active > 0:
+    last_seen_active = time.time()
+
+interval = _compute_adaptive_interval(last_seen_active, total_active, ...)
+time.sleep(interval)
+```
+
+This is self-contained — no changes to JarvisState, spawn.py, or pool.py.
+
+**Modified files:**
+- `packages/orchestration/src/openclaw/constants.py` (new, as part of CONF-05)
+- `packages/orchestration/src/openclaw/cli/monitor.py` — adaptive interval logic in `tail_state()`
+- `packages/orchestration/src/openclaw/config.py` — re-export new constants (backward compat)
+
+**New files:** None.
 
 ---
 
@@ -343,312 +375,342 @@ size. The bookkeeping cost is one extra `git rev-parse HEAD` call and one state 
 
 | Component | Responsibility | Location |
 |-----------|---------------|----------|
-| `memory_health.py` | Periodic health checks: connectivity, stale item detection, conflict detection, volume warnings | `orchestration/memory_health.py` |
-| `suggestion_engine.py` | Pattern analysis from JarvisState + memU, produces SuggestionItem proposals for SOUL evolution | `orchestration/suggestion_engine.py` |
-| Memory Health API route | On-demand health check endpoint, 5min server-side cache | `workspace/occc/src/app/api/memory/health/route.ts` |
-| Suggestions API routes | List suggestions + apply-to-soul-override endpoint | `workspace/occc/src/app/api/suggestions/route.ts` + `apply/route.ts` |
+| `path_resolver.py` | Single authoritative resolver for all runtime data paths (state files, snapshot dirs, health reports, soul files) | `packages/orchestration/src/openclaw/path_resolver.py` |
+| `constants.py` | All module-level constants consolidated: timeouts, intervals, memory budget, pool defaults, threshold defaults | `packages/orchestration/src/openclaw/constants.py` |
+| `openclaw.schema.json` | JSON Schema for openclaw.json — documents required fields, optional fields, types | `config/openclaw.schema.json` |
+| `test_config_integration.py` | Integration tests: path resolution, validation, env var precedence, migration | `packages/orchestration/tests/test_config_integration.py` |
+| `migrate_config.py` | CLI subcommand: detect old config shape, produce upgraded version with new optional fields | `packages/orchestration/src/openclaw/cli/migrate_config.py` |
+
+Note: `migrate_state.py` already exists at `packages/orchestration/src/openclaw/cli/migrate_state.py` —
+the config migration is a separate file scoped to `openclaw.json` and `project.json` format upgrades.
 
 ### Modified Components (surgical changes only)
 
 | Component | What Changes | Risk |
 |-----------|-------------|------|
-| `skills/spawn_specialist/pool.py` | SIGTERM handler registration; dehydration call; recovery loop on init; delta snapshot path in `_memorize_snapshot_fire_and_forget()` | MEDIUM — async signal handling in Python needs care |
-| `docker/l3-specialist/entrypoint.sh` | Add `trap cleanup_handler SIGTERM` before task execution; `cleanup_handler` stashes + updates state | LOW — bash trap is well-understood |
-| `orchestration/state_engine.py` | Add `interrupted` to status docstring; `list_tasks_by_status()` helper method | LOW — additive only |
-| `orchestration/snapshot.py` | Add `capture_delta_snapshot()` alongside existing `capture_semantic_snapshot()` | LOW — new function, existing function unchanged |
-| `orchestration/memory_client.py` | Add `list_all()` (paginated GET /memories) + `delete(item_id)` (DELETE /memories/{id}) methods | LOW — additive |
-| `workspace/occc/src/app/memory/page.tsx` | Add health banner section reading from `/api/memory/health` | LOW — additive |
-| `workspace/occc/src/app/settings/page.tsx` | Add SOUL suggestions panel (or `/decisions/page.tsx` if settings is overcrowded) | LOW — additive |
+| `config.py` | Becomes a thin re-export shim pointing to `constants.py` — backward compat preserved | LOW — additive deprecation only |
+| `config_validator.py` | Add `validate_openclaw_config()` for openclaw.json fields (source_directories, gateway.port, memory stanza) | LOW — additive |
+| `project_config.py` | Path-building calls delegate to `path_resolver.py`; add `get_memory_health_config()` | MEDIUM — path resolution is used everywhere; requires careful testing |
+| `monitor.py` | Adaptive interval in `tail_state()`; use `path_resolver.get_state_file()` in `_discover_projects()` | LOW — self-contained logic change |
+| `spawn.py` | Import `MEMORY_CONTEXT_BUDGET` from `constants.py` instead of inline | LOW — pure import change |
+| `pool.py` | Import `_POOL_DEFAULTS` from `constants.py` instead of inline | LOW — pure import change |
+| `memory_health.py` | Accept `conflict_threshold` as parameter; read from `get_memory_health_config()` | LOW — additive parameter |
+| `docker/l3-specialist/Dockerfile` | Add `HEALTHCHECK` instruction | LOW — additive |
+| `docker/l3-specialist/entrypoint.sh` | `touch /tmp/openclaw-healthy` after staging branch setup; `rm -f` in SIGTERM handler | LOW — minimal bash change |
+| `config/openclaw.json` | Add optional `data_dir`, `memory.conflict_threshold`, `memory.staleness_days` fields | LOW — backward compatible additions |
+| Dashboard containers component | Add `healthStatus` badge to container row | LOW — additive UI |
+
+### Untouched Components
+
+| Component | Why Untouched |
+|-----------|---------------|
+| `state_engine.py` | Takes path as constructor argument — not responsible for path resolution |
+| `snapshot.py` | Path passed from caller — unaffected by path resolver refactor |
+| `soul_renderer.py` | Already reads workspace from project config via correct path |
+| `memory_client.py` | HTTP client only — no filesystem paths |
+| `memory_health.py` (algorithm) | Logic unchanged — only threshold becomes configurable |
+| `suggestion_engine.py` | Reads from JarvisState + memU — no path changes needed |
+| Dashboard pages | `/memory`, `/settings` — only containers list gets health badge |
 
 ---
 
 ## Data Flows
 
-### Flow 1: Graceful Shutdown
+### Flow 1: Config Load (CONF-01, CONF-06)
 
 ```
-SIGTERM → host process (pool.py event loop)
+Process startup (spawn.py, pool.py, monitor.py)
     ↓
-asyncio signal handler: set shutdown_event
+import project_config  →  load_and_validate_openclaw_config()
+    ├── open config/openclaw.json
+    ├── validate_openclaw_config() — fail-fast on missing required fields
+    │   (source_directories: list, gateway.port: int, memory.memu_api_url: str)
+    └── validate_agent_hierarchy() — existing
     ↓
-for each task_id in self.active_containers:
-    container.kill(signal="SIGTERM")
-    jarvis.update_task(task_id, "interrupted", "SIGTERM received, container signalled")
+get_active_project_id() → OPENCLAW_PROJECT env var (priority) OR active_project field
     ↓
-wait up to 30s for containers.wait() to return
+load_project_config(project_id)
+    ├── open projects/<id>/project.json
+    ├── validate_project_config() — fail-fast (existing behavior)
+    └── validate workspace path exists (new: CONF-06)
     ↓
-remaining containers: force-remove
-    ↓
-process exits cleanly
-
-L3 container receives SIGTERM:
-    ↓
-entrypoint.sh trap: git stash push -m "interrupted-{TASK_ID}"
-    ↓
-python update_state(TASK_ID, "interrupted", "SIGTERM received")
-    ↓
-exit 0
-
-On next pool.py startup:
-    ↓
-jarvis.list_all_tasks() → filter status == "interrupted"
-    ↓
-for each interrupted task: re-submit to pool as new spawn
-    (original task_description + skill_hint preserved in state metadata)
+path_resolver.get_state_file(project_id)
+    ├── reads data_dir from openclaw.json (or defaults to <root>/workspace)
+    └── returns authoritative Path for workspace-state.json
 ```
 
-### Flow 2: Memory Health Check
+### Flow 2: Adaptive Monitor Poll (OBS-05)
 
 ```
-Dashboard loads /memory page
+monitor.py tail_state() starts
     ↓
-GET /api/memory/health?project=pumplai
+POLL intervals loaded from constants.py (1.0s, 0.5s, 5.0s)
     ↓
-API route checks cache (< 5 min old): return cached if fresh
+while True:
+    poll all projects → read JarvisState
+    count active tasks across all projects
+    if active > 0:
+        last_seen_active = now
     ↓
-Cache miss: call memory_health.run_checks(project_id)
-    ├── memory_client.health() → connectivity status
-    ├── memory_client.list_all(project_id) → all items
-    │   ├── flag items with age > staleness_days
-    │   └── run similarity scan on top-N items for conflicts
-    └── count total items → volume warning
+    _compute_adaptive_interval(last_seen_active, active_count, ...)
+    → active > 0: 0.5s
+    → active == 0 and now - last_seen_active < 10s: 1.0s (cooldown)
+    → active == 0 and cooldown expired: 5.0s
     ↓
-Write health-report.json to .openclaw/{project_id}/
-    ↓
-Return HealthReport to API route → cache → return to dashboard
-    ↓
-Dashboard renders: green/yellow/red banner + flagged items list
-User clicks delete on flagged item:
-    ↓
-DELETE /api/memory/{item_id}?project=pumplai
-    ↓
-memory_client.delete(item_id)
+    time.sleep(computed_interval)
 ```
 
-### Flow 3: L1 Strategic Suggestion
+### Flow 3: Docker Health Check (REL-09)
 
 ```
-L1 or operator triggers suggestion analysis
+spawn_l3_specialist() called
     ↓
-GET /api/suggestions/run?project=pumplai
+container.run(...) → container started
     ↓
-suggestion_engine.analyze(project_id):
-    ├── read JarvisState.list_all_tasks() → task outcomes + retry counts
-    ├── memory_client.retrieve("task failures patterns") → L2 decisions
-    └── pattern analysis → List[SuggestionItem]
+Docker daemon runs HEALTHCHECK every 10s:
+    test -f /tmp/openclaw-healthy
+    start-period: 15s (no checks while container initializes)
+    retries: 3 before marking unhealthy
     ↓
-Write soul-suggestions.json to .openclaw/{project_id}/
+entrypoint.sh executes:
+    setup → git checkout staging branch → touch /tmp/openclaw-healthy → execute task
+    (Health = starting → healthy after first successful check)
     ↓
-GET /api/suggestions?project=pumplai → returns pending suggestions
+SIGTERM received → rm -f /tmp/openclaw-healthy
+    (Docker marks container as unhealthy if SIGTERM arrives before task completion)
     ↓
-Dashboard /settings page renders suggestion list
-    ↓
-L1 reviews, clicks "Apply" on accepted suggestion
-    ↓
-POST /api/suggestions/apply {project_id, suggestion_id}
-    ↓
-API route: read soul-override.md (or empty if missing)
-    parse_sections() + merge_sections() with new/modified section
-    write updated soul-override.md
-    mark suggestion as applied in soul-suggestions.json
-    ↓
-Next L3 spawn: render_soul() picks up updated soul-override.md automatically
+Dashboard:
+    GET /api/swarm/containers → Docker SDK container.attrs['State']['Health']['Status']
+    → render badge: healthy (green), starting (yellow), unhealthy (red), none (grey)
 ```
 
-### Flow 4: Delta Memory Snapshot
+### Flow 4: Threshold-Configurable Conflict Detection (QUAL-07)
 
 ```
-Task completes in pool.py _attempt_task()
+Dashboard loads /memory → GET /api/memory/health?project=pumplai
     ↓
-asyncio.create_task(_memorize_snapshot_fire_and_forget(...))
+API route calls memory_health.run_checks(project_id)
     ↓
-Read last_memorized_commit from JarvisState task metadata
+memory_health.run_checks():
+    cfg = get_memory_health_config(project_id)
+    threshold = cfg["conflict_threshold"]  # from openclaw.json or constant default
+    staleness_days = cfg["staleness_days"]
     ↓
-snapshot.capture_delta_snapshot(task_id, workspace, project_id, since_commit)
-    ├── if since_commit is None: full diff (first memorize, existing behavior)
-    └── if since_commit set: git diff {since_commit}...HEAD (delta only)
+    run conflict scan with threshold
+    → pairs with cosine similarity > threshold flagged as conflicts
     ↓
-Build memorize payload with delta content (smaller if multi-commit task)
-    ↓
-MemoryClient.memorize(delta_content)
-    ↓
-On success: jarvis.set_task_metric(task_id, "last_memorized_commit", current_sha)
+return HealthReport with flagged pairs
 ```
 
 ---
 
 ## Build Order (Phase Dependencies)
 
-The four features are largely independent — they touch different parts of the system. This
-ordering minimizes risk by building foundational changes before dependent features.
+Features are largely independent but share the constants.py and path_resolver.py foundations.
+Build the foundation first to avoid repeated partial changes.
 
 ```
-Phase 1: Graceful Shutdown — SIGTERM handling
-  WHY FIRST: Foundational reliability; required before long-running production use.
-  Touches: pool.py, entrypoint.sh, state_engine.py (minor)
-  Test: send SIGTERM to pool process → verify interrupted state in state.json → verify recovery spawns on next start
-  No dependencies on other v1.4 features.
+Phase 1: Constants + Path Resolver (CONF-05, CONF-01 foundation)
+  WHY FIRST: Foundation that all other phases depend on.
+              Resolve _POOL_DEFAULTS duplication, move MEMORY_CONTEXT_BUDGET,
+              create path_resolver.py, update project_config.py to use it.
+  Touches: constants.py (new), path_resolver.py (new), config.py (shim),
+           project_config.py (delegate to path_resolver), spawn.py (import),
+           pool.py (import), monitor.py (use path_resolver in _discover_projects)
+  Test: existing 148 tests still pass
 
-Phase 2: Delta Snapshots — snapshot.py + pool.py memorize path
-  WHY SECOND: Pure backend optimization; no dashboard needed; verifiable with existing tools.
-  Touches: snapshot.py (new function), pool.py (memorize path), state_engine.py (last_memorized_commit metric)
-  Test: spawn task with multiple commits → verify delta diff is smaller than full diff → verify memU item contains only new changes
-  Depends on: nothing (but builds on Phase 1 pool.py changes — schedule after Phase 1 to avoid merge conflicts)
+Phase 2: openclaw.json Schema + Validation (CONF-02, CONF-04, CONF-06)
+  WHY SECOND: Depends on constants.py (threshold defaults); adds validation layer.
+  Touches: config_validator.py (+validate_openclaw_config), project_config.py
+           (+validate workspace path), openclaw.json (+data_dir, +memory.conflict_threshold),
+           openclaw.schema.json (new)
+  Test: validation tests against good/bad openclaw.json fixtures
 
-Phase 3: Memory Health Monitor
-  WHY THIRD: Backend logic + API + minimal dashboard. Self-contained.
-  Touches: memory_client.py (list_all, delete), memory_health.py (new), /api/memory/health route (new), /memory page (extend)
-  Test: inject a stale item → health check flags it → dashboard shows yellow banner → delete removes it
-  Depends on: existing memU service (v1.3 already shipped)
+Phase 3: Threshold Calibration (QUAL-07)
+  WHY THIRD: Depends on constants.py (MEMORY_CONFLICT_SIMILARITY_THRESHOLD) and
+              validate_openclaw_config() (new memory stanza fields from Phase 2).
+  Touches: project_config.py (+get_memory_health_config), memory_health.py (parameterize threshold)
+  Test: calibration fixture tests; verify behavior unchanged at default threshold
 
-Phase 4: L1 Strategic Suggestions
-  WHY LAST: Requires task history data (Phase 1 ensures clean history), benefits from
-  delta snapshots (Phase 2 means cleaner memory items), and is the highest-complexity feature.
-  Touches: suggestion_engine.py (new), /api/suggestions routes (new), /settings page (extend)
-  Test: run several tasks with failures → generate suggestions → apply suggestion → verify soul-override.md updated
-  Depends on: existing JarvisState task history, existing MemoryClient, existing soul_renderer.py
+Phase 4: Docker Health Checks (REL-09)
+  WHY FOURTH: Self-contained Dockerfile + entrypoint.sh change; no Python dependencies.
+              Fourth to allow prior phases to stabilize before adding container rebuild cost.
+  Touches: Dockerfile (+HEALTHCHECK), entrypoint.sh (+touch/rm sentinel), dashboard containers API
+  Test: spawn container → wait 15s → verify Docker reports healthy
+
+Phase 5: Adaptive Monitor Polling (OBS-05)
+  WHY FIFTH: Depends on constants.py (new POLL_INTERVAL_ACTIVE, POLL_INTERVAL_IDLE from Phase 1).
+  Touches: monitor.py (adaptive interval logic), constants.py (add new interval constants)
+  Test: simulate 0 tasks → verify 5s sleep; simulate 1 active task → verify 0.5s sleep
+
+Phase 6: Migration CLI + Integration Test Suite (CONF-03, CONF-07)
+  WHY LAST: Tests verify the whole config layer end-to-end; migration CLI can reference
+             final schema. No other phases depend on this.
+  Touches: migrate_config.py (new), test_config_integration.py (new)
+  Test: migrate synthetic old config → verify output matches new schema
 ```
 
 ---
 
 ## Architectural Patterns
 
-### Pattern 1: Async Signal Handling in pool.py
+### Pattern 1: Thin Re-Export Shim for Backward Compatibility
 
-**What:** Register SIGTERM handler via `asyncio.get_event_loop().add_signal_handler()` to
-set a `shutdown_event`. Spawn coroutine checks the event after each container exit.
+**What:** `config.py` becomes `from .constants import *` with deprecation comment.
+All existing importers (`from openclaw.config import POLL_INTERVAL`) continue to work
+without change. New code imports from `constants.py`.
 
-**Why not `signal.signal()`:** The existing pool.py is fully asyncio — mixing sync signal
-handlers with async code causes race conditions on Python <3.12. The asyncio API is safe.
+**When to use:** When consolidating constants from a module with many existing importers.
 
-**Example:**
+**Trade-offs:** Two-file indirection temporarily. Deprecation removed in a future cleanup.
+
 ```python
-# pool.py __init__ or startup
-loop = asyncio.get_event_loop()
-loop.add_signal_handler(signal.SIGTERM, lambda: asyncio.ensure_future(_shutdown(loop)))
-
-async def _shutdown(loop):
-    logger.info("SIGTERM received — initiating graceful shutdown")
-    for task_id, container in list(self.active_containers.items()):
-        container.kill(signal="SIGTERM")
-        jarvis.update_task(task_id, "interrupted", "SIGTERM received")
-    # Give containers 30s to exit
-    await asyncio.sleep(30)
-    loop.stop()
+# config.py (after)
+"""
+Backward-compatible re-export. New code should import from openclaw.constants.
+This module will be removed in a future version.
+"""
+from .constants import (  # noqa: F401
+    LOCK_TIMEOUT,
+    LOCK_RETRY_ATTEMPTS,
+    POLL_INTERVAL,
+    POLL_INTERVAL_ACTIVE,
+    POLL_INTERVAL_IDLE,
+    CACHE_TTL_SECONDS,
+    LOG_LEVEL,
+    ACTIVITY_LOG_MAX_ENTRIES,
+    MEMORY_CONTEXT_BUDGET,
+    MEMORY_CONFLICT_SIMILARITY_THRESHOLD,
+    MEMORY_STALENESS_DAYS,
+)
 ```
 
-**Trade-offs:** Simple and well-understood. Does not handle SIGKILL (unclean kill). Recovery
-loop handles the gap — interrupted tasks are re-queued on next start.
+### Pattern 2: File-Based Docker HEALTHCHECK
 
-### Pattern 2: On-Demand Health Check with Server-Side Cache
+**What:** Write a sentinel file `touch /tmp/openclaw-healthy` after successful L3 container
+initialization. HEALTHCHECK uses `test -f` which requires no additional tools beyond core
+utilities. Remove the sentinel on SIGTERM.
 
-**What:** `/api/memory/health` route runs health checks on first call, caches result in
-module-level variable with timestamp, returns cached result for 5 minutes.
+**When to use:** When containers have no HTTP endpoint to health-check against.
 
-**Why not background polling:** Background polling requires a persistent server process or
-cron — adds operational complexity. On-demand is sufficient for health monitoring use case.
-The dashboard only shows health when the user views the `/memory` page.
+**Trade-offs:** Simpler than HTTP health endpoint. Does not validate that the CLI runtime
+is still functioning mid-task — only that initialization succeeded. Acceptable for L3 ephemeral
+containers where mid-task failure is handled by the state engine, not Docker.
 
-**Example:**
-```typescript
-// route.ts
-let _healthCache: { report: HealthReport; ts: number } | null = null
-
-export async function GET(req: Request) {
-  const now = Date.now()
-  if (_healthCache && now - _healthCache.ts < 5 * 60 * 1000) {
-    return Response.json(_healthCache.report)
-  }
-  const report = await runHealthChecks(project)
-  _healthCache = { report, ts: now }
-  return Response.json(report)
-}
+```dockerfile
+HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=3 \
+    CMD test -f /tmp/openclaw-healthy || exit 1
 ```
 
-### Pattern 3: Suggestion-as-File (not DB)
+### Pattern 3: Configurable Thresholds with Constant Defaults
 
-**What:** `soul-suggestions.json` lives in the project state directory alongside
-`workspace-state.json`. Suggestions are immutable once generated — applying one marks it
-`applied: true` rather than deleting it (audit trail).
+**What:** Algorithm thresholds (cosine similarity, staleness days) live in `constants.py`
+as defaults. `openclaw.json` can override them via the `memory` stanza. Runtime code reads
+from config first, falls back to constant.
 
-**Why:** Consistent with the existing pattern of JSON files in `.openclaw/{project_id}/`.
-No new storage dependency. Suggestions are project-scoped and few in number (< 50 expected).
+**When to use:** When a threshold needs empirical tuning per deployment but has a reasonable
+default.
 
-### Pattern 4: Delta by Default, Full on First
+**Trade-offs:** Adds a config read to the hot path (health checks). Mitigated by the existing
+server-side cache on the health endpoint. Never raises — always returns a usable value.
 
-**What:** `capture_delta_snapshot()` checks `last_memorized_commit`. If none, produces full
-diff (matching existing behavior exactly). If set, produces `git diff {sha}...HEAD`.
+### Pattern 4: Activity-Bounded Adaptive Polling
 
-**Why:** Zero behavioral change for existing single-commit tasks. Multi-commit tasks get the
-optimization automatically. No configuration required.
+**What:** Monitor poll interval scales inversely with activity: fast when tasks are running,
+slow when idle, with a cooldown period to stay responsive right after task completion.
+
+**When to use:** Long-running polling loops where activity is bursty (quiet most of the time,
+intense during task execution windows).
+
+**Trade-offs:** Adds minor state tracking (last_seen_active timestamp) to the poll loop.
+No external dependencies. The cooldown prevents flapping between fast/slow during rapid
+task transitions.
 
 ---
 
 ## Anti-Patterns
 
-### Anti-Pattern 1: Modifying SOUL Files Without L1 Review
+### Anti-Pattern 1: Building Paths in Multiple Places
 
-**What people do:** `suggestion_engine.py` automatically writes to `soul-override.md` when
-confidence is high.
-**Why it's wrong:** SOUL mutations affect every subsequent task. Automated changes without
-review can compound — one bad suggestion affects all future L3 spawns until manually reverted.
-**Do this instead:** Always write to `soul-suggestions.json` with `applied: false`. L1 clicks
-Apply in the dashboard. The Apply API route writes to `soul-override.md`. Audit trail preserved.
+**What people do:** Each module computes `Path(__file__).parent.parent / "workspace"` inline.
 
-### Anti-Pattern 2: Blocking Pool Shutdown on Container Completion
+**Why it's wrong:** The v1.5 root cause: `monitor.py` builds paths relative to its own file
+location (`Path(__file__).parent.parent`), which points to the orchestration package root —
+not `OPENCLAW_ROOT`. When `OPENCLAW_ROOT` is `/home/ollie/.openclaw` but monitor.py is at
+`packages/orchestration/src/openclaw/cli/monitor.py`, the traversal resolves to
+`packages/orchestration/src/openclaw/` — wrong.
 
-**What people do:** SIGTERM handler waits indefinitely for all containers to complete their
-current task before shutting down.
-**Why it's wrong:** A task that hung before SIGTERM will hang the shutdown too. The pool
-process becomes unkillable.
-**Do this instead:** Dehydrate task state immediately on SIGTERM. Give containers 30s with
-SIGTERM, then force-remove. Recovery loop handles the rest on restart.
+**Do this instead:** All path construction goes through `path_resolver.py`. Single point of
+change when data directory moves (which already happened between v1.0 and v1.4).
 
-### Anti-Pattern 3: Running Similarity Scan on All Memory Items
+### Anti-Pattern 2: Duplicating Default Dictionaries Across Modules
 
-**What people do:** Conflict detection loads all memory items and runs pairwise cosine
-similarity O(n²).
-**Why it's wrong:** At 500 items, that is 125,000 comparisons — called every time the health
-page loads.
-**Do this instead:** Scope conflict scan to the most recent N items (default 50) within each
-category. Use memU's existing `/retrieve` semantic search to find items similar to known
-conflict seeds rather than exhaustive pairwise scan.
+**What people do:** `_POOL_CONFIG_DEFAULTS` defined in `project_config.py` and `_POOL_DEFAULTS`
+defined in `pool.py` with the same values.
 
-### Anti-Pattern 4: Re-memorizing Full Diff on Every Checkpoint
+**Why it's wrong:** They diverge silently. A new key added to one is missed in the other.
+The existing pool.py comment "also used by pool.py as fallback reference" acknowledges the
+coupling but doesn't resolve it.
 
-**What people do:** Call memorize multiple times during a task, each time with the full
-`{default_branch}...HEAD` diff.
-**Why it's wrong:** Each subsequent memorize includes all content from prior memorizations.
-memU deduplicates by content hash but still pays the embedding cost for every call.
-**Do this instead:** Delta snapshots — only the new commits since `last_memorized_commit`.
-The state engine tracks the SHA so each memorize payload contains only net-new information.
+**Do this instead:** One canonical `POOL_CONFIG_DEFAULTS` dict in `constants.py`. Both
+`project_config.py` and `pool.py` import from there.
+
+### Anti-Pattern 3: Hardcoded HEALTHCHECK Start Period Too Short
+
+**What people do:** HEALTHCHECK --start-period=5s on containers that take 15-20s to be ready.
+
+**Why it's wrong:** Docker starts issuing health checks after start-period. If start-period
+is shorter than container initialization, the first checks all fail, triggering unhealthy
+state before the container is actually broken.
+
+**Do this instead:** --start-period=15s for L3 containers. The CLI runtime (claude-code,
+gemini-cli) may need several seconds to start. The staging branch checkout adds another 2-5s.
+15s is conservative but safe.
+
+### Anti-Pattern 4: Adapting Poll Interval Based on Stale State
+
+**What people do:** Compute poll interval based on state read in the previous iteration,
+not the current one.
+
+**Why it's wrong:** If the last poll missed an activity update (e.g., state file write
+was in-flight), the adaptive logic uses outdated active count and may switch to slow
+polling just as a new task starts.
+
+**Do this instead:** Compute the active count from the current poll iteration's state read,
+before computing the sleep interval. `last_seen_active` tracks when we last observed
+activity — interval computed fresh each cycle.
 
 ---
 
-## File Structure Delta (New Files Only)
+## File Structure Delta
 
 ```
-orchestration/
-├── memory_health.py          # NEW: stale/conflict/volume health checks
-└── suggestion_engine.py      # NEW: pattern analysis, SuggestionItem generation
+packages/orchestration/src/openclaw/
+├── constants.py                    # NEW: all module-level constants consolidated
+├── path_resolver.py                # NEW: single authoritative path resolver
+├── config.py                       # MODIFY: thin re-export shim from constants.py
+├── config_validator.py             # MODIFY: add validate_openclaw_config()
+├── project_config.py               # MODIFY: use path_resolver; add get_memory_health_config()
+├── memory_health.py                # MODIFY: parameterize threshold
+├── cli/
+│   ├── monitor.py                  # MODIFY: adaptive poll interval; path_resolver in _discover_projects
+│   └── migrate_config.py           # NEW: openclaw.json + project.json migration CLI
 
-workspace/occc/src/app/
-├── api/
-│   ├── memory/
-│   │   └── health/
-│   │       └── route.ts      # NEW: on-demand health check endpoint
-│   └── suggestions/
-│       ├── route.ts           # NEW: GET list, POST generate
-│       └── apply/
-│           └── route.ts      # NEW: POST apply suggestion to soul-override.md
-└── settings/                  # EXISTS: extend page.tsx with suggestions panel
-    └── page.tsx               # MODIFY: add SuggestionsPanel component
+config/
+├── openclaw.json                   # MODIFY: add data_dir, memory.conflict_threshold, memory.staleness_days
+└── openclaw.schema.json            # NEW: formal JSON Schema
 
-workspace/occc/src/components/
-├── memory/
-│   └── HealthBanner.tsx       # NEW: green/yellow/red health status
-└── suggestions/
-    └── SuggestionsList.tsx    # NEW: suggestion review/apply UI
+docker/l3-specialist/
+├── Dockerfile                      # MODIFY: add HEALTHCHECK instruction
+└── entrypoint.sh                   # MODIFY: touch sentinel on startup, rm on SIGTERM
+
+packages/orchestration/tests/
+├── test_config_integration.py      # NEW: path resolution, validation, env var precedence tests
+└── fixtures/
+    └── memory_calibration/         # NEW: synthetic memory items for threshold calibration tests
+
+packages/dashboard/src/
+└── app/api/swarm/                  # MODIFY: include healthStatus in container response
 ```
 
 ---
@@ -657,33 +719,38 @@ workspace/occc/src/components/
 
 | Feature | New Files | Modified Files | Untouched |
 |---------|-----------|----------------|-----------|
-| Graceful Shutdown | none | `pool.py`, `entrypoint.sh`, `state_engine.py` (minor) | `spawn.py`, `snapshot.py`, `memory_client.py` |
-| Delta Snapshots | none | `snapshot.py` (+function), `pool.py` (memorize path), `state_engine.py` (metric key) | `memory_client.py`, `entrypoint.sh`, dashboard |
-| Memory Health | `memory_health.py`, `api/memory/health/route.ts`, `HealthBanner.tsx` | `memory_client.py` (+methods), `memory/page.tsx` | `pool.py`, `state_engine.py`, `snapshot.py` |
-| L1 Suggestions | `suggestion_engine.py`, `api/suggestions/` routes, `SuggestionsList.tsx` | `settings/page.tsx` | `soul_renderer.py` (reused as-is), `memory_client.py`, `pool.py` |
+| Config Consolidation (CONF-01..07) | `constants.py`, `path_resolver.py`, `openclaw.schema.json`, `migrate_config.py`, `test_config_integration.py` | `config.py`, `config_validator.py`, `project_config.py`, `spawn.py`, `pool.py`, `monitor.py`, `openclaw.json` | `state_engine.py`, `snapshot.py`, `memory_client.py`, `soul_renderer.py` |
+| Docker Health Checks (REL-09) | none | `Dockerfile`, `entrypoint.sh`, dashboard containers API/component | `pool.py`, `spawn.py`, `state_engine.py` |
+| Threshold Calibration (QUAL-07) | calibration test fixtures | `memory_health.py`, `project_config.py` (+helper), `constants.py` | `memory_client.py`, dashboard, `state_engine.py` |
+| Adaptive Monitor Polling (OBS-05) | none | `monitor.py`, `constants.py` (+new interval constants), `config.py` (re-export) | everything else |
 
 ---
 
 ## Scaling Considerations
 
-This remains a single-host system. v1.4 scaling concerns:
+This remains a single-host system. v1.5 scaling concerns are operational, not architectural:
 
-| Concern | Current Scale | Notes |
-|---------|---------------|-------|
-| SIGTERM recovery storm | Restart after kill → all interrupted tasks re-queued simultaneously | Stagger recovery with `asyncio.sleep(0)` yield between spawns; pool semaphore already limits concurrency |
-| Suggestion analysis cost | list_all_tasks() on large state files | JarvisState.list_all_tasks() reads full state.json — consider task count limit (e.g., last 500 tasks) for suggestion analysis |
-| Health check latency | list_all() from memU at 500+ items | Server-side cache (5min) prevents hammering; scope scan to last 50 items per category |
-| soul-suggestions.json growth | Accumulates applied suggestions | Add `max_suggestions` cap (e.g., 100); archive older applied suggestions |
+| Concern | Impact | Notes |
+|---------|--------|-------|
+| Constants consolidation | Zero runtime cost | Import-time only |
+| Path resolver overhead | Single extra JSON read per process start | Cached after first call |
+| Adaptive polling | Reduces CPU 5x during idle | No contention risk |
+| Docker HEALTHCHECK | 10s interval, negligible overhead | One `test -f` per container per interval |
+| Threshold config read | One extra JSON parse per health check call | Already cached by health endpoint |
 
 ---
 
 ## Sources
 
-- OpenClaw codebase: `skills/spawn_specialist/pool.py`, `orchestration/state_engine.py`, `orchestration/snapshot.py`, `docker/l3-specialist/entrypoint.sh`, `orchestration/memory_client.py`, `orchestration/soul_renderer.py`
-- PROJECT.md: v1.4 feature definitions + out-of-scope constraints
-- Python asyncio signal docs: `loop.add_signal_handler()` for safe async SIGTERM handling
+- OpenClaw codebase direct analysis: `config.py`, `config_validator.py`, `project_config.py`,
+  `state_engine.py`, `cli/monitor.py`, `skills/spawn/spawn.py`, `skills/spawn/pool.py`,
+  `docker/l3-specialist/Dockerfile`, `docker/l3-specialist/entrypoint.sh`, `config/openclaw.json`,
+  `projects/pumplai/project.json`
+- PROJECT.md: v1.5 requirements CONF-01..07, REL-09, QUAL-07, OBS-05 + known limitations
+- Docker HEALTHCHECK docs: `test -f` file-based check, start-period semantics (HIGH confidence)
+- Python asyncio adaptive sleep: standard pattern (HIGH confidence)
 
 ---
 
-*Architecture research for: OpenClaw v1.4 Operational Maturity*
-*Researched: 2026-02-24*
+*Architecture research for: OpenClaw v1.5 Config Consolidation*
+*Researched: 2026-02-25*

@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "openclaw"
+version = "1.4.0"
+description = "OpenClaw orchestration engine — Jarvis Protocol, project config, SOUL renderer"
+requires-python = ">=3.10"
+dependencies = [
+    "docker>=7.1.0",
+    "httpx",
+    "jsonschema>=4.26.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio",
+    "respx",
+]
+
+[project.scripts]
+openclaw-monitor = "openclaw.cli.monitor:main"
+openclaw-project = "openclaw.cli.project:main"
+openclaw-suggest = "openclaw.cli.suggest:main"
+openclaw-config = "openclaw.cli.config:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/openclaw"]

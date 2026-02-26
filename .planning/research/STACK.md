@@ -1,23 +1,23 @@
 # Stack Research
 
-**Domain:** AI Swarm Orchestration — v1.4 Operational Maturity additions
-**Researched:** 2026-02-24
-**Confidence:** HIGH (all claims verified against existing codebase + official Python docs + PyPI)
+**Domain:** AI Swarm Orchestration — v1.5 Config Consolidation additions
+**Researched:** 2026-02-25
+**Confidence:** HIGH (all claims verified against codebase + official Python docs + PyPI + Docker docs)
 
 ---
 
 ## Scope
 
-This document covers ONLY net-new stack needs for v1.4. It does not re-document the existing
+This document covers ONLY net-new stack needs for v1.5. It does not re-document the existing
 validated stack (Python 3 stdlib, docker>=7.1.0, httpx, asyncio, fcntl, Next.js 16, SWR,
-Tailwind 4, Recharts, memU/FastAPI/PostgreSQL+pgvector) which is already shipped.
+Tailwind 4, Recharts, memU/FastAPI/PostgreSQL+pgvector) which shipped in v1.0–v1.4.
 
 The four feature areas in scope:
 
-1. **SIGTERM graceful shutdown** — signal handling + task dehydration/rehydration + recovery loops
-2. **Memory health monitoring** — drift/conflict/stale detection with dashboard override UI
-3. **L1 SOUL suggestion engine** — task pattern analysis producing proactive SOUL recommendations
-4. **Delta memory snapshots** — reduced I/O via incremental state diffs
+1. **Config consolidation** — single authoritative path resolver, schema validation on load, migration CLI, env var precedence, constants consolidation, fail-fast startup validation, integration test suite (CONF-01 through CONF-07)
+2. **Docker health checks for L3 containers** — HEALTHCHECK Dockerfile instruction + Python SDK health status read (REL-09)
+3. **Cosine similarity threshold calibration** — empirical tuning methodology for conflict detection (QUAL-07)
+4. **Adaptive monitor poll interval** — dynamic interval scaling based on activity level (OBS-05)
 
 ---
 
@@ -27,112 +27,200 @@ The four feature areas in scope:
 
 | Technology | Version | Purpose | Why Recommended |
 |------------|---------|---------|-----------------|
-| Python `signal` (stdlib) | built-in | SIGTERM handler registration in pool.py | Already available everywhere Python runs. `loop.add_signal_handler(signal.SIGTERM, cb)` integrates directly with the asyncio event loop that pool.py already runs. No import overhead. Standard Docker PID 1 shutdown pattern. |
-| `asyncio.CancelledError` catch (stdlib) | built-in | Task cleanup hook during graceful drain | Pool.py already uses asyncio. The correct dehydration point is the `except asyncio.CancelledError` block in a semaphore-holding coroutine — at that point the task ID, skill hint, and workspace path are all in scope for JarvisState write. |
-| Exec-form Docker entrypoint | Dockerfile | PID 1 signal delivery to Python | The current `docker/l3-specialist/entrypoint.sh` uses shell form. Shell PID 1 does NOT forward SIGTERM to child Python processes. Fix: use `exec python -u ...` at the end of entrypoint.sh or switch to exec-form `CMD ["python", "-u", ...]`. Not a library change — a one-line Dockerfile/entrypoint change. |
-| Python `collections.Counter` (stdlib) | built-in | Task pattern frequency analysis for L1 SOUL suggestions | Counts recurring keywords from task descriptions, failure patterns, skill type distributions. Already imported in similar fashion to `re` in spawn.py. Sufficient for all plausible OpenClaw task corpus sizes (tens to hundreds of tasks per project — not millions). |
-| Python `statistics` (stdlib) | built-in | Success rate and latency statistics for SOUL suggestions | `statistics.mean()`, `statistics.stdev()`, `statistics.median()` for task duration and failure rate signals. Zero new dep. Requires Python >=3.4 (already satisfied). |
-| Python `re` (stdlib) | built-in | Keyword extraction from task descriptions | Already used in spawn.py (`_PROJECT_ID_PATTERN`). Extend with `re.findall(r'\w+', desc.lower())` for pattern tokenization. No new import needed in files that already import it. |
+| `jsonschema` | `>=4.26.0` | Strict schema validation for `openclaw.json` and `project.json` at startup | Provides JSON Schema Draft 7/2020-12 validation with lazy collect-all error reporting. OpenClaw already uses a hand-rolled `config_validator.py` that checks individual fields — jsonschema replaces that with a declarative schema dict, making CONF-02 and CONF-06 achievable without bespoke field-check code. No C extensions required; pure Python; Python >=3.10 compatible. Current release: 4.26.0 (Jan 7 2026). |
+| Docker `HEALTHCHECK` instruction | Dockerfile built-in | L3 container health reporting to Docker daemon (REL-09) | Built-in Dockerfile instruction — zero library change. Adds `--interval`, `--timeout`, `--start-period`, `--retries` options. L3 containers are short-lived tasks; `--start-period` accounts for startup time. Health status readable via `container.attrs["State"]["Health"]["Status"]` in the existing docker-py client. |
+| `container.attrs["State"]["Health"]` | docker>=7.1.0 (already pinned) | Read L3 container health status from Python | Accessed via the already-imported docker-py SDK. No new library. Pattern: `container.reload(); health = container.attrs.get("State", {}).get("Health", {})`. Returns dict with `Status` ("starting"/"healthy"/"unhealthy"/"none") and `Log` array. |
 
 ### Supporting Libraries — Net New
 
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
-| `deepdiff` | `>=8.6.1` | Structured JSON delta generation for snapshot diff/patch | Use if delta snapshots need to support full rehydration (reconstructing old state from stored patches). `Delta` objects serialize to flat dicts. No mandatory numpy dep for core diff/delta. Released September 2025 — actively maintained. |
+| `jsonschema` | `>=4.26.0` | Schema validation for config files | Add to `packages/orchestration/pyproject.toml` dependencies. Used in `config_validator.py` to replace hand-written field checks with declarative `Draft7Validator` or `Draft202012Validator`. Enables strict fail-fast on startup (CONF-06) and comprehensive integration testing (CONF-07). |
 
-**Note on deepdiff vs pure Python:** For state files that are shallow JSON dicts (<10KB, flat task objects), a custom `_compute_task_delta(old, new)` using dict comprehension is viable with zero new deps. Deepdiff is only needed if delta reversal (rehydrating old state from patches) becomes a requirement. Start with pure Python, add deepdiff if complexity grows.
+**All other v1.5 features are stdlib-only.** No further new pip installs required.
 
 ### What is Already Available — Do NOT Add Again
 
-| Capability | Where It Lives | v1.4 Use |
+| Capability | Where It Lives | v1.5 Use |
 |------------|---------------|---------|
-| Cosine similarity for duplicate/conflict detection | `memU postgres repo: _cosine()` and `vector_search_items()` with pgvector `<=>` operator | Similarity queries go through the existing `/retrieve` REST endpoint with project scoping. No orchestration-side vector math needed. |
-| Memory list + delete API | `/memories` GET and `/memories/{id}` DELETE (already deployed in `docker/memory/memory_service/`) | Memory health monitor pages through all memories via this endpoint. Dashboard already calls these routes. |
-| HTTP client for memU | `httpx` (already a dep in spawn.py and memory_client.py) | Memory health monitoring calls `/memories?user_id=` using the existing sync/async httpx patterns. |
-| JarvisState write primitives | `orchestration/state_engine.py` | Task dehydration serializes into the existing task `metadata` dict. `update_task(task_id, "dehydrated", ...)` is sufficient. No schema change needed. |
-| Fire-and-forget background work | `asyncio.create_task()` already used in pool.py | Recovery loop on pool startup and periodic health check polling use the same pattern. |
-| Structured JSON logging | `orchestration/logging.py` `get_logger()` factory | All new modules use existing logger factory — no new logging dep. |
-| `dataclasses` (stdlib) | built-in | `SuggestionReport` data container for L1 SOUL suggestions | Already available. |
+| Path resolution helpers | `packages/orchestration/src/openclaw/project_config.py` — `_find_project_root()`, `get_workspace_path()`, `get_state_path()`, `get_snapshot_dir()` | CONF-01: Audit all callsites and unify through these helpers. No new module needed — refactor existing divergent paths. |
+| Config loading | `project_config.py` — `load_and_validate_openclaw_config()`, `load_project_config()` | CONF-02: Extend these functions with jsonschema validation instead of re-implementing load logic. |
+| Config validation | `config_validator.py` — `validate_project_config()`, `validate_agent_hierarchy()`, `ConfigValidationError` | CONF-06: Replace field-by-field checks with jsonschema Draft 7 validator. Keep `ConfigValidationError` exception — callers already handle it. |
+| Constants / defaults | `config.py` — `LOCK_TIMEOUT`, `POLL_INTERVAL`, `CACHE_TTL_SECONDS`, `LOG_LEVEL`, `ACTIVITY_LOG_MAX_ENTRIES`. Pool defaults in `project_config.py` `_POOL_CONFIG_DEFAULTS`. | CONF-05: Move ALL magic numbers here. `project_config.py`'s `_POOL_CONFIG_DEFAULTS` dict moves to `config.py`. |
+| Migration CLI pattern | `cli/migrate_state.py` — argparse subcommand, idempotent with sentinel file, in-flight guard | CONF-03: New `openclaw-config migrate` command follows the same idempotent-with-guard pattern. |
+| Argparse subcommands | `cli/project.py`, `cli/monitor.py`, `cli/suggest.py` — established subcommand pattern | CONF-03: Config migrate CLI uses the same `argparse.ArgumentParser` + `add_subparsers()` pattern already in project.py. No new CLI framework. |
+| Env var precedence | `OPENCLAW_ROOT`, `OPENCLAW_PROJECT`, `OPENCLAW_LOG_LEVEL`, `OPENCLAW_ACTIVITY_LOG_MAX` — all read via `os.environ.get()` in their respective modules | CONF-04: Document the precedence chain (env > config file > hardcoded default) in code comments and ensure it is applied consistently across all four env vars. No new code — consistency audit. |
+| Docker SDK client | `docker>=7.1.0` (already pinned) | REL-09: `container.reload(); container.attrs["State"]["Health"]` reads health status from the same client used in pool.py and review.py. |
+| Structured JSON logging | `openclaw/logging.py` `get_logger()` factory | All new modules use existing logger. No new logging dep. |
+| `pytest>=7.0` + `pytest-asyncio` | Already in dev dependencies | CONF-07: Config integration tests use the existing test suite infrastructure. No new testing library. |
+| `time.monotonic()` (stdlib) | built-in | OBS-05: Adaptive poll interval calculation. Already used in state_engine.py context. |
 
 ---
 
 ## Integration Points with Existing Stack
 
-### Feature 1: SIGTERM Graceful Shutdown + Dehydration/Rehydration
+### Feature Area 1: Config Consolidation (CONF-01 through CONF-07)
 
-**Integration:** `pool.py` (`L3ContainerPool.run_task()`) registers a handler via `loop.add_signal_handler(signal.SIGTERM, shutdown_handler)`. On signal: set a `_shutting_down` flag, stop accepting new tasks, drain the asyncio semaphore gracefully, write each in-flight task ID to JarvisState with status `"dehydrated"` and serialized context (workspace path, skill hint, task description). On startup: `L3ContainerPool.__init__()` scans JarvisState for tasks in `"dehydrated"` status and re-queues them.
+**The problem:** Multiple modules independently read `openclaw.json` via `_find_project_root()`. The `workspace/` path is constructed differently in `project_config.py` (`root / "workspace" / ".openclaw" / project_id`) vs `cli/monitor.py` (`root / "workspace" / ".openclaw" / entry.name`). Constants are split between `config.py` and `project_config.py`.
 
-**Files to modify:**
-- `skills/spawn_specialist/pool.py` — add signal handler, dehydration drain, startup recovery scan
-- `orchestration/state_engine.py` — add `"dehydrated"` to the non-terminal status set (it should NOT appear in `list_active_tasks()` exclusions — dehydrated tasks ARE to be recovered)
-- `docker/l3-specialist/entrypoint.sh` — fix PID 1 signal forwarding with `exec`
+**CONF-01 — Authoritative path resolver:**
+No new library. Consolidate `get_state_path()` and `get_snapshot_dir()` in `project_config.py` as the single canonical source. Audit callers: `state_engine.py`, `cli/monitor.py`, `cli/migrate_state.py`, `skills/spawn/spawn.py`. Each must call `get_state_path(project_id)` — no inline path construction.
 
-**No new library imports.** `import signal` is stdlib. `asyncio` is already imported in pool.py.
-
-### Feature 2: Memory Health Monitoring
-
-**Integration:** New `orchestration/memory_health.py` module with three detection passes:
-
-1. **Staleness**: `GET /memories?user_id={project_id}` — compare `updated_at` against configurable threshold (default: 30 days). Items not reinforced and older than threshold are flagged as stale.
-2. **Near-duplicate**: For each memory, `POST /retrieve` with the item's own content as query. Items returned with cosine similarity >0.92 (via memU's pgvector `<=>`) are flagged as duplicates. The threshold is tunable via config.
-3. **Conflict detection**: Two memories with near-identical embedding but opposite sentiment keywords (simple negation heuristic: one contains "failed", the other "succeeded" for the same task pattern) are flagged as conflicts.
-
-**Dashboard:** New `/api/memory/health` Next.js route. New "Health" tab on the existing `/memory` page with flagged items, similarity scores, timestamps, and manual override buttons (delete / keep / merge label).
-
-**No new Python deps.** All HTTP via existing `httpx.AsyncClient` through `MemoryClient`. Cosine scoring comes back in the `/retrieve` response payload (memU already includes scores).
-
-### Feature 3: L1 SOUL Suggestion Engine
-
-**Integration:** New `orchestration/pattern_analyzer.py`. Reads `JarvisState.list_all_tasks()` for all registered projects (via `project_config.py` project list). Extracts:
-- `skill_hint` distribution (code vs test ratio)
-- Top 20 keyword tokens from task descriptions via `Counter(re.findall(r'\w+', desc.lower()))`
-- Success rate per skill type: `completed / (completed + failed)`
-- Mean and p95 task duration from `spawn_requested_at` → `completed_at` metadata timestamps
-- Recurring failure phrases (task description tokens that appear disproportionately in failed tasks)
-
-Returns a `SuggestionReport` dataclass. CLI entry point: `openclaw suggest-soul --project {id}` added to `orchestration/project_cli.py`. L1 reads this via new `GET /api/suggestions?project=` dashboard route.
-
-**No new library imports.** `collections`, `re`, `statistics`, `dataclasses` are all stdlib.
-
-### Feature 4: Delta Memory Snapshots
-
-**Integration:** Extends `orchestration/snapshot.py`. On each snapshot write, compute a delta between the last written snapshot and the current state. Store `{base_hash, patches, timestamp, project_id}` in the snapshot directory alongside full snapshots (one full snapshot per N deltas, configurable).
-
-**Approach A — Zero dep (recommended for v1.4):**
+**CONF-02 + CONF-06 — Schema validation with jsonschema:**
 ```python
-def _compute_task_delta(old_tasks: dict, new_tasks: dict) -> dict:
-    added = {k: v for k, v in new_tasks.items() if k not in old_tasks}
-    removed = list(old_tasks.keys() - new_tasks.keys())
-    changed = {k: v for k, v in new_tasks.items()
-               if k in old_tasks and old_tasks[k] != v}
-    return {"added": added, "removed": removed, "changed": changed}
+# config_validator.py (new pattern)
+from jsonschema import Draft7Validator, ValidationError
+
+OPENCLAW_JSON_SCHEMA = {
+    "type": "object",
+    "required": ["active_project", "agents"],
+    "properties": {
+        "active_project": {"type": "string", "minLength": 1},
+        "agents": {
+            "type": "object",
+            "required": ["list"],
+            "properties": {
+                "list": {"type": "array", "items": {"type": "object"}}
+            }
+        },
+        "memory": {
+            "type": "object",
+            "properties": {
+                "memu_api_url": {"type": "string"},
+                "enabled": {"type": "boolean"}
+            }
+        }
+    }
+}
+
+PROJECT_JSON_SCHEMA = {
+    "type": "object",
+    "required": ["workspace", "tech_stack"],
+    "properties": {
+        "workspace": {"type": "string", "minLength": 1},
+        "tech_stack": {"type": "object"},
+        "l3_overrides": {"type": "object"}
+    }
+}
+
+def validate_openclaw_config(config: dict, config_path: str) -> None:
+    validator = Draft7Validator(OPENCLAW_JSON_SCHEMA)
+    errors = list(validator.iter_errors(config))
+    if errors:
+        raise ConfigValidationError([e.message for e in errors])
 ```
 
-**Approach B — deepdiff (if rehydration needed):**
-```python
-from deepdiff import DeepDiff, Delta
-delta = Delta(DeepDiff(old_state, new_state))
-serialized = delta.to_flat_dicts()
+**CONF-03 — Migration CLI:**
+New `openclaw-config` entry point in `pyproject.toml` pointing to `cli/config_migrate.py`. Subcommands: `validate`, `migrate`. Pattern mirrors `cli/migrate_state.py` — idempotent, in-flight guard, sentinel on completion. No new library.
+
+**CONF-04 — Env var precedence:**
+Document and enforce: `OPENCLAW_ROOT` (root resolution) > `openclaw.json:active_project` for `OPENCLAW_PROJECT`. Precedence is already implemented; this is a consistency audit with added comments and a test.
+
+**CONF-05 — Constants consolidation:**
+Move `_POOL_CONFIG_DEFAULTS` from `project_config.py` to `config.py`. Add `HEALTH_CHECK_INTERVAL = 30` (Docker HEALTHCHECK default), `MONITOR_POLL_MIN = 0.5`, `MONITOR_POLL_MAX = 5.0` (OBS-05 bounds). One module owns all tunable numbers.
+
+**CONF-07 — Integration test suite:**
+Uses existing `pytest>=7.0` + `pytest-asyncio` + `tmp_path` fixture. Tests cover: path resolution for known project IDs, `ConfigValidationError` raised on bad schema, env var override of `OPENCLAW_ROOT`, migration CLI dry-run and actual migration idempotency.
+
+### Feature Area 2: Docker Health Checks for L3 Containers (REL-09)
+
+**Dockerfile change** — add to `docker/l3-specialist/Dockerfile`:
+```dockerfile
+# Health check: verify the entrypoint marker file exists (L3 creates it on startup)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD test -f /tmp/.openclaw_alive || exit 1
 ```
 
-Recommendation: Implement Approach A in v1.4 to maintain the zero-external-dep principle. Add a `SNAPSHOT_DELTA_MODE = True` config flag. Migrate to deepdiff if the delta format needs to be externally consumed or reversed.
+The `--start-period=60s` accounts for L3 startup time (Claude CLI initialization, git clone, etc.). The check itself is a file-existence test — L3 `entrypoint.sh` writes `/tmp/.openclaw_alive` on successful startup. This avoids network port dependency for a task-runner container.
+
+**Rationale for file-based health check vs HTTP:**
+- L3 containers do not expose HTTP ports
+- `curl` would require the container to bind a port just for health checking
+- `test -f /file` is zero-dependency (bash builtin), instant, and sufficient for "container is up and running" signal
+- Docker health state flows: `starting` (during `--start-period`) → `healthy` → `unhealthy` (if 3 consecutive failures)
+
+**Python SDK read** — in `skills/spawn/pool.py` or `review.py` after container operations:
+```python
+container.reload()  # Refresh attrs from daemon
+health = container.attrs.get("State", {}).get("Health", {})
+health_status = health.get("Status", "none")  # "starting"|"healthy"|"unhealthy"|"none"
+```
+
+`container.reload()` is already called in pool.py to check `container.status`. Adding health check read is a one-line addition.
+
+**Dashboard exposure:** Pass `health_status` field in the existing swarm stream SSE payload. Dashboard `useContainers()` hook already polls every 5s; the new field appears alongside `status` in the container list response.
+
+### Feature Area 3: Cosine Similarity Threshold Calibration (QUAL-07)
+
+**What needs calibrating:** The conflict detection window in `docker/memory/memory_service/scan_engine.py` uses `similarity_min=0.75` and `similarity_max=0.92`. The 0.92 upper bound was flagged at v1.4 as needing empirical tuning.
+
+**No new library.** The calibration is a methodology + test, not a runtime library change:
+
+1. **Test harness** — new `pytest` parametrize test that runs `_find_conflicts()` against a fixture corpus of known-conflicting and known-distinct memory pairs with varying thresholds (0.75, 0.80, 0.85, 0.88, 0.90, 0.92, 0.95).
+2. **Precision/recall metrics** — pure Python: `precision = true_positives / (true_positives + false_positives)`, `recall = true_positives / (true_positives + false_negatives)`. F1 score derivation.
+3. **Fixture generation** — small deterministic corpus (20-30 pairs) with known similarity ground truth. Embeddings can be synthetic numpy arrays for the unit test; real pgvector embeddings used in integration test against a live memU instance.
+4. **Outcome** — calibrated `similarity_min` and `similarity_max` constants moved to `config.py` as `CONFLICT_SIMILARITY_MIN` and `CONFLICT_SIMILARITY_MAX`. Currently 0.75/0.92 — final values determined by test results.
+
+**Why this is the right approach:** NLP research consistently shows cosine similarity thresholds are domain-specific with no universal value. The [0.75, 0.85] range is typical for OOD detection on sentence embeddings; OpenClaw's task-description embeddings may differ. Empirical testing on the actual corpus is the only reliable calibration method (confirmed by ACL/EMNLP literature).
+
+**`numpy` usage note:** `numpy` is already a transitive dep of `pgvector`/`memu` in the memory service Docker container. The calibration test can use `numpy` in the test environment only — it must NOT be added to orchestration's `pyproject.toml` dependencies.
+
+### Feature Area 4: Adaptive Monitor Poll Interval (OBS-05)
+
+**No new library.** Pure stdlib pattern using `time.monotonic()` for elapsed time tracking and `min()`/`max()` for interval clamping.
+
+**Algorithm** (implemented in `cli/monitor.py` `tail_state()`):
+```python
+# Constants from config.py
+MONITOR_POLL_MIN = 0.5   # seconds — floor when activity is high
+MONITOR_POLL_MAX = 5.0   # seconds — ceiling when idle
+MONITOR_BACKOFF_FACTOR = 1.5  # interval growth factor on idle cycle
+MONITOR_ACTIVITY_RESET = True  # reset to POLL_MIN on any new activity
+
+interval = MONITOR_POLL_MIN
+last_activity_time = time.monotonic()
+
+while True:
+    had_activity = _poll_all_projects(...)  # returns bool
+    if had_activity:
+        interval = MONITOR_POLL_MIN
+        last_activity_time = time.monotonic()
+    else:
+        idle_secs = time.monotonic() - last_activity_time
+        # Back off exponentially up to MONITOR_POLL_MAX
+        interval = min(interval * MONITOR_BACKOFF_FACTOR, MONITOR_POLL_MAX)
+
+    time.sleep(interval)
+```
+
+**Integration point:** `tail_state()` in `cli/monitor.py` currently calls `time.sleep(interval)` with a fixed interval passed from CLI args. The adaptive version replaces the fixed sleep with the above pattern. The `--interval` CLI arg becomes the `POLL_MIN` override (when user specifies, use as floor instead of default).
+
+**Dashboard SSE stream:** The dashboard monitor (`packages/dashboard/src/app/api/swarm/stream/route.ts`) polls via `useContainers()` at a fixed 5s interval on the client side. This is a separate codepath — OBS-05 only targets the CLI monitor, not the dashboard SSE. Dashboard polling remains fixed.
 
 ---
 
 ## Installation
 
 ```bash
-# For Feature 4, Approach B only (if pure Python delta is insufficient):
-pip install "deepdiff>=8.6.1"
+# Add jsonschema to orchestration dependencies
+# Edit packages/orchestration/pyproject.toml:
+# dependencies = ["docker>=7.1.0", "httpx", "jsonschema>=4.26.0"]
 
-# All other v1.4 features require NO new pip installs.
-# Features 1, 2, 3 are stdlib-only additions.
+uv pip install "jsonschema>=4.26.0"
+
+# All other v1.5 features require NO new pip installs.
+# REL-09: Dockerfile instruction change only (no Python package)
+# QUAL-07: Calibration test only (numpy available in memory service container already)
+# OBS-05: stdlib time.monotonic() only
 ```
 
-To verify no new dep is actually needed for Features 1-3:
+Verify single new dep:
 ```bash
-# Confirm signal, asyncio, collections, statistics, re are stdlib
-python3 -c "import signal, asyncio, collections, statistics, re; print('all stdlib')"
+python3 -c "import jsonschema; print(jsonschema.__version__)"
+# Expected: 4.26.0 (or later)
+
+# Confirm all other needed modules are stdlib
+python3 -c "import time, os, json, argparse; print('all stdlib OK')"
 ```
 
 ---
@@ -141,12 +229,12 @@ python3 -c "import signal, asyncio, collections, statistics, re; print('all stdl
 
 | Recommended | Alternative | When to Use Alternative |
 |-------------|-------------|-------------------------|
-| stdlib `signal.add_signal_handler` | `aioshutdown` PyPI package | Only if multiple complex shutdown hooks need ordered registration across many async components. OpenClaw's shutdown surface is small (one pool, one state file). Stdlib is sufficient and adds no dep. |
-| deepdiff >=8.6.1 for delta snapshots | `jsonpatch==1.33` | Use jsonpatch if external consumers need RFC 6902 interoperability. jsonpatch only dep is `jsonpointer`. deepdiff is better for Python-internal reconstruction because Delta is self-describing. |
-| Pure Python delta dict diff (Approach A) | deepdiff | Use deepdiff when task metadata grows deeply nested or when delta reversal is required. At v1.4 scope the state dict is shallow enough that custom diff is maintainable and simpler. |
-| Existing `/retrieve` endpoint for similarity in health monitor | numpy cosine similarity in orchestration | Never add numpy to the orchestration layer. memU's pgvector already computes cosine distance efficiently at the DB tier for the dataset sizes involved. |
-| `collections.Counter` + `statistics` for pattern analysis | scikit-learn (KMeans, DBSCAN) | Use ML clustering only when task corpus exceeds ~10,000 entries. At current scale (tens to hundreds of tasks per project), `Counter.most_common()` gives identical insight at zero cost. |
-| `asyncio.Queue` for recovery task re-queuing | Redis / Celery / RQ | Introduces a broker dependency for a problem that can be solved with an in-memory queue populated from JarvisState on startup. Single-host system with no persistence requirement across broker restarts. |
+| `jsonschema>=4.26.0` with `Draft7Validator` | Hand-rolled field checks (current `config_validator.py`) | Keep hand-rolled only if you need custom error messages that jsonschema cannot produce. jsonschema's `iter_errors()` gives field paths — sufficient for actionable errors. The current hand-rolled approach was appropriate for v1.2 (2 fields), but CONF-02 adds 8+ schema constraints making declarative validation the lower-maintenance choice. |
+| `jsonschema>=4.26.0` | `pydantic>=2.0` | Use pydantic if OpenClaw config objects need to be passed as typed Python objects throughout the codebase. jsonschema validates raw dicts (which is what config files are) without creating model classes. At v1.5 scope, raw dict access is sufficient and pydantic would require refactoring all callers. |
+| `jsonschema>=4.26.0` | `jsonschema-rs` (Rust-based) | Use jsonschema-rs if validation throughput exceeds 10,000 configs/second. OpenClaw validates at most 2 config files on startup. Pure-Python jsonschema is ample. |
+| File-based `HEALTHCHECK` (`test -f /tmp/.openclaw_alive`) | HTTP-based `HEALTHCHECK` (`curl -f http://localhost:PORT/health`) | Use HTTP check if L3 containers ever expose a port (e.g., future local API). Current L3 containers are task runners with no listening port — file-based is simpler and zero-dependency. |
+| Exponential backoff with `min(interval * 1.5, MAX)` | `backoff` PyPI library | Use backoff library if retry/backoff is needed across many functions with decorator syntax. OBS-05 is one polling loop — inline `min()` calculation needs no library. |
+| Empirical calibration test harness | Static threshold (keep 0.92) | Keep static only if no real memory corpus is available for testing. The v1.4 decision log explicitly flags 0.92 as "revisit" — QUAL-07 mandates calibration rather than accepting the unvalidated value. |
 
 ---
 
@@ -154,42 +242,35 @@ python3 -c "import signal, asyncio, collections, statistics, re; print('all stdl
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| `numpy` in orchestration layer | Adds 15MB+ compiled dependency to what is otherwise a zero-dep Python package. Vector math for memory health is performed by pgvector inside the DB. | Existing `/retrieve` REST API via httpx |
-| `scikit-learn` for task pattern analysis | Pulls in numpy + scipy + joblib. At OpenClaw's scale this is solving a frequency-count problem with machine learning. | `collections.Counter` + `statistics` stdlib |
-| `celery` or `rq` for recovery queues | Introduces Redis/broker dependency. Recovery queue is an in-memory list of dehydrated task IDs read from JarvisState on pool startup. | `asyncio.Queue` + JarvisState read on startup |
-| Shell-form Docker entrypoint (unchanged) | PID 1 is `/bin/bash`; SIGTERM goes to bash, not Python. Python pool never receives the signal. Graceful shutdown silently fails. | `exec python -u ...` at end of entrypoint.sh |
-| `prometheus_client` or OpenTelemetry | Explicitly out of scope per PROJECT.md "Out of Scope" section. Single-host system. | Existing structured JSON logging via `get_logger()` |
-| `pendulum` in orchestration layer | Already used inside memU but not in orchestration. The orchestration layer only needs `datetime.fromisoformat()` (stdlib, Python 3.11+) for timestamp parsing. | `datetime.fromisoformat()` (stdlib 3.11+) |
-| `APScheduler` or similar for health monitor polling | Scheduler dependency for what is a `asyncio.get_event_loop().call_later(interval, fn)` call. | `asyncio.call_later()` or periodic background task with `asyncio.sleep()` loop |
+| `pydantic` for config validation | Creates typed model classes requiring refactoring all dict-access callers throughout codebase. Disproportionate change for a config validation improvement. | `jsonschema.Draft7Validator` validates raw dicts in-place — zero caller changes needed. |
+| `numpy` in `packages/orchestration/` | Already explicitly rejected in v1.4 and v1.3 research. Adds 15MB+ compiled dep to what is otherwise a zero-C-extension Python package. Vector math for QUAL-07 calibration runs only in the memory service Docker container where numpy is already present transitively. | Calibration test imports numpy only in `tests/test_threshold_calibration.py`, not in orchestration production code. |
+| HTTP `HEALTHCHECK` with `curl` in L3 Dockerfile | Requires installing curl in the image (already present) AND L3 container exposing a port just for health checking. Port binding is unnecessary complexity for a task-runner container. | `test -f /tmp/.openclaw_alive` — bash builtin, no port, no network, instant. |
+| `APScheduler` or similar for adaptive polling | Library dependency for a pattern expressible in 5 lines of stdlib code. OBS-05 is one while-loop with exponential backoff — not a multi-job scheduling problem. | `time.monotonic()` + `time.sleep()` + inline interval calculation. |
+| `ConfigArgParse` or similar config-arg bridges | Introduces a new CLI framework over the existing argparse patterns. All env var / config file precedence is already implemented via `os.environ.get()` — consistent with the locked v1.1 decision to use argparse subparsers. | `os.environ.get("OPENCLAW_ROOT")` + argparse (already established pattern). |
+| `click` for migration CLI | Inconsistent with all existing CLI modules (`monitor.py`, `project.py`, `suggest.py`) which use argparse. Introducing click creates two CLI frameworks in one package. | `argparse.ArgumentParser` + `add_subparsers()` — established in-codebase pattern. |
 
 ---
 
 ## Stack Patterns by Variant
 
-**If delta snapshot complexity stays low (state files <10KB, flat task dicts):**
-- Use Approach A: custom `_compute_task_delta()` pure Python in snapshot.py
-- Zero new dependencies
-- Sufficient for task-level change tracking at current scale
+**If `openclaw.json` schema grows beyond simple type checks (e.g., cross-field validation):**
+- Use jsonschema `if/then/else` keywords within the Draft 7 schema
+- Example: `if active_project is set, then projects/<id>/project.json must exist`
+- Implement as a post-schema custom validator function (not a separate library)
 
-**If delta snapshots need to support rehydration (reconstructing old state from patch chain):**
-- Use Approach B: `deepdiff>=8.6.1`
-- `Delta` objects are serializable to flat dicts via `to_flat_dicts()`
-- Reversible: apply `delta` to `old_state` to reconstruct `new_state`
-- Add to `requirements.txt` only when this need is confirmed
+**If the HEALTHCHECK file approach proves unreliable (container dies before writing marker):**
+- Add the `test -f` check as a fallback to the entrypoint exit trap
+- Alternative: check for the process itself via `pgrep -f entrypoint` or check for a known artifact (git repo, virtualenv)
+- Do NOT switch to HTTP check unless L3 containers expose ports for other reasons
 
-**If memory health monitoring needs to run on a schedule (not just on-demand):**
-- Use `asyncio.sleep()` loop in a background task — consistent with pool.py's existing polling pattern
-- Do NOT add APScheduler or Celery Beat
+**If adaptive poll interval needs to be configurable per-project:**
+- Add `monitor.poll_min` and `monitor.poll_max` to `project.json`'s `l3_overrides`
+- Read via `get_pool_config()` extension (follow existing override pattern)
+- For v1.5, global constants in `config.py` are sufficient
 
-**If SIGTERM needs to coordinate across both `pool.py` and a future `monitor.py` daemon:**
-- Register `signal.SIGTERM` handler in each process independently
-- Each registers via `signal.signal()` (sync context) or `loop.add_signal_handler()` (async context)
-- Pool and monitor are separate processes — no shared signal handler state
-
-**If the L1 SOUL suggestion engine needs to generate prose recommendations:**
-- Pattern analyzer produces structured data; L1 formats it as text via its own SOUL template
-- Do NOT add an LLM API call inside pattern_analyzer.py — keep analysis deterministic and pure Python
-- L1 agent interprets the `SuggestionReport` and writes SOUL edits
+**If jsonschema validation errors need more human-friendly formatting:**
+- Use `jsonschema.exceptions.best_match(errors)` to surface the most relevant error when multiple errors exist
+- Wrap in `ConfigValidationError` as before — callers already handle that exception type
 
 ---
 
@@ -197,32 +278,33 @@ python3 -c "import signal, asyncio, collections, statistics, re; print('all stdl
 
 | Package | Compatible With | Notes |
 |---------|-----------------|-------|
-| `deepdiff>=8.6.1` | Python >=3.9 | Verified on PyPI, September 2025 release. numpy is NOT a mandatory dep — only needed for `[optimize]` extra. |
-| `jsonpatch==1.33` | Python >=3.7 (works on 3.13+) | Stable since June 2023. Single dep: `jsonpointer`. No C extensions — pure Python. |
-| `signal.add_signal_handler()` | Python 3.x, Unix/Linux only | Not available on Windows. OpenClaw targets Ubuntu 24.04 — fully compatible. Must be called from within a running asyncio event loop for async-safe callback. |
-| stdlib `statistics` | Python >=3.4 | Available on all supported Python versions. `statistics.stdev()` requires >=2 values — guard with `len(durations) >= 2` check. |
-| `datetime.fromisoformat()` | Python >=3.7 (full ISO 8601 on >=3.11) | For timestamp parsing in pattern_analyzer.py. Python 3.11+ handles timezone offsets properly. OpenClaw host is Python 3.14.3 — no issue. |
+| `jsonschema>=4.26.0` | Python >=3.10 | Current release 4.26.0 (Jan 7 2026). No C extensions. Works with Python 3.10–3.14 (OpenClaw's target range). Lazy `iter_errors()` works on Python 3.10+. |
+| `docker>=7.1.0` (existing) | Python >=3.10 | `container.attrs["State"]["Health"]` available in all docker-py 7.x releases. No version change needed. |
+| `jsonschema` Draft 7 | `openclaw.json` current structure | Draft 7 is the stable, well-supported target. Draft 2020-12 is also available but Draft 7 is sufficient for the schema complexity involved. |
+| `time.monotonic()` | Python >=3.3 | Available on all supported Python versions. Monotonic clock — immune to system clock adjustments. |
+| `test -f` in `HEALTHCHECK CMD` | Docker 17.05+ | HEALTHCHECK instruction stable since Docker 1.12. `--start-period` (used for L3 grace period) requires Docker 17.05+. Docker 29.1.5 fully supports all options. |
 
 ---
 
 ## Sources
 
-- Python 3 official docs `asyncio-eventloop.html` — `loop.add_signal_handler()` usage, Unix-only constraint, integration with asyncio tasks (HIGH confidence)
-- Python 3 official docs `signal.html` — `signal.SIGTERM`, `signal.signal()` (HIGH confidence)
-- PyPI deepdiff 8.6.1 — verified latest version September 2025, Python >=3.9, numpy not mandatory for core (HIGH confidence, fetched 2026-02-24)
-- PyPI jsonpatch 1.33 — verified latest stable, pure Python, single dep (HIGH confidence, fetched 2026-02-24)
-- `/home/ollie/.openclaw/skills/spawn_specialist/pool.py` — confirmed asyncio event loop context, existing `asyncio.create_task()` patterns (HIGH confidence, direct code inspection)
-- `/home/ollie/.openclaw/orchestration/state_engine.py` — confirmed JarvisState write primitives, `update_task()` and `create_task()` signature for dehydration (HIGH confidence, direct code inspection)
-- `/home/ollie/.openclaw/orchestration/memory_client.py` — confirmed httpx AsyncClient pattern, existing `health()`, `memorize()`, `retrieve()` methods (HIGH confidence, direct code inspection)
-- `/home/ollie/.openclaw/docker/memory/memory_service/routers/memories.py` — confirmed `/memories` GET list and `/memories/{id}` DELETE endpoints exist in deployed service (HIGH confidence, direct code inspection)
-- `/home/ollie/.openclaw/docker/memory/memory_service/routers/health.py` — confirmed `/health` endpoint shape (HIGH confidence, direct code inspection)
-- `/home/ollie/.openclaw/workspace/memory/src/memu/database/postgres/repositories/memory_item_repo.py` — confirmed `vector_search_items()` with pgvector cosine distance `<=>`, pure-Python `_cosine()` fallback, similarity score returned in tuples (HIGH confidence, direct code inspection)
-- `/home/ollie/.openclaw/docker/l3-specialist/entrypoint.sh` — confirmed shell-form entrypoint (PID 1 issue exists, exec fix needed) (HIGH confidence, direct code inspection)
-- WebSearch: Python SIGTERM Docker PID 1 patterns 2025/2026 — corroborated exec-form fix and dumb-init alternative (MEDIUM confidence)
-- WebSearch: deepdiff delta serialization flat dicts (MEDIUM confidence, corroborated by PyPI docs)
+- PyPI jsonschema 4.26.0 — current version (Jan 7 2026), Python >=3.10, MIT license, no C extensions (HIGH confidence, fetched 2026-02-25)
+- [jsonschema official docs — Schema Validation](https://python-jsonschema.readthedocs.io/en/stable/validate/) — `Draft7Validator`, `iter_errors()`, `best_match()` (HIGH confidence)
+- [Docker HEALTHCHECK docs](https://gdevops.frama.io/containerization/dockerfile/instructions/HEALTHCHECK/HEALTHCHECK.html) — `--interval`, `--timeout`, `--start-period`, `--retries` parameters (HIGH confidence)
+- [Docker HEALTHCHECK best practices 2026](https://oneuptime.com/blog/post/2026-01-30-docker-health-check-best-practices/view) — file-based vs HTTP check patterns (MEDIUM confidence)
+- docker-py SDK docs (7.1.0) — `container.attrs` raw response structure; `container.reload()` for refreshing attrs (HIGH confidence via WebSearch verification against SDK docs)
+- `container.attrs["State"]["Health"]["Status"]` pattern — verified via WebSearch against multiple practical examples showing "starting"/"healthy"/"unhealthy"/"none" status values (MEDIUM confidence, multiple sources agree)
+- ACL/EMNLP literature on cosine similarity thresholds — domain-specific calibration required, no universal value; [0.75, 0.85] typical for sentence embeddings (MEDIUM confidence, academic sources via WebSearch)
+- `/home/ollie/.openclaw/docker/memory/memory_service/scan_engine.py` — confirmed `similarity_min=0.75`, `similarity_max=0.92` with `cosine_topk()` from memu; calibration target is these two constants (HIGH confidence, direct code inspection)
+- `/home/ollie/.openclaw/packages/orchestration/src/openclaw/config.py` — confirmed all current constants; `POLL_INTERVAL = 1.0` is the fixed interval OBS-05 makes adaptive (HIGH confidence, direct code inspection)
+- `/home/ollie/.openclaw/packages/orchestration/src/openclaw/cli/monitor.py` — confirmed `time.sleep(interval)` call pattern and `POLL_INTERVAL` import; adaptive replacement point identified (HIGH confidence, direct code inspection)
+- `/home/ollie/.openclaw/packages/orchestration/src/openclaw/config_validator.py` — confirmed current hand-rolled validation; jsonschema replaces field-by-field checks (HIGH confidence, direct code inspection)
+- `/home/ollie/.openclaw/packages/orchestration/src/openclaw/project_config.py` — confirmed `_POOL_CONFIG_DEFAULTS` lives here (not config.py), divergence from config.py to fix in CONF-05 (HIGH confidence, direct code inspection)
+- `/home/ollie/.openclaw/docker/l3-specialist/Dockerfile` — confirmed no HEALTHCHECK instruction present; `l3worker` non-root user confirmed; `bash /entrypoint.sh` confirmed (HIGH confidence, direct code inspection)
+- [backoff PyPI](https://pypi.org/project/backoff/) — reviewed and rejected for OBS-05; inline `min()` calculation is sufficient (MEDIUM confidence)
 
 ---
 
-*Stack research for: OpenClaw v1.4 Operational Maturity*
-*Researched: 2026-02-24*
-*Previous baseline (v1.0–v1.3): Python 3 stdlib + docker>=7.1.0 + httpx + asyncio + Next.js 16 + memU/FastAPI/PostgreSQL+pgvector — all unchanged*
+*Stack research for: OpenClaw v1.5 Config Consolidation*
+*Researched: 2026-02-25*
+*Previous baseline (v1.0–v1.4): Python 3 stdlib + docker>=7.1.0 + httpx + asyncio + Next.js 16 + memU/FastAPI/PostgreSQL+pgvector — all unchanged. v1.4 added no new deps (stdlib-only). v1.5 adds jsonschema>=4.26.0 as the sole new dependency.*

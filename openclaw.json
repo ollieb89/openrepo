@@ -1,28 +1,8 @@
 {
   "meta": {
-    "lastTouchedVersion": "2026.2.15",
-    "lastTouchedAt": "2026-02-17T19:20:06.825Z"
+    "lastTouchedVersion": "2026.2.23",
+    "lastTouchedAt": "2026-02-25T03:26:34.250Z"
   },
-  "wizard": {
-    "lastRunAt": "2026-02-17T19:20:06.816Z",
-    "lastRunVersion": "2026.2.15",
-    "lastRunCommand": "doctor",
-    "lastRunMode": "local"
-  },
-  "auth": {
-    "profiles": {
-      "google-gemini-cli:buitelaarolivier@gmail.com": {
-        "provider": "google-gemini-cli",
-        "mode": "oauth",
-        "email": "buitelaarolivier@gmail.com"
-      }
-    }
-  },
-  "active_project": "pumplai",
-  "source_directories": [
-    "/home/ollie/Development/Projects",
-    "/home/ollie/Development/Tools"
-  ],
   "agents": {
     "defaults": {
       "model": {
@@ -42,30 +22,26 @@
         }
       },
       "memorySearch": {
-        "enabled": false
+        "enabled": true
+      },
+      "maxConcurrent": 4,
+      "subagents": {
+        "maxConcurrent": 8
       },
       "sandbox": {
         "mode": "non-main",
         "workspaceAccess": "none",
         "scope": "session"
-      },
-      "maxConcurrent": 4,
-      "subagents": {
-        "maxConcurrent": 8
       }
     },
     "list": [
       {
         "id": "main",
-        "name": "Central Core",
-        "level": 1,
-        "reports_to": null
+        "name": "Central Core"
       },
       {
         "id": "clawdia_prime",
         "name": "Head of Development",
-        "level": 1,
-        "reports_to": null,
         "sandbox": {
           "mode": "off"
         }
@@ -73,9 +49,6 @@
       {
         "id": "pumplai_pm",
         "name": "PumpLAI Project Manager",
-        "level": 2,
-        "reports_to": "clawdia_prime",
-        "project": "pumplai",
         "sandbox": {
           "mode": "all"
         }
@@ -83,19 +56,13 @@
       {
         "id": "nextjs_pm",
         "name": "Frontend Architect",
-        "level": 2,
-        "reports_to": "clawdia_prime",
-        "project": "pumplai",
         "sandbox": {
-          "mode": "off"
+          "mode": "all"
         }
       },
       {
         "id": "python_backend_worker",
         "name": "ML Pipeline Worker",
-        "level": 3,
-        "reports_to": "pumplai_pm",
-        "project": "pumplai",
         "sandbox": {
           "mode": "off"
         }
@@ -103,8 +70,13 @@
       {
         "id": "l3_specialist",
         "name": "L3 Specialist Executor",
-        "level": 3,
-        "reports_to": "pumplai_pm",
+        "sandbox": {
+          "mode": "all"
+        }
+      },
+      {
+        "id": "agent",
+        "name": "Dispatch Bridge",
         "sandbox": {
           "mode": "all"
         }
@@ -113,15 +85,17 @@
   },
   "commands": {
     "native": "auto",
-    "nativeSkills": "auto"
+    "nativeSkills": "auto",
+    "restart": true,
+    "ownerDisplay": "raw"
   },
   "channels": {
     "telegram": {
       "enabled": true,
       "dmPolicy": "pairing",
-      "botToken": "8261002797:AAFMJm4sifdywmKM8oKezRnFdAgxezvIHW0",
+      "botToken": "${OPENCLAW_TELEGRAM_BOT_TOKEN}",
       "groupPolicy": "allowlist",
-      "streamMode": "partial"
+      "streaming": "partial"
     }
   },
   "gateway": {
@@ -130,19 +104,25 @@
     "bind": "loopback",
     "auth": {
       "mode": "token",
-      "token": "c1701657cb4ba6739dcb5684bebf077384ce540c3c41e112"
+      "token": "${OPENCLAW_GATEWAY_TOKEN}"
     }
   },
-  "memory": {
-    "memu_api_url": "http://localhost:18791"
-  },
   "plugins": {
+    "slots": {
+      "memory": "memory-memu"
+    },
     "entries": {
       "telegram": {
         "enabled": true
       },
       "google-gemini-cli-auth": {
         "enabled": true
+      },
+      "memory-memu": {
+        "enabled": true,
+        "config": {
+          "geminiApiKey": "${GEMINI_API_KEY}"
+        }
       }
     }
   }

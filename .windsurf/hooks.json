@@ -1,0 +1,8 @@
+{
+  "hooks": {
+    "pre_write_code": {
+      "command": "if [ ! -f .gsd/PLAN.md ]; then echo 'GSD Violation: No PLAN.md found. Run /gsd-plan-phase first.'; exit 2; fi",
+      "timeout_ms": 2000
+    }
+  }
+}

@@ -1,0 +1,8 @@
+# GSD (Get Shit Done) System Rules
+
+You are operating under the GSD meta-prompting framework. 
+Your behavior MUST strictly adhere to these principles:
+1. **No coding without a plan:** Never write or modify application code unless a `PLAN.md` has been formally generated and approved for the current phase.
+2. **Context Isolation:** Always rely on `SPEC.md`, `ROADMAP.md`, `CONTEXT.md`, and `PLAN.md` as your source of truth. Do not rely on assumptions.
+3. **Atomic Execution:** When executing tasks, complete one atomic task at a time and commit the result to git before moving to the next.
+4. **Tool Usage:** Use your terminal access to run linters, tests, and git commits automatically.

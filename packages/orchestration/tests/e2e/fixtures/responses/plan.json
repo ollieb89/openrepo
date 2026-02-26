@@ -1,0 +1,19 @@
+{
+  "steps": [
+    {
+      "id": "1",
+      "action": "Analyze task requirements",
+      "expected_outcome": "Clear understanding of what needs to be done"
+    },
+    {
+      "id": "2",
+      "action": "Create implementation plan",
+      "expected_outcome": "Detailed plan with actionable steps"
+    },
+    {
+      "id": "3",
+      "action": "Execute plan",
+      "expected_outcome": "Task completed successfully"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  mock-llm:
+    build:
+      context: ./mock_llm
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./responses:/app/responses:ro
+    environment:
+      - FLASK_ENV=testing
+      - RESPONSES_DIR=/app/responses
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  orchestrator:
+    build:
+      context: ../../../
+      dockerfile: Dockerfile
+    environment:
+      - AUTONOMY_ENABLED=1
+      - MOCK_LLM_URL=http://mock-llm:8080
+      - CLI_RUNTIME=claude-code
+      - OPENCLAW_STATE_FILE=/tmp/openclaw/state.json
+      - AUTONOMY_CONFIDENCE_THRESHOLD=0.4
+      - AUTONOMY_MAX_RETRIES=1
+    volumes:
+      - orchestrator_workspace:/workspace
+      - /tmp/openclaw:/tmp/openclaw
+    depends_on:
+      mock-llm:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import openclaw; print('OK')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  orchestrator_workspace:

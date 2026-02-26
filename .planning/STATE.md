@@ -2,102 +2,111 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-24)
+See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.4 Operational Maturity — Phase 41: L1 Strategic Suggestions (complete — all 3 plans done)
+**Current focus:** v1.6 Agent Autonomy shipped 2026-02-26. Planning next milestone (/gsd-new-milestone).
 
 ## Current Position
 
-Phase: 41 of 42 (L1 Strategic Suggestions) — complete
-Plan: 3 of 3 complete in current phase
-Status: Plan 03 complete — Suggestions dashboard UI (SuggestionsPanel, SuggestionCard, DismissedTab, Sidebar badge)
-Last activity: 2026-02-24 — Phase 41 Plan 03 complete: /suggestions dashboard page, SuggestionCard accept/reject flows, Sidebar pending count badge
-
-Progress: [█████░░░░░] 55% (v1.4)
+Milestone: v1.6 — COMPLETE
+Status: All 7 phases (54-60) delivered. 14 plans, 10/11 requirements satisfied.
+Last activity: 2026-02-26 — Milestone archived, tagged v1.6.
 
 ## Performance Metrics
 
-**Velocity (prior milestones):**
+**Velocity (shipped milestones):**
 - v1.0: 10 phases, 25 plans across 7 days
 - v1.1: 8 phases, 17 plans in ~5 hours
 - v1.2: 7 phases, 14 plans in ~1 day
-- v1.3: 11 phases, 19 plans in 7 days
-
-**v1.4:** 4 phases, TBD plans — 10 plans complete (Phase 39 Plans 01-04, Phase 40 Plans 01-04, Phase 41 Plans 01-02)
+- v1.3: 11 phases, 19 plans in ~1 day
+- v1.4: 6 phases, 16 plans in ~1 day
+- v1.5: 9 phases, 22 plans in ~1 day
+- v1.6: 7 phases, 14 plans in ~1 day
 
 ## Accumulated Context
 
 ### Decisions
 
-All prior decisions logged in PROJECT.md Key Decisions table (v1.0–v1.3).
+All decisions logged in PROJECT.md Key Decisions table (v1.0–v1.4).
 
-v1.4 research flags to carry into planning:
-- Phase 39: asyncio SIGTERM + fcntl deadlock interaction — dehydration must use flag + `loop.add_signal_handler`, never direct `update_task()` from signal handler. Recovery loop needs `recovery_safe` flag check before re-spawning to avoid re-running tasks with existing git commits.
-- Phase 41: Build the approval gate before the suggestion pipeline. SOUL diff validation rules (no safety constraint removal, no shell commands, max 100 lines) must be specified before coding the apply path.
+Notable for v1.5:
+- Cosine similarity conflict detection threshold (0.92) needs empirical tuning — addressed in Phase 49
+- `workspace/` path divergence (runtime `data/workspace/.openclaw/` vs code-resolved `OPENCLAW_ROOT/workspace/.openclaw/`) — addressed in Phase 45
+- Phase 49 depends on Phase 45 (shares OPENCLAW_ROOT plumbing) but is independent of Phases 46-48
 
-**Phase 39 Plan 01 decisions:**
-- CLI runtime backgrounded with pipe-to-tee + wait so PID 1 (bash) remains free to receive SIGTERM
-- _child_pid captures tee PID (last pipeline stage); killing tee sends SIGPIPE to CLI runtime — acceptable shutdown path
-- stop_timeout=30 in spawn.py matches drain window from CONTEXT.md; exceeds JarvisState LOCK_TIMEOUT (5s) plus overhead
+**45-01 decisions:**
+- get_state_path() and get_snapshot_dir() require project_id — no Optional default, no active-project fallback
+- OPENCLAW_STATE_FILE env var takes priority in get_state_path() to align with container entrypoint.sh behavior
+- _find_project_root() never uses Path(__file__).parent — resolves to site-packages, not live project root
 
-**Phase 39 Plan 02 decisions:**
-- Use loop.add_signal_handler() not signal.signal() — prevents fcntl deadlock if state engine holds lock at signal time
-- Idempotency guard via mutable closure dict {"flag": False} — double SIGTERM silently ignored
-- drain_pending_memorize_tasks() returns summary dict not raises — caller decides action
-- 30s drain timeout matches stop_timeout=30 set in plan 01
+**45-02 decisions:**
+- pool.py init builds defaults dict inline from DEFAULT_POOL_* constants — no separate dict variable needed
+- init.py resolves project_id via get_active_project_id() with "default" fallback for path function calls
+- soul_renderer.py aliases get_project_root as _find_project_root to minimize diff while aligning to config source
 
-**Phase 39 Plan 03 decisions:**
-- auto_retry checks git branch for partial commits before re-queuing — falls back to mark_failed if commits exist (conservative, no data loss)
-- Retry limit of 1 enforced via metadata.retry_count >= 1 — prevents infinite retry loops
-- Missing spawn_requested_at treated as expired with warning log — silently skipping could mask orphaned tasks
-- run_recovery_scan() always logs startup summary even when nothing recovered
+**46-01 decisions (TDD RED):**
+- validate_openclaw_config returns (fatal: list, warnings: list) tuple — testable without mocking sys.exit
+- validate_project_config_schema is a separate entry point for project.json — raises exception on failure
+- test_project_json_missing_required uses pytest.raises(Exception) broadly — exact exception type is Plan 02's decision
 
-**Phase 39 Plan 04 decisions:**
-- pool_cfg set in both try and except paths so pool._pool_config is always a valid dict before run_recovery_scan() call
-- run_recovery_scan() called unconditionally in spawn_task() — no conditional guard needed (scan handles empty state gracefully)
+**46-02 decisions (schema implementation GREEN):**
+- additionalProperties violations are warnings not fatal errors — unknown fields may be forward-compatible
+- sys.exit(1) fires in _emit_validation_results() at call site in project_config.py, not inside the validator
+- OPENCLAW_JSON_SCHEMA and PROJECT_JSON_SCHEMA imported lazily inside validator functions to avoid circular imports
+- Draft202012Validator.iter_errors() collect-all strategy — user sees all errors at once
 
-**Phase 40 Plan 01 decisions:**
-- scan_engine.py extracted as stdlib-only module so algorithm is testable without pydantic/memu in root env
-- Lazy imports of cosine_topk and pendulum inside function bodies — _check_staleness works without memu at import time
-- user_id required (non-optional) in HealthScanRequest to prevent cross-project scope leak
-- content required (non-optional) in MemoryUpdateRequest to prevent empty-body ValueError from memu CRUD
-- last_reinforced_at absence treated as 'fresh' if created_at within retrieval_window — avoids false-positive stale flags
-- Conflict pair deduplication via tuple(sorted([id_a, id_b])) seen-set
+**46-03 decisions (CLI + documentation):**
+- openclaw-config show calls load_and_validate_openclaw_config() — reuses existing validation path rather than loading config directly
+- FileNotFoundError caught separately from generic Exception in cmd_show for actionable error messages
+- _comment_* JSON keys pattern used for inline schema documentation (standard JSON workaround, file remains parseable)
+- config/openclaw.json.example documents all 9 schema properties including nested gateway.auth, agents.defaults, channels.telegram
+- [Phase 50-01]: event_bus.py has zero openclaw imports at module level to avoid circular imports
+- [Phase 50-01]: Each emit() handler gets its own daemon thread — no shared thread pool needed
+- [Phase 50-notion-kanban-sync]: data_source_id used for queries, database_id for creates — API 2025-09-03 splits ID space; both cached in config.json
+- [Phase 50-notion-kanban-sync]: Module-level threading.Lock() in notion_client.py prevents concurrent bootstrap race creating duplicate Notion DBs
+- [Phase 47-env-var-precedence-migration-cli]: get_active_project_env() returns None (not empty string) when OPENCLAW_PROJECT unset — or None idiom coerces empty string
+- [Phase 47-env-var-precedence-migration-cli]: mkdir auto-create in _find_project_root() applies only to OPENCLAW_ROOT env var path, not ~/.openclaw fallback
+- [Phase 47-02-migration-cli]: shutil.copy2 backup in helpers (_migrate_one_*) not in cmd_migrate — cleaner separation; _migrate_one_project_json catches ConfigValidationError (raise pattern), not (fatal, warnings) tuple
+- [Phase 47-03-tests]: get_active_project_env() tests do not need importlib.reload — function reads os.environ at call time; test_get_active_project_id_uses_env_var uses reload in try/finally for OPENCLAW_ROOT override
+- [Phase 50-03]: _safe_set_status is exclusive — if not openclaw-linked, Status key is absent from update dict (Notion's value is untouched)
+- [Phase 50-03]: activity append is best-effort — failure logs warning but never aborts the main Cards DB mutation
+- [Phase 50-03]: Module-level _project_page_id_cache dict avoids repeated Projects DB queries within one process lifetime
+- [Phase 50-05]: _parse_batch sentence heuristic skips comma-split when '. ', '? ', or '! ' present — avoids splitting natural language sentences
+- [Phase 50-05]: Status ownership on capture update: explicit status in payload respected directly; no _is_openclaw_linked guard needed for capture cards (Capture Hash is our ownership marker)
+- [Phase 50-05]: card_type=Task for Dev area, Life Task for all others — consistent with Cards DB schema options
+- [Phase 50]: [Phase 50-04]: _should_write_status() is canonical status ownership guard — _is_openclaw_linked() delegates to it for backward compat
+- [Phase 50]: [Phase 50-04]: container child cards use upsert_by_dedupe on OpenClaw Event Anchor for idempotent replay
+- [Phase 50-06]: SyncResult.extra dict added — holds reconcile drift report; included in to_dict() output only when non-empty
+- [Phase 50-06]: _reconcile_status_mismatch is no-op when workspace-state.json unavailable — prevents false corrections against empty baseline
+- [Phase 50-06]: _query_all() paginated helper calls client._request() directly for cursor pagination (query_database() does not expose cursor)
+- [Phase 48-01]: Inner-method imports in integration tests — monkeypatching env vars takes effect before modules are touched
+- [Phase 48-01]: try/finally with importlib.reload(cfg) in finally block restores module-level LOG_LEVEL/ACTIVITY_LOG_MAX after env var tests
+- [Phase 48-01]: Pool config tests write tmp_path/projects/testproject/project.json to match exact path load_project_config() resolves
+- [Phase 49-deferred-reliability-quality-and-observability]: HEALTHCHECK shell form (CMD test -f) not exec form — Debian bookworm-slim test is bash builtin; sentinel placed after update_state starting before staging branch
+- [Phase 49-02-QUAL-07]: MEMORY_CONFLICT_THRESHOLD = 0.85 (not 0.92 placeholder) — sits at related→duplicate boundary per text-embedding-3-small benchmarks; conservative to prefer false negatives over false positives
+- [Phase 49-02-QUAL-07]: Fail-open on conflict check error: if service.retrieve() raises, proceed with memorize — missed conflicts recoverable, failed writes are not
+- [Phase 49-02-QUAL-07]: memorize.py reads openclaw.json directly via OPENCLAW_ROOT (cannot import openclaw package from Docker memory container)
+- [Phase 49-03-OBS-05]: Adaptive polling constants (2s/30s) hardcoded — not configurable in openclaw.json per locked decision; Docker failure returns 0 (fail-open to idle)
 
-**Phase 40 Plan 02 decisions:**
-- HealthFlag interface exported from HealthTab.tsx as single source of truth — Panel, Row, Table import from one location
-- healthFlags Map<string, HealthFlag> keyed by memory_id for O(1) row-level badge lookup
-- runHealthScan wrapped in useCallback with healthSettings dep — prevents stale closure in scheduled interval
-- handleOpenConflict and handleOpenSettings use toast.info placeholders — modals deferred (out of QUAL-04/05 scope)
-- Scheduled interval guards on activeTab === health AND projectId non-null
-
-**Phase 40 Plan 03 decisions:**
-- LCS word-diff splits on \s+ preserving spacing tokens for faithful original formatting
-- SettingsPanel is ephemeral session-only state — no backend persistence per CONTEXT.md scope
-- HealthSettings type defined in SettingsPanel.tsx, imported by MemoryPanel — single source of truth
-- onArchiveMemory is optional prop on HealthTab for backward compatibility
-- handleAdvanceNext sequences conflict flags only — stale flags use dismiss/archive independently
-
-**Phase 40 Plan 04 decisions:**
-- Archive uses content prefix [ARCHIVED <timestamp>] as soft-delete marker — recoverable, no backend changes needed
-- items array from useMemory hook used directly (hook exposes items already unwrapped, not data?.items)
-- Regression test uses stdlib dict validator not pydantic (pydantic not installed in root test env)
-
-**Phase 41 Plan 02 decisions:**
-- validateDiffText exported from action route (not shared lib) — keeps approval gate co-located with write path, preventing accidental bypass
-- rerenderSoul failure logged but does not fail accept request — override content already durably written
-- rejection_reason memorization deferred to L2 CLI — action route does not call memU directly (separation of concerns)
-- project param always required in query string — no active_project fallback (cross-project scope safety)
-
-**Phase 41 Plan 01 decisions:**
-- Activity log (workspace-state.json) used as primary corpus; memU as supplementary — engine works even when memU is empty or down
-- keyword frequency clustering (stdlib) chosen over embedding-based — no live memU dependency, works on plain text
-- sys.path guard added before asyncio import to prevent orchestration/logging.py shadowing stdlib logging in Python 3.14
-- suggest.py has zero imports of soul_renderer write functions — structural approval gate enforced at module boundary (ADV-06)
-- Suppression fingerprint derived from md5 of keyword so rejected suggestions are matched even after evidence count changes
-- [Phase 41]: SuggestionCard accepted state renders as green confirmation card (stays visible after accept for clear operator feedback)
-- [Phase 41]: Sidebar reads projectId from localStorage directly (not ProjectContext) to avoid React context dependency in layout component
+- [Phase 54-04-AUTO-02]: 0.6 escalation threshold — Balance between caution and throughput.
+- [Phase 54-04-AUTO-04]: 1 retry default — Catches ~70% of transient issues, doesn't block pool.
+- [Phase 54-04-AUTO-05]: 5s confidence debounce — Reduces event bus flooding while capturing meaningful changes.
+- [Phase 54-04-AUTO-05]: Fire-and-forget events — Never block task execution on event handling.
+- [Phase 54-04]: Sentinel files — Local backup when HTTP/memU unavailable.
+- [Phase 54-04]: 4 states vs 3 or 5 — Initialization distinction, retry visibility, proper cleanup.
+- [Phase 56-01-AUTO-02]: Confidence Thresholding — `runner.py` deducts confidence for general failures (-0.3), tool errors (-0.15), and unclear requirements (-0.5). If score < `AUTONOMY_CONFIDENCE_THRESHOLD` (default 0.4), it emits `AutonomyEscalationTriggered`.
+- [Phase 56-02-AUTO-02]: Indefinite Pause Loop — Escalation triggers an asynchronous `_escalation_pause_loop` that indefinitely checks `JarvisState` for "resumed" or "executing" instead of `sys.exit(1)`. This preserves exact context for manual L2 intervention.
+- [Phase 56-02-AUTO-02]: Reset Confidence on Resume — When breaking out of pause loop, `confidence_score` resets to 1.0 to prevent immediate re-escalation on step retry.
+- [Phase 56-02-AUTO-02]: Orchestrator Notifications — `hooks.py` listens to `EVENT_ESCALATION_TRIGGERED` locally and logs a `[TELEGRAM_PING]` critical alert to immediately notify human operators.
+- [Phase 57-01-AUTO-03]: Context-Aware Tools — L3 agents execute a pre-planning `_analyze_tool_requirements()` prompt to determine permitted tool categories, generating an `AutonomyToolsSelected` event and injecting explicit tool constraint instructions into subsequent execution prompts.
+- [Phase 58-01-AUTO-04]: Heuristics-Based Deviation Detection — Implemented `_detect_deviation()` in `runner.py` with three criteria: explicit step failure, execution duration >180s threshold, and error keyword density >3 per output.
+- [Phase 58-01-AUTO-04]: LLM Reflection for Course Correction — Implemented `_reflect_and_correct()` that generates 1-2 recovery steps via LLM prompt when deviation detected, emits `AutonomyCourseCorrection` event, and dynamically splices recovery steps into execution queue.
+- [Phase 58-01-AUTO-04]: Event Telemetry — `AutonomyCourseCorrection` event payload includes `failed_step` and `recovery_steps` for external monitoring systems.
+- [Phase 59-01-TEST-02]: E2E Test Infrastructure — Created `tests/e2e/` directory with Docker Compose setup, mock LLM server (`tests/e2e/mock_llm/server.py`), and pytest fixtures for containerized E2E testing.
+- [Phase 59-01-TEST-02]: Mock LLM Server — Flask-based mock LLM that returns deterministic responses based on prompt pattern matching, OpenAI API-compatible format.
+- [Phase 59-01-TEST-02]: Happy Path E2E Test — `test_happy_path.py` validates PLANNING → EXECUTING → COMPLETE lifecycle with mock CLI responses, verifying tool selection, plan generation, and event emissions.
+- [Phase 59-01-TEST-02]: CI Integration — GitHub Actions workflow `.github/workflows/e2e.yml` runs E2E tests on PRs with artifact capture on failure.
 
 ### Pending Todos
 
@@ -105,12 +114,11 @@ None.
 
 ### Blockers/Concerns
 
-- Phase 39 Plan 01 RESOLVED: stop_timeout=30 added to spawn.py container_config.
-- Phase 40: RESOLVED — PUT /api/memory/[id] proxy implemented in plan 02, used successfully in plan 03.
-- Phase 41: Rejection corpus may be too small for ≥3-cluster threshold at current project scale — track cluster hit rate early and add keyword-frequency fallback if needed.
+- Human verification pending for live Docker/browser tests (SIGTERM E2E, memory health UI, suggestions UI) — accepted as tech debt per v1.4 audit
+- Event bridge (ws://localhost:8080/events) not implemented — dashboard degrades gracefully
 
 ## Session Continuity
 
-Last session: 2026-02-24
-Stopped at: Completed 41-03-PLAN.md — Suggestions dashboard UI (SuggestionsPanel, SuggestionCard, DismissedTab, Sidebar badge)
-Resume: Phase 42 Plan 01 (Delta Snapshots)
+Last session: 2026-02-26
+Stopped at: v1.6 milestone complete. Archived, tagged, committed.
+Resume file: /gsd-new-milestone — start next milestone

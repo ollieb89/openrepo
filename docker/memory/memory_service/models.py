@@ -17,6 +17,7 @@ class MemorizeRequest(BaseModel):
 class RetrieveRequest(BaseModel):
     queries: list[dict[str, Any]]
     where: dict[str, Any] | None = None
+    created_after: Optional[str] = None  # ISO timestamp cursor for delta fetch (PERF-07)
 
 
 class MemorizeAccepted(BaseModel):

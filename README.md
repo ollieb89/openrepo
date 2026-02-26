@@ -35,8 +35,8 @@ OpenClaw uses a **3-tier hierarchy** to decompose complex objectives into atomic
 
 | Tier | Role | Implementation |
 |------|------|----------------|
-| **L1 — Strategic** | Receives high-level objectives, breaks them into tactical directives | `agents/clawdia_prime/` — routes via `skills/router_skill/index.js` |
-| **L2 — Tactical** | Decomposes directives into atomic tasks, spawns L3 containers, reviews diffs, merges or rejects | `agents/pumplai_pm/` (per-project) — uses `skills/spawn_specialist/` |
+| **L1 — Strategic** | Receives high-level objectives, breaks them into tactical directives | `agents/clawdia_prime/` — routes via `skills/router/index.js` |
+| **L2 — Tactical** | Decomposes directives into atomic tasks, spawns L3 containers, reviews diffs, merges or rejects | `agents/pumplai_pm/` (per-project) — uses `skills/spawn/` |
 | **L3 — Execution** | Runs inside isolated Docker containers on staging branches, executes code/test tasks | `docker/l3-specialist/` — ephemeral, security-constrained |
 
 ### Delegation Flow
@@ -44,13 +44,13 @@ OpenClaw uses a **3-tier hierarchy** to decompose complex objectives into atomic
 ```
 L1 (ClawdiaPrime)
  │
- │  router_skill dispatches directive via:
+ │  router skill dispatches directive via:
  │    openclaw agent --agent <l2_id> --message "<directive>"
  │
  ▼
 L2 (Project Manager)
  │
- │  spawn_specialist creates Docker container:
+ │  spawn skill creates Docker container:
  │    - Creates task in workspace-state.json
  │    - Runs container with security constraints
  │    - Monitors execution with timeout
@@ -101,7 +101,7 @@ Snapshots are saved to `workspace/.openclaw/<project_id>/snapshots/{task_id}.dif
 
 ### Container Pool Management
 
-L3 containers are managed by an **asyncio semaphore-based pool** (`skills/spawn_specialist/pool.py`):
+L3 containers are managed by an **asyncio semaphore-based pool** (`skills/spawn/pool.py`):
 
 - **Default concurrency**: 3 containers per project (configurable per-project)
 - **Pool modes**:
@@ -138,12 +138,12 @@ orchestration/               Jarvis Protocol core
   config_validator.py        Project and agent hierarchy validation
   logging.py                 Structured logging subsystem
 skills/                      Executable capabilities
-  router_skill/              L1 → L2 directive dispatch (Node.js)
+  router/                    L1 → L2 directive dispatch (Node.js)
     index.js                 Uses execFileSync for shell-injection-safe CLI calls
-  spawn_specialist/          L2 → L3 container spawning (Python)
+  spawn/                     L2 → L3 container spawning (Python)
     spawn.py                 Docker container lifecycle and security config
     pool.py                  Concurrency management (asyncio semaphore, PoolRegistry)
-  review_skill/              L2 diff review
+  review/                    L2 diff review
 docker/l3-specialist/        L3 container image
   Dockerfile                 Debian slim + git/python3/curl/jq, non-root user
   entrypoint.sh              Branch creation, runtime execution, state updates
@@ -169,7 +169,7 @@ identity/                    Device authentication tokens
 
 - **Docker** — for L3 specialist containers
 - **Python 3** — orchestration layer (no external deps except `docker>=7.1.0` for spawn)
-- **Node.js** — for `router_skill` (L1 → L2 dispatch)
+- **Node.js** — for `router` skill (L1 → L2 dispatch)
 - **[Bun](https://bun.sh)** — for the monitoring dashboard
 
 ---
@@ -189,7 +189,7 @@ cd ~/.openclaw
 docker build -t openclaw-l3-specialist:latest docker/l3-specialist/
 ```
 
-### 3. Install Python dependencies (for spawn_specialist)
+### 3. Install Python dependencies (for spawn)
 
 ```bash
 pip install docker>=7.1.0
@@ -229,7 +229,7 @@ This will:
 ### Spawn a specialist to do work
 
 ```bash
-python3 skills/spawn_specialist/spawn.py task-001 code "Implement the login page" \
+python3 skills/spawn/spawn.py task-001 code "Implement the login page" \
   --workspace /path/to/myproject
 ```
 
@@ -350,7 +350,7 @@ python3 orchestration/soul_renderer.py --project myproject --write
 ### Direct spawn (for testing)
 
 ```bash
-python3 skills/spawn_specialist/spawn.py <task_id> <code|test> "<description>" \
+python3 skills/spawn/spawn.py <task_id> <code|test> "<description>" \
   --workspace /path/to/workspace \
   --project myproject \
   --runtime claude-code \
@@ -360,7 +360,7 @@ python3 skills/spawn_specialist/spawn.py <task_id> <code|test> "<description>" \
 ### Pool-managed spawn (production)
 
 ```bash
-python3 skills/spawn_specialist/pool.py <task_id> <code|test> "<description>" \
+python3 skills/spawn/pool.py <task_id> <code|test> "<description>" \
   --workspace /path/to/workspace \
   --project myproject
 ```
@@ -467,15 +467,14 @@ The **OCCC** (OpenClaw Control Center) is a Next.js monitoring dashboard running
 ### Run locally
 
 ```bash
-cd workspace/occc
-bun install
-bun run dev    # http://localhost:6987
+export OPENCLAW_ROOT=$HOME/.openclaw   # Required: dashboard inherits this for suggest.py path resolution
+make dashboard                         # or: cd packages/dashboard && bun install && bun run dev
 ```
 
 ### Run via Docker
 
 ```bash
-docker build -t openclaw-dashboard workspace/occc/
+docker build -t openclaw-dashboard packages/dashboard/
 # Exposed on host port 18795 → container port 6987
 ```
 
@@ -567,7 +566,96 @@ L3 specialist containers run with strict isolation:
 | Restart policy | None (L2 handles retries, not Docker) |
 | Concurrency | Max 3 concurrent containers per project (configurable) |
 | Retry | Once on failure, then report |
-| Shell injection | Prevented — `router_skill` uses `execFileSync` with argument arrays, no shell interpretation |
+| Shell injection | Prevented — `router` skill uses `execFileSync` with argument arrays, no shell interpretation |
+
+---
+
+## Agent Autonomy Framework (v1.6)
+
+The **Agent Autonomy Framework** enables L3 containers to self-direct their work with confidence-based decision making, automatically escalating to human oversight when confidence falls below threshold.
+
+### Architecture
+
+```
+L3 Container
+ │
+ ├─ AutonomyClient ──→ Orchestrator HTTP API
+ │                        │
+ ├─ Sentinel Files ──→ /tmp/openclaw/autonomy/  (backup)
+ │                        │
+ └─ Confidence Loop    Autonomy Hooks
+    (self-reporting)    │
+                         ├─ State Machine (4 states)
+                         ├─ Event Bus (decoupled)
+                         └─ memU (persistence)
+```
+
+### States
+
+| State | Description | Transition Trigger |
+|-------|-------------|-------------------|
+| **PLANNING** | Task initialized | `on_task_spawn()` |
+| **EXECUTING** | Container healthy, work in progress | Container health check |
+| **BLOCKED** | Hit obstacle, retry pending | Task failure |
+| **COMPLETE** | Task finished successfully | Task completion |
+| **ESCALATING** | Max retries exceeded, human needed | Retry exhaustion |
+
+### Confidence Scoring
+
+Tasks are scored 0.0-1.0 based on:
+- **Complexity** (25%): Code keywords, length, multi-step indicators
+- **Ambiguity** (30%): Uncertainty words vs clarity indicators
+- **Past Success** (25%): Historical success rate (future: ML-based)
+- **Time Estimate** (20%): Duration-based confidence
+
+**Escalation Threshold**: 0.6 (configurable per-project)
+
+### Usage
+
+```python
+from openclaw.autonomy import (
+    on_task_spawn, on_container_healthy, on_task_complete,
+    AutonomyState, AutonomyContext, AutonomyEventBus
+)
+
+# 1. Spawn creates PLANNING context
+context = on_task_spawn("task-001", {"max_retries": 1})
+
+# 2. Health check transitions to EXECUTING
+on_container_healthy("task-001")
+
+# 3. L3 container reports confidence
+#    (inside container via AutonomyClient)
+from openclaw.autonomy import AutonomyClient
+client = AutonomyClient("task-001", "http://host.docker.internal:8080")
+client.report_state_update("executing", confidence=0.85)
+
+# 4. Task completion
+on_task_complete("task-001", {"status": "success"})
+```
+
+### Configuration
+
+```json
+{
+  "autonomy": {
+    "enabled": true,
+    "escalation_threshold": 0.6,
+    "confidence_calculator": "threshold",
+    "max_retries": 1,
+    "blocked_timeout_minutes": 30
+  }
+}
+```
+
+### Events
+
+| Event | Description |
+|-------|-------------|
+| `autonomy.state_changed` | State transition occurred |
+| `autonomy.confidence_updated` | Confidence score changed (debounced) |
+| `autonomy.escalation_triggered` | Human escalation requested |
+| `autonomy.retry_attempted` | Retry from BLOCKED state |
 
 ---
 

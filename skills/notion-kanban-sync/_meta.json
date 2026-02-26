@@ -1,0 +1,6 @@
+{
+  "ownerId": "openclaw",
+  "slug": "notion-kanban-sync",
+  "version": "0.1.0",
+  "description": "OpenClaw state → Notion kanban board sync"
+}

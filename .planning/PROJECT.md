@@ -17,20 +17,15 @@ Hierarchical AI orchestration with physical isolation — enabling autonomous, s
 - **Container:** Debian bookworm-slim L3 images, Nvidia Container Toolkit
 - **OS:** Ubuntu 24.04 LTS
 
-## Current Milestone: v1.4 Operational Maturity
+## Current Milestone: Planning next (v1.7 or v2.0)
 
-**Goal:** Harden the swarm for production-grade autonomy — graceful shutdown with task recovery, memory health monitoring, L1 proactive SOUL suggestions, and delta-based snapshot optimization.
-
-**Target features:**
-- Graceful SIGTERM handling with task state dehydration/rehydration and automated recovery loops
-- Memory health monitor detecting stale/conflicting memories with manual override UI
-- L1 strategic SOUL template suggestions based on recurring task failure/success patterns
-- Delta-based memory snapshots to reduce I/O during deep context injection
+**Previous:** v1.6 Agent Autonomy — shipped 2026-02-26
 
 ## Current State
 
-**Shipped:** v1.3 Agent Memory (2026-02-24)
-**LOC:** ~38,600 (Python + TypeScript)
+**Shipped:** v1.6 Agent Autonomy (2026-02-26)
+**LOC:** ~25K Python, ~30K TypeScript/TSX (packages/ only)
+**Tests:** 268/268 passing
 
 Architecture operational:
 - L1 (ClawdiaPrime) → L2 (PumplAI_PM) → L3 (Ephemeral Specialists) delegation chain
@@ -38,6 +33,17 @@ Architecture operational:
 - Semantic snapshot system with git staging branches
 - occc mission control dashboard with SSE real-time streaming, project switching, and metrics visualization
 - Docker isolation with `no-new-privileges`, `cap_drop ALL`, memory/CPU limits
+- Unified config layer with schema validation, env-var precedence, and migration CLI
+- Notion Kanban Sync (v1.5/v2.0 extension) for real-time project visibility
+
+Agent autonomy (v1.6):
+- 4-state autonomy framework (PLANNING → EXECUTING → BLOCKED/COMPLETE/ESCALATING) with confidence scoring
+- Self-directed task decomposition via LLM planning phase; spawn injects AUTONOMY_ENABLED
+- Confidence-based escalation (0.6 threshold) with indefinite pause loop until L2 resumes
+- Context-aware tool selection with intent analysis and prompt injection
+- Progress self-monitoring: heuristic deviation detection, LLM-driven course correction, dynamic step splicing
+- Dashboard autonomy UI: state badges, confidence indicator, escalation alerts, EscalationsPage, Resume/Fail APIs
+- E2E autonomy tests (16 tests): happy path, retry path, escalation path, multi-step
 
 Multi-project framework (v1.1):
 - Per-project state/snapshot path resolution via `project_config.py`
@@ -53,23 +59,30 @@ Orchestration hardening (v1.2):
 - Task lifecycle observability: spawn-to-complete timestamps, lock wait tracking, activity log rotation
 - Per-project pool config: configurable concurrency limits, shared/isolated modes, overflow policies (reject/wait/priority)
 - Dashboard metrics: Recharts visualization (task charts, pool gauges), agent hierarchy with status dots
-- Monitor cache fix: JarvisState reuse across poll cycles for cache hit performance
 
 Agent memory (v1.3):
-- Standalone memU service (memu-py + PostgreSQL+pgvector) in Docker with REST API (memorize, retrieve, CRUD, health)
+- Standalone memU service (memu-py + PostgreSQL+pgvector) in Docker with REST API
 - Per-project + per-agent memory scoping enforced by MemoryClient wrapper
 - L3 auto-memorization of task outcomes via fire-and-forget (non-blocking)
 - L2 review decision memorization with category metadata
 - Pre-spawn context retrieval injected into SOUL template (2,000-char budget cap, graceful degradation)
-- L3 in-execution memory queries via HTTP (SOUL documents curl pattern)
-- Category-routed memory formatting — CATEGORY_SECTION_MAP routes to Past Review Outcomes / Task Outcomes / Past Work Context
+- L3 in-execution memory queries via HTTP; category-routed memory formatting (CATEGORY_SECTION_MAP)
 - Dashboard /memory page with project-scoped browsing, semantic search, bulk delete, metadata display
+
+Operational maturity (v1.4):
+- SIGTERM graceful shutdown for L3 containers — bash trap writes `interrupted` to Jarvis state (exit 143)
+- Fire-and-forget memorize drain — asyncio tasks tracked + drained (30s gather) via `loop.add_signal_handler`
+- Pool startup recovery scan — detects orphaned tasks, applies configurable `mark_failed`/`auto_retry`/`manual` policy
+- Memory health monitoring — staleness + cosine-conflict detection; dashboard badges, conflict panel, edit/archive actions
+- L1 strategic SOUL suggestions — keyword-frequency clustering → diff-style amendments with mandatory approval gate
+- Delta-cursor memory retrieval — `created_after` filter on memU `/retrieve`, cursor in `workspace-state.json`, `max_snapshots` pruning
 
 Known limitations:
 - Gateway startup is manual (runtime dependency)
 - COM-04 snapshot capture cannot be E2E tested when workspace is a git submodule
 - CLI routing replaces lane queue REST API (accepted spec deviation)
-- Pre-existing TypeScript errors in unrelated connector/test files (occc)
+- `workspace/` path divergence: runtime state at `data/workspace/.openclaw/` vs code-resolved `OPENCLAW_ROOT/workspace/.openclaw/` — pre-existing, candidate for v1.5 config unification
+- Human verification pending for live Docker/browser tests (SIGTERM E2E, memory health UI, suggestions UI)
 
 ## Requirements
 
@@ -84,6 +97,11 @@ Known limitations:
 - ✓ HIE-04: Physical Docker isolation — v1.0
 - ✓ COM-01: Hub-and-spoke via Gateway — v1.0
 - ✓ COM-02: Lane Queues / CLI routing — v1.0 (spec deviation accepted)
+- ✓ AUTO-01: L3 agents perform self-directed task breakdown and planning — v1.6
+- ✓ AUTO-02: agents self-escalate based on confidence thresholds — v1.6
+- ✓ AUTO-03: Context-aware tool selection based on task intent — v1.6
+- ✓ AUTO-04: Progress self-monitoring and course correction logic — v1.6
+- ✓ AUTO-05: Autonomous handoff to L2 when blocked or complete — v1.6 (partial: design doc deferred)
 - ✓ COM-03: Jarvis Protocol state.json sync — v1.0
 - ✓ COM-04: Semantic snapshotting — v1.0
 - ✓ DSH-01: occc dashboard (Next.js 16) — v1.0
@@ -106,10 +124,17 @@ Known limitations:
 - ✓ MEM-01 through MEM-04: L3 auto-memorization, L2 review memorization, non-blocking failure, MEMU_API_URL injection — v1.3
 - ✓ RET-01 through RET-05: Pre-spawn retrieval, SOUL injection, budget cap, graceful degradation, in-execution queries — v1.3
 - ✓ DSH-11 through DSH-14: Memory page, semantic search, delete action, metadata display — v1.3
+- ✓ REL-04 through REL-08: SIGTERM graceful shutdown, pool recovery scan, configurable recovery policy, memorize drain — v1.4
+- ✓ QUAL-01 through QUAL-06: Memory health scan (staleness + conflict detection), PUT update endpoint, dashboard badges + conflict panel + settings — v1.4
+- ✓ ADV-01 through ADV-06: Pattern extraction engine, SOUL diff amendments, pending suggestions store, accept/reject pipeline with approval gate, dashboard suggestions UI — v1.4
+- ✓ PERF-05 through PERF-08: Memory cursors in state.json, cursor-aware pre-spawn retrieval, `created_after` filter on memU, `max_snapshots` pruning — v1.4
+- ✓ CONF-01 through CONF-07: Config consolidation (path resolver, schema validation, migration CLI, env precedence, integration tests) — v1.5
+- ✓ REL-09, QUAL-07, OBS-05: Docker health checks, calibrated threshold, adaptive polling — v1.5
+- ✓ NOTION-01 through NOTION-11: Notion Kanban Sync (lifecycle events, idempotent capture, reconcile) — v1.5
 
 ### Active
 
-(Defining requirements for v1.4 Operational Maturity)
+(None — v1.6 complete; next milestone TBD)
 
 ### Out of Scope
 
@@ -122,7 +147,7 @@ Known limitations:
 - Cross-project agent sharing — conflicts with 1:1 L2-to-project assumption
 - GitPython library adoption — subprocess reduction sufficient for now
 - Prometheus/OpenTelemetry export — overkill for single-host system
-- Docker health checks — defer to container hardening milestone
+- Docker health checks — moved to v1.5 (REL-09 now active)
 
 ## Key Decisions
 
@@ -149,13 +174,28 @@ Known limitations:
 | PoolOverflowError for all overflow scenarios | ✓ Good — single exception type, clear error messages | v1.2 |
 | Shared semaphore lazy-created on first shared-mode call | ✓ Good — no wasted resources for isolated-only projects | v1.2 |
 | JarvisState instance dict local to tail_state() | ✓ Good — implicit teardown on exit, no module-level cache | v1.2 |
-| memU as self-hosted library in standalone Docker service | ✓ Good — avoids unknown Temporal dependency from nevamindai image | v1.3 |
+| memU as self-hosted library in standalone Docker service | ✓ Good — avoids unknown Temporal dependency | v1.3 |
 | PostgreSQL+pgvector for memory storage | ✓ Good — PG17 native vector performance, persistent volume | v1.3 |
 | Per-agent + per-project memory scoping via MemoryClient | ✓ Good — structurally impossible to skip scoping | v1.3 |
 | Fire-and-forget memorization via asyncio.create_task | ✓ Good — non-blocking, pool slot released immediately | v1.3 |
 | Sync httpx for pre-spawn retrieval (not asyncio) | ✓ Good — avoids RuntimeError in async context | v1.3 |
 | CATEGORY_SECTION_MAP for memory routing | ✓ Good — explicit three-bucket output, clean routing | v1.3 |
 | 2,000-char SOUL memory budget (hardcoded) | ✓ Good — simple, prevents template bloat | v1.3 |
+| `loop.add_signal_handler` for SIGTERM drain | ✓ Good — avoids fcntl deadlock risk with asyncio loop | v1.4 |
+| Idempotency guard on `register_shutdown_handler()` | ✓ Good — safe to call from multiple code paths | v1.4 |
+| Cosine similarity for conflict detection (0.85) | ✓ Good — Sitting at related-duplicate boundary per benchmarks | v1.5 |
+| Keyword-frequency clustering for SOUL suggestions | ✓ Good — low false-positive rate; adaptive threshold for small sets | v1.5 |
+| SHA-based commit cursor for delta snapshot retrieval | ✓ Good — ISO timestamp cursor in state.json | v1.4 |
+| Approval gate validates SOUL diff before write | ✓ Good — prevents structural injection and safety-constraint removal | v1.4 |
+| Path resolver requires explicit project_id | ✓ Good — no project-id fallback avoids path leakage | v1.5 |
+| validation returns (fatal, warnings) tuple | ✓ Good — testable UI without affecting terminal stdout/stderr logic | v1.5 |
+| additionalProperties violations as warnings | ✓ Good — unknown fields are forward-compatible | v1.5 |
+| Event bus daemon handlers with ImportError guard | ✓ Good — fire-and-forget events never block state mutation | v1.5 |
+| Field ownership check for Notion sync (`_should_write_status`) | ✓ Good — prevents OpenClaw from overwriting user-owned fields | v1.5 |
+| 4 states vs 3 or 5 for autonomy | ✓ Good — distinct initialization, retry visibility, proper cleanup | v1.6 |
+| 0.6 escalation threshold default | ✓ Good — balances caution and throughput | v1.6 |
+| 1 retry default for L3 containers | ✓ Good — catches ~70% of transient issues, doesn't block pool | v1.6 |
+| Fire-and-forget events | ✓ Good — never block task execution on event handling | v1.6 |
 
 ## Primary Docs
 
@@ -165,4 +205,4 @@ Known limitations:
 - DEV_WF_FINDINGS.md
 
 ---
-*Last updated: 2026-02-24 after v1.4 milestone start*
+*Last updated: 2026-02-26 after v1.6 milestone*

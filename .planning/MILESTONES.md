@@ -72,3 +72,62 @@
 
 ---
 
+
+## v1.4 Operational Maturity (Shipped: 2026-02-25)
+
+**Phases:** 39-44 | **Plans:** 16 executed | **Timeline:** 1 day (2026-02-24 → 2026-02-25)
+**Requirements:** 21/21 satisfied | **Tests:** 148/148 passing | **Integration:** 21/21 wired, 5/5 E2E flows
+
+**Key accomplishments:**
+- SIGTERM graceful shutdown for L3 containers — bash trap writes `interrupted` to Jarvis state, kills child process cleanly (exit code 143, not 137)
+- Fire-and-forget memorize drain on shutdown — asyncio tasks tracked in `_pending_memorize_tasks` and drained via 30s `gather` using `loop.add_signal_handler` (avoids fcntl deadlock)
+- Pool startup recovery scan — detects orphaned tasks in `in_progress`/`interrupted`/`starting` states, applies configurable `mark_failed`/`auto_retry`/`manual` policy per project
+- Memory health monitoring — staleness + cosine-conflict detection (3 new FastAPI endpoints + PUT update), dashboard badges, conflict resolution panel, edit/archive/dismiss actions
+- L1 strategic SOUL suggestions — keyword-frequency clustering over rejection memories → diff-style amendments with mandatory approval gate; structural injection prevented at API layer; dashboard accept/reject flow
+- Delta-cursor memory retrieval — `created_after` filter on memU `/retrieve`, cursor tracked in `workspace-state.json`, `max_snapshots` pruning wired into `capture_semantic_snapshot`
+
+**Git range:** `feat(39-01)` → `docs(phase-44)` | **LOC:** ~28K Python, ~27K TypeScript/TSX
+
+---
+
+
+## v1.5 Config Consolidation (Shipped: 2026-02-25)
+
+**Phases:** 45-53 | **Plans:** 22 executed | **Timeline:** 1 day (2026-02-25)
+**Requirements:** 21/21 satisfied (v1.5 + v2.0 Notion Sync) | **Tests:** 268/268 passing
+
+**Key accomplishments:**
+- Single source of truth for paths — `get_state_path()` and `get_snapshot_dir()` in config.py with OPENCLAW_STATE_FILE priority
+- Documented, machine-validated schema for openclaw.json — unknown fields flagged, missing required fields fatal
+- Migration CLI with dry-run — `openclaw config migrate` upgrades configs to current schema with backup
+- Env var precedence enforced uniformly — OPENCLAW_ROOT → OPENCLAW_PROJECT → OPENCLAW_LOG_LEVEL → OPENCLAW_ACTIVITY_LOG_MAX
+- Config integration test suite — 15 tests covering path resolution, validation, env precedence, pool fallback
+- Docker health checks for L3 containers (REL-09) — `docker ps` shows healthy/unhealthy/starting
+- Cosine similarity threshold calibrated (0.85) for memory conflict detection
+- Adaptive monitor polling — 2s interval when L3 active, 30s when idle
+- Notion Kanban Sync — event bus, Notion client, schema bootstrap, event sync, conversational capture, reconcile
+- Tech debt cleanup — fixed stale error messages, removed residual config fields, tuned suggest.py adaptive thresholds
+
+**Git range:** `feat(45-01)` → `fix(53-01)` | **LOC:** ~25K Python, ~30K TypeScript/TSX
+
+---
+
+
+## v1.6 Agent Autonomy (Shipped: 2026-02-26)
+
+**Phases:** 54-60 | **Plans:** 14 executed | **Timeline:** 1 day (2026-02-25 → 2026-02-26)
+**Requirements:** 10/11 satisfied (AUTO-05 partial) | **Tests:** 16 E2E autonomy tests
+
+**Key accomplishments:**
+- Autonomy framework: 4-state machine, confidence scoring, event bus, spawn hooks, L3 self-reporting
+- Self-directed task decomposition via LLM planning phase before execution
+- Confidence-based escalation with indefinite pause loop until L2 resumes
+- Context-aware tool selection with intent analysis and prompt injection
+- Progress self-monitoring with heuristic deviation detection and LLM-driven course correction
+- Dashboard autonomy UI: state badges, confidence indicator, escalation alerts, Resume/Fail APIs
+- E2E test suite: happy path, retry path, escalation path, multi-step (16 tests)
+
+**Git range:** `docs(phase-0)` → `fix(e2e)` | **LOC:** ~342K (packages)
+
+---
+

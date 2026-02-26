@@ -1,0 +1,20 @@
+{
+  "notion_projects_db_id": null,
+  "notion_projects_ds_id": null,
+  "notion_cards_db_id": null,
+  "notion_cards_ds_id": null,
+  "notion_parent_page_id": null,
+  "auto_create_dbs": true,
+  "meaningful_container_runtime_min": 10,
+  "persistent_failure_threshold": 2,
+  "retry_max_attempts": 3,
+  "retry_base_delay_seconds": 1,
+  "default_dev_area": "Dev",
+  "area_keywords": {
+    "Health": ["gym", "workout", "doctor", "health", "exercise", "diet", "sleep"],
+    "Finance": ["tax", "invest", "budget", "payment", "invoice", "expense"],
+    "Learning": ["course", "book", "study", "learn", "tutorial", "certification"],
+    "Relationships": ["family", "friend", "birthday", "gift", "catch up", "dinner"],
+    "Admin": ["renew", "insurance", "passport", "appointment", "register"]
+  }
+}

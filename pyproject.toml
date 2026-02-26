@@ -1,0 +1,16 @@
+[project]
+name = "openclaw-workspace"
+version = "1.4.0"
+description = "OpenClaw AI Swarm Orchestration — workspace root"
+requires-python = ">=3.10"
+
+[tool.uv.workspace]
+members = ["packages/orchestration"]
+
+[tool.pytest.ini_options]
+testpaths = ["packages/orchestration/tests"]
+asyncio_mode = "auto"
+markers = [
+    "integration: integration tests that touch the filesystem",
+    "e2e: end-to-end tests that use Docker containers",
+]
