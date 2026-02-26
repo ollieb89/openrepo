@@ -116,7 +116,7 @@ See: `.planning/milestones/v1.5-ROADMAP.md` for full phase details.
 
 ### 🚧 v1.6 Agent Autonomy (Active)
 
-- [/] Phase 54: Autonomy Framework Formulation (4/4 plans) — implemented, tests pending
+- [x] Phase 54: Autonomy Framework Formulation (4/4 plans) — completed 2026-02-26
 - [ ] Phase 55: Self-Directed Task Decomposition (plan pending)
 - [ ] Phase 56: Confidence-Based Escalation Logic (plan pending)  
 - [ ] Phase 57: Context-Aware Tool Selection (plan pending)
@@ -306,6 +306,19 @@ Plans:
   2. `openclaw.json` no longer contains the `wizard` field — no unknown-field warning on startup
   3. `suggest.py` MIN_CLUSTER_SIZE defaults work with datasets under 10 memories without requiring manual seeding
 
+### Phase 55: Self-Directed Task Decomposition
+**Goal**: Implement AUTO-01 (L3 agents perform self-directed task breakdown and planning)
+**Depends on**: Phase 54
+**Requirements**: AUTO-01
+**Success Criteria** (what must be TRUE):
+  1. L3 agents can generate their own executable plans
+  2. The plans respect autonomy constraints
+**Plans**: 2/2 plans complete
+
+Plans:
+- [ ] 55-01-PLAN.md — Autonomy Runner Core & Events
+- [ ] 55-02-PLAN.md — Docker Integration & Testing
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -316,4 +329,4 @@ Plans:
 | 26-38 | v1.3 | 19/19 | ✓ Complete | 2026-02-24 |
 | 39-44 | v1.4 | 16/16 | ✓ Complete | 2026-02-25 |
 | 45-53 | v1.5 | 22/22 | ✓ Complete | 2026-02-25 |
-| 54 | v1.6 | 4/4 | [/] Active (tests pending) | 2026-02-26 |
+| 54 | v1.6 | Complete    | 2026-02-26 | 2026-02-26 |
