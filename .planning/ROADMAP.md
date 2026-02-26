@@ -8,7 +8,7 @@
 - ✅ **v1.3 Agent Memory** — Phases 26-38 (shipped 2026-02-24)
 - ✅ **v1.4 Operational Maturity** — Phases 39-44 (shipped 2026-02-25)
 - ✅ **v1.5 Config Consolidation** — Phases 45-53 (shipped 2026-02-25)
-- 🚧 **v1.6 Agent Autonomy** — Phases 54-58 (active)
+- ✅ **v1.6 Agent Autonomy** — Phases 54-60 (shipped 2026-02-26)
 - 📋 **v2.0 Notion Kanban Sync** — Phase 50 (planned)
 
 ## Phases
@@ -114,13 +114,20 @@ See: `.planning/milestones/v1.5-ROADMAP.md` for full phase details.
 
 </details>
 
-### 🚧 v1.6 Agent Autonomy (Active)
+<details>
+<summary>✅ v1.6 Agent Autonomy (Phases 54-60) — SHIPPED 2026-02-26</summary>
 
-- [/] Phase 54: Autonomy Framework Formulation (1 plan)
-- [ ] Phase 55: Self-Directed Task Decomposition (plan pending)
-- [ ] Phase 56: Confidence-Based Escalation Logic (plan pending)
-- [x] Phase 57: Context-Aware Tool Selection (1/1 plan complete)
-- [ ] Phase 58: Progress Self-Monitoring (1/1 plan complete)
+- [x] Phase 54: Autonomy Framework Formulation (4/4 plans) — completed 2026-02-26
+- [x] Phase 55: Self-Directed Task Decomposition (2/2 plans) — completed 2026-02-26
+- [x] Phase 56: Confidence-Based Escalation Logic (2/2 plans) — completed 2026-02-26
+- [x] Phase 57: Context-Aware Tool Selection (1/1 plan) — completed 2026-02-26
+- [x] Phase 58: Progress Self-Monitoring (1/1 plan) — completed 2026-02-26
+- [x] Phase 59: E2E Autonomy Tests (2/2 plans) — completed 2026-02-26
+- [x] Phase 60: Dashboard Autonomy UI (2/2 plans) — completed 2026-02-26
+
+See: `.planning/milestones/v1.6-ROADMAP.md` for full phase details.
+
+</details>
 
 ### 📋 Next Milestone
 
@@ -339,11 +346,11 @@ Plans:
   3. Selected tools display per task
   4. Real-time escalation alert banner
   5. Escalation context panel with reason and history
-**Plans**: 0/2 plans complete
+**Plans**: 2/2 plans complete
 
 Plans:
-- [ ] 60-01-PLAN.md — Autonomy State Dashboard Components
-- [ ] 60-02-PLAN.md — Escalation Notifications & Real-time Alerts
+- [x] 60-01-PLAN.md — Autonomy State Dashboard Components
+- [x] 60-02-PLAN.md — Escalation Notifications & Real-time Alerts
 
 ## Progress
 
@@ -355,10 +362,10 @@ Plans:
 | 26-38 | v1.3 | 19/19 | ✓ Complete | 2026-02-24 |
 | 39-44 | v1.4 | 16/16 | ✓ Complete | 2026-02-25 |
 | 45-53 | v1.5 | 22/22 | ✓ Complete | 2026-02-25 |
-| 54 | v1.6 | 0/1 | Not started | - |
+| 54 | v1.6 | 4/4 | ✓ Complete | 2026-02-26 |
 | 55 | v1.6 | 2/2 | ✓ Complete | 2026-02-26 |
 | 56 | v1.6 | 2/2 | ✓ Complete | 2026-02-26 |
 | 57 | v1.6 | 1/1 | ✓ Complete | 2026-02-26 |
 | 58 | v1.6 | 1/1 | ✓ Complete | 2026-02-26 |
 | 59 | v1.6 | 2/2 | ✓ Complete | 2026-02-26 |
-| 60 | v1.6 | 0/2 | Planned | - |
+| 60 | v1.6 | 2/2 | ✓ Complete | 2026-02-26 |

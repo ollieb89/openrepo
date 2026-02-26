@@ -5,14 +5,13 @@
 See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** Phase 59 COMPLETE — All E2E autonomy tests delivered (16 tests covering happy path, retry path, escalation path, and multi-step execution). Ready for Phase 60 (Dashboard Autonomy UI).
+**Current focus:** v1.6 Agent Autonomy shipped 2026-02-26. Planning next milestone (/gsd-new-milestone).
 
 ## Current Position
 
-Phase: 59
-Plan: 59-02-PLAN.md — COMPLETE
-Status: Phase 59 Execution Complete — All E2E autonomy tests implemented (16 tests across happy path, retry path, escalation path, and multi-step execution)
-Last activity: 2026-02-26 — E2E test infrastructure complete with mock LLM server, Docker Compose setup, and comprehensive test coverage for retry/escalation scenarios.
+Milestone: v1.6 — COMPLETE
+Status: All 7 phases (54-60) delivered. 14 plans, 10/11 requirements satisfied.
+Last activity: 2026-02-26 — Milestone archived, tagged v1.6.
 
 ## Performance Metrics
 
@@ -23,6 +22,7 @@ Last activity: 2026-02-26 — E2E test infrastructure complete with mock LLM ser
 - v1.3: 11 phases, 19 plans in ~1 day
 - v1.4: 6 phases, 16 plans in ~1 day
 - v1.5: 9 phases, 22 plans in ~1 day
+- v1.6: 7 phases, 14 plans in ~1 day
 
 ## Accumulated Context
 
@@ -115,9 +115,10 @@ None.
 ### Blockers/Concerns
 
 - Human verification pending for live Docker/browser tests (SIGTERM E2E, memory health UI, suggestions UI) — accepted as tech debt per v1.4 audit
+- Event bridge (ws://localhost:8080/events) not implemented — dashboard degrades gracefully
 
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Phase 59 COMPLETE. All E2E tests implemented and infrastructure complete.
-Resume file: Transition to Phase 60 — Dashboard Autonomy UI
+Stopped at: v1.6 milestone complete. Archived, tagged, committed.
+Resume file: /gsd-new-milestone — start next milestone

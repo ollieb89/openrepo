@@ -17,23 +17,13 @@ Hierarchical AI orchestration with physical isolation — enabling autonomous, s
 - **Container:** Debian bookworm-slim L3 images, Nvidia Container Toolkit
 - **OS:** Ubuntu 24.04 LTS
 
-## Current Milestone: v1.6 Agent Autonomy — ACTIVE
+## Current Milestone: Planning next (v1.7 or v2.0)
 
-**Goal:** Enable L3 agents to self-direct their work with confidence-based decision making and autonomous escalation.
-
-**Target Features:**
-- Self-directed task breakdown and planning (AUTO-01)
-- Confidence-based escalation with configurable thresholds (AUTO-02)
-- Context-aware tool selection for L3 agents (AUTO-03)
-- Progress self-monitoring with course correction (AUTO-04)
-- Autonomous handoff to L2 when blocked or complete (AUTO-05)
-- Dashboard visibility into autonomy state and escalations
-
-**Current Status:** Phase 54 autonomy framework implemented. Fixing test failures and integrating hooks into spawn flow.
+**Previous:** v1.6 Agent Autonomy — shipped 2026-02-26
 
 ## Current State
 
-**Shipped:** v1.5 Config Consolidation (2026-02-25)
+**Shipped:** v1.6 Agent Autonomy (2026-02-26)
 **LOC:** ~25K Python, ~30K TypeScript/TSX (packages/ only)
 **Tests:** 268/268 passing
 
@@ -45,6 +35,15 @@ Architecture operational:
 - Docker isolation with `no-new-privileges`, `cap_drop ALL`, memory/CPU limits
 - Unified config layer with schema validation, env-var precedence, and migration CLI
 - Notion Kanban Sync (v1.5/v2.0 extension) for real-time project visibility
+
+Agent autonomy (v1.6):
+- 4-state autonomy framework (PLANNING → EXECUTING → BLOCKED/COMPLETE/ESCALATING) with confidence scoring
+- Self-directed task decomposition via LLM planning phase; spawn injects AUTONOMY_ENABLED
+- Confidence-based escalation (0.6 threshold) with indefinite pause loop until L2 resumes
+- Context-aware tool selection with intent analysis and prompt injection
+- Progress self-monitoring: heuristic deviation detection, LLM-driven course correction, dynamic step splicing
+- Dashboard autonomy UI: state badges, confidence indicator, escalation alerts, EscalationsPage, Resume/Fail APIs
+- E2E autonomy tests (16 tests): happy path, retry path, escalation path, multi-step
 
 Multi-project framework (v1.1):
 - Per-project state/snapshot path resolution via `project_config.py`
@@ -98,6 +97,11 @@ Known limitations:
 - ✓ HIE-04: Physical Docker isolation — v1.0
 - ✓ COM-01: Hub-and-spoke via Gateway — v1.0
 - ✓ COM-02: Lane Queues / CLI routing — v1.0 (spec deviation accepted)
+- ✓ AUTO-01: L3 agents perform self-directed task breakdown and planning — v1.6
+- ✓ AUTO-02: agents self-escalate based on confidence thresholds — v1.6
+- ✓ AUTO-03: Context-aware tool selection based on task intent — v1.6
+- ✓ AUTO-04: Progress self-monitoring and course correction logic — v1.6
+- ✓ AUTO-05: Autonomous handoff to L2 when blocked or complete — v1.6 (partial: design doc deferred)
 - ✓ COM-03: Jarvis Protocol state.json sync — v1.0
 - ✓ COM-04: Semantic snapshotting — v1.0
 - ✓ DSH-01: occc dashboard (Next.js 16) — v1.0
@@ -130,11 +134,7 @@ Known limitations:
 
 ### Active
 
-- [ ] AUTO-01: L3 agents perform self-directed task breakdown and planning — v1.6
-- [ ] AUTO-02: agents self-escalate based on confidence thresholds — v1.6
-- [ ] AUTO-03: Context-aware tool selection based on task intent — v1.6
-- [ ] AUTO-04: Progress self-monitoring and course correction logic — v1.6
-- [ ] AUTO-05: Autonomous handoff to L2 when blocked or complete — v1.6
+(None — v1.6 complete; next milestone TBD)
 
 ### Out of Scope
 
@@ -192,6 +192,10 @@ Known limitations:
 | additionalProperties violations as warnings | ✓ Good — unknown fields are forward-compatible | v1.5 |
 | Event bus daemon handlers with ImportError guard | ✓ Good — fire-and-forget events never block state mutation | v1.5 |
 | Field ownership check for Notion sync (`_should_write_status`) | ✓ Good — prevents OpenClaw from overwriting user-owned fields | v1.5 |
+| 4 states vs 3 or 5 for autonomy | ✓ Good — distinct initialization, retry visibility, proper cleanup | v1.6 |
+| 0.6 escalation threshold default | ✓ Good — balances caution and throughput | v1.6 |
+| 1 retry default for L3 containers | ✓ Good — catches ~70% of transient issues, doesn't block pool | v1.6 |
+| Fire-and-forget events | ✓ Good — never block task execution on event handling | v1.6 |
 
 ## Primary Docs
 
@@ -201,4 +205,4 @@ Known limitations:
 - DEV_WF_FINDINGS.md
 
 ---
-*Last updated: 2026-02-25 after v1.5 milestone completion*
+*Last updated: 2026-02-26 after v1.6 milestone*

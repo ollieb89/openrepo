@@ -113,16 +113,21 @@
 ---
 
 
-## v1.6 Agent Autonomy (Active)
+## v1.6 Agent Autonomy (Shipped: 2026-02-26)
 
-**Phases:** 54+ | **Plans:** 0 executed | **Timeline:** TBD
-**Requirements:** TBD | **E2E Flows:** TBD | **Integrations:** TBD
+**Phases:** 54-60 | **Plans:** 14 executed | **Timeline:** 1 day (2026-02-25 → 2026-02-26)
+**Requirements:** 10/11 satisfied (AUTO-05 partial) | **Tests:** 16 E2E autonomy tests
 
 **Key accomplishments:**
-- Self-directed task breakdown and planning
-- Confidence-based escalation decisions
-- Context-aware tool selection
-- Progress self-monitoring and course correction
-- Autonomous handoff to L2 when blocked or complete
+- Autonomy framework: 4-state machine, confidence scoring, event bus, spawn hooks, L3 self-reporting
+- Self-directed task decomposition via LLM planning phase before execution
+- Confidence-based escalation with indefinite pause loop until L2 resumes
+- Context-aware tool selection with intent analysis and prompt injection
+- Progress self-monitoring with heuristic deviation detection and LLM-driven course correction
+- Dashboard autonomy UI: state badges, confidence indicator, escalation alerts, Resume/Fail APIs
+- E2E test suite: happy path, retry path, escalation path, multi-step (16 tests)
+
+**Git range:** `docs(phase-0)` → `fix(e2e)` | **LOC:** ~342K (packages)
 
 ---
+
