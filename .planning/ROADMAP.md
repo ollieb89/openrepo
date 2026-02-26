@@ -117,7 +117,7 @@ See: `.planning/milestones/v1.5-ROADMAP.md` for full phase details.
 ### 🚧 v1.6 Agent Autonomy (Active)
 
 - [x] Phase 54: Autonomy Framework Formulation (4/4 plans) — completed 2026-02-26
-- [ ] Phase 55: Self-Directed Task Decomposition (plan pending)
+- [x] Phase 55: Self-Directed Task Decomposition (2/2 plans) — completed 2026-02-26
 - [ ] Phase 56: Confidence-Based Escalation Logic (plan pending)  
 - [ ] Phase 57: Context-Aware Tool Selection (plan pending)
 - [ ] Phase 58: Progress Self-Monitoring (plan pending)
@@ -329,4 +329,4 @@ Plans:
 | 26-38 | v1.3 | 19/19 | ✓ Complete | 2026-02-24 |
 | 39-44 | v1.4 | 16/16 | ✓ Complete | 2026-02-25 |
 | 45-53 | v1.5 | 22/22 | ✓ Complete | 2026-02-25 |
-| 54 | v1.6 | Complete    | 2026-02-26 | 2026-02-26 |
+| 54-55 | v1.6 | 6/6 | ✓ Complete | 2026-02-26 |
