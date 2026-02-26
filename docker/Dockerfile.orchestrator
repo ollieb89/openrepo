@@ -1,0 +1,40 @@
+# Minimal orchestrator for E2E testing
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install basic dependencies
+RUN pip install flask requests
+
+# Create a simple mock orchestrator that just provides health endpoint
+COPY <<'EOF' /app/orchestrator.py
+import os
+import json
+from flask import Flask, jsonify
+
+app = Flask(__name__)
+
+@app.route('/health')
+def health():
+    return jsonify({'status': 'healthy'})
+
+@app.route('/api/v1/autonomy/status')
+def autonomy_status():
+    return jsonify({
+        'state': 'PLANNING',
+        'confidence': 0.8,
+        'task_id': 'test-task',
+        'progress': {'current_step': 0, 'total_steps': 3}
+    })
+
+if __name__ == '__main__':
+    # Create health sentinel for docker-compose healthcheck
+    sentinel_dir = '/workspace/.openclaw/sentinel'
+    os.makedirs(sentinel_dir, exist_ok=True)
+    with open(f'{sentinel_dir}/healthy', 'w') as f:
+        f.write('ok')
+    
+    app.run(host='0.0.0.0', port=8000)
+EOF
+
+CMD ["python", "orchestrator.py"]

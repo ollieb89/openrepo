@@ -148,11 +148,11 @@ class MockLLMClient:
         except requests.RequestException:
             return False
     
-    def configure_response(self, pattern: str, response: Dict[str, Any]) -> None:
+    def configure_response(self, pattern: str, response: Dict[str, Any], priority: int = 0) -> None:
         """Configure a mock response pattern."""
         resp = requests.post(
             f"{self.base_url}/configure",
-            json={"pattern": pattern, "response": response},
+            json={"pattern": pattern, "response": response, "priority": priority},
             timeout=5
         )
         resp.raise_for_status()

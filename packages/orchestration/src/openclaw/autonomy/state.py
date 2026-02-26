@@ -9,6 +9,7 @@ from datetime import datetime
 from typing import Optional
 
 from .types import AutonomyContext, AutonomyState, StateTransition
+from .events import AutonomyEventBus, AutonomyStateChanged
 
 
 class StateMachine:
@@ -89,6 +90,15 @@ class StateMachine:
         # Update state
         self.context.state = new_state
         self.context.update_timestamp()
+        
+        # Emit state change event
+        event = AutonomyStateChanged(
+            task_id=self.context.task_id,
+            old_state=old_state.value,
+            new_state=new_state.value,
+            reason=reason
+        )
+        AutonomyEventBus.emit(event)
     
     def get_time_in_current_state(self) -> float:
         """

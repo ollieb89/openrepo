@@ -3,7 +3,7 @@ version: '3.8'
 services:
   mock-llm:
     build:
-      context: ../../mock_llm
+      context: ../mock_llm
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
@@ -19,7 +19,7 @@ services:
 
   orchestrator:
     build:
-      context: ../../../..
+      context: ../../..
       dockerfile: docker/Dockerfile.orchestrator
     environment:
       - AUTONOMY_ENABLED=1
@@ -34,7 +34,7 @@ services:
     networks:
       - e2e-network
     healthcheck:
-      test: ["CMD", "test", "-f", "/workspace/.openclaw/sentinel/healthy"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 5s
       timeout: 3s
       retries: 5
