@@ -116,13 +116,11 @@ See: `.planning/milestones/v1.5-ROADMAP.md` for full phase details.
 
 ### 🚧 v1.6 Agent Autonomy (Active)
 
-- [x] Phase 54: Autonomy Framework Formulation (4/4 plans) — completed 2026-02-26
-- [x] Phase 55: Self-Directed Task Decomposition (2/2 plans) — completed 2026-02-26
-- [ ] Phase 56: Confidence-Based Escalation Logic (plan pending)  
-- [ ] Phase 57: Context-Aware Tool Selection (plan pending)
-- [ ] Phase 58: Progress Self-Monitoring (plan pending)
-- [ ] Phase 59: Dashboard Autonomy UI (plan pending)
-- [ ] Phase 60: E2E Verification & Hardening (plan pending)
+- [/] Phase 54: Autonomy Framework Formulation (1 plan)
+- [ ] Phase 55: Self-Directed Task Decomposition (plan pending)
+- [ ] Phase 56: Confidence-Based Escalation Logic (plan pending)
+- [x] Phase 57: Context-Aware Tool Selection (1/1 plan complete)
+- [ ] Phase 58: Progress Self-Monitoring (1/1 plan complete)
 
 ### 📋 Next Milestone
 
@@ -282,20 +280,6 @@ Plans:
 - [ ] 50-05-PLAN.md — Conversational capture with area inference + batch parsing
 - [ ] 50-06-PLAN.md — Reconcile handler + unit tests for event bus and sync logic
 
-### Phase 54: Autonomy Framework Formulation
-**Goal**: Implement the 4-state autonomy machine with confidence scoring, event system, and L3 self-reporting — foundation for agent self-direction
-**Depends on**: Phase 53 (v1.5 shipped)
-**Requirements**: AUTO-02, AUTO-04, AUTO-05
-**Success Criteria** (what must be TRUE):
-  1. `from openclaw.autonomy import AutonomyState, StateMachine, AutonomyContext` works — all types and state machine available
-  2. State machine validates transitions: PLANNING→EXECUTING→BLOCKED→EXECUTING→COMPLETE (or ESCALATING after max retries)
-  3. Confidence scoring produces 0.0-1.0 scores based on task complexity, ambiguity, past success, time estimate
-  4. Events emitted on state changes with debouncing for confidence updates (5s window, 0.1 threshold bypass)
-  5. Hooks integrate with spawn flow: `on_task_spawn()` creates context, `on_container_healthy()` starts EXECUTING
-  6. L3 `AutonomyClient` reports state via HTTP with sentinel file fallback when orchestrator unavailable
-  7. memU persistence stores autonomy contexts with category="AUTONOMY_STATE" and metadata for queries
-**Plans**: 4/4 plans complete — 54-01 (types/state), 54-02 (confidence/config), 54-03 (hooks/integration), 54-04 (docs/verification)
-
 ### Phase 53: Tech Debt Cleanup
 **Goal**: Close accumulated tech debt from v1.5 audit — fix stale references, remove residual config fields, and tune suggestion thresholds
 **Depends on**: Phase 49 (v1.5 core complete)
@@ -306,18 +290,60 @@ Plans:
   2. `openclaw.json` no longer contains the `wizard` field — no unknown-field warning on startup
   3. `suggest.py` MIN_CLUSTER_SIZE defaults work with datasets under 10 memories without requiring manual seeding
 
-### Phase 55: Self-Directed Task Decomposition
-**Goal**: Implement AUTO-01 (L3 agents perform self-directed task breakdown and planning)
-**Depends on**: Phase 54
-**Requirements**: AUTO-01
+### Phase 57: Context-Aware Tool Selection
+**Goal**: Implement AUTO-03 (agents dynamically select tools based on task context)
+**Depends on**: Phase 56
+**Requirements**: AUTO-03
 **Success Criteria** (what must be TRUE):
-  1. L3 agents can generate their own executable plans
-  2. The plans respect autonomy constraints
+  1. The L3 agent analyzes task intent and limits itself to required tool categories.
+  2. Tools constraints are injected explicitly into the execution prompt.
+**Plans**: 1/1 plan complete
+
+Plans:
+- [x] 57-01-PLAN.md — Intent Analysis & Prompt Injection
+
+### Phase 58: Progress Self-Monitoring
+**Goal**: Implement AUTO-04 (agents monitor progress and autonomously course-correct)
+**Depends on**: Phase 57
+**Requirements**: AUTO-04
+**Success Criteria**:
+  1. The L3 agent detects deviations via heuristics (time, error density, failures).
+  2. The agent pauses to reflect and generates a dynamic set of recovery steps.
+  3. Recovery steps are seamlessly spliced into the execution queue.
+**Plans**: 1/1 plan complete
+
+Plans:
+- [x] 58-01-PLAN.md — Heuristics & Dynamic Reflection
+
+### Phase 59: E2E Autonomy Tests
+**Goal**: Implement TEST-02 (E2E tests for autonomy lifecycle)
+**Depends on**: Phase 54-58
+**Requirements**: TEST-02
+**Success Criteria**:
+  1. Happy path test: PLANNING → EXECUTING → COMPLETE
+  2. Retry path test: EXECUTING → BLOCKED → EXECUTING → COMPLETE
+  3. Escalation path test: EXECUTING → ESCALATING → pause → resume
 **Plans**: 2/2 plans complete
 
 Plans:
-- [ ] 55-01-PLAN.md — Autonomy Runner Core & Events
-- [ ] 55-02-PLAN.md — Docker Integration & Testing
+- [x] 59-01-PLAN.md — E2E Test Infrastructure & Happy Path
+- [x] 59-02-PLAN.md — Retry & Escalation Path Tests
+
+### Phase 60: Dashboard Autonomy UI
+**Goal**: Implement DSH-AUTO-01/02 (Dashboard autonomy state and escalation notifications)
+**Depends on**: Phase 54-58
+**Requirements**: DSH-AUTO-01, DSH-AUTO-02
+**Success Criteria**:
+  1. State badge shows planning/executing/blocked/complete/escalating
+  2. Confidence score visualization with threshold indicator
+  3. Selected tools display per task
+  4. Real-time escalation alert banner
+  5. Escalation context panel with reason and history
+**Plans**: 0/2 plans complete
+
+Plans:
+- [ ] 60-01-PLAN.md — Autonomy State Dashboard Components
+- [ ] 60-02-PLAN.md — Escalation Notifications & Real-time Alerts
 
 ## Progress
 
@@ -329,4 +355,10 @@ Plans:
 | 26-38 | v1.3 | 19/19 | ✓ Complete | 2026-02-24 |
 | 39-44 | v1.4 | 16/16 | ✓ Complete | 2026-02-25 |
 | 45-53 | v1.5 | 22/22 | ✓ Complete | 2026-02-25 |
-| 54-55 | v1.6 | 6/6 | ✓ Complete | 2026-02-26 |
+| 54 | v1.6 | 0/1 | Not started | - |
+| 55 | v1.6 | 2/2 | ✓ Complete | 2026-02-26 |
+| 56 | v1.6 | 2/2 | ✓ Complete | 2026-02-26 |
+| 57 | v1.6 | 1/1 | ✓ Complete | 2026-02-26 |
+| 58 | v1.6 | 1/1 | ✓ Complete | 2026-02-26 |
+| 59 | v1.6 | 2/2 | ✓ Complete | 2026-02-26 |
+| 60 | v1.6 | 0/2 | Planned | - |

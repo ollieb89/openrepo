@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** Phase 55: Self-Directed Task Decomposition
+**Current focus:** Phase 59 COMPLETE — All E2E autonomy tests delivered (16 tests covering happy path, retry path, escalation path, and multi-step execution). Ready for Phase 60 (Dashboard Autonomy UI).
 
 ## Current Position
 
-Phase: 55
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-02-26 — Phase 54 complete, transition to Phase 55.
+Phase: 59
+Plan: 59-02-PLAN.md — COMPLETE
+Status: Phase 59 Execution Complete — All E2E autonomy tests implemented (16 tests across happy path, retry path, escalation path, and multi-step execution)
+Last activity: 2026-02-26 — E2E test infrastructure complete with mock LLM server, Docker Compose setup, and comprehensive test coverage for retry/escalation scenarios.
 
 ## Performance Metrics
 
@@ -95,6 +95,18 @@ Notable for v1.5:
 - [Phase 54-04-AUTO-05]: Fire-and-forget events — Never block task execution on event handling.
 - [Phase 54-04]: Sentinel files — Local backup when HTTP/memU unavailable.
 - [Phase 54-04]: 4 states vs 3 or 5 — Initialization distinction, retry visibility, proper cleanup.
+- [Phase 56-01-AUTO-02]: Confidence Thresholding — `runner.py` deducts confidence for general failures (-0.3), tool errors (-0.15), and unclear requirements (-0.5). If score < `AUTONOMY_CONFIDENCE_THRESHOLD` (default 0.4), it emits `AutonomyEscalationTriggered`.
+- [Phase 56-02-AUTO-02]: Indefinite Pause Loop — Escalation triggers an asynchronous `_escalation_pause_loop` that indefinitely checks `JarvisState` for "resumed" or "executing" instead of `sys.exit(1)`. This preserves exact context for manual L2 intervention.
+- [Phase 56-02-AUTO-02]: Reset Confidence on Resume — When breaking out of pause loop, `confidence_score` resets to 1.0 to prevent immediate re-escalation on step retry.
+- [Phase 56-02-AUTO-02]: Orchestrator Notifications — `hooks.py` listens to `EVENT_ESCALATION_TRIGGERED` locally and logs a `[TELEGRAM_PING]` critical alert to immediately notify human operators.
+- [Phase 57-01-AUTO-03]: Context-Aware Tools — L3 agents execute a pre-planning `_analyze_tool_requirements()` prompt to determine permitted tool categories, generating an `AutonomyToolsSelected` event and injecting explicit tool constraint instructions into subsequent execution prompts.
+- [Phase 58-01-AUTO-04]: Heuristics-Based Deviation Detection — Implemented `_detect_deviation()` in `runner.py` with three criteria: explicit step failure, execution duration >180s threshold, and error keyword density >3 per output.
+- [Phase 58-01-AUTO-04]: LLM Reflection for Course Correction — Implemented `_reflect_and_correct()` that generates 1-2 recovery steps via LLM prompt when deviation detected, emits `AutonomyCourseCorrection` event, and dynamically splices recovery steps into execution queue.
+- [Phase 58-01-AUTO-04]: Event Telemetry — `AutonomyCourseCorrection` event payload includes `failed_step` and `recovery_steps` for external monitoring systems.
+- [Phase 59-01-TEST-02]: E2E Test Infrastructure — Created `tests/e2e/` directory with Docker Compose setup, mock LLM server (`tests/e2e/mock_llm/server.py`), and pytest fixtures for containerized E2E testing.
+- [Phase 59-01-TEST-02]: Mock LLM Server — Flask-based mock LLM that returns deterministic responses based on prompt pattern matching, OpenAI API-compatible format.
+- [Phase 59-01-TEST-02]: Happy Path E2E Test — `test_happy_path.py` validates PLANNING → EXECUTING → COMPLETE lifecycle with mock CLI responses, verifying tool selection, plan generation, and event emissions.
+- [Phase 59-01-TEST-02]: CI Integration — GitHub Actions workflow `.github/workflows/e2e.yml` runs E2E tests on PRs with artifact capture on failure.
 
 ### Pending Todos
 
@@ -107,5 +119,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Phase 55 context gathered
-Resume file: .planning/phases/55-self-directed-task-decomposition/55-CONTEXT.md
+Stopped at: Phase 59 COMPLETE. All E2E tests implemented and infrastructure complete.
+Resume file: Transition to Phase 60 — Dashboard Autonomy UI
