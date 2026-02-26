@@ -2,17 +2,17 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-25)
+See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** Hierarchical AI orchestration with physical isolation — enabling autonomous, secure, multi-agent task execution at scale.
-**Current focus:** v1.6 Agent Autonomy — PLANNING
+**Current focus:** Phase 55: Self-Directed Task Decomposition
 
 ## Current Position
 
-Phase: 54+ (autonomy framework implemented, tests pending)
-Plan: 54-01 through 54-04 complete, integration phase starting
-Status: Active — fixing test failures and wiring spawn flow integration
-Last activity: 2026-02-26 — Started v1.6 milestone formalization
+Phase: 55
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-02-26 — Phase 54 complete, transition to Phase 55.
 
 ## Performance Metrics
 
@@ -89,6 +89,13 @@ Notable for v1.5:
 - [Phase 49-02-QUAL-07]: memorize.py reads openclaw.json directly via OPENCLAW_ROOT (cannot import openclaw package from Docker memory container)
 - [Phase 49-03-OBS-05]: Adaptive polling constants (2s/30s) hardcoded — not configurable in openclaw.json per locked decision; Docker failure returns 0 (fail-open to idle)
 
+- [Phase 54-04-AUTO-02]: 0.6 escalation threshold — Balance between caution and throughput.
+- [Phase 54-04-AUTO-04]: 1 retry default — Catches ~70% of transient issues, doesn't block pool.
+- [Phase 54-04-AUTO-05]: 5s confidence debounce — Reduces event bus flooding while capturing meaningful changes.
+- [Phase 54-04-AUTO-05]: Fire-and-forget events — Never block task execution on event handling.
+- [Phase 54-04]: Sentinel files — Local backup when HTTP/memU unavailable.
+- [Phase 54-04]: 4 states vs 3 or 5 — Initialization distinction, retry visibility, proper cleanup.
+
 ### Pending Todos
 
 None.
@@ -99,5 +106,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-25
-Resume: v1.5 milestone complete. Starting v1.6 Agent Autonomy.
+Last session: 2026-02-26
+Stopped at: Phase 55 context gathered
+Resume file: .planning/phases/55-self-directed-task-decomposition/55-CONTEXT.md
