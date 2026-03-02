@@ -15,22 +15,36 @@ logger = get_logger("service")
 
 
 def init_service(settings: Settings) -> MemoryService:
-    """Initialize MemoryService with postgres backend and OpenAI LLM profiles.
+    """Initialize MemoryService with postgres backend and LLM profiles.
 
     The MemoryService constructor is synchronous. Individual methods
     (memorize, retrieve, list_memory_items, delete_memory_item) are async.
+    
+    Uses OpenRouter for chat/LLM (free models) and OpenAI for embeddings.
+    If OpenAI key is not provided, embedding operations will fail gracefully.
     """
-    service = MemoryService(
-        llm_profiles={
-            "default": {
-                "api_key": settings.OPENAI_API_KEY,
-                "chat_model": settings.OPENAI_CHAT_MODEL,
-            },
-            "embedding": {
-                "api_key": settings.OPENAI_API_KEY,
-                "embed_model": settings.OPENAI_EMBED_MODEL,
-            },
+    llm_profiles = {
+        "default": {
+            "api_key": settings.OPENROUTER_API_KEY,
+            "base_url": settings.OPENROUTER_BASE_URL,
+            "chat_model": settings.OPENROUTER_CHAT_MODEL,
         },
+    }
+    
+    # Only add embedding profile if OpenAI key is provided
+    if settings.OPENAI_API_KEY and settings.OPENAI_API_KEY.startswith("sk-"):
+        llm_profiles["embedding"] = {
+            "api_key": settings.OPENAI_API_KEY,
+            "embed_model": settings.OPENAI_EMBED_MODEL,
+        }
+        logger.info("Embeddings configured with OpenAI")
+    else:
+        logger.warning("OPENAI_API_KEY not configured - embeddings disabled. "
+                      "New memories will be stored without embeddings. "
+                      "Conflict detection requires manual embedding insertion.")
+    
+    service = MemoryService(
+        llm_profiles=llm_profiles,
         database_config={
             "metadata_store": {
                 "provider": "postgres",
@@ -43,7 +57,7 @@ def init_service(settings: Settings) -> MemoryService:
             },
         },
     )
-    logger.info("MemoryService instance created")
+    logger.info("MemoryService initialized (OpenRouter for chat)")
     return service
 
 

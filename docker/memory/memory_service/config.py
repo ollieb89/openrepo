@@ -8,8 +8,15 @@ class Settings(BaseSettings):
     DB_NAME: str = "openclaw_memory"
     DB_USER: str = "claw_admin"
 
-    OPENAI_API_KEY: str
-    OPENAI_CHAT_MODEL: str = "gpt-4o-mini"
+    # OpenRouter configuration (for chat/LLM)
+    OPENROUTER_API_KEY: str
+    OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
+    # Free/Open models on OpenRouter
+    OPENROUTER_CHAT_MODEL: str = "openrouter/meta-llama/llama-3.1-70b-instruct:free"
+    
+    # OpenAI for embeddings (OpenRouter doesn't provide embeddings)
+    # Embeddings are very cheap ($0.02 per 1M tokens) or use OpenAI free tier
+    OPENAI_API_KEY: str = ""  # Optional - only needed for creating new embeddings
     OPENAI_EMBED_MODEL: str = "text-embedding-3-small"
 
     SERVICE_PORT: int = 18791
