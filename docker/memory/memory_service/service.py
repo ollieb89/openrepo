@@ -52,10 +52,53 @@ def init_service(settings: Settings) -> MemoryService:
 # ---------------------------------------------------------------------------
 
 
+async def _fetch_embeddings_direct(memory_ids: list[str], dsn: str) -> dict[str, list[float]]:
+    """Fetch embeddings directly from PostgreSQL since list_memory_items excludes them.
+    
+    Returns a dict mapping memory_id -> embedding vector.
+    """
+    if not memory_ids:
+        return {}
+    
+    import asyncio
+    import psycopg
+    
+    try:
+        # Use a thread pool to run the sync psycopg query
+        def _query():
+            embeddings = {}
+            # Parse DSN to extract connection parameters
+            # DSN format: postgresql+psycopg://user:pass@host:port/db
+            conn_str = dsn.replace("postgresql+psycopg://", "postgresql://")
+            with psycopg.connect(conn_str) as conn:
+                with conn.cursor() as cur:
+                    placeholders = ','.join(['%s'] * len(memory_ids))
+                    cur.execute(
+                        f"SELECT id, embedding::text FROM memory_items WHERE id IN ({placeholders})",
+                        memory_ids
+                    )
+                    for row in cur.fetchall():
+                        mid, emb_str = row
+                        if emb_str:
+                            # Parse vector string like "[0.1,0.2,...]" to list of floats
+                            emb_str = emb_str.strip('[]')
+                            if emb_str:
+                                embeddings[mid] = [float(x) for x in emb_str.split(',')]
+            return embeddings
+        
+        # Run in thread pool to not block
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, _query)
+    except Exception as e:
+        logger.warning(f"Failed to fetch embeddings: {e}")
+        return {}
+
+
 async def run_health_scan(
     memu: MemoryService,
     app: Any,
     body: HealthScanRequest,
+    dsn: str | None = None,
 ) -> HealthScanResult:
     """Run a full health scan for the given user_id scope.
 
@@ -75,6 +118,16 @@ async def run_health_scan(
     # Fetch all items for this user (project) scope
     list_result = await memu.list_memory_items(where={"user_id": body.user_id})
     items = list_result.get("items", [])
+    
+    # Fetch embeddings separately since list_memory_items excludes them
+    memory_ids = [item.get("id") for item in items if item.get("id")]
+    embeddings_map = await _fetch_embeddings_direct(memory_ids, dsn) if dsn else {}
+    
+    # Attach embeddings to items for conflict detection
+    for item in items:
+        mid = item.get("id")
+        if mid and mid in embeddings_map:
+            item["embedding"] = embeddings_map[mid]
 
     logger.info(f"Health scan started: user_id={body.user_id}, item_count={len(items)}")
 

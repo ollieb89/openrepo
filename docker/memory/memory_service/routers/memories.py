@@ -52,7 +52,8 @@ async def health_scan(request: Request, body: HealthScanRequest):
 
     try:
         logger.info(f"Health scan requested: user_id={body.user_id}")
-        result = await run_health_scan(memu, request.app, body)
+        dsn = getattr(request.app.state, "dsn", None)
+        result = await run_health_scan(memu, request.app, body, dsn)
         logger.info(
             f"Health scan complete: stale={result.totals['stale']}, "
             f"conflict={result.totals['conflict']}"

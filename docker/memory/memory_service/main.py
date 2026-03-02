@@ -17,10 +17,12 @@ async def lifespan(app: FastAPI):
     try:
         # MemoryService.__init__ is synchronous
         app.state.memu = init_service(settings)
+        app.state.dsn = settings.dsn  # Store DSN for direct DB queries
         logger.info("MemoryService initialized successfully")
     except Exception as e:
         logger.error(f"Failed to initialize MemoryService: {e}")
         app.state.memu = None  # Health endpoint will report uninitialized
+        app.state.dsn = None
 
     yield
 

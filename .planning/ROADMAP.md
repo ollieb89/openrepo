@@ -144,8 +144,8 @@ See: `.planning/milestones/v1.6-ROADMAP.md` for full phase details.
 **Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 45-01-PLAN.md — Add path resolver functions + consolidated constants to config.py
-- [ ] 45-02-PLAN.md — Migrate all call sites to import from config.py, remove duplicates
+- [x] 45-01-PLAN.md — Add path resolver functions + consolidated constants to config.py
+- [x] 45-02-PLAN.md — Migrate all call sites to import from config.py, remove duplicates
 
 ### Phase 46: Schema Validation + Fail-Fast Startup
 **Goal**: `openclaw.json` has a documented, machine-validated schema, and OpenClaw refuses to start with a clear actionable error if either config file is malformed or missing required fields
@@ -159,9 +159,9 @@ Plans:
 **Plans:** 3/3 plans complete
 
 Plans:
-- [ ] 46-01-PLAN.md — Write failing schema validation test suite (TDD RED state)
-- [ ] 46-02-PLAN.md — Implement OPENCLAW_JSON_SCHEMA + validators + wiring into load paths
-- [ ] 46-03-PLAN.md — Add openclaw-config show CLI and openclaw.json.example schema doc
+- [x] 46-01-PLAN.md — Write failing schema validation test suite (TDD RED state)
+- [x] 46-02-PLAN.md — Implement OPENCLAW_JSON_SCHEMA + validators + wiring into load paths
+- [x] 46-03-PLAN.md — Add openclaw-config show CLI and openclaw.json.example schema doc
 
 ### Phase 47: Env Var Precedence + Migration CLI
 **Goal**: Operators know exactly which env vars override which config values and in what order, enforced uniformly across all callers; operators can run one command to upgrade an existing config to the current schema
@@ -175,9 +175,9 @@ Plans:
 **Plans:** 3/3 plans complete
 
 Plans:
-- [ ] 47-01-PLAN.md — Env var uniformity: get_active_project_env() in config.py, _find_project_root() auto-create, precedence comment block, openclaw.json.example + cli/config.py epilog
-- [ ] 47-02-PLAN.md — Migration CLI: cmd_migrate() + migrate subparser in cli/config.py (dry-run, backup, unknown-field removal, project.json scope)
-- [ ] 47-03-PLAN.md — Tests: extend test_config_validator.py with CONF-03 and CONF-04 test cases
+- [x] 47-01-PLAN.md — Env var uniformity: get_active_project_env() in config.py, _find_project_root() auto-create, precedence comment block, openclaw.json.example + cli/config.py epilog
+- [x] 47-02-PLAN.md — Migration CLI: cmd_migrate() + migrate subparser in cli/config.py (dry-run, backup, unknown-field removal, project.json scope)
+- [x] 47-03-PLAN.md — Tests: extend test_config_validator.py with CONF-03 and CONF-04 test cases
 
 ### Phase 48: Config Integration Tests
 **Goal**: An automated test suite verifies path resolution, schema validation, env var precedence, and pool config fallback — giving the operator confidence the config layer is correct and will stay correct
@@ -192,7 +192,7 @@ Plans:
 **Plans:** 1/1 plans complete
 
 Plans:
-- [ ] 48-01-PLAN.md — Config integration test suite: pyproject.toml marker, conftest fixture, test_config_integration.py (4 test classes)
+- [x] 48-01-PLAN.md — Config integration test suite: pyproject.toml marker, conftest fixture, test_config_integration.py (4 test classes)
 
 ### Phase 49: Deferred Reliability, Quality, and Observability
 **Goal**: Three items deferred from earlier milestones are delivered — L3 containers report health status, the cosine similarity conflict threshold is evidence-based and configurable, and the monitor adapts its poll rate to swarm activity
@@ -205,16 +205,16 @@ Plans:
 **Plans:** 3/3 plans complete
 
 Plans:
-- [ ] 49-01-PLAN.md — Test scaffold (8 failing tests) + REL-09 Docker HEALTHCHECK + entrypoint.sh sentinel
-- [ ] 49-02-PLAN.md — QUAL-07: MEMORY_CONFLICT_THRESHOLD in config.py + get_conflict_threshold() + memorize router conflict check
-- [ ] 49-03-PLAN.md — OBS-05: POLL_INTERVAL_ACTIVE/IDLE in config.py + _count_active_l3_containers() + adaptive sleep in tail_state()
+- [x] 49-01-PLAN.md — Test scaffold (8 failing tests) + REL-09 Docker HEALTHCHECK + entrypoint.sh sentinel
+- [x] 49-02-PLAN.md — QUAL-07: MEMORY_CONFLICT_THRESHOLD in config.py + get_conflict_threshold() + memorize router conflict check
+- [x] 49-03-PLAN.md — OBS-05: POLL_INTERVAL_ACTIVE/IDLE in config.py + _count_active_l3_containers() + adaptive sleep in tail_state()
 
 ### v1.4.1 Human Verification (Gap Closure)
 
 **Milestone Goal:** Live-environment verification of v1.4 Operational Maturity features that require Docker, memU, and dashboard services running — 12 manual tests across graceful shutdown, memory health, suggestions, and config guards.
 
 - [x] **Phase 51: Live Verification — Docker & Sentinel** — Graceful shutdown, SIGTERM drain, Makefile OPENCLAW_ROOT guard (3 tests) (completed 2026-02-25)
-- [ ] **Phase 52: Live Verification — Dashboard & memU** — Memory health scan, conflict panel, suggestions E2E, sidebar badge, threshold settings (9 tests)
+- [x] **Phase 52: Live Verification — Dashboard & memU** — Memory health scan, conflict panel, suggestions E2E, sidebar badge, threshold settings (9 tests) (completed 2026-02-25)
 
 ### v2.0 Notion Kanban Sync (Planned)
 
@@ -237,7 +237,7 @@ Plans:
 **Plans:** 1/1 plans complete
 
 Plans:
-- [ ] 51-01-PLAN.md — Docker graceful shutdown + SIGTERM drain + Makefile guard verification (pre-flight, 3 tests, VERIFICATION.md, human checkpoint)
+- [x] 51-01-PLAN.md — Docker graceful shutdown + SIGTERM drain + Makefile guard verification (pre-flight, 3 tests, VERIFICATION.md, human checkpoint)
 
 ### Phase 52: Live Verification — Dashboard & memU
 **Goal**: Confirm v1.4 dashboard and memory features work end-to-end with live services — health scan badges, conflict panel, suggestion acceptance, sidebar counts, and settings persistence
@@ -255,11 +255,11 @@ Plans:
   8. Sidebar badge shows correct pending suggestion count
   9. POST `/api/suggestions` invokes `suggest.py` and returns results
 
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 52-01-PLAN.md — Environment setup + known code fixes (memU rebuild, seed data, localStorage persistence, auto-rescan)
-- [ ] 52-02-PLAN.md — Execute all 9 verification tests with structured logging + human review
+- [x] 52-01-PLAN.md — Environment setup + known code fixes (memU rebuild, seed data, localStorage persistence, auto-rescan)
+- [x] 52-02-PLAN.md — Execute all 9 verification tests with structured logging + human review
 
 ### Phase 50: Notion Kanban Sync
 **Goal**: OpenClaw events (phase lifecycle, container lifecycle, project registration) automatically mirror to a Notion kanban board; conversational capture routes life tasks to the same board; reconcile detects and corrects drift — all idempotent, field-ownership-respecting, and observable
@@ -277,15 +277,15 @@ Plans:
   9. Field ownership respected — every write checks ownership before touching a field
   10. Structured result returned for every invocation with created/updated/skipped/errors
   11. 429/5xx errors handled with retry + backoff; failures recorded in Sync Error
-**Plans**: 6 plans
+**Plans:** 6/6 plans complete
 
 Plans:
-- [ ] 50-01-PLAN.md — Event bus infrastructure + hook sites in state_engine, pool, project_cli
-- [ ] 50-02-PLAN.md — Skill skeleton + Notion client wrapper + bootstrap/discovery
-- [ ] 50-03-PLAN.md — Event sync handlers for project + phase lifecycle events
-- [ ] 50-04-PLAN.md — Container event handlers + field ownership carve-out
-- [ ] 50-05-PLAN.md — Conversational capture with area inference + batch parsing
-- [ ] 50-06-PLAN.md — Reconcile handler + unit tests for event bus and sync logic
+- [x] 50-01-PLAN.md — Event bus infrastructure + hook sites in state_engine, pool, project_cli
+- [x] 50-02-PLAN.md — Skill skeleton + Notion client wrapper + bootstrap/discovery
+- [x] 50-03-PLAN.md — Event sync handlers for project + phase lifecycle events
+- [x] 50-04-PLAN.md — Container event handlers + field ownership carve-out
+- [x] 50-05-PLAN.md — Conversational capture with area inference + batch parsing
+- [x] 50-06-PLAN.md — Reconcile handler + unit tests for event bus and sync logic
 
 ### Phase 53: Tech Debt Cleanup
 **Goal**: Close accumulated tech debt from v1.5 audit — fix stale references, remove residual config fields, and tune suggestion thresholds
@@ -296,6 +296,10 @@ Plans:
   1. `migrate_state.py` error message references `config.get_state_path()` instead of stale `project_config.get_state_path()`
   2. `openclaw.json` no longer contains the `wizard` field — no unknown-field warning on startup
   3. `suggest.py` MIN_CLUSTER_SIZE defaults work with datasets under 10 memories without requiring manual seeding
+**Plans:** 1/1 plan complete
+
+Plans:
+- [x] 53-01-PLAN.md — Fix stale references, remove wizard field, tune MIN_CLUSTER_SIZE defaults
 
 ### Phase 57: Context-Aware Tool Selection
 **Goal**: Implement AUTO-03 (agents dynamically select tools based on task context)
