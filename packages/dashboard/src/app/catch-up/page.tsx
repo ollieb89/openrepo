@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Search, Info, Pin, Share2, Sparkles, AlertCircle } from 'lucide-react';
 import { SummaryStream } from '@/components/sync/SummaryStream';
+import { apiPath } from '@/lib/api-client';
 
 export default function CatchUpPage() {
   const [query, setQuery] = useState('');
@@ -21,7 +22,7 @@ export default function CatchUpPage() {
     setSuggestions(null);
 
     try {
-      const res = await fetch('/api/sync/catch-up', {
+      const res = await fetch(apiPath('/api/sync/catch-up'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -68,8 +69,8 @@ export default function CatchUpPage() {
         </div>
         <h1 className="text-3xl font-bold text-slate-900 mb-2">Catch Me Up</h1>
         <p className="text-slate-500 text-center max-w-lg">
-          Get a natural language summary of what's happened across your sources.
-          Try "What's the status of the auth bug?" or "Summarize recent activity in Slack."
+          Get a natural language summary of what&apos;s happened across your sources.
+          Try &quot;What&apos;s the status of the auth bug?&quot; or &quot;Summarize recent activity in Slack.&quot;
         </p>
       </div>
 

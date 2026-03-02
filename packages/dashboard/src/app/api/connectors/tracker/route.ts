@@ -1,3 +1,4 @@
+import { NextRequest, NextResponse } from 'next/server';
 import { getConnectorState, upsertConnectorState } from '@/lib/connectors/store';
 import {
   buildTrackerSources,
@@ -6,6 +7,7 @@ import {
 } from '@/lib/connectors/tracker';
 import { listCheckpointsForConnector } from '@/lib/sync/checkpoints';
 import { listConnectorProgress } from '@/lib/sync/engine';
+import { withAuth } from '@/lib/auth-middleware';
 
 const TRACKER_CONNECTOR_ID = 'connector-tracker';
 
@@ -68,17 +70,17 @@ async function loadTrackerConnectorPayload() {
   };
 }
 
-export async function GET() {
+async function getHandler() {
   try {
     const payload = await loadTrackerConnectorPayload();
-    return Response.json(payload);
+    return NextResponse.json(payload);
   } catch (error) {
     console.error('Error loading tracker connector:', error);
-    return Response.json({ error: 'Failed to load tracker connector' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to load tracker connector' }, { status: 500 });
   }
 }
 
-export async function POST(request: Request) {
+async function postHandler(request: NextRequest) {
   try {
     const body = validateRequest(await request.json());
 
@@ -105,9 +107,12 @@ export async function POST(request: Request) {
       lastError: undefined,
     });
 
-    return Response.json({ ok: true, connector: saved });
+    return NextResponse.json({ ok: true, connector: saved });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to configure tracker connector';
-    return Response.json({ ok: false, error: message }, { status: 400 });
+    return NextResponse.json({ ok: false, error: message }, { status: 400 });
   }
 }
+
+export const GET = withAuth(getHandler);
+export const POST = withAuth(postHandler);

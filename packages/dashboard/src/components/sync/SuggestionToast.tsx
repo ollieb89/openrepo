@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Lightbulb, ArrowRight, X } from 'lucide-react';
 import Link from 'next/link';
+import { apiPath } from '@/lib/api-client';
 
 export default function SuggestionToast() {
   const [count, setCount] = useState(0);
@@ -19,7 +20,7 @@ export default function SuggestionToast() {
 
   async function checkSuggestions() {
     try {
-      const res = await fetch('/api/links/suggestions');
+      const res = await fetch(apiPath('/api/links/suggestions'));
       const data = await res.json();
       if (data.length > 0) {
         setCount(data.length);

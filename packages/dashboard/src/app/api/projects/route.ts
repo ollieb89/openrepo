@@ -1,14 +1,21 @@
+import { NextRequest, NextResponse } from 'next/server';
 import { listProjects, getActiveProjectId } from '@/lib/openclaw';
+import { withAuth } from '@/lib/auth-middleware';
 
-export async function GET() {
+async function handler(request: NextRequest): Promise<NextResponse> {
   try {
     const [projects, activeId] = await Promise.all([
       listProjects(),
       getActiveProjectId(),
     ]);
-    return Response.json({ projects, activeId });
+    return NextResponse.json({ projects, activeId });
   } catch (error) {
     console.error('Error loading projects:', error);
-    return Response.json({ error: 'Failed to load projects' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to load projects' },
+      { status: 500 }
+    );
   }
 }
+
+export const GET = withAuth(handler);

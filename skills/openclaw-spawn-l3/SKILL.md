@@ -1,6 +1,10 @@
 ---
 name: openclaw-spawn-l3
 description: L2→L3 container spawning in OpenClaw. Use when spawning Docker specialist containers, managing the per-project container pool, configuring L3 security isolation, injecting SOUL and memory context into containers, reviewing L3 diffs, merging or rejecting L3 work, or debugging container lifecycle issues. Triggers for: "spawn L3", "container pool", "L3 specialist", "Docker isolation", "SOUL injection", "task container", "cap_drop", "l3/task branch", "pool semaphore".
+metadata:
+  openclaw:
+    emoji: "🐳"
+    category: "orchestration"
 ---
 
 # L2 → L3 Container Spawning

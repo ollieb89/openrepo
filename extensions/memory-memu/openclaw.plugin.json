@@ -57,7 +57,11 @@
       },
       "memuPath": {
         "type": "string",
-        "description": "Path to memU source"
+        "description": "Path to memU source (optional; maps to MEMU_PATH env)"
+      },
+      "memuDbPath": {
+        "type": "string",
+        "description": "SQLite database path (optional; maps to MEMU_DB_PATH env; defaults to OPENCLAW_ROOT/memory/memu.sqlite)"
       },
       "llmProvider": {
         "type": "string",

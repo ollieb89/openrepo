@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import fs from 'fs/promises';
 import path from 'path';
 import { clearConnectorRuntimeStoreForTests, upsertConnectorState } from '../../src/lib/connectors/store';
@@ -42,7 +42,7 @@ describe('slack adapter', () => {
       },
     });
 
-    const fetchMock = mock(async (input: string | URL) => {
+    const fetchMock = vi.fn(async (input: string | URL) => {
       const url = new URL(input.toString());
       if (url.pathname.endsWith('/conversations.list')) {
         return new Response(
@@ -121,7 +121,7 @@ describe('slack adapter', () => {
   });
 
   it('resumes incremental history from checkpoint cursor ts', async () => {
-    const fetchMock = mock(async (input: string | URL) => {
+    const fetchMock = vi.fn(async (input: string | URL) => {
       const url = new URL(input.toString());
       if (url.pathname.endsWith('/conversations.history')) {
         expect(url.searchParams.get('oldest')).toBe('1710000999.000001');

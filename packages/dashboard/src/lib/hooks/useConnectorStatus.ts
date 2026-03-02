@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import useSWR from 'swr';
 import type { ConnectorHealthStatus, ConnectorSourceScope, ConnectorState } from '@/lib/types/connectors';
+import { apiPath } from '@/lib/api-client';
 
 const SLACK_CONNECTOR_ID = 'connector-slack-primary';
 
@@ -52,7 +53,7 @@ export function useConnectorStatus() {
   const [isMutating, setIsMutating] = useState(false);
 
   const connectorSWR = useSWR<ConnectorDetailResponse | null>(
-    `/api/connectors?id=${encodeURIComponent(SLACK_CONNECTOR_ID)}`,
+    apiPath(`/api/connectors?id=${encodeURIComponent(SLACK_CONNECTOR_ID)}`),
     fetcher,
     {
       refreshInterval: 5000,
@@ -60,7 +61,7 @@ export function useConnectorStatus() {
     }
   );
 
-  const channelsSWR = useSWR<SlackChannelScopeResponse | null>('/api/connectors/slack/channels', fetcher, {
+  const channelsSWR = useSWR<SlackChannelScopeResponse | null>(apiPath('/api/connectors/slack/channels'), fetcher, {
     refreshInterval: 5000,
     revalidateOnFocus: false,
   });
@@ -89,7 +90,7 @@ export function useConnectorStatus() {
   async function connectSlack(input: { code: string; redirectUri: string; firstSyncWindowDays: number }) {
     setIsMutating(true);
     try {
-      const response = await fetch('/api/connectors/slack/oauth', {
+      const response = await fetch(apiPath('/api/connectors/slack/oauth'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
@@ -109,7 +110,7 @@ export function useConnectorStatus() {
   async function saveChannelScope(input: { selectedChannelIds: string[]; firstSyncWindowDays: number }) {
     setIsMutating(true);
     try {
-      const response = await fetch('/api/connectors/slack/channels', {
+      const response = await fetch(apiPath('/api/connectors/slack/channels'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
@@ -129,7 +130,7 @@ export function useConnectorStatus() {
   async function syncNow(firstWindowDays?: number) {
     setIsMutating(true);
     try {
-      const response = await fetch('/api/connectors/slack/sync', {
+      const response = await fetch(apiPath('/api/connectors/slack/sync'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ firstSyncWindowDays: firstWindowDays }),

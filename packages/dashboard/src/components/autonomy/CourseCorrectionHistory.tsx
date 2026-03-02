@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { RefreshCw, ChevronDown, ChevronUp, WifiOff } from 'lucide-react';
 import Card from '@/components/common/Card';
 import { useCourseCorrections } from '@/hooks/useAutonomyEvents';
 
@@ -14,7 +14,7 @@ function formatTime(timestamp: number): string {
 }
 
 export function CourseCorrectionHistory({ taskId }: CourseCorrectionHistoryProps) {
-  const corrections = useCourseCorrections(taskId);
+  const { corrections } = useCourseCorrections(taskId);
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
   
   if (corrections.length === 0) return null;

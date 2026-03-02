@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import useSWR from 'swr';
 import type { PrivacyExecutionMode } from '@/lib/types/privacy';
 import type { PrivacyAuditEvent } from '@/lib/privacy/audit-log';
+import { apiPath } from '@/lib/api-client';
 
 interface PrivacySettings {
   projectId: string;
@@ -43,7 +44,7 @@ export function usePrivacy(projectId: string | null) {
   });
 
   const settingsUrl = projectId
-    ? `/api/privacy/settings?projectId=${encodeURIComponent(projectId)}`
+    ? apiPath(`/api/privacy/settings?projectId=${encodeURIComponent(projectId)}`)
     : null;
 
   const eventsUrl = useMemo(() => {
@@ -76,7 +77,7 @@ export function usePrivacy(projectId: string | null) {
       params.set('to', toIso);
     }
 
-    return `/api/privacy/events?${params.toString()}`;
+    return apiPath(`/api/privacy/events?${params.toString()}`);
   }, [filters, projectId]);
 
   const settingsSWR = useSWR<{ projectId: string; remoteInferenceEnabled: boolean; updatedAt: string | null }>(
@@ -92,7 +93,7 @@ export function usePrivacy(projectId: string | null) {
   async function setRemoteConsent(enabled: boolean): Promise<void> {
     if (!projectId) return;
 
-    const response = await fetch('/api/privacy/settings', {
+    const response = await fetch(apiPath('/api/privacy/settings'), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ projectId, remoteInferenceEnabled: enabled }),
@@ -108,7 +109,7 @@ export function usePrivacy(projectId: string | null) {
   async function revokeConsent(): Promise<void> {
     if (!projectId) return;
 
-    const response = await fetch('/api/privacy/settings', {
+    const response = await fetch(apiPath('/api/privacy/settings'), {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ projectId }),

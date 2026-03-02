@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Check, X, ExternalLink, Info, MessageSquare } from 'lucide-react';
+import { apiPath } from '@/lib/api-client';
 
 interface Suggestion {
   id: string;
@@ -27,7 +28,7 @@ export default function LinkReviewPanel() {
 
   async function fetchSuggestions() {
     try {
-      const res = await fetch('/api/links/suggestions');
+      const res = await fetch(apiPath('/api/links/suggestions'));
       const data = await res.json();
       setSuggestions(data);
     } catch (err) {
@@ -39,7 +40,7 @@ export default function LinkReviewPanel() {
 
   async function handleAction(id: string, action: 'accept' | 'reject') {
     try {
-      const res = await fetch(`/api/links/suggestions/${id}/action`, {
+      const res = await fetch(apiPath(`/api/links/suggestions/${id}/action`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action }),

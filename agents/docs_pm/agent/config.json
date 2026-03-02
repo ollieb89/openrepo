@@ -1,0 +1,36 @@
+{
+  "id": "docs_pm",
+  "name": "Docs_PM - Documentation Project Manager",
+  "level": 2,
+  "reports_to": "clawdia_prime",
+  "delegates_to": "l3_specialist",
+  "identity_ref": "agents/docs_pm/agent/IDENTITY.md",
+  "gateway": {
+    "endpoint": "http://localhost:18789",
+    "auth_source": "openclaw.json"
+  },
+  "skill_registry": {
+    "spawn": {
+      "name": "Spawn Documentation Specialist",
+      "description": "Spawns L3 specialists for docs and content tasks",
+      "timeout_seconds": 600,
+      "skill_path": "skills/spawn"
+    },
+    "content_review": {
+      "name": "Documentation Review",
+      "description": "Reviews doc quality, accuracy, and style compliance",
+      "timeout_seconds": 300,
+      "skill_path": "skills/review"
+    }
+  },
+  "max_concurrent": 3,
+  "retry_on_failure": true,
+  "max_retries": 1,
+  "doc_settings": {
+    "default_generator": "docusaurus",
+    "supported_generators": ["docusaurus", "astro", "vitepress", "mkdocs"],
+    "auto_deploy": true,
+    "deploy_branch": "main",
+    "preview_on_pr": true
+  }
+}

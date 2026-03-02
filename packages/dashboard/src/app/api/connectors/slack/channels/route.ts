@@ -1,21 +1,22 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import {
   DEFAULT_FIRST_SYNC_WINDOW_DAYS,
   getSlackConnectorState,
   listSlackChannels,
   saveSlackChannelSelection,
 } from '@/lib/connectors/slack';
+import { withAuth } from '@/lib/auth-middleware';
 
 interface SaveChannelScopePayload {
   selectedChannelIds?: string[];
   firstSyncWindowDays?: number;
 }
 
-export async function GET() {
+async function getHandler() {
   try {
     const connector = await getSlackConnectorState();
     if (!connector) {
-      return Response.json({ ok: true, connected: false, channels: [], selectedChannelIds: [] });
+      return NextResponse.json({ ok: true, connected: false, channels: [], selectedChannelIds: [] });
     }
 
     const channels = await listSlackChannels(connector.id);
@@ -29,7 +30,7 @@ export async function GET() {
         ? metadata.firstSyncWindowDays
         : DEFAULT_FIRST_SYNC_WINDOW_DAYS;
 
-    return Response.json({
+    return NextResponse.json({
       ok: true,
       connected: true,
       channels,
@@ -38,15 +39,15 @@ export async function GET() {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to load Slack channels';
-    return Response.json({ ok: false, error: message }, { status: 500 });
+    return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }
 }
 
-export async function POST(request: NextRequest) {
+async function postHandler(request: NextRequest) {
   try {
     const body = (await request.json()) as SaveChannelScopePayload;
     if (!Array.isArray(body.selectedChannelIds)) {
-      return Response.json({ ok: false, error: 'selectedChannelIds must be an array' }, { status: 400 });
+      return NextResponse.json({ ok: false, error: 'selectedChannelIds must be an array' }, { status: 400 });
     }
 
     const connector = await saveSlackChannelSelection({
@@ -54,10 +55,13 @@ export async function POST(request: NextRequest) {
       firstSyncWindowDays: body.firstSyncWindowDays,
     });
 
-    return Response.json({ ok: true, connector });
+    return NextResponse.json({ ok: true, connector });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to save Slack channel scope';
     const status = message.includes('not connected') ? 404 : 500;
-    return Response.json({ ok: false, error: message }, { status });
+    return NextResponse.json({ ok: false, error: message }, { status });
   }
 }
+
+export const GET = withAuth(getHandler);
+export const POST = withAuth(postHandler);

@@ -49,6 +49,7 @@ interface MemuConfig {
   autoRecall?: boolean;
   pythonPath?: string;
   memuPath?: string;
+  memuDbPath?: string;
   // LLM provider settings
   llmProvider?: string;       // "anthropic" | "openai" | "gemini" (default: "anthropic")
   llmBaseUrl?: string;        // API base URL
@@ -104,6 +105,7 @@ async function callMemu(
       ANTHROPIC_TOKEN: resolveAnthropicToken(config.anthropicToken),
       GEMINI_API_KEY: config.geminiApiKey || "",
       MEMU_PATH: config.memuPath || "",
+      MEMU_DB_PATH: config.memuDbPath || "",
       LLM_PROVIDER: config.llmProvider || "anthropic",
       LLM_BASE_URL: config.llmBaseUrl || "",
       LLM_MODEL: config.llmModel || "",

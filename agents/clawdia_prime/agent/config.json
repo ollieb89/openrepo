@@ -8,12 +8,19 @@
     "endpoint": "http://localhost:18789",
     "auth_source": "openclaw.json"
   },
+  "projects": ["main"],
   "skill_registry": {
     "router": {
       "name": "Hub-and-Spoke Router (CLI)",
       "description": "Delegates tasks to L2 project managers via the OpenClaw CLI",
       "timeout_seconds": 120,
       "skill_path": "skills/router"
+    },
+    "swarm_query": {
+      "name": "Swarm Intelligence Query",
+      "description": "Read-only cross-project state aggregation for L1 visibility",
+      "timeout_seconds": 30,
+      "skill_path": "agents/clawdia_prime/skills/swarm_query"
     }
   },
   "subordinates": ["pumplai_pm"],

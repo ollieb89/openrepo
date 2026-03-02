@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { Bot, ExternalLink } from 'lucide-react';
 
 const navItems = [
   {
@@ -97,6 +98,14 @@ const navItems = [
   },
 ];
 
+const externalLinks = [
+  {
+    label: 'Agent Runtime',
+    href: 'http://localhost:18789',
+    icon: Bot,
+  },
+];
+
 export default function Sidebar() {
   const pathname = usePathname();
   const [pendingCount, setPendingCount] = useState(0);
@@ -134,7 +143,7 @@ export default function Sidebar() {
         <p className="text-xs text-gray-500 dark:text-gray-400">Control Center</p>
       </div>
 
-      <nav className="flex-1 p-3 space-y-1">
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
         {navItems.map(item => {
           const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
           const isSuggestions = item.href === '/suggestions';
@@ -160,6 +169,28 @@ export default function Sidebar() {
             </Link>
           );
         })}
+
+        <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+          <p className="px-3 mb-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            External
+          </p>
+          {externalLinks.map(link => {
+            const IconComponent = link.icon;
+            return (
+              <a
+                key={link.href}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
+              >
+                <IconComponent className="w-5 h-5 shrink-0" />
+                {link.label}
+                <ExternalLink className="w-3 h-3 shrink-0 ml-auto opacity-60" />
+              </a>
+            );
+          })}
+        </div>
       </nav>
     </aside>
   );

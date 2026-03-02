@@ -1,0 +1,88 @@
+{
+  "id": "main",
+  "name": "Meta-PM Coordinator",
+  "level": 2,
+  "reports_to": "clawdia_prime",
+  "role": "coordinator",
+  "identity_ref": "agents/main/agent/IDENTITY.md",
+  "gateway": {
+    "endpoint": "http://localhost:18789",
+    "auth_source": "openclaw.json"
+  },
+  "project_registry": {
+    "pumplai": {
+      "pm_agent": "pumplai_pm",
+      "domains": ["fullstack", "frontend", "backend", "web"],
+      "stack_hints": ["next.js", "react", "tailwind", "fastapi", "postgresql", "typescript", "python"],
+      "workspace": "/home/ollie/.openclaw/workspace"
+    },
+    "pai": {
+      "pm_agent": "pai_pm",
+      "domains": ["fullstack", "frontend", "backend", "web"],
+      "stack_hints": ["next.js", "react", "tailwind", "fastapi", "postgresql", "typescript", "python"],
+      "workspace": "/home/ollie/.openclaw/workspace"
+    },
+    "openrepo": {
+      "pm_agent": "openrepo_pm",
+      "domains": ["fullstack", "frontend", "backend", "web"],
+      "stack_hints": ["next.js", "react", "tailwind", "fastapi", "postgresql", "typescript", "python"],
+      "workspace": "/home/ollie/Development/Tools/openrepo"
+    },
+    "gdata": {
+      "pm_agent": "gdata_pm",
+      "domains": ["fullstack", "frontend", "backend", "web"],
+      "stack_hints": ["vue.js", "react", "tailwind", "fastapi", "postgresql", "typescript", "python"],
+      "workspace": "/home/ollie/.openclaw/workspace"
+    },
+    "docs_site": {
+      "pm_agent": "docs_pm",
+      "domains": ["documentation", "content", "static-site"],
+      "stack_hints": ["markdown", "mdx", "docusaurus", "astro", "vitepress", "content"],
+      "workspace": "/home/ollie/.openclaw/workspace/docs"
+    }
+  },
+  "generic_skills": ["research", "analysis", "documentation", "planning", "investigation"],
+  "skill_registry": {
+    "swarm_query": {
+      "name": "Swarm Intelligence Query",
+      "description": "Cross-project visibility and health monitoring for routing decisions",
+      "timeout_seconds": 30,
+      "skill_path": "agents/clawdia_prime/skills/swarm_query"
+    },
+    "route_directive": {
+      "name": "Intelligent Directive Router",
+      "description": "Analyzes directives and routes to appropriate PM or L3",
+      "timeout_seconds": 10,
+      "skill_path": "agents/main/skills/route_directive"
+    },
+    "spawn": {
+      "name": "Generic L3 Spawner",
+      "description": "Spawns L3 specialists for generic tasks (research, analysis, docs)",
+      "timeout_seconds": 660,
+      "skill_path": "skills/spawn"
+    },
+    "coordinate_parallel": {
+      "name": "Parallel PM Coordinator",
+      "description": "Coordinates multi-PM execution and aggregates results",
+      "timeout_seconds": 1200,
+      "skill_path": "agents/main/skills/coordinate_parallel"
+    }
+  },
+  "routing_config": {
+    "health_threshold_low": 0.3,
+    "health_threshold_high": 0.7,
+    "max_queue_wait_minutes": 30,
+    "enable_load_balancing": true,
+    "enable_stack_detection": true,
+    "fallback_to_l3": true
+  },
+  "max_concurrent": 3,
+  "retry_on_failure": true,
+  "max_retries": 1,
+  "escalation_policy": {
+    "on_no_pm_match": "escalate",
+    "on_all_pms_bottlenecked": "escalate",
+    "on_coordination_conflict": "escalate",
+    "on_swarm_query_failure": "continue_blind"
+  }
+}

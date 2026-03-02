@@ -1,0 +1,34 @@
+{
+  "categories": {
+    "orchestration-core": [
+      "router",
+      "spawn",
+      "review",
+      "openclaw-orchestrate",
+      "openclaw-spawn-l3",
+      "openclaw-heartbeat",
+      "openclaw-review"
+    ],
+    "orchestration-methodology": [
+      "brainstorming",
+      "executing-plans",
+      "test-driven-development",
+      "verification-before-completion",
+      "subagent-driven-development",
+      "systematic-debugging",
+      "self-improving-agent"
+    ],
+    "multi-agent": [
+      "multi-agent",
+      "dispatching-parallel-agents",
+      "pumplai_delegation"
+    ],
+    "integration": [
+      "oc-notion",
+      "notion-kanban-sync",
+      "openclaw-memory-system",
+      "openclaw-models",
+      "notebooklm"
+    ]
+  }
+}

@@ -1,11 +1,15 @@
+import { NextRequest, NextResponse } from 'next/server';
 import { listAgents } from '@/lib/openclaw';
+import { withAuth } from '@/lib/auth-middleware';
 
-export async function GET() {
+async function handler(request: NextRequest): Promise<NextResponse> {
   try {
     const agents = await listAgents();
-    return Response.json({ agents });
+    return NextResponse.json({ agents });
   } catch (error) {
     console.error('Error loading agents:', error);
-    return Response.json({ error: 'Failed to load agents' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to load agents' }, { status: 500 });
   }
 }
+
+export const GET = withAuth(handler);

@@ -1,7 +1,20 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { streamContainerLogs, listSwarmContainers } from '@/lib/docker';
+import { validateToken, isAuthRequired, createUnauthorizedResponse } from '@/lib/auth';
+import { withAuth } from '@/lib/auth-middleware';
 
 export async function GET(request: NextRequest) {
+  // Check authentication
+  if (isAuthRequired()) {
+    const authHeader = request.headers.get('Authorization');
+    const customTokenHeader = request.headers.get('X-OpenClaw-Token');
+    const queryToken = new URL(request.url).searchParams.get('_token');
+
+    if (!validateToken(authHeader || undefined, customTokenHeader || undefined, queryToken || undefined)) {
+      return createUnauthorizedResponse();
+    }
+  }
+
   const { searchParams } = new URL(request.url);
   const containerId = searchParams.get('containerId');
 
@@ -50,11 +63,11 @@ export async function GET(request: NextRequest) {
   });
 }
 
-export async function POST(request: NextRequest) {
+async function postHandler(request: NextRequest) {
   try {
     const containers = await listSwarmContainers();
     
-    return Response.json({
+    return NextResponse.json({
       containers: containers.map(c => ({
         id: c.Id,
         name: c.Names[0],
@@ -66,9 +79,11 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error listing containers:', error);
-    return Response.json(
+    return NextResponse.json(
       { error: 'Failed to list containers' },
       { status: 500 }
     );
   }
 }
+
+export const POST = withAuth(postHandler);

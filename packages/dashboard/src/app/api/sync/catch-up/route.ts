@@ -1,12 +1,13 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { parseIntent } from '@/lib/sync/intent';
 import { searchContext } from '@/lib/sync/vector-store';
 import { synthesizeTimeline } from '@/lib/sync/synthesis';
 import { generateEmbedding } from '@/lib/ollama';
+import { withAuth } from '@/lib/auth-middleware';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(req: NextRequest) {
+async function handler(req: NextRequest) {
   try {
     const { query, activeProjectId } = await req.json();
 
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest) {
     const { stream, confidence, context } = await synthesizeTimeline(query, records);
 
     if (confidence === 'low') {
-      return Response.json({
+      return NextResponse.json({
         confidence: 'low',
         suggestions: context.slice(0, 3).map(r => ({
           id: r.id,
@@ -62,6 +63,8 @@ export async function POST(req: NextRequest) {
 
   } catch (error) {
     console.error('[CatchUp] API Error:', error);
-    return Response.json({ error: 'Failed to process catch-up query' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to process catch-up query' }, { status: 500 });
   }
 }
+
+export const POST = withAuth(handler);

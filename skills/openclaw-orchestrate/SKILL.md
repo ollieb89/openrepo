@@ -1,6 +1,10 @@
 ---
 name: openclaw-orchestrate
 description: Multi-tier agent orchestration in OpenClaw's L1→L2→L3 hierarchy. Use when routing directives from L1 (ClawdiaPrime) to L2 (Project Manager), delegating tasks from L2 to L3 specialists, building or modifying the router skill, coordinating parallel agent runs, or debugging delegation failures. Triggers for: "dispatch a task", "delegate to L3", "orchestration", "route a directive", "L1/L2/L3 workflow", "tier hierarchy", "agent coordination", "parallel agents", "openclaw router".
+metadata:
+  openclaw:
+    emoji: "🏗️"
+    category: "orchestration"
 ---
 
 # OpenClaw Multi-Tier Orchestration

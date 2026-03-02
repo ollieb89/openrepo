@@ -1,8 +1,9 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getTaskState, getActiveProjectId, getProject } from '@/lib/openclaw';
+import { withAuth } from '@/lib/auth-middleware';
 import type { MetricsResponse } from '@/lib/types';
 
-export async function GET(request: NextRequest) {
+async function handler(request: NextRequest): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
     const projectId = searchParams.get('project') || await getActiveProjectId();
@@ -69,9 +70,11 @@ export async function GET(request: NextRequest) {
       projectId,
     };
 
-    return Response.json(response);
+    return NextResponse.json(response);
   } catch (error) {
     console.error('Error loading metrics:', error);
-    return Response.json({ error: 'Failed to load metrics' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to load metrics' }, { status: 500 });
   }
 }
+
+export const GET = withAuth(handler);

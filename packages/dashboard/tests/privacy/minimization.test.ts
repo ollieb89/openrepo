@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'bun:test';
+import { describe, expect, it } from 'vitest';
 import { minimizePersistenceRecord } from '../../src/lib/privacy/minimization';
 
 const FIXED_DATE = new Date('2026-02-24T00:00:00.000Z');

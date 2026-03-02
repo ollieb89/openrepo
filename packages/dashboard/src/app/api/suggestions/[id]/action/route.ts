@@ -3,7 +3,8 @@ import { existsSync } from 'fs';
 import path from 'path';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { withAuth } from '@/lib/auth-middleware';
 
 const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || '/home/ollie/.openclaw';
 const ORCHESTRATION_ROOT = path.join(OPENCLAW_ROOT, 'packages', 'orchestration', 'src', 'openclaw');
@@ -24,7 +25,7 @@ const FORBIDDEN_PATTERNS: RegExp[] = [
   /\$\([^)]+\)/,    // shell substitution $(...)
 ];
 
-export function validateDiffText(diffText: unknown): { valid: boolean; reason?: string } {
+function validateDiffText(diffText: unknown): { valid: boolean; reason?: string } {
   if (diffText === null || diffText === undefined || diffText === '') {
     return { valid: false, reason: 'diff_text is required and must be a non-empty string' };
   }
@@ -75,11 +76,11 @@ interface SuggestionsFile {
   suggestions: SuggestionRecord[];
 }
 
-export async function POST(
+async function handler(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const suggestionId = params.id;
+  const { id: suggestionId } = await params;
 
   let body: {
     action?: string;
@@ -91,13 +92,13 @@ export async function POST(
   try {
     body = await request.json();
   } catch {
-    return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
   const { action, project } = body;
 
   if (!action || !project) {
-    return Response.json({ error: 'action and project are required' }, { status: 400 });
+    return NextResponse.json({ error: 'action and project are required' }, { status: 400 });
   }
 
   // Read soul-suggestions.json
@@ -107,16 +108,16 @@ export async function POST(
     suggestionsData = JSON.parse(raw);
   } catch (error: unknown) {
     if (error instanceof Error && 'code' in error && (error as NodeJS.ErrnoException).code === 'ENOENT') {
-      return Response.json({ error: 'No suggestions found for this project' }, { status: 404 });
+      return NextResponse.json({ error: 'No suggestions found for this project' }, { status: 404 });
     }
     console.error('Error reading soul-suggestions.json:', error);
-    return Response.json({ error: 'Failed to read suggestions' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to read suggestions' }, { status: 500 });
   }
 
   // Find the suggestion by id
   const suggestionIndex = suggestionsData.suggestions.findIndex(s => s.id === suggestionId);
   if (suggestionIndex === -1) {
-    return Response.json({ error: `Suggestion '${suggestionId}' not found` }, { status: 404 });
+    return NextResponse.json({ error: `Suggestion '${suggestionId}' not found` }, { status: 404 });
   }
 
   const suggestion = suggestionsData.suggestions[suggestionIndex];
@@ -125,7 +126,7 @@ export async function POST(
     // Approval gate — validateDiffText must pass before any file write
     const validation = validateDiffText(body.diff_text);
     if (!validation.valid) {
-      return Response.json({ error: validation.reason }, { status: 422 });
+      return NextResponse.json({ error: validation.reason }, { status: 422 });
     }
 
     const diffText = body.diff_text as string;
@@ -158,7 +159,7 @@ export async function POST(
     // Write updated JSON back
     await fs.writeFile(suggestionsPath(project), JSON.stringify(suggestionsData, null, 2), 'utf-8');
 
-    return Response.json({ ok: true, message: 'Applied to soul-override.md' });
+    return NextResponse.json({ ok: true, message: 'Applied to soul-override.md' });
 
   } else if (action === 'reject') {
     // Update suggestion status with suppression
@@ -174,9 +175,11 @@ export async function POST(
     await fs.writeFile(suggestionsPath(project), JSON.stringify(suggestionsData, null, 2), 'utf-8');
 
     // Rejection reason memorization deferred to L2 CLI — dashboard doesn't call memU directly
-    return Response.json({ ok: true });
+    return NextResponse.json({ ok: true });
 
   } else {
-    return Response.json({ error: `Unknown action: '${action}'` }, { status: 400 });
+    return NextResponse.json({ error: `Unknown action: '${action}'` }, { status: 400 });
   }
 }
+
+export const POST = withAuth(handler);

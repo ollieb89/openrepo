@@ -1,13 +1,14 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import {
   addPrivacyAuditEvent,
   listPrivacyAuditEvents,
   type CreatePrivacyAuditEventInput,
   type PrivacyAuditEventFilters,
 } from '@/lib/privacy/audit-log';
+import { withAuth } from '@/lib/auth-middleware';
 
-function badRequest(message: string): Response {
-  return Response.json({ error: message }, { status: 400 });
+function badRequest(message: string): NextResponse {
+  return NextResponse.json({ error: message }, { status: 400 });
 }
 
 function parseFilters(request: NextRequest): PrivacyAuditEventFilters {
@@ -31,12 +32,12 @@ function parseFilters(request: NextRequest): PrivacyAuditEventFilters {
   return filters;
 }
 
-export async function GET(request: NextRequest) {
+async function getHandler(request: NextRequest) {
   const events = listPrivacyAuditEvents(parseFilters(request));
-  return Response.json({ events });
+  return NextResponse.json({ events });
 }
 
-export async function POST(request: NextRequest) {
+async function postHandler(request: NextRequest) {
   const body = await request.json().catch(() => null);
   const input = body as CreatePrivacyAuditEventInput | null;
 
@@ -60,5 +61,8 @@ export async function POST(request: NextRequest) {
     createdAt: input.createdAt,
   });
 
-  return Response.json({ event }, { status: 201 });
+  return NextResponse.json({ event }, { status: 201 });
 }
+
+export const GET = withAuth(getHandler);
+export const POST = withAuth(postHandler);

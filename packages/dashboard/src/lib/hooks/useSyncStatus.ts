@@ -1,6 +1,7 @@
 'use client';
 
 import useSWR from 'swr';
+import { apiPath } from '@/lib/api-client';
 
 export type SyncHealthStatus = 'auth_expired' | 'error' | 'rate_limited' | 'syncing' | 'connected' | 'disconnected';
 export type SyncStage =
@@ -117,12 +118,12 @@ export function statusTrafficLight(status: SyncHealthStatus): 'red' | 'amber' | 
 
 export function resolveSyncEndpoint(connector: Pick<SyncConnectorSnapshot, 'id' | 'provider'>): string {
   if (connector.id === 'connector-slack-primary' || connector.provider === 'slack') {
-    return '/api/connectors/slack/sync';
+    return apiPath('/api/connectors/slack/sync');
   }
   if (connector.id === 'connector-tracker' || connector.provider === 'github' || connector.provider === 'linear') {
-    return '/api/connectors/tracker/sync';
+    return apiPath('/api/connectors/tracker/sync');
   }
-  return `/api/connectors/${encodeURIComponent(connector.id)}/sync`;
+  return apiPath(`/api/connectors/${encodeURIComponent(connector.id)}/sync`);
 }
 
 export function reconnectHref(connector: Pick<SyncConnectorSnapshot, 'id' | 'provider'>): string {
@@ -151,7 +152,7 @@ async function triggerConnectorSync(connector: Pick<SyncConnectorSnapshot, 'id' 
 }
 
 export function useSyncStatus() {
-  const syncSWR = useSWR<SyncHealthPayload>('/api/connectors/health', fetcher, {
+  const syncSWR = useSWR<SyncHealthPayload>(apiPath('/api/connectors/health'), fetcher, {
     refreshInterval: 3000,
     revalidateOnFocus: false,
   });

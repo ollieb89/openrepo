@@ -3,12 +3,13 @@ import { loadDecisions, saveDecisions, loadSyncRecords } from '@/lib/sync/storag
 import { extractDecisionsFromThread } from '@/lib/sync/summarizer';
 import { listConnectorStates } from '@/lib/connectors/store';
 import { ThreadRecord } from '@/lib/types/decisions';
+import { withAuth } from '@/lib/auth-middleware';
 
-export async function POST(
+async function handler(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = params;
+  const { id } = await params;
   const { hint } = await req.json();
 
   try {
@@ -67,3 +68,5 @@ export async function POST(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+export const POST = withAuth(handler);

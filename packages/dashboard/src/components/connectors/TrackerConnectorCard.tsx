@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Card from '@/components/common/Card';
 import type { ConnectorHealthStatus } from '@/lib/types/connectors';
+import { apiPath } from '@/lib/api-client';
 
 type TrackerProvider = 'github' | 'linear';
 
@@ -77,7 +78,7 @@ export default function TrackerConnectorCard() {
     setError(null);
 
     try {
-      const response = await fetch('/api/connectors/tracker', { method: 'GET' });
+      const response = await fetch(apiPath('/api/connectors/tracker'), { method: 'GET' });
       if (!response.ok) {
         throw new Error('Failed to load tracker connector');
       }
@@ -126,7 +127,7 @@ export default function TrackerConnectorCard() {
     setError(null);
 
     try {
-      const response = await fetch('/api/connectors/tracker', {
+      const response = await fetch(apiPath('/api/connectors/tracker'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -156,7 +157,7 @@ export default function TrackerConnectorCard() {
     setError(null);
 
     try {
-      const response = await fetch('/api/connectors/tracker/sync', {
+      const response = await fetch(apiPath('/api/connectors/tracker/sync'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

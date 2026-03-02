@@ -1,6 +1,10 @@
 ---
 name: openclaw-review
 description: L2 diff review workflow in OpenClaw. Use when reviewing L3 work on a staging branch, capturing snapshots of L3 output, making merge or reject decisions, writing post-review memory, or setting up the review skill. Triggers for: "review L3 work", "review diff", "merge branch", "reject branch", "l3/task branch", "openclaw snapshot", "L2 review", "diff review", "code review L3", "awaiting review".
+metadata:
+  openclaw:
+    emoji: "✅"
+    category: "orchestration"
 ---
 
 # L2 Diff Review Workflow

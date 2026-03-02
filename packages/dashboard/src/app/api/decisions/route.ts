@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { loadDecisions } from '@/lib/sync/storage';
+import { withAuth } from '@/lib/auth-middleware';
 import path from 'path';
 import fs from 'fs';
 
@@ -8,7 +9,7 @@ const GET_RECORDS_ROOT = () => {
   return path.join(root, 'workspace', '.openclaw', 'records', 'decisions');
 };
 
-export async function GET(req: NextRequest) {
+async function handler(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const projectId = searchParams.get('projectId');
 
@@ -41,3 +42,5 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to fetch decisions' }, { status: 500 });
   }
 }
+
+export const GET = withAuth(handler);

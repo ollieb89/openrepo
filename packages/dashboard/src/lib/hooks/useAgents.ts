@@ -1,11 +1,12 @@
 import useSWR from 'swr';
 import type { Agent } from '@/lib/types';
+import { apiPath } from '@/lib/api-client';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export function useAgents(projectId: string | null) {
   const { data, error, isLoading } = useSWR<{ agents: Agent[] }>(
-    '/api/agents',
+    apiPath('/api/agents'),
     fetcher,
     { revalidateOnFocus: false }
   );

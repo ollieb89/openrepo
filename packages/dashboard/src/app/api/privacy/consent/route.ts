@@ -1,15 +1,16 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import {
   getProjectConsent,
   revokeProjectConsent,
   setProjectConsent,
 } from '@/lib/privacy/consent-store';
+import { withAuth } from '@/lib/auth-middleware';
 
-function badRequest(message: string): Response {
-  return Response.json({ error: message }, { status: 400 });
+function badRequest(message: string): NextResponse {
+  return NextResponse.json({ error: message }, { status: 400 });
 }
 
-export async function GET(request: NextRequest) {
+async function getHandler(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const projectId = searchParams.get('projectId');
 
@@ -19,14 +20,14 @@ export async function GET(request: NextRequest) {
 
   const consent = await getProjectConsent(projectId);
 
-  return Response.json({
+  return NextResponse.json({
     projectId,
     remoteInferenceEnabled: consent?.remoteInferenceEnabled === true,
     updatedAt: consent?.updatedAt ?? null,
   });
 }
 
-export async function PUT(request: NextRequest) {
+async function putHandler(request: NextRequest) {
   const body = await request.json().catch(() => null);
   const projectId = body?.projectId;
   const remoteInferenceEnabled = body?.remoteInferenceEnabled;
@@ -40,10 +41,10 @@ export async function PUT(request: NextRequest) {
   }
 
   const consent = await setProjectConsent(projectId, remoteInferenceEnabled);
-  return Response.json({ consent });
+  return NextResponse.json({ consent });
 }
 
-export async function DELETE(request: NextRequest) {
+async function deleteHandler(request: NextRequest) {
   const body = await request.json().catch(() => null);
   const projectId = body?.projectId;
 
@@ -52,5 +53,9 @@ export async function DELETE(request: NextRequest) {
   }
 
   const consent = await revokeProjectConsent(projectId);
-  return Response.json({ consent });
+  return NextResponse.json({ consent });
 }
+
+export const GET = withAuth(getHandler);
+export const PUT = withAuth(putHandler);
+export const DELETE = withAuth(deleteHandler);

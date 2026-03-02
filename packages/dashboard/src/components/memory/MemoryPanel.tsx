@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import { useMemory } from '@/lib/hooks/useMemory';
 import { useProject } from '@/context/ProjectContext';
 import type { MemoryItem } from '@/lib/types/memory';
+import { apiPath } from '@/lib/api-client';
 import MemoryStatBar from './MemoryStatBar';
 import MemoryFilters from './MemoryFilters';
 import MemoryTable from './MemoryTable';
@@ -135,7 +136,7 @@ export default function MemoryPanel() {
     if (!projectId || scanRunning) return;
     setScanRunning(true);
     try {
-      const res = await fetch('/api/memory/health-scan', {
+      const res = await fetch(apiPath('/api/memory/health-scan'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -242,7 +243,7 @@ export default function MemoryPanel() {
 
   // Edit memory via PUT proxy
   async function handleEditMemory(id: string, content: string): Promise<void> {
-    const res = await fetch(`/api/memory/${id}`, {
+    const res = await fetch(apiPath(`/api/memory/${id}`), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content }),
@@ -257,7 +258,7 @@ export default function MemoryPanel() {
     setDeletingIds(prev => new Set(Array.from(prev).concat([id])));
     await new Promise(resolve => setTimeout(resolve, DELETE_ANIMATION_MS));
 
-    const res = await fetch(`/api/memory/${id}`, { method: 'DELETE' });
+    const res = await fetch(apiPath(`/api/memory/${id}`), { method: 'DELETE' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     // Remove from health flags
@@ -348,7 +349,7 @@ export default function MemoryPanel() {
     await new Promise(resolve => setTimeout(resolve, DELETE_ANIMATION_MS));
 
     try {
-      const res = await fetch(`/api/memory/${id}`, { method: 'DELETE' });
+      const res = await fetch(apiPath(`/api/memory/${id}`), { method: 'DELETE' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       // Optimistically remove from SWR cache
@@ -395,7 +396,7 @@ export default function MemoryPanel() {
     await new Promise(resolve => setTimeout(resolve, DELETE_ANIMATION_MS));
 
     try {
-      await Promise.all(Array.from(ids).map(id => fetch(`/api/memory/${id}`, { method: 'DELETE' }).then(r => { if (!r.ok) throw new Error(`HTTP ${r.status} for ${id}`); })));
+      await Promise.all(Array.from(ids).map(id => fetch(apiPath(`/api/memory/${id}`), { method: 'DELETE' }).then(r => { if (!r.ok) throw new Error(`HTTP ${r.status} for ${id}`); })));
 
       // Optimistically remove from SWR cache
       await mutate(

@@ -29,7 +29,11 @@ from memu.app import MemoryService
 # Configuration from environment
 ANTHROPIC_TOKEN = os.environ.get("ANTHROPIC_TOKEN", "")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
-DB_PATH = os.environ.get("MEMU_DB_PATH", os.path.expanduser("~/.openclaw/memory/memu.sqlite"))
+_DEFAULT_DB_DIR = os.path.join(
+    os.environ.get("OPENCLAW_ROOT", os.path.expanduser("~/.openclaw")),
+    "memory",
+)
+DB_PATH = os.environ.get("MEMU_DB_PATH", os.path.join(_DEFAULT_DB_DIR, "memu.sqlite"))
 
 # Provider settings (configurable via openclaw.json)
 LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "anthropic")

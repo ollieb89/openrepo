@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'bun:test';
+import { beforeEach, describe, expect, it } from 'vitest';
 import {
   addPrivacyAuditEvent,
   listPrivacyAuditEvents,
@@ -201,7 +201,7 @@ describe('runtime inference guard wiring', () => {
       {
         guard: {
           runInference: async (input) => {
-            expect(input.remoteConfig.endpoint.startsWith('https://')).toBeTrue();
+            expect(input.remoteConfig.endpoint.startsWith('https://')).toBe(true);
             return {
               decision: {
                 mode: 'remote',

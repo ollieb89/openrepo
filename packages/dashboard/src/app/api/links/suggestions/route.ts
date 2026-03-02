@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getPendingSuggestions } from '@/lib/sync/vector-store';
+import { withAuth } from '@/lib/auth-middleware';
 
-export async function GET() {
+async function handler() {
   try {
     const suggestions = getPendingSuggestions();
     return NextResponse.json(suggestions);
@@ -10,3 +11,5 @@ export async function GET() {
     return NextResponse.json({ error: 'Failed to fetch suggestions' }, { status: 500 });
   }
 }
+
+export const GET = withAuth(handler);

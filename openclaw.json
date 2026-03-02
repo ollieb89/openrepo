@@ -107,6 +107,12 @@
       "token": "${OPENCLAW_GATEWAY_TOKEN}"
     }
   },
+  "skills": {
+    "load": {
+      "extraDirs": [
+        "/home/ob/Development/Tools/openrepo/skills"]
+    }
+  },
   "plugins": {
     "slots": {
       "memory": "memory-memu"

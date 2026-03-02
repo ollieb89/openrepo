@@ -1,4 +1,4 @@
-import { describe, expect, it, mock } from 'bun:test';
+import { describe, expect, it, vi } from 'vitest';
 import { createRemoteTransport } from '../../src/lib/privacy/transport';
 
 describe('remote transport', () => {
@@ -19,7 +19,7 @@ describe('remote transport', () => {
 
   it('allows secure https transport and performs requests', async () => {
     const originalFetch = globalThis.fetch;
-    const fetchMock = mock(async () =>
+    const fetchMock = vi.fn(async () =>
       new Response(JSON.stringify({ ok: true }), {
         status: 200,
         headers: { 'content-type': 'application/json' },

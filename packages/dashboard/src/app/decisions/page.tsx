@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useProject } from '@/context/ProjectContext';
 import { DecisionCard } from '@/components/decisions/DecisionCard';
 import { Decision } from '@/lib/types/decisions';
@@ -10,7 +10,7 @@ export default function DecisionsPage() {
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchDecisions = async () => {
+  const fetchDecisions = useCallback(async () => {
     if (!projectId) {
       setLoading(false);
       return;
@@ -26,11 +26,11 @@ export default function DecisionsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [projectId]);
 
   useEffect(() => {
     fetchDecisions();
-  }, [projectId]);
+  }, [fetchDecisions]);
 
   const handleHide = async (id: string) => {
     try {

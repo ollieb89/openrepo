@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { loadDecisions, saveDecisions } from '@/lib/sync/storage';
 import { listConnectorStates } from '@/lib/connectors/store';
+import { withAuth } from '@/lib/auth-middleware';
 
-export async function DELETE(
+async function handler(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = params;
+  const { id } = await params;
 
   try {
     const connectors = await listConnectorStates();
@@ -35,3 +36,5 @@ export async function DELETE(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+export const DELETE = withAuth(handler);

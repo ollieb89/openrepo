@@ -1,5 +1,6 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { readOpenClawConfig, getActiveProjectId } from '@/lib/openclaw';
+import { withAuth } from '@/lib/auth-middleware';
 
 async function getMemuUrl(): Promise<string> {
   const config = await readOpenClawConfig();
@@ -7,7 +8,7 @@ async function getMemuUrl(): Promise<string> {
   return memory?.memu_api_url ?? 'http://localhost:18791';
 }
 
-export async function GET(request: NextRequest) {
+async function handler(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const projectId = searchParams.get('project') || await getActiveProjectId();
@@ -26,15 +27,18 @@ export async function GET(request: NextRequest) {
       });
       const data = await res.json();
       const items = Array.isArray(data) ? data : (data.items ?? []);
-      return Response.json({ items, total: items.length, projectId, mode: 'search' });
+      return NextResponse.json({ items, total: items.length, projectId, mode: 'search' });
     } else {
       const res = await fetch(`${memuUrl}/memories?user_id=${encodeURIComponent(projectId)}`);
       const data = await res.json();
       const items = Array.isArray(data) ? data : (data.items ?? []);
-      return Response.json({ items, total: items.length, projectId, mode: 'browse' });
+      return NextResponse.json({ items, total: items.length, projectId, mode: 'browse' });
     }
   } catch (error) {
     console.error('Error fetching memories:', error);
-    return Response.json({ error: 'Failed to fetch memories' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to fetch memories' }, { status: 500 });
   }
 }
+
+export const GET = withAuth(handler);
+export const POST = withAuth(handler);

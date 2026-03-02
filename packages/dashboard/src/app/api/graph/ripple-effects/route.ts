@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { findRippleEffects } from '@/lib/sync/graph';
+import { withAuth } from '@/lib/auth-middleware';
 
-export async function GET(request: NextRequest) {
+async function handler(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
 
@@ -28,3 +29,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withAuth(handler);

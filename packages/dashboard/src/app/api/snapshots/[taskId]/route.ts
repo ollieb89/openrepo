@@ -1,20 +1,24 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getSnapshot, getActiveProjectId } from '@/lib/openclaw';
+import { withAuth } from '@/lib/auth-middleware';
 
-export async function GET(
+async function handler(
   request: NextRequest,
-  { params }: { params: { taskId: string } }
+  { params }: { params: Promise<{ taskId: string }> }
 ) {
   try {
+    const { taskId } = await params;
     const { searchParams } = new URL(request.url);
     const projectId = searchParams.get('project') || await getActiveProjectId();
-    const diff = await getSnapshot(projectId, params.taskId);
+    const diff = await getSnapshot(projectId, taskId);
     if (!diff) {
-      return Response.json({ error: 'Snapshot not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Snapshot not found' }, { status: 404 });
     }
-    return Response.json({ diff });
+    return NextResponse.json({ diff });
   } catch (error) {
     console.error('Error loading snapshot:', error);
-    return Response.json({ error: 'Failed to load snapshot' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to load snapshot' }, { status: 500 });
   }
 }
+
+export const GET = withAuth(handler);

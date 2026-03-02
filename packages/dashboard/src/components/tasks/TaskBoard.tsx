@@ -71,7 +71,11 @@ export default function TaskBoard() {
               </div>
               <div className="space-y-2">
                 {columnTasks.map(task => (
-                  <TaskCard key={task.id} task={task} onClick={setSelectedTask} />
+                  <TaskCard 
+                    key={task.id} 
+                    task={task} 
+                    onClick={() => setSelectedTask(task as TaskWithAutonomy)} 
+                  />
                 ))}
               </div>
             </div>
@@ -100,7 +104,7 @@ export default function TaskBoard() {
               <p className="text-sm font-mono text-gray-900 dark:text-white">{selectedTask.id}</p>
             </div>
             <div className="flex gap-2">
-              <StatusBadge status={selectedTask.status} />
+              <StatusBadge status={selectedTask.status as TaskStatus} />
               {selectedTask.skill_hint && (
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
                   {selectedTask.skill_hint}

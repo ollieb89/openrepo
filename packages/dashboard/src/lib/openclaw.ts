@@ -78,12 +78,13 @@ function enrichTaskWithAutonomy(task: Task): TaskWithAutonomy {
   const autonomyMeta = (meta.autonomy as Record<string, unknown>) || {};
   const status = task.status;
   const lastEntry = task.activity_log?.[task.activity_log.length - 1];
+  const isEscalating = !!autonomyMeta.escalation_reason || !!autonomyMeta.escalation_confidence;
 
   const autonomy = {
     state: mapStatusToAutonomyState(status),
-    confidence_score: (autonomyMeta.confidence_score as number) ?? (status === 'escalating' ? 0.5 : 1),
+    confidence_score: (autonomyMeta.confidence_score as number) ?? (isEscalating ? 0.5 : 1),
     selected_tools: (autonomyMeta.selected_tools as string[]) ?? [],
-    ...(status === 'escalating' && {
+    ...(isEscalating && {
       escalation: {
         reason:
           (autonomyMeta.escalation_reason as string) ?? lastEntry?.entry ?? 'Task escalated',

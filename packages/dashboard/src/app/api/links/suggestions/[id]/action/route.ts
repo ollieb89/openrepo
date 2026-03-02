@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updateLinkSuggestionStatus } from '@/lib/sync/vector-store';
 import { addEdge } from '@/lib/sync/graph';
+import { withAuth } from '@/lib/auth-middleware';
 
-export async function POST(
+async function handler(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const { action } = await request.json();
 
     if (!['accept', 'reject'].includes(action)) {
@@ -31,3 +32,5 @@ export async function POST(
     return NextResponse.json({ error: 'Failed to update suggestion status' }, { status: 500 });
   }
 }
+
+export const POST = withAuth(handler);

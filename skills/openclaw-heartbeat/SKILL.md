@@ -1,6 +1,10 @@
 ---
 name: openclaw-heartbeat
 description: Heartbeat operations and periodic agent monitoring in OpenClaw. Use when setting up scheduled/recurring agent checks, configuring HEARTBEAT.md tasks, managing heartbeat state, batching periodic API checks (email, calendar, weather, system health), implementing quiet hours, or debugging missed heartbeats. Triggers for: "heartbeat", "periodic check", "scheduled agent", "batch checks", "HEARTBEAT.md", "quiet hours", "recurring task", "heartbeat state", "cron agent".
+metadata:
+  openclaw:
+    emoji: "💓"
+    category: "orchestration"
 ---
 
 # OpenClaw Heartbeat Operations

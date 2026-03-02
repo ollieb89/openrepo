@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { apiPath } from '@/lib/api-client';
 
 /**
  * Client-side component that pings the background sync API periodically.
@@ -11,7 +12,7 @@ export default function BackgroundSyncTrigger() {
     // Initial ping on mount
     const triggerSync = async () => {
       try {
-        await fetch('/api/connectors/sync/background', {
+        await fetch(apiPath('/api/connectors/sync/background'), {
           method: 'POST',
         });
       } catch (err) {

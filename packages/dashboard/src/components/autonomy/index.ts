@@ -12,10 +12,10 @@ export { NotificationSettings } from './NotificationSettings';
 // Types
 export type { 
   AutonomyState, 
-  ToolCategory,
   AutonomyInfo,
   AutonomyEscalation,
   TaskWithAutonomy,
-  EscalationEvent,
-  CourseCorrection 
+  AutonomyStateChangedEvent,
+  AutonomyConfidenceUpdatedEvent,
+  AutonomyEscalationTriggeredEvent
 } from '@/lib/types/autonomy';

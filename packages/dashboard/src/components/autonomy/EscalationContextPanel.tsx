@@ -1,6 +1,6 @@
 'use client';
 
-import { ShieldAlert, Play, XCircle } from 'lucide-react';
+import { ShieldAlert, Play, XCircle, WifiOff } from 'lucide-react';
 import Card from '@/components/common/Card';
 import AutonomyStateBadge from './AutonomyStateBadge';
 import { useAutonomyEvents } from '@/hooks/useAutonomyEvents';
@@ -21,7 +21,7 @@ function formatTime(timestamp: number): string {
 
 export function EscalationContextPanel({ task }: EscalationContextPanelProps) {
   const { projectId } = useProject();
-  const { events } = useAutonomyEvents({ taskId: task.id });
+  const { events, connectionState } = useAutonomyEvents({ taskId: task.id });
   
   if (!task.autonomy?.escalation) return null;
   

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'bun:test';
+import { describe, expect, it } from 'vitest';
 import type { ConnectorCheckpoint, ConnectorState, SyncProgressSnapshot } from '../../src/lib/types/connectors';
 import { buildConnectorHealthPayload } from '../../src/lib/connectors/health-payload';
 import {

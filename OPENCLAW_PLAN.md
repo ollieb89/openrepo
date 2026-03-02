@@ -378,8 +378,9 @@ No structural changes needed. This phase is about hardening and documentation.
 #### 3.1 — Add memory health check to Makefile
 
 ```makefile
-memory-health: ## Check memU service health
-	@curl -sf http://localhost:8765/health > /dev/null 2>&1 \
+memory-health: ## Check memU service health (port 18791; override via MEMU_API_URL)
+	@url="$${MEMU_API_URL:-http://localhost:18791}"; \
+	curl -sf "$$url/health" > /dev/null 2>&1 \
 		&& echo "memU service: healthy" \
 		|| echo "memU service: not running (start with 'make memory-up')"
 ```
@@ -404,7 +405,7 @@ Add a section to CLAUDE.md (or this plan's appendix) documenting:
 | Check | Command | Expected |
 |---|---|---|
 | memU starts | `make memory-up && make memory-health` | "healthy" |
-| Memory persists across restarts | `make memory-down && make memory-up && curl localhost:8765/health` | Service recovers, data intact |
+| Memory persists across restarts | `make memory-down && make memory-up && curl localhost:18791/health` | Service recovers, data intact |
 | L3 gets memory context | Spawn a test L3 → check `/run/openclaw/soul.md` | Memory section present in SOUL |
 
 ---
@@ -457,6 +458,8 @@ const externalLinks = [
 If openclaw supports custom navigation via config or plugin:
 - Add a link to `http://localhost:6987` in the openclaw UI
 - Or document it in the openclaw MOTD/welcome message
+
+**Note:** OCCC cross-links to the openclaw gateway from the sidebar. For the reverse direction, developers can manually open OCCC at `http://localhost:6987` or add a link in the openclaw UI if/when config-based external links are supported.
 
 #### 4.4 — Gateway proxy for OCCC (future, optional)
 
@@ -630,13 +633,31 @@ Week 2
 - [ ] No skill name collisions remain
 - [ ] Orchestration-only skills are scoped to L2 agents
 
+**Note:** OpenClaw loads config from `~/.openclaw/openclaw.json` by default. To see root skills:
+
+1. **Use repo config** (requires OPENCLAW_TELEGRAM_BOT_TOKEN, OPENCLAW_GATEWAY_TOKEN, etc.):
+   ```bash
+   OPENCLAW_CONFIG_PATH="$(pwd)/openclaw.json" openclaw skills list
+   # or: make openclaw-skills
+   ```
+
+2. **Merge into your config** — add to `~/.openclaw/openclaw.json`:
+   ```json
+   "skills": {
+     "load": {
+       "extraDirs": ["/path/to/openrepo/skills"]
+     }
+   }
+   ```
+   Use an absolute path so it works regardless of cwd.
+
 ### Phase 3 (Memory)
 - [ ] `make memory-health` reports service status
 - [ ] Memory injection works in L3 SOUL context
 
 ### Phase 4 (Dashboard)
-- [ ] `make dev-services` starts both dashboards
-- [ ] Cross-links navigate between OCCC and openclaw UI
+- [x] `make dev-services` starts memU + OCCC dashboard
+- [x] Cross-link in OCCC sidebar: "Agent Runtime" → openclaw gateway (:18789)
 
 ### Phase 5 (Docker)
 - [ ] L3 image builds from openclaw sandbox base
@@ -678,7 +699,7 @@ Week 2
 | Port | Service | Owner |
 |---|---|---|
 | 6987 | OCCC Dashboard | packages/dashboard (Next.js) |
-| 8765 | memU REST API | packages/memory (FastAPI) |
+| 18791 | memU REST API | packages/memory (FastAPI) |
 | 18789 | OpenClaw Gateway | openclaw/ (Express 5) |
 
 ## Appendix D: Skill Format Comparison

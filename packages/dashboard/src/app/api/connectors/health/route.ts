@@ -1,9 +1,11 @@
+import { NextResponse } from 'next/server';
 import { listCheckpointsForConnector } from '@/lib/sync/checkpoints';
 import { listConnectorStates } from '@/lib/connectors/store';
 import { listConnectorProgress } from '@/lib/sync/engine';
 import { buildConnectorHealthPayload } from '@/lib/connectors/health-payload';
+import { withAuth } from '@/lib/auth-middleware';
 
-export async function GET() {
+async function handler() {
   try {
     const connectors = await listConnectorStates();
 
@@ -31,9 +33,11 @@ export async function GET() {
       checkpointsByConnector,
     });
 
-    return Response.json(payload);
+    return NextResponse.json(payload);
   } catch (error) {
     console.error('Error loading connector health:', error);
-    return Response.json({ error: 'Failed to load connector health' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to load connector health' }, { status: 500 });
   }
 }
+
+export const GET = withAuth(handler);

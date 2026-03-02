@@ -1,12 +1,16 @@
+import { NextRequest, NextResponse } from 'next/server';
 import { getActiveProjectId, getProject } from '@/lib/openclaw';
+import { withAuth } from '@/lib/auth-middleware';
 
-export async function GET() {
+async function handler(request: NextRequest): Promise<NextResponse> {
   try {
     const id = await getActiveProjectId();
     const project = await getProject(id);
-    return Response.json({ id, project });
+    return NextResponse.json({ id, project });
   } catch (error) {
     console.error('Error loading active project:', error);
-    return Response.json({ error: 'Failed to load active project' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to load active project' }, { status: 500 });
   }
 }
+
+export const GET = withAuth(handler);

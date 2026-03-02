@@ -1,8 +1,7 @@
 /** @type {import("next").NextConfig} */
 const nextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ['dockerode', 'ssh2'],
-  },
+  basePath: '/occc',
+  serverExternalPackages: ['dockerode', 'ssh2'],
 };
 
 module.exports = nextConfig;

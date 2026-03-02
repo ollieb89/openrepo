@@ -13,10 +13,10 @@ export interface AutonomyInfo {
   escalation?: AutonomyEscalation;
 }
 
-export interface TaskWithAutonomy {
-  id: string;
-  title: string;
-  status: string;
+import type { Task } from '@/lib/types';
+
+export interface TaskWithAutonomy extends Task {
+  title?: string;
   autonomy?: AutonomyInfo;
 }
 

@@ -1,7 +1,7 @@
-.PHONY: help dev test lint dashboard memory clean \
+.PHONY: help dev test lint dashboard memory clean memory-health \
         submodule-init submodule-update \
-        openclaw-install openclaw-build openclaw-link \
-        setup dev-all
+        openclaw-install openclaw-build openclaw-link openclaw-skills \
+        setup dev-all dev-dashboard dev-services
 
 help: ## Show available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -25,10 +25,22 @@ dashboard: ## Start dashboard dev server (port 6987) — OPENCLAW_ROOT must be e
 		echo "  Run: export OPENCLAW_ROOT=$$HOME/.openclaw"; \
 		exit 1; \
 	fi
-	cd packages/dashboard && bun install && bun run dev
+	cd packages/dashboard && pnpm install && pnpm run dev
+
+dev-dashboard: dashboard ## Start OCCC dashboard (port 6987)
+
+dev-services: ## Start all background services (memU + OCCC dashboard + OpenClaw link)
+	@echo "Starting memU..."
+	$(MAKE) memory-up
+	@echo "Starting OCCC dashboard on :6987..."
+	@if [ -z "$$OPENCLAW_ROOT" ]; then \
+		echo "WARN: OPENCLAW_ROOT not set. Dashboard may fail. Run: export OPENCLAW_ROOT=$$HOME/.openclaw"; \
+	fi
+	cd packages/dashboard && pnpm install && pnpm run dev &
+	@echo "All services started. OpenClaw gateway available on :18789 (OCCC on :6987, memU on :18791)"
 
 dashboard-build: ## Build dashboard for production
-	cd packages/dashboard && bun run build
+	cd packages/dashboard && pnpm run build
 
 # --- Memory (memU) ---
 
@@ -37,6 +49,12 @@ memory-up: ## Start memU service via Docker Compose
 
 memory-down: ## Stop memU service
 	cd docker/memory && docker compose down
+
+memory-health: ## Check memU service health (port 18791; override via MEMU_API_URL)
+	@url="$${MEMU_API_URL:-http://localhost:18791}"; \
+	curl -sf "$$url/health" > /dev/null 2>&1 \
+		&& echo "memU service: healthy" \
+		|| echo "memU service: not running (start with 'make memory-up')"
 
 # --- Docker ---
 
@@ -62,6 +80,9 @@ openclaw-build: ## Build the openclaw runtime
 
 openclaw-link: ## Make 'openclaw' CLI available on PATH (via pnpm link)
 	cd openclaw && pnpm link --global
+
+openclaw-skills: ## List skills (uses repo openclaw.json so root skills appear)
+	OPENCLAW_CONFIG_PATH="$(CURDIR)/openclaw.json" openclaw skills list
 
 # --- Unified Setup ---
 
