@@ -1,4 +1,7 @@
-.PHONY: help dev test lint dashboard memory clean
+.PHONY: help dev test lint dashboard memory clean \
+        submodule-init submodule-update \
+        openclaw-install openclaw-build openclaw-link \
+        setup dev-all
 
 help: ## Show available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -39,6 +42,36 @@ memory-down: ## Stop memU service
 
 docker-l3: ## Build L3 specialist container image
 	docker build -t openclaw-l3-specialist:latest docker/l3-specialist/
+
+# --- Submodule Management ---
+
+submodule-init: ## Initialize and update git submodules
+	git submodule update --init --recursive
+
+submodule-update: ## Pull latest from openclaw submodule remote
+	cd openclaw && git fetch origin && git checkout origin/main
+	@echo "Remember to commit the submodule pointer: git add openclaw && git commit"
+
+# --- OpenClaw Runtime ---
+
+openclaw-install: ## Install openclaw runtime dependencies
+	cd openclaw && pnpm install --frozen-lockfile
+
+openclaw-build: ## Build the openclaw runtime
+	cd openclaw && pnpm build
+
+openclaw-link: ## Make 'openclaw' CLI available on PATH (via pnpm link)
+	cd openclaw && pnpm link --global
+
+# --- Unified Setup ---
+
+setup: submodule-init openclaw-install openclaw-build openclaw-link dev ## Full workspace setup from scratch
+	@echo "Setup complete. 'openclaw' CLI is on PATH. Orchestration package installed."
+
+# --- Unified Dev ---
+
+dev-all: dev ## Start all dev services (orchestration + dashboard)
+	@echo "Orchestration installed. Run 'make dashboard' in another terminal for OCCC."
 
 # --- Cleanup ---
 
