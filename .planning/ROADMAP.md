@@ -1,375 +1,115 @@
-# Roadmap: OpenClaw (Grand Architect Protocol)
+# Roadmap: OpenClaw Agent Orchestration
 
 ## Milestones
 
-- ✅ **v1.0 Grand Architect Protocol Foundation** — Phases 1-10 (shipped 2026-02-23)
-- ✅ **v1.1 Project Agnostic** — Phases 11-18 (shipped 2026-02-23)
-- ✅ **v1.2 Orchestration Hardening** — Phases 19-25 (shipped 2026-02-24)
-- ✅ **v1.3 Agent Memory** — Phases 26-38 (shipped 2026-02-24)
-- ✅ **v1.4 Operational Maturity** — Phases 39-44 (shipped 2026-02-25)
-- ✅ **v1.5 Config Consolidation** — Phases 45-53 (shipped 2026-02-25)
-- ✅ **v1.6 Agent Autonomy** — Phases 54-60 (shipped 2026-02-26)
-- 📋 **v2.0 Notion Kanban Sync** — Phase 50 (planned)
+- ✅ **v1.0 Grand Architect Protocol Foundation** - Phases 1-10 (shipped 2026-02-23)
+- ✅ **v1.1 Project Agnostic** - Phases 11-18 (shipped 2026-02-23)
+- ✅ **v1.2 Orchestration Hardening** - Phases 19-25 (shipped 2026-02-24)
+- ✅ **v1.3 Agent Memory** - Phases 26-38 (shipped 2026-02-24)
+- ✅ **v1.4 Operational Maturity** - Phases 39-44 (shipped 2026-02-25)
+- ✅ **v1.5 Config Consolidation** - Phases 45-53 (shipped 2026-02-25)
+- ✅ **v1.6 Agent Autonomy** - Phases 54-60 (shipped 2026-02-26)
+- 🚧 **v2.0 Structural Intelligence** - Phases 61-65 (in progress)
+
+---
+
+<details>
+<summary>✅ v1.0–v1.6 (Phases 1-60) - SHIPPED</summary>
+
+60 phases shipped across 6 milestones. See MILESTONES.md for full retrospective.
+
+</details>
+
+---
+
+### 🚧 v2.0 Structural Intelligence (In Progress)
+
+**Milestone Goal:** OpenClaw proposes its own orchestration structure — pre-execution structural intelligence with inspectable reasoning and learning from corrections.
 
 ## Phases
 
-<details>
-<summary>✅ v1.0 Grand Architect Protocol Foundation (Phases 1-10) — SHIPPED 2026-02-23</summary>
-
-- [x] Phase 1: Environment Substrate (2/2 plans) — completed 2026-02-17
-- [x] Phase 2: Core Orchestration (2/2 plans) — completed 2026-02-17
-- [x] Phase 3: Specialist Execution (4/4 plans) — completed 2026-02-18
-- [x] Phase 4: Monitoring Uplink (4/4 plans) — completed 2026-02-18
-- [x] Phase 5: Wiring Fixes & Initialization (3/3 plans) — completed 2026-02-23
-- [x] Phase 6: Phase 3 Formal Verification (2/2 plans) — completed 2026-02-23
-- [x] Phase 7: Phase 4 Formal Verification (2/3 plans, 1 skipped) — completed 2026-02-23
-- [x] Phase 8: Final Gap Closure (1/1 plan) — completed 2026-02-23
-- [x] Phase 9: Integration Wiring Cleanup (2/2 plans) — completed 2026-02-23
-- [x] Phase 10: Housekeeping & Documentation (2/2 plans) — completed 2026-02-23
-
-See: `.planning/milestones/v1.0-ROADMAP.md` for full phase details.
-
-</details>
-
-<details>
-<summary>✅ v1.1 Project Agnostic (Phases 11-18) — SHIPPED 2026-02-23</summary>
-
-- [x] Phase 11: Config Decoupling Foundation (3/3 plans) — completed 2026-02-23
-- [x] Phase 12: SOUL Templating (2/2 plans) — completed 2026-02-23
-- [x] Phase 13: Multi-Project Runtime (2/2 plans) — completed 2026-02-23
-- [x] Phase 14: Project CLI (2/2 plans) — completed 2026-02-23
-- [x] Phase 15: Dashboard Project Switcher (2/2 plans) — completed 2026-02-23
-- [x] Phase 16: Phase 11/12 Integration Fixes (2/2 plans) — completed 2026-02-23
-- [x] Phase 17: Phase 11/12 Formal Verification (2/2 plans) — completed 2026-02-23
-- [x] Phase 18: Integration Hardening (2/2 plans) — completed 2026-02-23
-
-See: `.planning/milestones/v1.1-ROADMAP.md` for full phase details.
-
-</details>
-
-<details>
-<summary>✅ v1.2 Orchestration Hardening (Phases 19-25) — SHIPPED 2026-02-24</summary>
-
-- [x] Phase 19: Structured Logging (2/2 plans) — completed 2026-02-24
-- [x] Phase 20: Reliability Hardening (2/2 plans) — completed 2026-02-24
-- [x] Phase 21: State Engine Performance (3/3 plans) — completed 2026-02-24
-- [x] Phase 22: Observability Metrics (2/2 plans) — completed 2026-02-24
-- [x] Phase 23: Per-Project Pool Config (2/2 plans) — completed 2026-02-24
-- [x] Phase 24: Dashboard Metrics (2/2 plans) — completed 2026-02-24
-- [x] Phase 25: Monitor Cache Fix (1/1 plan) — completed 2026-02-24
-
-See: `.planning/milestones/v1.2-ROADMAP.md` for full phase details.
-
-</details>
-
-<details>
-<summary>✅ v1.3 Agent Memory (Phases 26-38) — SHIPPED 2026-02-24</summary>
-
-- [x] Phase 26: memU Infrastructure (2/2 plans) — completed 2026-02-24
-- [x] Phase 27: Memory Client + Scoping (1/1 plan) — completed 2026-02-24
-- [x] Phase 28: L3 Auto-Memorization (2/2 plans) — completed 2026-02-24
-- [x] Phase 29: Pre-Spawn Retrieval + SOUL Injection (2/2 plans) — completed 2026-02-24
-- [x] Phase 30: L2 Review Decision Memorization (2/2 plans) — completed 2026-02-24
-- [x] Phase 33: Integration Gap Closure (2/2 plans) — completed 2026-02-24
-- [x] Phase 34: Review Decision Category Fix (1/1 plan) — completed 2026-02-24
-- [x] Phase 35: L3 In-Execution Memory Queries (1/1 plan) — completed 2026-02-24
-- [x] Phase 36: Dashboard Memory Panel (3/3 plans) — completed 2026-02-24
-- [x] Phase 37: Category Field E2E Fix (2/2 plans) — completed 2026-02-24
-- [x] Phase 38: Phase 28 Verification + Cleanup (1/1 plan) — completed 2026-02-24
-
-Phases 31 and 32 were superseded by Phases 35 and 36 respectively.
-
-See: `.planning/milestones/v1.3-ROADMAP.md` for full phase details.
-
-</details>
-
-<details>
-<summary>✅ v1.4 Operational Maturity (Phases 39-44) — SHIPPED 2026-02-25</summary>
-
-- [x] Phase 39: Graceful Sentinel (4/4 plans) — completed 2026-02-24
-- [x] Phase 40: Memory Health Monitor (4/4 plans) — completed 2026-02-24
-- [x] Phase 41: L1 Strategic Suggestions (3/3 plans) — completed 2026-02-24
-- [x] Phase 42: Delta Snapshots (3/3 plans) — completed 2026-02-24
-- [x] Phase 43: v1.4 Gap Closure (1/1 plan) — completed 2026-02-25
-- [x] Phase 44: v1.4 Tech Debt Cleanup (1/1 plan) — completed 2026-02-25
-
-See: `.planning/milestones/v1.4-ROADMAP.md` for full phase details.
-
-</details>
-
-<details>
-<summary>✅ v1.5 Config Consolidation (Phases 45-53) — SHIPPED 2026-02-25</summary>
-
-- [x] Phase 45: Path Resolver + Constants Foundation (2/2 plans) — completed 2026-02-25
-- [x] Phase 46: Schema Validation + Fail-Fast Startup (3/3 plans) — completed 2026-02-25
-- [x] Phase 47: Env Var Precedence + Migration CLI (3/3 plans) — completed 2026-02-25
-- [x] Phase 48: Config Integration Tests (1/1 plan) — completed 2026-02-25
-- [x] Phase 49: Deferred Reliability, Quality, and Observability (3/3 plans) — completed 2026-02-25
-- [x] Phase 50: Notion Kanban Sync (6/6 plans) — completed 2026-02-25
-- [x] Phase 51: Live Verification — Docker & Sentinel (1/1 plan) — completed 2026-02-25
-- [x] Phase 52: Live Verification — Dashboard & memU (2/2 plans) — completed 2026-02-25
-- [x] Phase 53: Tech Debt Cleanup (1/1 plan) — completed 2026-02-25
-
-See: `.planning/milestones/v1.5-ROADMAP.md` for full phase details.
-
-</details>
-
-<details>
-<summary>✅ v1.6 Agent Autonomy (Phases 54-60) — SHIPPED 2026-02-26</summary>
-
-- [x] Phase 54: Autonomy Framework Formulation (4/4 plans) — completed 2026-02-26
-- [x] Phase 55: Self-Directed Task Decomposition (2/2 plans) — completed 2026-02-26
-- [x] Phase 56: Confidence-Based Escalation Logic (2/2 plans) — completed 2026-02-26
-- [x] Phase 57: Context-Aware Tool Selection (1/1 plan) — completed 2026-02-26
-- [x] Phase 58: Progress Self-Monitoring (1/1 plan) — completed 2026-02-26
-- [x] Phase 59: E2E Autonomy Tests (2/2 plans) — completed 2026-02-26
-- [x] Phase 60: Dashboard Autonomy UI (2/2 plans) — completed 2026-02-26
-
-See: `.planning/milestones/v1.6-ROADMAP.md` for full phase details.
-
-</details>
-
-### 📋 Next Milestone
+- [ ] **Phase 61: Topology Foundation** - Topology data model, serialization, diff engine, and isolated file storage
+- [ ] **Phase 62: Structure Proposal Engine** - Multi-candidate proposals (Lean/Balanced/Robust) with rubric scoring and constraint linting
+- [ ] **Phase 63: Correction System and Approval Gate** - Soft re-proposal, hard direct edit, async diff analysis, and execution gate
+- [ ] **Phase 64: Structural Memory** - Correction storage, preference profiling, isolation from L3 SOUL injection
+- [ ] **Phase 65: Topology Observability** - Dashboard topology graph, proposal comparison, correction history, confidence timeline
 
 ## Phase Details
 
-### Phase 45: Path Resolver + Constants Foundation
-**Goal**: All components resolve workspace state paths through one authoritative function, and all shared constants/defaults live in a single location with no duplicated magic values
-**Depends on**: Phase 44 (v1.4 complete)
-**Requirements**: CONF-01, CONF-05
+### Phase 61: Topology Foundation
+**Goal**: The system can represent, serialize, version, diff, and classify swarm topologies as explicit data objects stored in their own isolated files
+**Depends on**: Phase 60 (v1.6 Autonomy)
+**Requirements**: TOPO-01, TOPO-02, TOPO-03, TOPO-04, TOPO-05, TOPO-06
 **Success Criteria** (what must be TRUE):
-  1. Operator can call `get_state_path()` and `get_snapshot_dir()` and the returned paths match where L3 containers actually write — no divergence between runtime and code-resolved paths
-  2. `grep`-ing the codebase for pool defaults, lock timeouts, cache TTL, log levels, and memory budget cap returns only `config.py` as the source — no duplicated literals across modules
-  3. All call sites (state_engine, spawn, pool, monitor, snapshot) import constants from `config.py` rather than defining their own
-**Plans:** 2/2 plans complete
+  1. User can inspect a topology as a structured JSON object showing agent nodes, delegation edges, archetype classification, and role count
+  2. A topology round-trips through serialize/deserialize (JSON → dataclass → JSON) with zero data loss, verified by equality check
+  3. System generates a human-readable structural diff between any two topology versions showing exactly which nodes and edges were added, removed, or modified
+  4. System classifies a topology as Lean, Balanced, or Robust based on role count, hierarchy depth, and coordination pattern — consistently for the same topology
+  5. Topology data files live under a dedicated `topology/` directory and are never read or written by L3 container flock operations
+**Plans**: TBD
 
-Plans:
-- [x] 45-01-PLAN.md — Add path resolver functions + consolidated constants to config.py
-- [x] 45-02-PLAN.md — Migrate all call sites to import from config.py, remove duplicates
-
-### Phase 46: Schema Validation + Fail-Fast Startup
-**Goal**: `openclaw.json` has a documented, machine-validated schema, and OpenClaw refuses to start with a clear actionable error if either config file is malformed or missing required fields
-**Depends on**: Phase 45
-**Requirements**: CONF-02, CONF-06
+### Phase 62: Structure Proposal Engine
+**Goal**: Given an outcome description, the system generates 2-3 scored, justified topology proposals across Lean/Balanced/Robust archetypes using constraint-validated LLM output
+**Depends on**: Phase 61
+**Requirements**: PROP-01, PROP-02, PROP-03, PROP-04, PROP-05, PROP-06
 **Success Criteria** (what must be TRUE):
-  1. Adding an unknown field to `openclaw.json` causes startup to print a specific warning identifying the unknown field by name
-  2. Removing a required field from `openclaw.json` or `project.json` causes the process to exit before doing any work, with an error message naming the missing field and the config file
-  3. The schema for `openclaw.json`'s OpenClaw runtime section is written down in a human-readable form that operators can consult
-  4. Existing valid configs continue to load without error after the validation change
-**Plans:** 3/3 plans complete
+  1. User submits an outcome description and receives exactly 2-3 topology proposals, one per archetype, each with named roles, hierarchy, and delegation boundaries
+  2. Each proposal displays a rubric score across all 7 dimensions (complexity, coordination overhead, risk containment, time-to-first-output, cost estimate, preference fit, overall confidence) with a written justification
+  3. Proposals that include roles not in the skill registry, or pool sizes exceeding project `max_concurrent`, are rejected by the constraint linter before they reach the user
+  4. Proposal confidence scores are shown comparatively so the user can see which candidate scores higher on each dimension relative to the others
+  5. Topology confidence threshold is configured under `topology.proposal_confidence_warning_threshold` — a separate key from the autonomy framework's `autonomy.confidence_threshold`
+**Plans**: TBD
 
-Plans:
-- [x] 46-01-PLAN.md — Write failing schema validation test suite (TDD RED state)
-- [x] 46-02-PLAN.md — Implement OPENCLAW_JSON_SCHEMA + validators + wiring into load paths
-- [x] 46-03-PLAN.md — Add openclaw-config show CLI and openclaw.json.example schema doc
-
-### Phase 47: Env Var Precedence + Migration CLI
-**Goal**: Operators know exactly which env vars override which config values and in what order, enforced uniformly across all callers; operators can run one command to upgrade an existing config to the current schema
-**Depends on**: Phase 46
-**Requirements**: CONF-03, CONF-04
+### Phase 63: Correction System and Approval Gate
+**Goal**: Users can correct proposals through textual feedback or direct edits, with the system enforcing an approval gate before execution and learning from every correction event
+**Depends on**: Phase 62
+**Requirements**: CORR-01, CORR-02, CORR-03, CORR-04, CORR-05, CORR-06, CORR-07
 **Success Criteria** (what must be TRUE):
-  1. Setting `OPENCLAW_ROOT`, `OPENCLAW_PROJECT`, `OPENCLAW_LOG_LEVEL`, or `OPENCLAW_ACTIVITY_LOG_MAX` consistently overrides the corresponding config value in every component that reads it — no component ignores the env var while another respects it
-  2. Running `openclaw config migrate --dry-run` on an older config file prints a human-readable diff of what would change without modifying the file
-  3. Running `openclaw config migrate` on an older config file produces a valid config that passes Phase 46's schema validation
-  4. The resolution order (`OPENCLAW_ROOT` → `OPENCLAW_PROJECT` → `OPENCLAW_LOG_LEVEL` → `OPENCLAW_ACTIVITY_LOG_MAX`) is documented in the config file itself via comments or an adjacent README
-**Plans:** 3/3 plans complete
+  1. User can type feedback on a proposal and receive a revised proposal that visibly addresses the feedback, with a maximum of 3 re-proposals per feedback loop before the system surfaces the trade-off and stops cycling
+  2. User can directly edit a proposed topology (roles, hierarchy) and the edited version executes immediately without waiting for async diff analysis to complete
+  3. After any correction, the system stores a diff record showing the structural delta between the proposed and approved topology, timestamped and typed as soft or hard
+  4. When the system had high confidence in a proposal that the user overrode, the system surfaces a non-blocking informational note explaining its original reasoning — this note never blocks execution
+  5. No L3 container spawn occurs until the user has explicitly approved a topology version
+**Plans**: TBD
 
-Plans:
-- [x] 47-01-PLAN.md — Env var uniformity: get_active_project_env() in config.py, _find_project_root() auto-create, precedence comment block, openclaw.json.example + cli/config.py epilog
-- [x] 47-02-PLAN.md — Migration CLI: cmd_migrate() + migrate subparser in cli/config.py (dry-run, backup, unknown-field removal, project.json scope)
-- [x] 47-03-PLAN.md — Tests: extend test_config_validator.py with CONF-03 and CONF-04 test cases
-
-### Phase 48: Config Integration Tests
-**Goal**: An automated test suite verifies path resolution, schema validation, env var precedence, and pool config fallback — giving the operator confidence the config layer is correct and will stay correct
-**Depends on**: Phase 47
-**Requirements**: CONF-07
+### Phase 64: Structural Memory
+**Goal**: The system accumulates correction history, extracts structural preferences, and uses them to improve future proposals — while keeping topology data completely isolated from L3 agent SOUL context
+**Depends on**: Phase 63
+**Requirements**: SMEM-01, SMEM-02, SMEM-03, SMEM-04, SMEM-05, SMEM-06
 **Success Criteria** (what must be TRUE):
-  1. Running `uv run pytest` includes config integration tests and they all pass on a clean checkout
-  2. Tests cover path resolution (state path and snapshot dir match expected locations under different OPENCLAW_ROOT values)
-  3. Tests cover fail-fast validation (invalid and missing-field configs trigger the expected errors)
-  4. Tests cover env var precedence (env var values override config file values for all four variables)
-  5. Tests cover pool config fallback (missing pool config in project.json falls back to defaults from config.py)
-**Plans:** 1/1 plans complete
+  1. After a correction, the system stores the diff record with timestamp, project id, correction type (soft/hard), and project context — retrievable by project
+  2. Running a test L3 spawn after structural data has been written to memU shows zero topology, archetype, or rubric content in the L3 SOUL context (`/run/openclaw/soul.md`)
+  3. User can query per-project correction count and see whether the preference profile has reached the minimum data threshold for active influence
+  4. After sufficient corrections accumulate, the system surfaces an extracted pattern (e.g., "user flattens hierarchies for low-complexity tasks") visible in the structural memory report
+  5. Preference profiling applies decay (older corrections weighted less) and epsilon-greedy exploration (20% random archetype ordering) so the system does not lock into early archetype preferences
+**Plans**: TBD
 
-Plans:
-- [x] 48-01-PLAN.md — Config integration test suite: pyproject.toml marker, conftest fixture, test_config_integration.py (4 test classes)
-
-### Phase 49: Deferred Reliability, Quality, and Observability
-**Goal**: Three items deferred from earlier milestones are delivered — L3 containers report health status, the cosine similarity conflict threshold is evidence-based and configurable, and the monitor adapts its poll rate to swarm activity
-**Depends on**: Phase 45
-**Requirements**: REL-09, QUAL-07, OBS-05
+### Phase 65: Topology Observability
+**Goal**: The dashboard surfaces proposed and approved topologies as interactive graphs, shows correction history with structural diffs, and displays confidence and proposal evolution over time
+**Depends on**: Phase 64 (Phase 63 for API route development)
+**Requirements**: TOBS-01, TOBS-02, TOBS-03, TOBS-04, TOBS-05, TOBS-06
 **Success Criteria** (what must be TRUE):
-  1. Running `docker ps` shows `healthy`, `unhealthy`, or `starting` health status for L3 containers rather than no health information
-  2. The cosine similarity threshold for conflict detection is set in `openclaw.json` (not hardcoded) and defaults to a value chosen based on observed data — the rationale for the chosen value is noted in a comment or decision log
-  3. The monitor poll interval shortens when L3 tasks are actively running and lengthens when the swarm is idle — CPU usage during quiet periods is measurably lower than with a fixed interval
-**Plans:** 3/3 plans complete
-
-Plans:
-- [x] 49-01-PLAN.md — Test scaffold (8 failing tests) + REL-09 Docker HEALTHCHECK + entrypoint.sh sentinel
-- [x] 49-02-PLAN.md — QUAL-07: MEMORY_CONFLICT_THRESHOLD in config.py + get_conflict_threshold() + memorize router conflict check
-- [x] 49-03-PLAN.md — OBS-05: POLL_INTERVAL_ACTIVE/IDLE in config.py + _count_active_l3_containers() + adaptive sleep in tail_state()
-
-### v1.4.1 Human Verification (Gap Closure)
-
-**Milestone Goal:** Live-environment verification of v1.4 Operational Maturity features that require Docker, memU, and dashboard services running — 12 manual tests across graceful shutdown, memory health, suggestions, and config guards.
-
-- [x] **Phase 51: Live Verification — Docker & Sentinel** — Graceful shutdown, SIGTERM drain, Makefile OPENCLAW_ROOT guard (3 tests) (completed 2026-02-25)
-- [x] **Phase 52: Live Verification — Dashboard & memU** — Memory health scan, conflict panel, suggestions E2E, sidebar badge, threshold settings (9 tests) (completed 2026-02-25)
-
-### v2.0 Notion Kanban Sync (Planned)
-
-**Milestone Goal:** A reactive L2-level skill that maintains a Notion kanban board as a read-only visibility mirror of OpenClaw state, covering both dev projects and life areas — with event bus infrastructure, Notion DB bootstrap, event sync, conversational capture, reconciliation, and hardening.
-
-- [x] **Phase 50: Notion Kanban Sync** — Full end-to-end delivery: event bus, Notion client, schema bootstrap, event sync, conversational capture, reconcile, and hardening (completed 2026-02-25)
-
-## Phase Details
-
-### Phase 51: Live Verification — Docker & Sentinel
-**Goal**: Confirm v1.4 Docker-related features work in a live environment — graceful shutdown produces exit 143 + interrupted state, SIGTERM drain completes pending memorize before exit, and Makefile guards against missing OPENCLAW_ROOT
-**Depends on**: Phase 44 (v1.4 shipped)
-**Requirements**: v1.4 gap closure (no new REQ-IDs)
-**Gap Closure**: Closes v1.4 human verification tests 1, 12, 13
-**Success Criteria** (what must be TRUE):
-  1. `docker stop` on a running L3 container → exit code 143, workspace state shows `interrupted`
-  2. SIGTERM sent while L3 is mid-memorize → pending memorize call completes before container exits
-  3. `unset OPENCLAW_ROOT && make dashboard` → prints ERROR and does not start bun dev server
-
-**Plans:** 1/1 plans complete
-
-Plans:
-- [x] 51-01-PLAN.md — Docker graceful shutdown + SIGTERM drain + Makefile guard verification (pre-flight, 3 tests, VERIFICATION.md, human checkpoint)
-
-### Phase 52: Live Verification — Dashboard & memU
-**Goal**: Confirm v1.4 dashboard and memory features work end-to-end with live services — health scan badges, conflict panel, suggestion acceptance, sidebar counts, and settings persistence
-**Depends on**: Phase 51
-**Requirements**: v1.4 gap closure (no new REQ-IDs)
-**Gap Closure**: Closes v1.4 human verification tests 2-11
-**Success Criteria** (what must be TRUE):
-  1. Health scan populates flag badges on memories with issues
-  2. Archive stale flag PUT succeeds, flag removed, toast appears
-  3. Conflict badge click opens ConflictPanel with side-by-side diff
-  4. Editing a flagged memory triggers re-scan automatically
-  5. Threshold adjustment in settings page persists across refresh
-  6. `/suggestions` page renders without errors
-  7. Accepting a suggestion appends to `soul-override.md` and re-renders SOUL
-  8. Sidebar badge shows correct pending suggestion count
-  9. POST `/api/suggestions` invokes `suggest.py` and returns results
-
-**Plans:** 2/2 plans complete
-
-Plans:
-- [x] 52-01-PLAN.md — Environment setup + known code fixes (memU rebuild, seed data, localStorage persistence, auto-rescan)
-- [x] 52-02-PLAN.md — Execute all 9 verification tests with structured logging + human review
-
-### Phase 50: Notion Kanban Sync
-**Goal**: OpenClaw events (phase lifecycle, container lifecycle, project registration) automatically mirror to a Notion kanban board; conversational capture routes life tasks to the same board; reconcile detects and corrects drift — all idempotent, field-ownership-respecting, and observable
-**Depends on**: None (independent of v1.5)
-**Requirements**: NOTION-01, NOTION-02, NOTION-03, NOTION-04, NOTION-05, NOTION-06, NOTION-07, NOTION-08, NOTION-09, NOTION-10, NOTION-11
-**Success Criteria** (what must be TRUE):
-  1. Phase lifecycle events (started/completed/blocked) create/update Notion cards with correct status transitions
-  2. Replay of the same event produces no duplicates (idempotent via dedupe keys)
-  3. New project registration creates Projects DB row + triage card
-  4. Conversational capture creates cards with correct area inference and dedupe
-  5. Container events append to activity log without spamming new cards (meaningful rule enforced)
-  6. Unlinked cards have Notion-owned Status — OpenClaw never overwrites
-  7. Reconcile detects drift, applies only allowed corrections, never deletes
-  8. DB discovery works on first run; cached IDs used on subsequent runs
-  9. Field ownership respected — every write checks ownership before touching a field
-  10. Structured result returned for every invocation with created/updated/skipped/errors
-  11. 429/5xx errors handled with retry + backoff; failures recorded in Sync Error
-**Plans:** 6/6 plans complete
-
-Plans:
-- [x] 50-01-PLAN.md — Event bus infrastructure + hook sites in state_engine, pool, project_cli
-- [x] 50-02-PLAN.md — Skill skeleton + Notion client wrapper + bootstrap/discovery
-- [x] 50-03-PLAN.md — Event sync handlers for project + phase lifecycle events
-- [x] 50-04-PLAN.md — Container event handlers + field ownership carve-out
-- [x] 50-05-PLAN.md — Conversational capture with area inference + batch parsing
-- [x] 50-06-PLAN.md — Reconcile handler + unit tests for event bus and sync logic
-
-### Phase 53: Tech Debt Cleanup
-**Goal**: Close accumulated tech debt from v1.5 audit — fix stale references, remove residual config fields, and tune suggestion thresholds
-**Depends on**: Phase 49 (v1.5 core complete)
-**Requirements**: None (tech debt — no new REQ-IDs)
-**Gap Closure**: Closes v1.5 audit tech debt items
-**Success Criteria** (what must be TRUE):
-  1. `migrate_state.py` error message references `config.get_state_path()` instead of stale `project_config.get_state_path()`
-  2. `openclaw.json` no longer contains the `wizard` field — no unknown-field warning on startup
-  3. `suggest.py` MIN_CLUSTER_SIZE defaults work with datasets under 10 memories without requiring manual seeding
-**Plans:** 1/1 plan complete
-
-Plans:
-- [x] 53-01-PLAN.md — Fix stale references, remove wizard field, tune MIN_CLUSTER_SIZE defaults
-
-### Phase 57: Context-Aware Tool Selection
-**Goal**: Implement AUTO-03 (agents dynamically select tools based on task context)
-**Depends on**: Phase 56
-**Requirements**: AUTO-03
-**Success Criteria** (what must be TRUE):
-  1. The L3 agent analyzes task intent and limits itself to required tool categories.
-  2. Tools constraints are injected explicitly into the execution prompt.
-**Plans**: 1/1 plan complete
-
-Plans:
-- [x] 57-01-PLAN.md — Intent Analysis & Prompt Injection
-
-### Phase 58: Progress Self-Monitoring
-**Goal**: Implement AUTO-04 (agents monitor progress and autonomously course-correct)
-**Depends on**: Phase 57
-**Requirements**: AUTO-04
-**Success Criteria**:
-  1. The L3 agent detects deviations via heuristics (time, error density, failures).
-  2. The agent pauses to reflect and generates a dynamic set of recovery steps.
-  3. Recovery steps are seamlessly spliced into the execution queue.
-**Plans**: 1/1 plan complete
-
-Plans:
-- [x] 58-01-PLAN.md — Heuristics & Dynamic Reflection
-
-### Phase 59: E2E Autonomy Tests
-**Goal**: Implement TEST-02 (E2E tests for autonomy lifecycle)
-**Depends on**: Phase 54-58
-**Requirements**: TEST-02
-**Success Criteria**:
-  1. Happy path test: PLANNING → EXECUTING → COMPLETE
-  2. Retry path test: EXECUTING → BLOCKED → EXECUTING → COMPLETE
-  3. Escalation path test: EXECUTING → ESCALATING → pause → resume
-**Plans**: 2/2 plans complete
-
-Plans:
-- [x] 59-01-PLAN.md — E2E Test Infrastructure & Happy Path
-- [x] 59-02-PLAN.md — Retry & Escalation Path Tests
-
-### Phase 60: Dashboard Autonomy UI
-**Goal**: Implement DSH-AUTO-01/02 (Dashboard autonomy state and escalation notifications)
-**Depends on**: Phase 54-58
-**Requirements**: DSH-AUTO-01, DSH-AUTO-02
-**Success Criteria**:
-  1. State badge shows planning/executing/blocked/complete/escalating
-  2. Confidence score visualization with threshold indicator
-  3. Selected tools display per task
-  4. Real-time escalation alert banner
-  5. Escalation context panel with reason and history
-**Plans**: 2/2 plans complete
-
-Plans:
-- [x] 60-01-PLAN.md — Autonomy State Dashboard Components
-- [x] 60-02-PLAN.md — Escalation Notifications & Real-time Alerts
+  1. Dashboard topology page renders the currently proposed topology as an interactive DAG with nodes labeled by role and edges labeled by relationship type
+  2. Proposed and approved topologies appear side-by-side so the user can see what was suggested versus what was approved
+  3. Correction history panel lists all corrections for a project with the structural diff (added/removed/modified nodes and edges) for each correction event
+  4. Structural diff timeline shows how topology evolved chronologically across all proposals and corrections for a project in a single scrollable view
+  5. Confidence evolution chart shows how each archetype's overall confidence score changed across correction cycles for a project
+  6. Multi-proposal comparison view displays all 3 archetype candidates with their rubric scores, key differentiators, and archetype labels simultaneously
+**Plans**: TBD
 
 ## Progress
 
+**Execution Order:**
+Phases execute in numeric order: 61 → 62 → 63 → 64 → 65
+
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 1-10 | v1.0 | 25/25 | ✓ Complete | 2026-02-23 |
-| 11-18 | v1.1 | 17/17 | ✓ Complete | 2026-02-23 |
-| 19-25 | v1.2 | 14/14 | ✓ Complete | 2026-02-24 |
-| 26-38 | v1.3 | 19/19 | ✓ Complete | 2026-02-24 |
-| 39-44 | v1.4 | 16/16 | ✓ Complete | 2026-02-25 |
-| 45-53 | v1.5 | 22/22 | ✓ Complete | 2026-02-25 |
-| 54 | v1.6 | 4/4 | ✓ Complete | 2026-02-26 |
-| 55 | v1.6 | 2/2 | ✓ Complete | 2026-02-26 |
-| 56 | v1.6 | 2/2 | ✓ Complete | 2026-02-26 |
-| 57 | v1.6 | 1/1 | ✓ Complete | 2026-02-26 |
-| 58 | v1.6 | 1/1 | ✓ Complete | 2026-02-26 |
-| 59 | v1.6 | 2/2 | ✓ Complete | 2026-02-26 |
-| 60 | v1.6 | 2/2 | ✓ Complete | 2026-02-26 |
+| 61. Topology Foundation | v2.0 | 0/? | Not started | - |
+| 62. Structure Proposal Engine | v2.0 | 0/? | Not started | - |
+| 63. Correction System and Approval Gate | v2.0 | 0/? | Not started | - |
+| 64. Structural Memory | v2.0 | 0/? | Not started | - |
+| 65. Topology Observability | v2.0 | 0/? | Not started | - |
+
+---
+*Roadmap created: 2026-03-03*
+*v2.0 phases added: 2026-03-03 — phases 61-65 covering 31 requirements*

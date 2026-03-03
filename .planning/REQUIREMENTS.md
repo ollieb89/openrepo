@@ -89,43 +89,43 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TOPO-01 | -- | Pending |
-| TOPO-02 | -- | Pending |
-| TOPO-03 | -- | Pending |
-| TOPO-04 | -- | Pending |
-| TOPO-05 | -- | Pending |
-| TOPO-06 | -- | Pending |
-| PROP-01 | -- | Pending |
-| PROP-02 | -- | Pending |
-| PROP-03 | -- | Pending |
-| PROP-04 | -- | Pending |
-| PROP-05 | -- | Pending |
-| PROP-06 | -- | Pending |
-| CORR-01 | -- | Pending |
-| CORR-02 | -- | Pending |
-| CORR-03 | -- | Pending |
-| CORR-04 | -- | Pending |
-| CORR-05 | -- | Pending |
-| CORR-06 | -- | Pending |
-| CORR-07 | -- | Pending |
-| SMEM-01 | -- | Pending |
-| SMEM-02 | -- | Pending |
-| SMEM-03 | -- | Pending |
-| SMEM-04 | -- | Pending |
-| SMEM-05 | -- | Pending |
-| SMEM-06 | -- | Pending |
-| TOBS-01 | -- | Pending |
-| TOBS-02 | -- | Pending |
-| TOBS-03 | -- | Pending |
-| TOBS-04 | -- | Pending |
-| TOBS-05 | -- | Pending |
-| TOBS-06 | -- | Pending |
+| TOPO-01 | Phase 61 | Pending |
+| TOPO-02 | Phase 61 | Pending |
+| TOPO-03 | Phase 61 | Pending |
+| TOPO-04 | Phase 61 | Pending |
+| TOPO-05 | Phase 61 | Pending |
+| TOPO-06 | Phase 61 | Pending |
+| PROP-01 | Phase 62 | Pending |
+| PROP-02 | Phase 62 | Pending |
+| PROP-03 | Phase 62 | Pending |
+| PROP-04 | Phase 62 | Pending |
+| PROP-05 | Phase 62 | Pending |
+| PROP-06 | Phase 62 | Pending |
+| CORR-01 | Phase 63 | Pending |
+| CORR-02 | Phase 63 | Pending |
+| CORR-03 | Phase 63 | Pending |
+| CORR-04 | Phase 63 | Pending |
+| CORR-05 | Phase 63 | Pending |
+| CORR-06 | Phase 63 | Pending |
+| CORR-07 | Phase 63 | Pending |
+| SMEM-01 | Phase 64 | Pending |
+| SMEM-02 | Phase 64 | Pending |
+| SMEM-03 | Phase 64 | Pending |
+| SMEM-04 | Phase 64 | Pending |
+| SMEM-05 | Phase 64 | Pending |
+| SMEM-06 | Phase 64 | Pending |
+| TOBS-01 | Phase 65 | Pending |
+| TOBS-02 | Phase 65 | Pending |
+| TOBS-03 | Phase 65 | Pending |
+| TOBS-04 | Phase 65 | Pending |
+| TOBS-05 | Phase 65 | Pending |
+| TOBS-06 | Phase 65 | Pending |
 
 **Coverage:**
 - v2.0 requirements: 31 total
-- Mapped to phases: 0
-- Unmapped: 31 (pending roadmap creation)
+- Mapped to phases: 31
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-03*
-*Last updated: 2026-03-03 after initial definition*
+*Last updated: 2026-03-03 — traceability complete, phases 61-65 assigned*
