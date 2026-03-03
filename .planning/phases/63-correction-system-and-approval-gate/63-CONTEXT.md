@@ -1,6 +1,7 @@
 # Phase 63: Correction System and Approval Gate - Context
 
 **Gathered:** 2026-03-03
+**Updated:** 2026-03-03
 **Status:** Ready for planning
 
 <domain>
@@ -17,12 +18,17 @@ Users can correct proposals through textual feedback (soft correction) or direct
 - Same-session conversational loop: after proposals display, CLI stays interactive. User types feedback inline (e.g., "flatten the hierarchy", "add a review gate between coordinator and workers")
 - Re-proposal scope is Claude's discretion: broad feedback regenerates all 3 archetypes, specific feedback targets only the relevant archetype(s)
 - Re-proposals show diff (highlighted delta) AND full updated proposal below — user sees both the evolution and the complete picture
-- 3-cycle limit (CORR-06): when hit, system presents the best version so far, explains what feedback asked for vs what the engine achieved, and offers to approve or directly edit. "Here's where I landed. Approve this or edit it yourself."
+- 3-cycle limit (CORR-06): when hit, present all versions from the loop and let the user choose which to approve or edit directly. Show what feedback asked for vs what the engine achieved for each version
 - Each re-proposal round goes through the same constraint linter pipeline as initial proposals
+- Mode switching allowed anytime: user can type "edit" or similar during the soft correction loop to switch to hard correction (export-edit-import) at any point — not just at the cycle limit
 
 ### Hard Correction UX
 - Export-edit-import workflow: system exports the selected proposal to `topology/proposal-draft.json` in annotated JSON format (JSONC with field descriptions, role names as keys, readable edge types). User edits in their editor, then the system imports on approval
+- Annotation depth: section headers grouping nodes/edges/metadata with brief explanations, no per-field comments. Clean but navigable
+- Editor behavior: default to write-and-notify (write file, print path). `--edit` flag opens $EDITOR directly for kubectl-style flow. User chooses workflow
 - Tiered validation on import: unknown agent roles block execution with error. Pool limit violations get non-blocking warnings. Matches the constraint linter's existing reject/auto-adjust split
+- Edit error handling: display specific error with context, leave the user's edited file in place so they can fix without losing work. No re-export over their changes
+- Linter warnings on import: show exactly what the linter changed (diff between user's edit and adjusted version), then apply. User sees the delta without a confirmation gate — consistent with non-blocking pushback philosophy
 - File lives in project-scoped topology directory: `workspace/.openclaw/{project_id}/topology/proposal-draft.json`
 - Parser strips annotations on import and converts back to TopologyGraph via from_dict()
 
@@ -42,11 +48,11 @@ Users can correct proposals through textual feedback (soft correction) or direct
 
 ### Claude's Discretion
 - Session state management implementation (in-memory vs file-based for the interactive loop)
-- Exact annotated JSON format and comment style for proposal-draft.json
+- Exact JSONC comment wording within section headers for proposal-draft.json
 - Re-proposal prompt engineering (how feedback gets injected into the LLM prompt)
 - Diff rendering format for re-proposal deltas
 - Exact wording of cycle-limit and pushback messages
-- Error handling for malformed edited JSON on import
+- JSON auto-recovery strategy for minor syntax errors (trailing commas, etc.)
 
 </decisions>
 
@@ -57,6 +63,7 @@ Users can correct proposals through textual feedback (soft correction) or direct
 - Export-edit-import mirrors the familiar pattern of `kubectl edit` — export, edit in $EDITOR, reimport. Topology editing should feel like infrastructure management, not UI interaction
 - Pushback notes should feel like a knowledgeable colleague saying "just so you know..." — informative, not confrontational. Dimension-specific so the user can evaluate the trade-off themselves
 - The cycle limit message should acknowledge the feedback was heard, not dismiss it — "Here's the closest I could get to what you described" not "I can't do this"
+- Edit errors should never destroy user work — leave the file in place, show what's wrong, let them fix it
 
 </specifics>
 
