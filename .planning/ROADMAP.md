@@ -75,7 +75,11 @@
   3. After any correction, the system stores a diff record showing the structural delta between the proposed and approved topology, timestamped and typed as soft or hard
   4. When the system had high confidence in a proposal that the user overrode, the system surfaces a non-blocking informational note explaining its original reasoning — this note never blocks execution
   5. No L3 container spawn occurs until the user has explicitly approved a topology version
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 63-01-PLAN.md — Correction models, approval logic, storage extensions, and tests
+- [ ] 63-02-PLAN.md — Interactive CLI session loop and openclaw-approve resume command
+- [ ] 63-03-PLAN.md — L1 router approval gate and config extensions
 
 ### Phase 64: Structural Memory
 **Goal**: The system accumulates correction history, extracts structural preferences, and uses them to improve future proposals — while keeping topology data completely isolated from L3 agent SOUL context
@@ -111,7 +115,7 @@ Phases execute in numeric order: 61 → 62 → 63 → 64 → 65
 |-------|-----------|----------------|--------|-----------|
 | 61. Topology Foundation | v2.0 | 0/? | Not started | - |
 | 62. Structure Proposal Engine | 5/5 | Complete    | 2026-03-03 | - |
-| 63. Correction System and Approval Gate | v2.0 | 0/? | Not started | - |
+| 63. Correction System and Approval Gate | v2.0 | 0/3 | Not started | - |
 | 64. Structural Memory | v2.0 | 0/? | Not started | - |
 | 65. Topology Observability | v2.0 | 0/? | Not started | - |
 
