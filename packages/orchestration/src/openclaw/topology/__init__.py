@@ -14,6 +14,11 @@ from .storage import (
     save_topology,
     load_topology,
 )
+from .diff import (
+    TopologyDiff,
+    topology_diff,
+    format_diff,
+)
 
 __all__ = [
     "EdgeType",
@@ -22,4 +27,7 @@ __all__ = [
     "TopologyGraph",
     "save_topology",
     "load_topology",
+    "TopologyDiff",
+    "topology_diff",
+    "format_diff",
 ]
