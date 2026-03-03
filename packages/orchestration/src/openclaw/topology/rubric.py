@@ -157,6 +157,21 @@ class RubricScorer:
         return max_depth
 
 
+def score_proposal(topology: TopologyGraph, weights: dict) -> RubricScore:
+    """Standalone wrapper around RubricScorer.score_proposal().
+
+    Convenience function for use in CLI and other non-class contexts.
+
+    Args:
+        topology: The TopologyGraph to score.
+        weights: Dict of dimension -> float weights. Empty dict uses DEFAULT_WEIGHTS.
+
+    Returns:
+        RubricScore with all 7 fields populated.
+    """
+    return RubricScorer().score_proposal(topology, weights)
+
+
 def find_key_differentiators(scores: List[RubricScore]) -> List[str]:
     """
     Identify dimensions where proposals differ most significantly.

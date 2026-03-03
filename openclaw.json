@@ -37,13 +37,27 @@
     "list": [
       {
         "id": "main",
-        "name": "Central Core"
+        "name": "Central Core",
+        "level": 1,
+        "reports_to": null,
+        "orchestration": {}
       },
       {
         "id": "clawdia_prime",
         "name": "Head of Development",
         "sandbox": {
           "mode": "off"
+        },
+        "level": 1,
+        "reports_to": null,
+        "subordinates": [
+          "pumplai_pm",
+          "nextjs_pm",
+          "python_backend_worker",
+          "docs_pm"
+        ],
+        "orchestration": {
+          "role": "strategic"
         }
       },
       {
@@ -51,6 +65,14 @@
         "name": "PumpLAI Project Manager",
         "sandbox": {
           "mode": "all"
+        },
+        "level": 2,
+        "reports_to": "clawdia_prime",
+        "subordinates": [
+          "l3_specialist"
+        ],
+        "orchestration": {
+          "role": "tactical"
         }
       },
       {
@@ -58,6 +80,14 @@
         "name": "Frontend Architect",
         "sandbox": {
           "mode": "all"
+        },
+        "level": 2,
+        "reports_to": "clawdia_prime",
+        "subordinates": [
+          "l3_specialist"
+        ],
+        "orchestration": {
+          "role": "tactical"
         }
       },
       {
@@ -65,6 +95,14 @@
         "name": "ML Pipeline Worker",
         "sandbox": {
           "mode": "off"
+        },
+        "level": 2,
+        "reports_to": "clawdia_prime",
+        "subordinates": [
+          "l3_specialist"
+        ],
+        "orchestration": {
+          "role": "tactical"
         }
       },
       {
@@ -72,6 +110,13 @@
         "name": "L3 Specialist Executor",
         "sandbox": {
           "mode": "all"
+        },
+        "level": 3,
+        "reports_to": "pumplai_pm",
+        "orchestration": {
+          "container": {
+            "image": "ubuntu:latest"
+          }
         }
       },
       {
@@ -79,6 +124,13 @@
         "name": "Dispatch Bridge",
         "sandbox": {
           "mode": "all"
+        },
+        "level": 3,
+        "reports_to": "pumplai_pm",
+        "orchestration": {
+          "container": {
+            "image": "ubuntu:latest"
+          }
         }
       }
     ]
@@ -110,7 +162,19 @@
   "skills": {
     "load": {
       "extraDirs": [
-        "/home/ob/Development/Tools/openrepo/skills"]
+        "/home/ob/Development/Tools/openrepo/skills"
+      ]
+    }
+  },
+  "topology": {
+    "proposal_confidence_warning_threshold": 5,
+    "rubric_weights": {
+      "complexity": 0.15,
+      "coordination_overhead": 0.15,
+      "risk_containment": 0.20,
+      "time_to_first_output": 0.20,
+      "cost_estimate": 0.10,
+      "preference_fit": 0.20
     }
   },
   "plugins": {
