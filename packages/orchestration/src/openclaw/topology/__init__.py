@@ -39,6 +39,14 @@ from .linter import (
     LintResult,
     MAX_RETRIES,
 )
+from .renderer import (
+    render_dag,
+    render_matrix,
+    render_assumptions,
+    render_justifications,
+    render_low_confidence_warning,
+    render_full_output,
+)
 
 __all__ = [
     "EdgeType",
@@ -62,4 +70,10 @@ __all__ = [
     "ConstraintLinter",
     "LintResult",
     "MAX_RETRIES",
+    "render_dag",
+    "render_matrix",
+    "render_assumptions",
+    "render_justifications",
+    "render_low_confidence_warning",
+    "render_full_output",
 ]

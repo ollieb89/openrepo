@@ -200,9 +200,12 @@ class TestRenderMatrix:
 
     def test_stacked_layout_when_narrow(self):
         """When terminal width < 100, stacked layout is used (no side-by-side columns)."""
+        from unittest.mock import MagicMock
         from openclaw.topology.renderer import render_matrix
         proposals = _three_proposals()
-        with patch("shutil.get_terminal_size", return_value=(80, 24)):
+        mock_size = MagicMock()
+        mock_size.columns = 80
+        with patch("shutil.get_terminal_size", return_value=mock_size):
             output = render_matrix(proposals, key_differentiators=[])
         # Stacked layout: each archetype appears as a separate section
         assert "lean" in output.lower()
@@ -210,9 +213,12 @@ class TestRenderMatrix:
 
     def test_wide_layout_when_wide_terminal(self):
         """When terminal width >= 100, wide side-by-side layout is used."""
+        from unittest.mock import MagicMock
         from openclaw.topology.renderer import render_matrix
         proposals = _three_proposals()
-        with patch("shutil.get_terminal_size", return_value=(120, 24)):
+        mock_size = MagicMock()
+        mock_size.columns = 120
+        with patch("shutil.get_terminal_size", return_value=mock_size):
             output = render_matrix(proposals, key_differentiators=[])
         assert "lean" in output.lower()
         assert isinstance(output, str)
