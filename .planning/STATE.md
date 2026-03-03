@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Structural Intelligence
 status: executing
-stopped_at: Completed 63-01-PLAN.md — correction.py, approval.py, storage.py extended, 42 tests pass
-last_updated: "2026-03-03T19:18:56.964Z"
+stopped_at: Completed 63-03-PLAN.md — router approval gate, config keys auto_approve_l1+pushback_threshold, 98 tests pass
+last_updated: "2026-03-03T19:24:22.876Z"
 last_activity: 2026-03-03 — Phase 62 Plan 03 complete (proposal models, rubric scorer, constraint linter)
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 8
-  completed_plans: 6
+  completed_plans: 7
   percent: 5
 ---
 
@@ -51,6 +51,7 @@ Progress: [█░░░░░░░░░] 5% (v2.0 — 1/? plans complete)
 | Phase 62-03 P03 | 5 | 2 tasks | 7 files |
 | Phase 62 P05 | 5 | 3 tasks | 10 files |
 | Phase 63 P01 | 4min | 1 tasks | 5 files |
+| Phase 63 P03 | 5min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,8 @@ Progress: [█░░░░░░░░░] 5% (v2.0 — 1/? plans complete)
 - [Phase 63-01]: CorrectionSession uses @dataclass consistent with AgentSpec/TopologyGraph patterns
 - [Phase 63-01]: apply_soft_correction raises ValueError before LLM call when cycle limit reached (no wasted API call)
 - [Phase 63-01]: compute_pushback_note never raises — catches all exceptions and returns empty string for safety
+- [Phase 63]: Propose directives bypass the approval gate — they create topology, not consume it
+- [Phase 63]: Gate condition requires projectId presence — absent active_project silently passes gate to avoid breaking bare installs
 
 ### Pending Todos
 
@@ -89,6 +92,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-03T19:18:56.960Z
-Stopped at: Completed 63-01-PLAN.md — correction.py, approval.py, storage.py extended, 42 tests pass
+Last session: 2026-03-03T19:24:22.872Z
+Stopped at: Completed 63-03-PLAN.md — router approval gate, config keys auto_approve_l1+pushback_threshold, 98 tests pass
 Resume file: None
