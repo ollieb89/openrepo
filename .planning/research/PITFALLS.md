@@ -1,232 +1,238 @@
 # Pitfalls Research
 
-**Domain:** Adding config consolidation, adaptive polling, Docker health checks, and cosine threshold calibration to existing OpenClaw swarm orchestration system (v1.5)
-**Researched:** 2026-02-25
-**Confidence:** HIGH — derived from direct codebase inspection of `project_config.py`, `config.py`, `config_validator.py`, `state_engine.py`, `monitor.py`, `scan_engine.py`, `pool.py`, `docker/l3-specialist/Dockerfile` and `entrypoint.sh`, plus targeted research on Docker HEALTHCHECK signal interactions, adaptive polling backoff patterns, and vector similarity threshold calibration
+**Domain:** Adding structural intelligence (topology modeling, LLM-driven structure proposal, correction-as-training, structural observability) to an existing 60-phase multi-agent orchestration system (~340K LOC) with Docker isolation, memU memory, and autonomy framework.
+**Researched:** 2026-03-03
+**Confidence:** HIGH — derived from direct codebase inspection of `state_engine.py`, `spawn.py`, `autonomy/hooks.py`, `autonomy/types.py`, `config.py`, `soul_renderer.py`, `project_config.py`, `dashboard/src/lib/types.ts`, plus analysis of v1.0–v1.6 architectural patterns and integration points that the v2.0 features must layer on top of.
 
 ---
 
 ## Critical Pitfalls
 
-### Pitfall 1: Path Resolver Consolidation Breaks Existing State Files and Cached State
+### Pitfall 1: Over-Abstraction of the Topology Graph Model
 
 **What goes wrong:**
-The v1.5 goal is a single authoritative workspace path resolver. The current system has a known divergence: runtime state is written at `data/workspace/.openclaw/` while code resolves to `OPENCLAW_ROOT/workspace/.openclaw/`. Consolidating to one path without migrating existing state files causes the new resolver to compute a path that does not contain the live `workspace-state.json`. The pool's startup recovery scan reads the state path from the new resolver, finds no file, creates a fresh state file, and silently discards all task history and cursor positions for every registered project. The memory delta cursor (introduced in v1.4 as a SHA stored in state.json) is also lost — all projects revert to full memory fetches on next spawn.
+The topology data model is designed to be "maximally general" — a fully generic directed graph with arbitrary node types, edge labels, and metadata fields. Implementation begins with a graph library (NetworkX or a custom adjacency structure) capable of representing any conceivable agent topology. Three archetypes (Lean, Balanced, Robust) are implemented as subclasses or parameterized templates of this generic model. The scoring rubric operates on generic graph properties.
 
-The mtime-based state cache in `JarvisState` compounds this: if any component holds a cached `JarvisState` instance pointing to the old path, writes go to the old path while reads from the new path return a freshly created empty file. Components see divergent state with no error raised.
+The result: proposal generation requires 300-line graph traversal functions to extract "number of coordination edges" or "critical path length" — properties that could be computed trivially if the model was constrained to the domain's actual topology vocabulary. The graph model accumulates fields that are never used ("edge latency hints", "node affinity scores") because they were added for theoretical completeness. Serialization to/from JSON becomes non-trivial as the generic graph structure doesn't map cleanly to flat JSON.
+
+The existing system's agent model is flat: level (1/2/3), `reports_to` (one parent), `subordinates` (list). The v2.0 topology must be expressible as container configurations that spawn into this exact structure. A generic graph model diverges from this constraint and creates an impedance mismatch at spawn time — the graph must be "compiled" into spawn parameters, adding a translation layer that becomes a bug surface.
 
 **Why it happens:**
-The divergence was pre-existing and accepted as technical debt. When the consolidation is implemented, developers update `_find_project_root()` and `get_state_path()` but do not perform a data migration step — the old state files remain at the old path, unreachable by the new resolver. This is the standard "moved the pointer but not the data" config migration failure.
+Topology feels like a graph problem, so developers reach for graph abstractions. The urge to build something reusable and general is strong. The three archetypes make the model feel like it needs parameterization. But the actual topology space for this system is narrow: L1 (one), L2 per project (one), L3 pool (2-5 containers). The complexity is in the *coordination patterns*, not the structure.
 
 **How to avoid:**
-- Define the canonical path first. Document it explicitly before writing any code.
-- Write the migration CLI (CONF-03) before the path resolver change. The migration must: (a) discover all existing state files at the old path, (b) copy them to the new canonical path, (c) verify checksums, (d) print a migration report. Only then should the resolver code change.
-- In `get_state_path()`, add a one-time check: if the old path contains a state file and the new path does not, log a CRITICAL warning and raise an error rather than silently returning an empty new path. Force the operator to run the migration CLI explicitly.
-- Integration test: verify that `get_state_path()` returns the same path before and after the resolver change when called with the same `project_id`. Run this test against real files, not just the function's return value.
-- Never silently create a missing state file during `get_state_path()` — a missing state file after a resolver change is always a symptom of migration failure, not a normal "first run" condition.
+Define the topology schema as a concrete Python dataclass, not a generic graph. It should have explicit fields: `archetype` (enum), `l3_roles` (list of typed role descriptors), `coordination_pattern` (enum: direct, hub-and-spoke, pipeline), `estimated_pool_size` (int), and `rationale` (str per component). The scoring rubric operates on these named fields directly — not on graph traversal.
+
+The graph visualization in the dashboard is a *rendering concern*, not a storage concern. Compute the visual graph representation from the dataclass at render time. Do not store a graph data structure in memU or the state file.
 
 **Warning signs:**
-- After deploying the path resolver change, `openclaw-monitor status` shows zero tasks for all projects despite active work
-- Pool startup recovery scan finds no orphaned tasks even when the system was interrupted mid-task before deployment
-- Memory retrieval on first spawn after the change fetches a full memory set (cursor reset to None) for every project
-- `get_state_path()` returns a path that does not yet exist on disk for projects that have been running for weeks
+- The topology schema has more than 8 top-level fields after initial design
+- "Compile topology to spawn config" is planned as a separate phase item rather than a trivial dict translation
+- Graph traversal functions are written before a single archetype is manually representable as JSON
+- The schema requires importing a graph library (`networkx`, etc.) in the orchestration package
 
-**Phase to address:** CONF-01 (path resolver) — the migration CLI from CONF-03 must be built and validated before CONF-01 is implemented. Do not reverse this order.
+**Phase to address:** Topology-as-data phase (Phase 1 of v2.0). Define the schema first as a dataclass with the three archetypes hard-coded, validate that each archetype serializes to a valid spawn config, and only then generalize if needed.
 
 ---
 
-### Pitfall 2: Migration CLI Overwrites Live State During Active Spawns
+### Pitfall 2: LLM Proposal Quality Degrades Silently Under Real Workloads
 
 **What goes wrong:**
-The migration CLI copies state files from the old path to the new canonical path. If run while a project has active L3 containers, the source state file is being written to by those containers via `JarvisState.update_task()` with `fcntl.LOCK_EX`. The migration CLI's copy operation is not fcntl-aware — it does a standard `shutil.copy2()` or equivalent, which does not acquire the flock before reading. The copy captures a mid-write state: the destination file contains a valid JSON prefix followed by truncated bytes (the interrupted write from the lock holder), or it captures a state that is one or more `update_task()` calls behind.
+The structure proposal engine is built, tested with a handful of representative task descriptions, and deployed. Initial proposals are high quality. Over time, the LLM's proposals drift: roles proposed don't match the actual skill registry in `l3_config`, `estimated_pool_size` exceeds the project's `max_concurrent` (currently 3), archetypes are selected incorrectly for task type (Robust proposed for a 2-hour refactor), and scoring rubric values are inconsistent across proposals (same task, different scores on re-proposal). None of this is detected because there is no proposal quality measurement in place.
 
-After migration, the new resolver reads the destination file. If the JSON is truncated, the state engine falls back to the `.bak` recovery path. If the JSON is valid but stale, in-flight tasks show `in_progress` without the most recent status updates, confusing the recovery scan.
+The scoring rubric is the mechanism intended to surface quality — but if the LLM generates scores as part of the proposal (rather than scores being computed externally), it can produce self-consistent but incorrect scores (e.g., a proposal that claims low coordination overhead while specifying a 4-agent hub-and-spoke structure). There is no ground truth for proposal quality until execution completes, and by then the causal connection between proposal and outcome is lost.
 
 **Why it happens:**
-Configuration migration tools are typically written as one-shot scripts with no awareness of the application's own locking protocol. The `fcntl.LOCK_SH` / `fcntl.LOCK_EX` locks used by `JarvisState` are process-level file advisory locks — they are invisible to `cp` and `shutil.copy2()`.
+LLM-generated structured output is easy to get right in controlled demos and hard to keep right as the prompt context, model version, and task distribution shift. Proposal quality is assumed to be the LLM's responsibility — if the model is good, the proposals will be good. No instrumentation is built to detect quality regression because it is not obvious what "quality" means for a pre-execution proposal.
 
 **How to avoid:**
-- The migration CLI must acquire `fcntl.LOCK_SH` on the source state file before reading it, and release after the copy is complete. Use the same lock acquisition code as `JarvisState._read_state_locked()`.
-- Alternatively, document clearly that the migration CLI must only be run when all L3 containers are stopped (`docker ps` shows no `openclaw-*-l3-*` containers). Add an explicit pre-flight check in the migration CLI that aborts if any running containers match the OpenClaw naming pattern.
-- Include a dry-run mode (`--dry-run`) that prints what would be migrated without writing anything.
-- After the copy, verify the destination is valid JSON before declaring success. If not, delete the destination and report failure.
+Separate proposal generation from scoring. The LLM generates the proposed structure (archetype, roles, rationale text). An external scoring function computes the rubric values from the proposal's properties against known system constraints: `pool_size ≤ project.max_concurrent`, `roles ⊆ skill_registry`, `archetype matches task_size_heuristic(description)`. These constraint checks are deterministic and can be tested.
+
+Log every proposal with a proposal ID. When the topology is executed and completes, log outcome (success/failure, actual execution time vs. estimate). This creates the feedback loop for detection of quality drift: if estimated `time_to_first_output` is consistently 3x the actual, the scoring heuristic is wrong.
+
+Define a proposal linting step: before presenting proposals to the user, validate that all proposed roles exist in the skill registry, that `estimated_pool_size` is within bounds, and that the archetype label matches the constraints claimed. Reject malformed proposals at generation time with a re-prompt, not at correction time.
 
 **Warning signs:**
-- Migration CLI exits successfully but `state_engine.py` falls back to `.bak` recovery on first read of the migrated file
-- `workspace-state.json` at the new path has a file size smaller than the `.bak` at the old path
-- Tasks that were `in_progress` during migration show as `in_progress` at the new path but are actually completed (their containers exited while the migration copy captured a stale snapshot)
+- Proposed `l3_roles` contain role names that don't exist in `agents/l3_specialist/config.json`
+- `estimated_pool_size` in a proposal exceeds the project's `max_concurrent` (default: 3)
+- Both `Lean` and `Robust` archetypes are proposed for the same task description on consecutive calls
+- Scoring rubric values change by >0.3 on re-proposal for identical input
+- No proposal ID is stored in the correction record, preventing outcome attribution
 
-**Phase to address:** CONF-03 (migration CLI) — add the `fcntl.LOCK_SH` acquisition and container pre-flight check before the CLI is usable in production.
+**Phase to address:** Structure proposal engine phase. Build the constraint linter before the LLM prompt. Test the linter independently. Only integrate LLM output with the linter already in place.
 
 ---
 
-### Pitfall 3: Strict Fail-Fast Startup Validation Kills the Daemon Before State Recovery Can Run
+### Pitfall 3: Correction Loop Instability — Feedback Creates Diverging Proposals
 
 **What goes wrong:**
-CONF-06 requires fail-fast startup validation: if `openclaw.json` or `project.json` is invalid, the process must abort immediately. However, the pool's startup recovery scan (implemented in v1.4) needs to run at startup to detect orphaned tasks and apply the configured `recovery_policy`. If strict validation happens first and a schema violation is present (e.g., a partially migrated config from CONF-03), the process exits before the recovery scan runs. Orphaned tasks from the pre-restart run are never cleaned up — they remain `in_progress` in the state file indefinitely. On the next start (after the config is fixed), the recovery scan sees these as new orphans and processes them again, potentially re-spawning work that was completed before the aborted restart.
+The dual correction system (soft feedback → re-propose, hard direct edit → execute-then-analyze) is implemented. A user provides soft feedback: "Too many agents, simplify." The engine re-proposes. The new proposal removes a role. The user provides feedback again: "Now missing the reviewer role." The engine adds it back. The user again: "Still too complex." This oscillation continues. The feedback history grows, but the proposals don't converge — they cycle between two configurations that each address different feedback items.
 
-Additionally, the existing `config_validator.py` raises `ConfigValidationError` on schema violations. If startup validation calls `load_and_validate_openclaw_config()` before pool initialization, any config issue prevents the pool from ever starting — including issues that would not affect spawning (e.g., an unknown field added by a future version of the schema).
+The harder failure: feedback from correction is injected into the structural memory, and structural memory is retrieved to inform future proposals. After 10 corrections on a task, the memory contains contradictory preference signals — "user prefers Lean" and "user requires reviewer role" — and the proposal engine is given both. The next proposal for a new but similar task is a confusing hybrid that satisfies neither constraint.
 
 **Why it happens:**
-Fail-fast validation is the right design for config errors that would cause runtime failures. But startup sequencing is subtle: recovery must run even when config is degraded, and validation must distinguish "fatal for spawning" errors from "advisory warnings about unknown fields".
+Feedback signals are stored as additive preferences without conflict detection. "Simplify" and "add reviewer role" are treated as independent preferences that can both be satisfied. They cannot — Lean topology has no dedicated reviewer by definition. The correction system has no model of which preferences are in tension.
 
 **How to avoid:**
-- Define a clear startup sequence: (1) load config with recovery-mode permissiveness — any parse error is fatal, but schema warnings are non-fatal; (2) run pool recovery scan; (3) apply strict validation before accepting new spawn requests.
-- Distinguish between "cannot operate" errors (missing `active_project`, unparseable JSON) and "schema advisory" warnings (unknown fields, deprecated keys). Only "cannot operate" errors abort before recovery.
-- Add a `--recover-only` flag to the pool CLI that runs only the recovery scan and exits, bypassing all validation. This allows operators to manually drain orphans even when the config is broken.
-- Never call `validate_agent_hierarchy()` before pool recovery — agent hierarchy validation is only needed for dispatch, not for reading existing state.
+Limit correction cycles per session. Define a maximum re-propose count (2-3 attempts) after which the system presents the closest available option and requires a hard edit or a manual override. Prevent infinite oscillation by design.
+
+For structural memory, store correction signals with the archetype context: "When task type is 'refactor', user prefers Lean over Balanced" — not "user prefers Lean generally." Retrieve only signals that match the current task type and archetype context, not all historical corrections. This limits cross-contamination.
+
+Implement a convergence check before re-proposing: if the new proposal would differ from a previous proposal in this session by fewer than 2 role changes, do not re-propose — instead, surface the trade-off explicitly: "Adding the reviewer role requires upgrading from Lean to Balanced. Accept?"
 
 **Warning signs:**
-- After a config schema change, the process cannot start even though the previous config was valid — the migration CLI introduced a new required field that the old config lacks
-- Pool startup logs show `ConfigValidationError` followed by exit, with no recovery scan log entries
-- Tasks that were `in_progress` before the config was broken accumulate indefinitely without cleanup
+- A single session requires more than 3 re-proposal cycles
+- Structural memory contains more than 5 corrections for the same project with contradictory archetype preferences
+- A proposal presented to the user is identical to one already rejected in the same session
+- The convergence rate metric (corrections per session before approval) is increasing over time rather than decreasing as preferences are learned
 
-**Phase to address:** CONF-06 (fail-fast validation) — define the startup sequence explicitly before implementing validation. Recovery must be sequenced before strict validation of spawn-time config.
+**Phase to address:** Dual correction system phase. Build the cycle limit and convergence check before building structural memory integration. Validate with a simulated oscillation test: inject contradictory feedback signals, verify the system terminates within 3 cycles rather than oscillating.
 
 ---
 
-### Pitfall 4: Adaptive Polling Misses State Transitions During the Cooldown Window
+### Pitfall 4: Structural Memory Bloat from Full Topology Diffs
 
 **What goes wrong:**
-OBS-05 requires the monitor poll interval to adapt dynamically to activity level: fast polling when tasks are active, slow polling during idle periods. The naive implementation backs off to a long interval (e.g., 10 seconds) after N idle polls. If a new task is spawned during the idle period, the monitor does not detect it until the next poll fires — up to 10 seconds later. For the CLI monitor, this is acceptable latency. For the dashboard SSE stream, it causes the "task started" event to appear late, making the dashboard feel unresponsive.
+Every correction generates a structural diff that is stored in memU. A structural diff is a before/after comparison of two topology proposals: which roles were added, removed, or changed; how scores changed; the user's rationale. The full diff is serialized as a JSON object and stored as a memory entry.
 
-A worse failure: if adaptive polling uses a wall-clock timer to determine the next poll time, and the state file is modified at exactly the start of a long cooldown window, the monitor may report the old state for the full cooldown duration. This manifests as tasks appearing "stuck" at their previous status in the dashboard.
+After 50 corrections, each project has 50 memory entries. Each entry is retrieved during pre-spawn memory context assembly. The existing `MEMORY_CONTEXT_BUDGET` is 2000 characters — structural diffs are verbose and quickly exhaust this budget, crowding out the existing "Past Review Outcomes" and "Task Outcomes" memory categories that the L3 containers actually need for execution.
 
-The thrashing problem is the inverse: if the threshold for "active" detection is too sensitive (e.g., any state file mtime change triggers fast mode), the monitor may never leave fast mode, burning CPU at 1-second intervals even when only background writes (e.g., activity log rotation) are touching the file.
+The second failure: structural diffs contain full topology JSON (all 3 proposed archetypes, all scores). When retrieved, this data is injected into L3 SOUL context, which is incorrect — L3 containers are executors that don't need topology history. They need task context and past code decisions, not proposal history.
 
 **Why it happens:**
-Adaptive polling requires two thresholds: (1) what counts as "activity" to trigger fast mode, and (2) how long to stay in fast mode after the last activity. Setting both thresholds correctly requires understanding the actual write frequency of `workspace-state.json` in normal operation — which includes activity log rotation writes that are not task-status changes. Developers typically set thresholds based on intuition, not measurement.
+Structural memory is stored in the same memU namespace as execution memory because it's the existing memory service. There's no memory category segmentation in the retrieval path — `_format_memory_context()` in `spawn.py` routes by `category` and `agent_type` fields, but structural topology diffs are stored without an explicit category that would exclude them from L3 injection.
 
 **How to avoid:**
-- Define "activity" precisely: a task status change (`starting`, `in_progress`, `completed`, `failed`, `interrupted`) counts as activity. An activity log rotation write does not. Implement this by comparing the current task status map against the previous poll's task status map, not by mtime change alone.
-- Use a hysteresis approach: enter fast mode (1s interval) on any task status change. Return to slow mode (5s interval — not 10s) only after N consecutive polls with no status change. Keep slow mode fast enough that spawned tasks are visible within 5 seconds.
-- Cap the maximum poll interval at 5 seconds regardless of idle duration. A 10-second cap is too long for a monitoring tool and offers minimal CPU savings over 5 seconds.
-- Never use mtime change alone as the activity signal — log rotation, `.bak` writes, and cursor updates all touch mtime without changing task status.
-- Write a test that verifies: if a task status changes during a simulated idle period, the next poll always detects it within `max_slow_interval + 1` seconds.
+Store structural memory in a separate memU namespace or with an explicit `category: "structural_topology"` field. Update `_format_memory_context()` in `spawn.py` to explicitly exclude `structural_topology` category from L3 SOUL injection. Structural memory is only retrieved for the proposal engine (L1/L2 context), never for L3 executors.
+
+Store preference extractions, not raw diffs. Instead of storing the full before/after topology JSON, store the extracted preference signal: `{"preference": "Lean preferred for refactors", "strength": 0.8, "project": "myproject", "task_type": "refactor"}`. This is a single sentence, not a 200-line JSON object.
+
+Define a structural memory retention limit per project: maximum 20 structural preference records per project. When the limit is reached, aggregate old preferences into a project preference profile summary and discard the individual records.
 
 **Warning signs:**
-- Dashboard shows a task as "not started" for more than 5 seconds after `spawn_task()` returns successfully
-- Monitor CPU usage is consistently 100% even with no active containers (thrashing on non-task mtime changes)
-- Monitor remains in "slow mode" while containers are actively running (threshold misconfigured: activity detection too strict)
-- Two consecutive polls return identical state but the state file mtime changed between them (mtime used as activity signal rather than status comparison)
+- L3 containers' SOUL files contain topology JSON from past proposals (check `/run/openclaw/soul.md` in a running L3 container)
+- `_format_memory_context()` returns structural diff content in the "Past Work Context" section for L3 SOUL injection
+- Memory context budget is exhausted by structural memory, leaving the "Past Review Outcomes" section empty for L3 containers
+- Per-project structural memory entries exceed 30 records within the first week of v2.0 deployment
 
-**Phase to address:** OBS-05 (adaptive polling) — define the activity detection strategy and interval bounds before implementation. Validate that the activity signal (status change, not mtime) eliminates false positives from activity log rotation.
+**Phase to address:** Structural memory phase. Define the category exclusion rule and the preference extraction format before any structural data is written to memU. Validate by running a spawn after a correction and confirming the L3 SOUL file contains no topology JSON.
 
 ---
 
-### Pitfall 5: Docker HEALTHCHECK Exits Unhealthy During SIGTERM Drain Window
+### Pitfall 5: Observability Overhead Degrades Execution Performance
 
 **What goes wrong:**
-REL-09 adds Docker `HEALTHCHECK` to L3 containers. A typical health check script verifies the container is "alive" — e.g., checks that the entrypoint process is running and the state file is readable. During graceful shutdown (when `docker stop` sends SIGTERM), the entrypoint's `_trap_sigterm` handler is executing: it calls `update_state "interrupted" ...` and then `exit 143`. This execution takes 1-3 seconds. During this window, the health check fires and may observe a degraded state: the task output log has been flushed, the child PID (`_child_pid`) has been killed, and the state file may be mid-write.
+Topology observability is implemented as comprehensive logging: every proposal, every score, every correction, every diff is written to the state file and/or emitted as events via `event_bridge`. The structural diff visualization requires computing diffs at render time (dashboard fetches full proposal history, computes visual diff in the browser). Confidence evolution is tracked by storing every score for every rubric dimension on every proposal cycle.
 
-The health check reports unhealthy. Docker's response to an unhealthy container depends on how it is run: in a `docker run` context (OpenClaw's current usage), an unhealthy status has no automatic effect. But if the system is ever placed behind Docker Compose with `depends_on: condition: service_healthy`, the unhealthy status during shutdown will cause cascading restarts of dependent services.
+The state file (`workspace-state.json`) grows rapidly: each topology proposal adds ~5KB of JSON. After 10 tasks with 2 correction cycles each, the state file is 150KB larger than baseline. The JarvisState lock contention increases because structural write operations hold `LOCK_EX` while writing large topology blobs. L3 containers, which write task updates every 30-60 seconds, experience increased lock wait times.
 
-A secondary issue: the health check script itself may require tools (`curl`, `python3`, `jq`) that are installed in the L3 image but run as UID 1000 (non-root). If the health check script is placed at a path only readable by root, or if the tools require elevated capabilities (removed by `cap_drop ALL`), the health check permanently fails.
+The dashboard fetching proposal history on every page load causes the metrics API to read the full state file repeatedly. The state cache (`CACHE_TTL_SECONDS = 5.0`) provides limited protection because structural proposal updates invalidate the cache frequently during active proposal sessions.
 
 **Why it happens:**
-HEALTHCHECK is typically added for liveness verification during normal operation. Its interaction with the shutdown sequence is an afterthought. The L3 container's security hardening (`no-new-privileges`, `cap_drop ALL`) makes tool availability in health checks non-obvious — `curl` and `python3` are present in the image but some tools invoke capabilities that are dropped.
+Observability is added after the core feature works. The full topology data is stored "just in case" it's needed for analysis. The incremental cost of each stored proposal is not felt until 20+ proposals have accumulated. The state file's lock contention is not measured during development because tests use a single process, not the concurrent multi-container production scenario.
 
 **How to avoid:**
-- Use a minimal, capability-free health check: `HEALTHCHECK CMD ["python3", "-c", "import os; os.path.exists('/workspace')"]` or a simple shell `test -f /workspace/.openclaw/*/workspace-state.json || exit 1`. Avoid `curl` entirely (requires network capabilities that may be restricted).
-- The health check script must not touch the state file with write operations — read-only check only. The state file is protected by `fcntl.flock()` and a read-blocking health check would contend with the SIGTERM handler's write.
-- Set `HEALTHCHECK --start-period=10s` to prevent the health check from firing during the entrypoint initialization phase (git checkout, state setup).
-- Set `HEALTHCHECK --interval=15s` — L3 containers are ephemeral and short-lived (typically 5-60 minutes). A 15-second interval is sufficient and reduces health check overhead.
-- Test the health check explicitly during a `docker stop` sequence: the container should show unhealthy for at most one health check interval during shutdown, then exit with code 143. This is acceptable behavior for ephemeral containers.
-- Document that the health check is for observability only, not for Docker Compose `service_healthy` dependency chaining — L3 containers are not appropriate health-gate targets.
+Do not store full topology proposals in the JarvisState file. The state file is for task execution state. Structural observability data belongs in a separate file: `.openclaw/<project_id>/topology-history.json` or equivalent. This file is never locked by L3 containers — it is only written by the proposal engine (L2/L1) and read by the dashboard.
+
+Store only what is needed for the dashboard visualization. The "structural diff timeline" needs: proposal ID, archetype, overall confidence score, timestamp, and correction action (approved/rejected/edited). Not all rubric dimension scores on every proposal. Rubric details are stored on the final approved proposal only.
+
+Precompute diffs server-side. The dashboard API endpoint for structural history should return precomputed diff summaries, not raw proposals that the client must diff. This moves CPU from the browser to the API server and reduces payload size.
 
 **Warning signs:**
-- Health check always fails immediately after container start — the `--start-period` is too short and fires before git checkout completes
-- `docker inspect` shows health status as `unhealthy` even when the container is running a task normally — the health check command is using a dropped capability
-- `docker stop <l3-container>` causes health check to report unhealthy and a Compose restart loop fires (if the system has been placed under Compose `service_healthy` conditions)
-- Health check script exits with error code 2 (invalid usage) — shell form vs exec form mismatch in HEALTHCHECK instruction
+- JarvisState lock wait time (`lock_wait_ms` in logs) increases from <1ms baseline to >50ms after 10 topology proposals
+- `workspace-state.json` grows by more than 10KB per task lifecycle
+- Dashboard metrics API response time increases proportionally with the number of proposal history entries
+- L3 container activity log shows lock acquisition timeouts (`TimeoutError: Lock acquisition timeout`) during active proposal sessions
 
-**Phase to address:** REL-09 (Docker health checks) — design the health check command to be capability-free and read-only before adding it to the Dockerfile. Explicitly test behavior during `docker stop` shutdown sequence.
+**Phase to address:** Topology observability phase. Define the storage location (separate file, not state.json) and the data model (minimal precomputed summaries) before implementing any observability writes. Add a lock contention benchmark test: spawn 3 concurrent L3 containers while running proposal sessions; verify lock wait stays <10ms.
 
 ---
 
-### Pitfall 6: Cosine Threshold Calibration Uses Synthetic Data That Doesn't Reflect Real Embedding Distribution
+### Pitfall 6: Backwards Compatibility Break — v1.x SOUL Templates and Spawn Configs Fail on v2.0 Topology
 
 **What goes wrong:**
-QUAL-07 requires empirical calibration of the cosine similarity conflict detection threshold (currently 0.92 based on the v1.4 implementation note "threshold needs empirical tuning under real workload"). The calibration approach that fails: generate synthetic memory pairs with known ground truth (similar = conflict, dissimilar = distinct), run `_find_conflicts()` against them, and tune the `similarity_min`/`similarity_max` window.
+The topology proposal engine generates a proposed agent structure. When approved, this structure must be translated into spawn parameters — `skill_hint`, `task_description`, and eventually the `environment` dict injected into L3 containers. The v2.0 implementation adds new spawn parameters (`TOPOLOGY_ARCHETYPE`, `TOPOLOGY_ROLE`, `PROPOSAL_ID`) to the container environment.
 
-Synthetic pairs generated as random vectors or manually crafted sentences do not reflect the real embedding distribution of OpenClaw memory entries. OpenClaw memories are short structured strings (`"L3 task completed: refactored payment module. 3 files changed."`) encoded by the embedding model used in memU. The actual cosine similarity distribution of real memories clusters around 0.75-0.92 for semantically distinct same-category entries (because they share structural patterns: "L3 task...", "L2 review...", category headers). Synthetic calibration against random vectors produces a threshold that is too high and misses real conflicts, or calibration against manually similar sentences produces a threshold that is too low and triggers false positives on structurally similar but semantically distinct real entries.
+The existing `soul_renderer.py` uses `string.Template.safe_substitute()` — it ignores unknown `$variable` references silently. But the L3 SOUL template in `agents/_templates/soul-default.md` may not include the new topology variables, causing the rendered SOUL to have literal `$TOPOLOGY_ARCHETYPE` strings rather than substituted values. Worse: v1.x agent configs that specify custom SOUL templates (via `soul_ref`) do not have topology sections, so the augmented SOUL is assembled incorrectly.
 
-The second failure mode: the threshold is calibrated once on the current memory store and never re-evaluated. As more memories accumulate, the embedding distribution shifts (more entries cluster together as the system learns a narrower vocabulary of patterns). The threshold becomes miscalibrated without any warning signal.
+Project configs (`projects/<id>/project.json`) validated against `PROJECT_JSON_SCHEMA` now fail validation if a new required field (e.g., `topology`) is added to the schema without a migration path. Every existing project.json silently loses validation until updated.
 
 **Why it happens:**
-Developers calibrate on what is available and easy to generate — synthetic data. The actual embedding distribution of domain-specific short structured strings is not obvious without running the real embedding model over real data. This is the same problem as calibrating anomaly detection thresholds on laboratory data vs. production traffic.
+Adding new fields to existing schemas is the most common source of backwards compatibility breaks in incrementally developed systems. The existing validation is strict (`additionalProperties: False` in `OPENCLAW_JSON_SCHEMA`). Any new field added to proposals or spawn configs must also be added to the validation schemas, but existing data doesn't have those fields — causing validation failures on load.
 
 **How to avoid:**
-- Calibrate using real memory entries. Export at least 50 real memories from the production memU instance (or a staging replica), compute all pairwise cosine similarities, and plot the distribution. The conflict threshold should be set just above the natural cluster boundary for "same-type, different-task" entries.
-- Implement threshold calibration as an operator tool, not a unit test: `openclaw-memory calibrate-thresholds --project <id>` that exports, computes, and recommends threshold values with a precision/recall tradeoff table.
-- Add a monitoring counter: `health_scan_conflict_rate = conflicts_found / total_pairs`. If this rate exceeds 20% on any scan, log a WARNING that the threshold may be too loose. If it is 0% for 30 consecutive days, log an INFO suggesting the threshold may be too tight.
-- The `similarity_min`/`similarity_max` window in `_find_conflicts()` already exists — use it correctly. Values below `similarity_min` are "definitely different", values above `similarity_max` are "definitely duplicates". The conflict window (between min and max) should be narrow (e.g., 0.75-0.92) not wide.
-- Do not use the same threshold for all embedding models. If the embedding model is changed in a future memU upgrade, the calibration must be repeated.
+All topology-related fields in schemas must be optional with defaults. Never add a required field to `OPENCLAW_JSON_SCHEMA`, `PROJECT_JSON_SCHEMA`, or the SOUL template variables without providing a default value that preserves existing behavior. Add a schema version bump process: when v2.0 changes any schema, the config validator must accept both the old (v1.x) and new (v2.0) forms during a transition period.
+
+Test backwards compatibility explicitly: load every existing `project.json` in the repository through the new validator before merging any schema change. This is a 30-second automated test that catches 100% of schema breaks against known real configs.
+
+The SOUL template must be updated before the spawn parameters are added. If `TOPOLOGY_ARCHETYPE` is injected as an environment variable but the SOUL template doesn't reference it, it's harmless. The reverse (SOUL references `$TOPOLOGY_ARCHETYPE` but spawn doesn't set it) produces visible template pollution in the rendered SOUL.
 
 **Warning signs:**
-- First production health scan returns conflict rate > 25% — threshold is too loose and catching structurally similar but semantically distinct entries
-- Health scan returns 0 conflicts despite the memory store containing known contradictory entries added during development — threshold is too tight
-- After a memU embedding model upgrade, the conflict rate changes dramatically without any real change in memory content
-- Calibration test suite passes but production scan behaves differently — test data (synthetic) does not match production embedding distribution
+- `safe_substitute()` output contains literal `$TOPOLOGY_ARCHETYPE` strings in the rendered SOUL
+- `openclaw-project list` fails with `ConfigValidationError` for any existing project after v2.0 schema update
+- A project that worked in v1.6 fails to spawn L3 containers after v2.0 deployment without any change to its config
+- The config validator passes for new projects but fails for the projects in `projects/` that were created before v2.0
 
-**Phase to address:** QUAL-07 (threshold calibration) — run the calibration tool against real memory entries from a staging or production memU export before setting the threshold. Do not rely on the test suite's synthetic data for production threshold selection.
+**Phase to address:** Topology-as-data phase (first). Schema changes must be made with optional fields and tested against all existing project configs before any new spawn parameters are added.
 
 ---
 
-### Pitfall 7: Constants Consolidation Introduces Import-Time Side Effects That Break Isolated Test Modules
+### Pitfall 7: Correction-as-Training Creates a Positive Feedback Loop That Locks In Early Mistakes
 
 **What goes wrong:**
-CONF-05 consolidates all constants and defaults into one location (likely a new version of `config.py` or a new `defaults.py`). The current `config.py` is minimal and safe to import anywhere. The new consolidated constants module may import from `project_config.py` (to provide project-specific defaults) or from `state_engine.py` (to provide state-related defaults). This introduces import-time I/O — the `_find_project_root()` function is called, which reads `OPENCLAW_ROOT` from the environment or walks up the filesystem. In CI environments (or test modules that set up their own paths), this import-time filesystem access fails or returns the wrong root.
+The structural memory stores correction patterns: "User approved Lean for tasks tagged 'bugfix'." After 10 approved Lean proposals for bugfixes, the proposal engine has high confidence that Lean is preferred for bugfixes. Future bugfix proposals present Lean as the top-ranked option with high confidence.
 
-The pool.py module duplicates `_POOL_DEFAULTS` (present in both `project_config.py` and `pool.py`). Consolidation will remove one copy. If the remaining copy is imported at module level from the new constants module, and that import transitively triggers `openclaw.json` file reads, every test that imports `pool.py` or `project_config.py` will fail with `FileNotFoundError` unless the test environment includes a valid `openclaw.json`.
+The user made a poor choice on the first 3 bugfixes — they approved Lean because it was the first option, not because it was optimal. The system learns this non-preference as a preference. Over time, the high-confidence Lean recommendation discourages the user from even reading the Balanced or Robust options, because Lean appears with a high "preference fit" score. The system converges on a locally-optimal preference that was established by path dependence, not genuine preference.
+
+This is the classic cold-start / feedback loop problem in recommendation systems. It is particularly acute here because there are only 3 archetype options — the system converges on a single archetype very quickly, and the correction signal needed to escape the local optimum requires the user to actively override a "high confidence" recommendation.
 
 **Why it happens:**
-Python's import system executes module-level code eagerly. Moving a constant from "literal value" to "computed from config file at import time" introduces I/O at import time — a subtle change that breaks the implicit contract that `import pool` does not touch the filesystem.
+Correction-as-training with a simple frequency-based preference model always amplifies whatever pattern appears first. There is no mechanism to distinguish "approved because optimal" from "approved because it was the default." The preference profile grows monotonically — there is no forgetting, no decay, and no uncertainty quantification.
 
 **How to avoid:**
-- Keep the consolidated constants module free of I/O at import time. Constants that require config file reads must remain lazy (computed on first call, not at module import).
-- The `_POOL_DEFAULTS` dict in `project_config.py` (line 20-26) is a safe literal — keep it as a literal dict, not a computed value. Reference it from `pool.py` via explicit import (`from openclaw.project_config import _POOL_CONFIG_DEFAULTS`) rather than duplicating.
-- Test the consolidated constants module in isolation: `python3 -c "from openclaw.config import POLL_INTERVAL"` must succeed with no `OPENCLAW_ROOT` set and no `openclaw.json` present. If it fails, the import has I/O dependencies that need to be removed.
-- Add a conftest fixture that sets `OPENCLAW_ROOT` to a temp directory with a minimal `openclaw.json` — this prevents real-config reads in tests. All existing tests that import orchestration modules should already use this pattern (check the existing `conftest.py`).
+Apply preference confidence decay over time. A preference signal from 30 days ago should have lower weight than one from yesterday, because task patterns change. Implement a half-life on preference records: each correction's contribution to the preference score is multiplied by `exp(-λ * days_since)` where λ is tuned to a 14-day half-life.
+
+Implement epsilon-greedy exploration. On a random 20% of proposals (configurable), present the archetypes in random order rather than preference-ranked order. This ensures the user sees all options occasionally, preventing the recommendation from locking into the first-approved archetype permanently.
+
+Surface the confidence basis. When the proposal engine presents a high-confidence Lean recommendation, show why: "Lean recommended based on 10 prior approvals for bugfix tasks." This makes the feedback loop visible and allows the user to consciously override it.
 
 **Warning signs:**
-- `pytest packages/orchestration/tests/` passes but `python3 -c "from openclaw.config import LOCK_TIMEOUT"` fails with `FileNotFoundError` in a fresh environment
-- A test that previously passed in isolation now fails with `ConfigValidationError` because the new constants module reads `openclaw.json` at import time and the test environment lacks one
-- Import order in tests starts to matter — tests pass when run in a specific order but fail when run individually
+- A single archetype achieves >80% preference score within the first 5 corrections
+- The second and third archetype proposals are never read by the user (proposal session duration collapses to <10 seconds — they approve immediately)
+- After 20 corrections, the preference profile is essentially deterministic: one archetype always scores >0.9 regardless of task description
+- A user requests "show me something different" — this is a direct signal that exploration has been suppressed
 
-**Phase to address:** CONF-05 (constants consolidation) — define the import-time I/O boundary rule before consolidation: all constants in `config.py` must be computable with no filesystem access. Validate with an import smoke test in CI.
+**Phase to address:** Structural memory phase. Build the decay function and epsilon-greedy exploration into the preference scoring system before it processes its first correction. Validate with a simulation: inject 10 identical correction signals and verify the resulting preference score is bounded, not at 1.0.
 
 ---
 
-### Pitfall 8: Env Var Precedence Documentation Creates Contradictions With Existing Behavior
+### Pitfall 8: Topology Proposal Pre-empts the Autonomy Framework's Confidence-Based Escalation
 
 **What goes wrong:**
-CONF-04 requires explicit, consistent env var precedence documentation. The existing precedence is:
-- `OPENCLAW_ROOT` → project root path (in `_find_project_root()`)
-- `OPENCLAW_PROJECT` → active project ID (in `get_active_project_id()`)
-- `OPENCLAW_LOG_LEVEL` → logging level (in `config.py`)
-- `OPENCLAW_ACTIVITY_LOG_MAX` → activity log rotation (in `config.py`)
-- `OPENCLAW_STATE_FILE` → state file path override (in entrypoint.sh only — not in Python)
+v1.6 introduced the autonomy framework: tasks have a confidence score, and tasks below the escalation threshold (`confidence_threshold: 0.4`) are escalated rather than executed autonomously. v2.0 adds topology proposals with their own confidence scores (the rubric's "overall confidence" dimension).
 
-The `OPENCLAW_STATE_FILE` env var is referenced in `entrypoint.sh` (line 13) but has no corresponding support in the Python `get_state_path()` function. If the operator sets `OPENCLAW_STATE_FILE` expecting it to override the Python resolver, the Python side ignores it. The entrypoint uses it but the Python state engine resolves a different path. Documentation that lists `OPENCLAW_STATE_FILE` as a supported override will mislead operators into believing the Python components respect it.
+These two confidence systems are independent but will inevitably interact. A topology proposal with overall confidence 0.35 is below the escalation threshold — should the system escalate before even proposing, or propose and let the user decide? If the proposal engine's confidence is below threshold, the autonomy hooks in `hooks.py` may trigger ESCALATING state before the proposal is presented to the user. The user never sees the proposal. The task is escalated based on structural uncertainty, not execution uncertainty.
 
-When CONF-01 consolidates the path resolver, if `OPENCLAW_STATE_FILE` is promoted to a Python-level override for consistency with the entrypoint, it creates a second path for "which state file am I writing to?" that conflicts with the project-scoped path computed from `OPENCLAW_ROOT` + `project_id`. Two components could write to different state files simultaneously.
+The reverse failure: a topology proposal with overall confidence 0.9 bypasses the autonomy escalation check because the structural confidence is high. But the underlying task (the code the agents will write) may be ambiguous and low-confidence for execution. The two systems use different inputs for confidence calculation.
 
 **Why it happens:**
-The entrypoint.sh was written independently from the Python project_config.py. The `OPENCLAW_STATE_FILE` variable was added to the entrypoint for container-side flexibility without a corresponding Python implementation. Documentation efforts surface this inconsistency for the first time.
+Two independent subsystems with overlapping scope are added in different milestones without an explicit interaction contract. The autonomy framework was designed for execution confidence. The proposal engine's confidence measures structural fit. They are semantically distinct but share the same escalation vocabulary and threshold configuration.
 
 **How to avoid:**
-- Before documenting env var precedence, audit every place an env var is read: `grep -r "os.environ.get\|os.getenv\|os.environ\[" packages/ skills/ docker/`. Cross-reference with entrypoint.sh and the docker volume/env injection in `spawn.py`.
-- Decide explicitly: is `OPENCLAW_STATE_FILE` a supported override or a container-internal implementation detail? If the former, implement it in `get_state_path()` with the documented precedence. If the latter, rename it to a less user-facing name (e.g., `_OPENCLAW_INTERNAL_STATE_FILE`) and note it is not a public API.
-- The documented precedence table must list every env var with: (a) which components read it, (b) what it overrides, (c) whether it is a public API or internal.
-- Never add a new env var to the Python config layer without also checking whether the entrypoint.sh or skills need a corresponding update.
+Define the interaction contract explicitly before either feature ships in v2.0. The structural proposal confidence is pre-execution, architectural confidence. The autonomy execution confidence is runtime, task-complexity confidence. They must not share the same `confidence_threshold` config value or the same escalation trigger.
+
+Rule: structural proposal confidence below threshold → present proposal with a low-confidence warning, but proceed normally to user review. Never trigger autonomy ESCALATING state from structural confidence alone. The user seeing a low-confidence proposal is the correct response — they can provide corrections.
+
+Rule: autonomy execution confidence (computed at task spawn time in `autonomy/confidence.py`) operates independently of the approved topology. The approved topology is an input to execution confidence (more complex topology → lower execution confidence), but the calculation is separate.
+
+Add a config field: `topology.proposal_confidence_warning_threshold: 0.5` — separate from `autonomy.confidence_threshold: 0.4`. These should never be the same key.
 
 **Warning signs:**
-- An operator sets `OPENCLAW_STATE_FILE` based on the documentation but the Python pool reads a different state file — tasks dispatched via `spawn_task()` never appear in the operator's custom state file
-- Two different env var values for the same concept coexist: `OPENCLAW_ROOT=/custom/path` and `OPENCLAW_STATE_FILE=/different/path/state.json` — the system uses one for Python and the other for bash, writing two divergent state files
-- After deploying CONF-04, an existing deployment that relied on undocumented env var behavior breaks because the documented precedence differs from the old implicit behavior
+- A task is escalated to L1 before the user ever sees a topology proposal — the pre-execution confidence check fires before proposal presentation
+- The `autonomy.confidence_threshold` setting in `openclaw.json` affects how many topology proposals are presented rather than how many tasks are autonomously executed
+- `hooks.py` `on_task_spawn()` is called with `AutonomyState.ESCALATING` for a task that hasn't been proposed yet
 
-**Phase to address:** CONF-04 (env var precedence) — audit all env var reads across all languages and components before writing documentation. Resolve the `OPENCLAW_STATE_FILE` inconsistency explicitly in the same phase as CONF-01.
+**Phase to address:** Structure proposal engine phase. Document the two confidence systems and their interaction contract before implementing the proposal engine. The autonomy hooks must not be triggered by proposal-phase events.
 
 ---
 
@@ -236,28 +242,29 @@ Shortcuts that seem reasonable but create long-term problems.
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Skip migration CLI — just document the new canonical path and let operators move files manually | Saves development time | Every deployment breaks silently if the operator misses a project directory; state cursors lost; recovery scan misses orphans | Never — migration must be automated |
-| Set adaptive polling cap at 10s to save CPU | Reduces monitor CPU by ~50% vs 1s polling | Tasks appear "started" up to 10s late in dashboard; monitoring tool feels broken for operators | Never for dashboard SSE — acceptable for CLI-only monitor if documented |
-| Use the same cosine threshold for conflict detection and duplicate detection | One threshold to configure | Conflict window (0.75-0.92) is different from duplicate window (>0.95) — same threshold causes either false positives on conflicts or misses exact duplicates | Never — use separate `similarity_min` and `similarity_max` (already supported in `_find_conflicts()`) |
-| Skip `fcntl.LOCK_SH` in migration CLI — "migration runs when system is idle" | Simpler migration code | If run during active spawns (operator error), state file corruption is possible and silent | Never — add the lock acquisition and document it as defense-in-depth |
-| Health check script reads `workspace-state.json` to verify task is running | Meaningful liveness check | Blocks on `fcntl.LOCK_EX` held by `update_task()` during writes — health check hangs and Docker marks container unhealthy during active writes | Never — health check must be read-only and lock-free |
-| Calibrate cosine threshold in unit tests using random vectors | Tests run without memU dependency | Threshold tuned to synthetic distribution fails on real embedding distribution | Never for production threshold — acceptable for regression testing that the threshold change doesn't break the algorithm |
+| Store full topology proposals in workspace-state.json | Single storage location, no new files | JarvisState lock contention increases for all L3 containers; state file grows unboundedly | Never — topology history must be a separate file not locked by L3 containers |
+| Reuse the same memU category for structural and execution memories | No new memU category fields needed | Structural topology JSON is injected into L3 SOUL context; MEMORY_CONTEXT_BUDGET exhausted by topology diffs | Never — explicitly set `category: "structural_topology"` and exclude from L3 SOUL injection |
+| Use a generic graph library for the topology model | Topology feels like a graph problem | 300-line graph traversal for properties trivially computable on a domain-specific dataclass; impedance mismatch at spawn time | Never — use a concrete domain dataclass first; only generalize if a 4th archetype is proven necessary |
+| Let the LLM compute rubric scores as part of proposal generation | One LLM call does everything | LLM produces self-consistent but incorrect scores; no external validation of constraint satisfaction | Never for constraint-checkable properties (pool_size bounds, role existence) — LLM scores are only valid for qualitative dimensions (complexity estimate, preference fit) |
+| Single confidence threshold for both structural proposals and execution autonomy | Simpler config | Structural uncertainty triggers execution escalation or vice versa; the two systems interfere with each other | Never — use separate config keys with separate threshold values |
+| Store raw correction rationale strings in structural memory | Simple to implement | Memory accumulates contradictory natural language that the proposal engine cannot reason about; preference extraction never happens | MVP-acceptable for the first 10 corrections while the extraction logic is built; must be replaced before structural memory influences >5 proposals |
+| Skip proposal cycle limits in the correction loop | More user flexibility | Oscillation between incompatible preferences; correction session never converges; structural memory fills with contradictory signals | Never — maximum 3 re-propose cycles per session must be enforced from day one |
 
 ---
 
 ## Integration Gotchas
 
-Common mistakes when connecting the new v1.5 features to the existing system.
+Common mistakes when layering structural intelligence on top of the existing Docker isolation, memory service, and autonomy framework.
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| New path resolver → JarvisState | Passing the new canonical path to `JarvisState.__init__()` when an existing `JarvisState` instance may still hold the old path in a running pool | Ensure pool reinitializes its `JarvisState` instance when the path resolver changes; never cache `JarvisState` across config reloads in a long-running process |
-| Migration CLI → fcntl state files | Using `shutil.copy2()` without acquiring `fcntl.LOCK_SH` first | Acquire `fcntl.LOCK_SH` on source before read; verify destination JSON is valid before declaring success |
-| Adaptive polling → dashboard SSE | Dashboard SSE endpoint polls state at its own interval — adding adaptive polling to the CLI monitor does not affect dashboard SSE latency | Dashboard SSE polling and CLI monitor polling are independent code paths; OBS-05 must address both or document the scope explicitly |
-| Docker HEALTHCHECK → entrypoint SIGTERM handler | Health check fires during the SIGTERM drain window (1-3s) and reports unhealthy — if any restart policy is applied, Docker restarts the container mid-shutdown | Use `--restart=no` for all L3 containers (already the case); document that health check unhealthy status during shutdown is expected and non-actionable |
-| Strict validation (CONF-06) → pool recovery scan | `load_and_validate_openclaw_config()` is called before pool recovery; a schema warning aborts the process before orphans are cleaned up | Recovery scan must run before strict validation of spawn-time config; use two validation passes: minimal (parse-only) before recovery, full after |
-| Threshold calibration → test suite | `test_health_scan.py` uses synthetic embeddings; after calibration, the production threshold differs from the test threshold | Test suite must use the same `similarity_min`/`similarity_max` values as production — inject threshold from config rather than hardcoding in tests |
-| CONF-05 constants consolidation → `pool.py` import | `pool.py` imports `_POOL_DEFAULTS` from two places (its own module-level dict AND `project_config._POOL_CONFIG_DEFAULTS`) — after consolidation, one import path is removed without updating the other | Search all import sites for `_POOL_DEFAULTS` and `_POOL_CONFIG_DEFAULTS` before removing either; verify with `grep -r "_POOL" packages/ skills/` |
+| Topology proposals → spawn.py | Adding topology fields to `spawn_l3_specialist()` signature that break the existing skill pool interface in `pool.py` | Add topology fields as optional kwargs with defaults; pool.py calls spawn with keyword args — adding required positional args breaks all existing callers |
+| Structural memory → memU `_format_memory_context()` | Not adding `structural_topology` to the exclusion list in `_format_memory_context()`, so topology diffs appear in L3 SOUL | Add the exclusion before any structural data is written to memU; write a test that confirms L3 SOUL contains no topology category content after a proposal |
+| Proposal confidence → autonomy hooks.py | Calling `on_task_spawn()` before the proposal is approved; the task's AutonomyContext is created before topology is confirmed | `on_task_spawn()` must only be called after topology approval, not at proposal generation time |
+| Structural diff visualization → dashboard types.ts | Adding topology types to `types.ts` without updating all API routes that return `Task` or `MetricsResponse` — TypeScript type errors surface only at build time, not at runtime | Add topology types as separate interfaces in a new `topology.ts` file; keep existing `Task` and `MetricsResponse` unchanged in the initial integration |
+| SOUL template → topology variables | Adding `$TOPOLOGY_ARCHETYPE` to SOUL template before `build_variables()` in `soul_renderer.py` provides the value — renders as literal `$TOPOLOGY_ARCHETYPE` in SOUL output | Update `build_variables()` first; test that `safe_substitute()` replaces the variable; only then add it to the SOUL template |
+| Correction analysis → JarvisState locking | Running async correction analysis in a background thread that also reads/writes state — overlaps with L3 container lock acquisition | Correction analysis must be read-only relative to workspace-state.json; all correction writes go to topology-history.json (separate file, no JarvisState) |
+| Project config validation → new topology fields | Adding `topology` key to `openclaw.json` schema with `additionalProperties: False` breaks existing configs that don't have the field | Add `topology` as an optional property with a complete default; validate that all existing project configs in `projects/` pass the new schema before merging |
 
 ---
 
@@ -267,23 +274,38 @@ Patterns that work at small scale but fail as usage grows.
 
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Adaptive polling thrashes on activity log rotation writes | Monitor CPU stays at 100%; mtime changes from log rotation trigger fast-poll mode indefinitely | Use task-status-map diff as activity signal, not mtime change | Immediately — activity log rotation happens on every task update (ACTIVITY_LOG_MAX_ENTRIES = 100), which means constant mtime churn |
-| Health check script makes Python import per check | Each health check invocation takes 200ms+ (Python startup time); 15-second interval means 1.3% of container lifetime spent on health checks | Use a minimal shell one-liner (`test -d /workspace`) rather than invoking Python; reserve Python health checks for functional probes | Any L3 container with `--interval < 30s` |
-| Cosine similarity scan over full memory store on every health check run | `_find_conflicts()` is O(n*k) — at 1000 memories with k=10, 10K comparisons per scan. If health scan runs on every dashboard load, PostgreSQL CPU spikes | Cache health scan results for minimum 1 hour; run as background job, not on-demand per-request | When memory store exceeds ~500 entries and health scan is triggered by UI refresh |
-| Migration CLI reads all project state files sequentially | Migration takes 30+ seconds for 9 registered projects if state files are large | Migration CLI can process projects in parallel (each state file is independently locked); use `concurrent.futures.ThreadPoolExecutor` | At 9 projects (current scale), sequential is acceptable; document the optimization for when project count grows |
+| Storing full 3-archetype proposals (all rubric scores) per task in memU | memU database size doubles within first month of v2.0; retrieval latency increases | Store preference extractions (~50 chars each) not full proposals (~2KB each); enforce 20-record structural memory limit per project | At 50+ tasks with 2 correction cycles each (~100 structural records) |
+| Computing structural diffs client-side in the dashboard | Browser freezes when viewing proposal history for tasks with >5 correction cycles; large JSON payloads | Precompute diff summaries server-side in the topology API endpoint; return only summary objects to the client | When a task has >3 correction cycles or proposal JSON exceeds 10KB |
+| Retrieving all structural memory entries during pre-spawn assembly | spawn.py pre-spawn retrieval adds 200ms+ per task as structural memory grows | Filter by `category != "structural_topology"` in the memU retrieval query passed to `_retrieve_memories_sync()` | Immediately on first structural memory entry — L3 containers should never receive structural topology memories |
+| Generating all 3 archetype proposals in a single LLM call | Single LLM call for 3 proposals fails with partial output if token limit exceeded; one bad archetype contaminates the retry | Generate each archetype proposal independently (3 calls); allows independent retry of a failed archetype without regenerating the others | When the combined 3-archetype prompt exceeds 8K output tokens (typical at high rubric detail) |
+| Confidence evolution tracking storing per-dimension scores for every proposal | Confidence history table grows at 7 dimensions × N proposals × M tasks; queries over this table are slow | Store only the overall confidence score and top/bottom 2 dimension scores per proposal; derive full history on-demand from structural memory | At 20+ tasks per project with 3+ proposal cycles each |
 
 ---
 
 ## Security Mistakes
 
-Domain-specific security issues for v1.5 features.
+Domain-specific security issues for v2.0 structural intelligence features.
 
 | Mistake | Risk | Prevention |
 |---------|------|------------|
-| Migration CLI does not verify destination path before writing | Path traversal: a malformed `project_id` in `projects/<id>/project.json` could cause the migration to write state files outside the `workspace/.openclaw/` directory | Validate that the computed destination path starts with the canonical `OPENCLAW_ROOT/workspace/.openclaw/` prefix before any write |
-| Env var documentation exposes `OPENCLAW_GATEWAY_TOKEN` semantics | Documentation of env var precedence may inadvertently document how to bypass the gateway auth token | Document only the `OPENCLAW_*` vars relevant to path resolution and logging; do not document security-sensitive vars in the same location as operational vars |
-| HEALTHCHECK script is world-writable after `COPY` | An L3 task that gains write access to the container filesystem can modify the health check script to always return healthy, masking real failures | `COPY entrypoint.sh` already uses `chmod +x` without `chmod o+w`; verify the health check script follows the same pattern: `COPY healthcheck.sh /healthcheck.sh && chmod 500 /healthcheck.sh` (readable and executable only by owner) |
-| Adaptive polling state comparison leaks task descriptions via log output | If the activity detection logic logs the "changed task" object for debugging, task descriptions containing sensitive data appear in monitor logs | Log only `task_id` and `status` fields in the activity detection log entry, never the full task description |
+| LLM proposal output is injected into SOUL template without sanitization | A prompt injection in the task description could cause the LLM to generate malicious topology rationale that, when injected into SOUL via `safe_substitute()`, alters the agent's behavior | Run proposal output through a sanitizer that strips `$variable` references and markdown code blocks before SOUL injection; `safe_substitute()` is safe for unresolved variables but rationale text should be treated as untrusted |
+| Topology correction rationale stored in memU without content filtering | User-provided correction text ("reject because...") is stored verbatim in memU and injected into future SOUL contexts; a crafted correction could inject instructions into future agent contexts | Treat all user-provided correction rationale as untrusted text; store it in a separate field that is never injected into SOUL context; only extracted preference signals (system-generated) go into the memU fields that feed SOUL injection |
+| Proposal ID is user-controlled and used as a file path component | If proposal IDs are derived from user input (task description slug), path traversal is possible when proposal data is stored in `.openclaw/<project_id>/topology-history.json` | Generate proposal IDs as UUIDs (`uuid.uuid4()`) server-side; never derive IDs from user-provided input; validate that any ID used in a file path matches `^[a-f0-9-]{36}$` |
+| Structural diff output contains full task descriptions | Topology observability exports (for debugging) include task descriptions that may contain sensitive business information; exported diffs leak this information | Implement a `--redact-tasks` flag on any observability export CLI; store task descriptions separately from structural scores in the topology history |
+
+---
+
+## UX Pitfalls
+
+Common user experience mistakes in the structural intelligence domain.
+
+| Pitfall | User Impact | Better Approach |
+|---------|-------------|-----------------|
+| Presenting all 3 archetypes at equal prominence | User reads all 3 in depth for every task; cognitive overload; proposal session takes 5+ minutes | Present the top-ranked archetype prominently with a short rationale; show the other 2 as collapsed alternatives with one-line summaries; expand on request |
+| Showing all 7 rubric scores for every archetype | 21 numbers per proposal session; user cannot quickly identify the relevant trade-off | Highlight only the dimensions where archetypes differ significantly (delta > 0.2); collapse identical scores into "similar across options" |
+| Requiring approval before observing correction analysis | User approves a direct edit but must wait for async diff analysis to complete before proceeding; the non-blocking analysis feels blocking if the UI shows a spinner | Show the correction analysis as a post-hoc notification ("Analysis complete: your edit shifted from Balanced to Lean — preference recorded"), not as a blocking step |
+| Confidence evolution timeline shown as a raw score graph | Score graph without context is uninterpretable; 0.73 on iteration 1 vs 0.81 on iteration 3 means nothing without knowing what changed | Show the confidence delta alongside the structural change: "+0.08 confidence after removing the reviewer role" — connect the score change to the specific edit |
+| No differentiation between "low confidence due to task ambiguity" vs "low confidence due to preference mismatch" | User doesn't know whether to clarify the task description or adjust the topology | Surface the top-contributing factor to low confidence: "Low confidence: task description is ambiguous (complexity: 0.3)" vs "Low confidence: no prior preference for this task type (preference fit: 0.2)" |
 
 ---
 
@@ -291,16 +313,15 @@ Domain-specific security issues for v1.5 features.
 
 Things that appear complete but are missing critical pieces.
 
-- [ ] **Path resolver consolidation (CONF-01):** `get_state_path()` returns a path that contains the live `workspace-state.json` — verify by `ls -la $(python3 -c "from openclaw.project_config import get_state_path; print(get_state_path())")` on a project that has been running
-- [ ] **Migration CLI (CONF-03):** Migration CLI acquires `fcntl.LOCK_SH` before reading source state files — verify by running `strace -e flock python3 migration_cli.py --dry-run` and confirming `flock()` syscalls appear
-- [ ] **Migration CLI (CONF-03):** Old path state files are moved (not just copied) or explicitly archived — verify that no state files remain at the old path after migration completes
-- [ ] **Strict validation (CONF-06):** Recovery scan runs even when `openclaw.json` has a schema advisory warning — verify by temporarily adding an unknown field to `openclaw.json` and confirming pool startup proceeds to recovery scan before rejecting new spawns
-- [ ] **Adaptive polling (OBS-05):** Activity detection uses task-status-map diff, not mtime — verify by checking that an activity log rotation write (updating only `activity_log` in state.json, not any task status) does NOT trigger fast-poll mode
-- [ ] **Docker HEALTHCHECK (REL-09):** Health check does not block on `fcntl` lock — verify by running `docker stop` on an active L3 container and confirming health check does not show lock contention errors in container logs
-- [ ] **Docker HEALTHCHECK (REL-09):** Health check works as UID 1000 with `cap_drop ALL` — verify by running `docker exec --user 1000 <container> /healthcheck.sh` with capabilities dropped
-- [ ] **Threshold calibration (QUAL-07):** Calibration was run against real memory entries (not synthetic) — verify by checking that the calibration report references a non-zero sample size from a real memU export
-- [ ] **Constants consolidation (CONF-05):** `python3 -c "from openclaw.config import LOCK_TIMEOUT"` succeeds with no `OPENCLAW_ROOT` set and no `openclaw.json` present — no import-time I/O
-- [ ] **Env var precedence (CONF-04):** `OPENCLAW_STATE_FILE` disposition is explicitly decided — either Python respects it (with updated `get_state_path()`) or it is documented as container-internal only
+- [ ] **Topology schema:** All three archetypes serialize to valid spawn configs and back — verify by calling `spawn_l3_specialist()` with topology-derived parameters for a test task without a real LLM call
+- [ ] **Proposal engine:** Constraint linter validates `l3_roles ⊆ skill_registry` and `estimated_pool_size ≤ max_concurrent` before any proposal is presented — verify by injecting an invalid role name and confirming the linter rejects the proposal
+- [ ] **Structural memory isolation:** L3 container SOUL files contain no `structural_topology` category content — verify by running `grep -i "topology\|archetype\|rubric" /run/openclaw/soul.md` inside a running L3 container after a proposal has been approved
+- [ ] **Correction loop limit:** A session with contradictory feedback terminates after 3 re-proposal cycles — verify by injecting oscillating feedback signals in a unit test and confirming the loop exits with a "manual override required" state
+- [ ] **JarvisState lock contention:** Lock wait time remains <10ms with 3 concurrent L3 containers during an active proposal session — verify with the `lock_wait_ms` metric in JarvisState log output during a concurrent test
+- [ ] **Backwards compatibility:** All existing `projects/*/project.json` files pass the v2.0 schema validator — verify with `python3 -c "from openclaw.config_validator import validate_project; [validate_project(p) for p in Path('projects').glob('*/project.json')]"`
+- [ ] **Autonomy hooks not triggered pre-approval:** `on_task_spawn()` is not called until after topology approval — verify with a trace: grep for `on_task_spawn` in logs for a proposal session; it must not appear before the approval event
+- [ ] **Preference decay:** After injecting 10 identical correction signals (all approving Lean), the Lean preference score is <0.9 — verify that the decay function is applied and score is bounded
+- [ ] **Observability storage location:** No topology data written to `workspace-state.json` — verify with `diff` on the state file before and after a complete proposal session; topology fields must not appear in the state file diff
 
 ---
 
@@ -310,13 +331,12 @@ When pitfalls occur despite prevention, how to recover.
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Path resolver change discarded existing state files | MEDIUM | Locate state files at old path (`find ~/.openclaw -name "workspace-state.json"`); copy to new canonical paths manually; verify JSON is valid; re-run pool startup |
-| Migration CLI ran during active spawns, produced truncated state file | LOW | State engine's `.bak` recovery kicks in automatically; verify `workspace-state.json.bak` at the old path contains the pre-migration valid state; copy `.bak` to new canonical path |
-| Strict validation blocked recovery scan, orphaned tasks piled up | LOW | Run `openclaw pool --recover-only` (if the flag exists) or manually update task statuses: `python3 -c "from openclaw.state_engine import JarvisState; ..."` to set `in_progress` tasks to `interrupted` |
-| Adaptive polling thrashed on log rotation — monitor process at 100% CPU | LOW | Restart monitor with `--interval 5` override flag to force a fixed interval; then fix the activity detection logic; restart again |
-| HEALTHCHECK reported unhealthy during normal operation | LOW | `docker inspect <container>` to see health check output; fix the health check command (capability or permission issue); rebuild L3 image with `make docker-l3`; no data loss |
-| Cosine threshold miscalibrated — false positive deluge | MEDIUM | Increase `similarity_min` to reduce false positives (push lower bound up); re-run health scan to verify conflict rate drops below 10%; archive falsely flagged entries instead of deleting them |
-| `OPENCLAW_STATE_FILE` env var set by operator, Python ignores it — state divergence | MEDIUM | Identify which state file was actually written by Python (`get_state_path()` call); merge state from operator's expected path into the canonical path manually; update documentation to clarify the env var is container-internal |
+| Topology data bloated workspace-state.json | MEDIUM | Write a one-off migration script to move `topology_*` keys from workspace-state.json to topology-history.json for each project; run during a maintenance window with L3 containers stopped |
+| Structural memory contaminated L3 SOUL contexts | LOW | Add `structural_topology` exclusion to `_format_memory_context()` immediately; existing structural memories in memU are harmlessly ignored going forward; no data deletion needed |
+| Correction loop oscillated — contradictory preferences in memory | MEDIUM | Reset structural memory for the affected project: delete all `structural_topology` category records from memU for that project_id; implement the cycle limit before re-enabling corrections |
+| LLM proposals degraded — roles don't match skill registry | LOW | Enable the constraint linter (if not already running) to reject invalid proposals at generation time; the linter is a pure validation step that can be added without restarting the system |
+| Proposal confidence interfered with autonomy escalation | MEDIUM | Separate the config keys (`topology.proposal_confidence_warning_threshold` vs `autonomy.confidence_threshold`); remove any code in hooks.py that reads proposal confidence; the state machine in `autonomy/state.py` is unaffected — only the trigger condition needs fixing |
+| Preference model locked into first-approved archetype | LOW | Reset the preference profile for the project (delete structural_topology preference records in memU); implement epsilon-greedy exploration before re-enabling structural memory influence on proposals |
 
 ---
 
@@ -326,26 +346,29 @@ How roadmap phases should address these pitfalls.
 
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| Path resolver breaks existing state files | CONF-03 (migration CLI) built before CONF-01 (resolver) | `get_state_path()` returns the same absolute path as before on all 9 registered projects |
-| Migration CLI corrupts state during active spawns | CONF-03 — add `fcntl.LOCK_SH` acquisition + container pre-flight check | Run migration with a container active; destination state file is valid JSON matching source |
-| Strict validation blocks recovery scan | CONF-06 — define two-pass startup sequence explicitly | Adding unknown field to `openclaw.json` does not prevent recovery scan from completing |
-| Adaptive polling misses tasks or thrashes on log rotation | OBS-05 — define activity signal as status-map diff, not mtime | Activity log rotation write does not trigger fast-poll mode; spawned task detected within 5s during slow poll |
-| HEALTHCHECK unhealthy during SIGTERM drain | REL-09 — capability-free, lock-free health check with `--start-period=10s` | `docker stop <l3>` exits with code 143; health check shows at most one unhealthy result during drain |
-| Cosine threshold miscalibrated from synthetic data | QUAL-07 — calibrate against real memory export before committing threshold | Calibration report references real sample size; conflict rate on production scan is <15% |
-| Constants consolidation introduces import-time I/O | CONF-05 — import smoke test in CI | `python3 -c "from openclaw.config import LOCK_TIMEOUT"` succeeds without `OPENCLAW_ROOT` or `openclaw.json` |
-| Env var precedence documentation contradicts existing `OPENCLAW_STATE_FILE` behavior | CONF-04 — full env var audit before documentation | Every env var in documentation is verified to be read by the claimed components via `grep` audit |
+| Over-abstraction of topology model | Topology-as-data (Phase 1) — schema defined as concrete dataclass first | All 3 archetypes serialize to spawn config with no translation layer; no graph library imported |
+| LLM proposal quality degrades silently | Structure proposal engine — constraint linter built before LLM integration | Linter catches invalid roles and out-of-bounds pool sizes; proposal ID is stored in every correction record |
+| Correction loop instability | Dual correction system — cycle limit built before structural memory integration | Oscillating feedback test terminates in ≤3 cycles; contradictory feedback produces a trade-off surface, not a cycling proposal |
+| Structural memory bloat | Structural memory — category exclusion and preference extraction format defined first | L3 SOUL contains no topology content; per-project structural memory count stays below 20 |
+| Observability overhead on execution | Topology observability — storage location (separate file) defined before any writes | JarvisState lock wait stays <10ms with concurrent L3 containers; state file size delta per task lifecycle is <1KB |
+| Backwards compatibility break | Topology-as-data (Phase 1) — all new schema fields are optional with defaults | All existing project.json files pass v2.0 validator before merge |
+| Feedback loop locking in early mistakes | Structural memory — decay function and epsilon-greedy built before preference scoring influences proposals | 10 identical signals produce preference score <0.9; random 20% of sessions see randomized archetype ordering |
+| Autonomy framework conflict | Structure proposal engine — interaction contract documented before implementation | `on_task_spawn()` not triggered during proposal phase; `topology.proposal_confidence_warning_threshold` is a separate config key from `autonomy.confidence_threshold` |
 
 ---
 
 ## Sources
 
-- Direct codebase inspection: `packages/orchestration/src/openclaw/config.py`, `project_config.py`, `config_validator.py`, `state_engine.py`, `cli/monitor.py`, `docker/memory/memory_service/scan_engine.py`, `skills/spawn/pool.py`, `docker/l3-specialist/Dockerfile`, `docker/l3-specialist/entrypoint.sh` — HIGH confidence
-- Docker HEALTHCHECK signal interaction: [Sending a signal to a container with healthcheck affects healthcheck status — docker/for-linux issue #454](https://github.com/docker/for-linux/issues/454), [How to Handle Docker Container Graceful Shutdown and Signal Handling — OneUptime](https://oneuptime.com/blog/post/2026-01-16-docker-graceful-shutdown-signals/view), [Docker Health Check: A Practical Guide — Lumigo](https://lumigo.io/container-monitoring/docker-health-check-a-practical-guide/), [Docker Health Check Best Practices — OneUptime](https://oneuptime.com/blog/post/2026-01-30-docker-health-check-best-practices/view) — MEDIUM confidence
-- Docker STOPSIGNAL and HEALTHCHECK sequencing: [Dockerfile STOPSIGNAL — Dockerpros](https://dockerpros.com/wiki/dockerfile-stopsignal/), [Health Checks in Docker Compose — Tom Vaidyan](https://www.tvaidyan.com/2025/02/13/health-checks-in-docker-compose-a-practical-guide/) — MEDIUM confidence
-- Adaptive polling backoff patterns: [Polling in System Design — GeeksforGeeks](https://www.geeksforgeeks.org/system-design/polling-in-system-design/), [Efficient Kafka Polling in Python — Medium](https://medium.com/@sonal.sadafal/efficient-kafka-polling-in-python-handling-idle-states-gracefully-e6d880663581), [Exponential Backoff in Distributed Systems — Better Stack](https://betterstack.com/community/guides/monitoring/exponential-backoff/) — MEDIUM confidence (polling patterns well established; OpenClaw-specific activity detection logic from codebase analysis)
-- Cosine similarity threshold calibration: [How to Use Cosine Similarity for Vector Search in pgvector — Sarah Glasmacher](https://www.sarahglasmacher.com/how-to-use-cosine-similarity-in-pgvector/), [pgvector GitHub](https://github.com/pgvector/pgvector), [Cosine Similarity Threshold — Emergent Mind](https://www.emergentmind.com/topics/cosine-similarity-threshold) — MEDIUM confidence; production distribution insight from codebase inspection of scan_engine.py and v1.4 calibration note in PROJECT.md
-- Config migration schema evolution: [Schema Evolution in Real-Time Systems — Estuary](https://estuary.dev/blog/real-time-schema-evolution/), [Safe Django migrations without server errors — Loopwerk](https://www.loopwerk.io/articles/2025/safe-django-db-migrations/) — LOW confidence for specific Python config patterns; HIGH confidence from direct code analysis of `_find_project_root()` and path divergence documented in PROJECT.md
+- Direct codebase inspection: `packages/orchestration/src/openclaw/state_engine.py`, `skills/spawn/spawn.py`, `packages/orchestration/src/openclaw/autonomy/hooks.py`, `autonomy/types.py`, `autonomy/state.py`, `config.py`, `soul_renderer.py`, `project_config.py`, `packages/dashboard/src/lib/types.ts` — HIGH confidence
+- v1.0–v1.6 architectural patterns from `CLAUDE.md`, `PROJECT.md`, `ROADMAP.md`, previous `PITFALLS.md` (v1.5) — HIGH confidence
+- LLM structured output quality degradation: general knowledge of LLM-based structured generation failure modes; validation through constraint linting is the industry-standard mitigation — MEDIUM confidence (no external source; derived from known patterns in LLM integration)
+- Feedback loop / recommendation system convergence failures: cold-start problem, preference reinforcement bias — well-documented in recommendation systems literature; epsilon-greedy exploration is the standard mitigation — MEDIUM confidence
+- Correction system instability: oscillation in multi-round feedback systems is a known failure mode in interactive ML; termination conditions and cycle limits are the standard prevention — MEDIUM confidence
+- Memory category isolation: derived from the existing `CATEGORY_SECTION_MAP` and `_format_memory_context()` pattern in `spawn.py` — HIGH confidence (codebase-derived)
+- Autonomy framework confidence interaction: derived from `autonomy/types.py` (AutonomyState), `autonomy/hooks.py` (on_task_spawn), `config.py` (confidence_threshold) — HIGH confidence (codebase-derived)
+- JarvisState lock contention analysis: derived from `fcntl.LOCK_EX` usage in `state_engine.py`, lock timeout constants in `config.py` — HIGH confidence (codebase-derived)
+- Backwards compatibility schema validation: derived from `OPENCLAW_JSON_SCHEMA` and `PROJECT_JSON_SCHEMA` in `config.py` with `additionalProperties: False` — HIGH confidence (codebase-derived)
 
 ---
-*Pitfalls research for: OpenClaw v1.5 Config Consolidation — path resolver migration, adaptive polling, Docker health checks, cosine threshold calibration*
-*Researched: 2026-02-25*
+*Pitfalls research for: OpenClaw v2.0 Structural Intelligence — topology modeling, LLM-driven structure proposal, correction-as-training, structural observability*
+*Researched: 2026-03-03*

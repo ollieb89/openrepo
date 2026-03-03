@@ -1,226 +1,224 @@
 # Stack Research
 
-**Domain:** AI Swarm Orchestration — v1.5 Config Consolidation additions
-**Researched:** 2026-02-25
-**Confidence:** HIGH (all claims verified against codebase + official Python docs + PyPI + Docker docs)
+**Domain:** AI Swarm Orchestration — v2.0 Structural Intelligence additions
+**Researched:** 2026-03-03
+**Confidence:** HIGH (all versions verified via PyPI index, npm registry, official docs)
 
 ---
 
 ## Scope
 
-This document covers ONLY net-new stack needs for v1.5. It does not re-document the existing
-validated stack (Python 3 stdlib, docker>=7.1.0, httpx, asyncio, fcntl, Next.js 16, SWR,
-Tailwind 4, Recharts, memU/FastAPI/PostgreSQL+pgvector) which shipped in v1.0–v1.4.
+This document covers ONLY net-new stack needs for v2.0. It does not re-document the validated
+baseline stack from v1.0–v1.6, which ships as-is:
 
-The four feature areas in scope:
+**Existing baseline (unchanged):**
+- Python stdlib: `asyncio`, `json`, `fcntl`, `threading`, `os`, `pathlib`
+- `docker>=7.1.0`, `httpx`, `jsonschema>=4.26.0` — orchestration deps
+- `fastapi`, `PostgreSQL + pgvector` — memU memory service (Docker)
+- `Next.js 15`, `React 19`, `SWR`, `Tailwind CSS 3`, `Recharts`, `zod`, `lucide-react` — dashboard
+- `better-sqlite3`, `dockerode` — dashboard API deps already present
 
-1. **Config consolidation** — single authoritative path resolver, schema validation on load, migration CLI, env var precedence, constants consolidation, fail-fast startup validation, integration test suite (CONF-01 through CONF-07)
-2. **Docker health checks for L3 containers** — HEALTHCHECK Dockerfile instruction + Python SDK health status read (REL-09)
-3. **Cosine similarity threshold calibration** — empirical tuning methodology for conflict detection (QUAL-07)
-4. **Adaptive monitor poll interval** — dynamic interval scaling based on activity level (OBS-05)
+The five feature areas in scope for v2.0:
+
+1. **Topology as Data** — graph data structures, JSON serialization, versioning
+2. **Structure Proposal Engine** — multi-proposal generation with LLM-structured scoring rubric
+3. **Dual Correction System** — structural diff analysis (soft feedback / hard edit paths)
+4. **Structural Memory** — topology diffs and preference profiling via existing memU
+5. **Topology Observability** — node-based graph visualization in dashboard
 
 ---
 
 ## Recommended Stack
 
-### Core Technologies — Net New
+### Core Technologies — Net New (Python)
 
 | Technology | Version | Purpose | Why Recommended |
 |------------|---------|---------|-----------------|
-| `jsonschema` | `>=4.26.0` | Strict schema validation for `openclaw.json` and `project.json` at startup | Provides JSON Schema Draft 7/2020-12 validation with lazy collect-all error reporting. OpenClaw already uses a hand-rolled `config_validator.py` that checks individual fields — jsonschema replaces that with a declarative schema dict, making CONF-02 and CONF-06 achievable without bespoke field-check code. No C extensions required; pure Python; Python >=3.10 compatible. Current release: 4.26.0 (Jan 7 2026). |
-| Docker `HEALTHCHECK` instruction | Dockerfile built-in | L3 container health reporting to Docker daemon (REL-09) | Built-in Dockerfile instruction — zero library change. Adds `--interval`, `--timeout`, `--start-period`, `--retries` options. L3 containers are short-lived tasks; `--start-period` accounts for startup time. Health status readable via `container.attrs["State"]["Health"]["Status"]` in the existing docker-py client. |
-| `container.attrs["State"]["Health"]` | docker>=7.1.0 (already pinned) | Read L3 container health status from Python | Accessed via the already-imported docker-py SDK. No new library. Pattern: `container.reload(); health = container.attrs.get("State", {}).get("Health", {})`. Returns dict with `Status` ("starting"/"healthy"/"unhealthy"/"none") and `Log` array. |
+| `networkx` | `>=3.6.1` | Graph data structure for topology model (DiGraph nodes = agents, edges = delegation) | Industry-standard Python graph library. `DiGraph` gives directed edges (L1→L2→L3 delegation direction), arbitrary node/edge attributes (agent role, container config, archetype metadata), and `node_link_data()` for JSON round-trip serialization that is natively readable by `@xyflow/react` on the dashboard. Pure Python, no C extensions, Python >=3.11 compatible. v3.6.1 released Dec 2025. Alternatives (igraph, graph-tool) require C extensions and are overkill for topologies of ≤20 nodes. |
+| `deepdiff` | `>=8.6.1` | Structural diff of topology JSON objects for dual correction analysis | Provides `DeepDiff(old_topology, new_topology)` returning a typed change report: `dictionary_item_added`, `dictionary_item_removed`, `values_changed`, `iterable_item_added`. This maps cleanly onto topology diff semantics: added nodes, removed nodes, edge changes, attribute changes. The `Delta` class can reconstruct the edited topology from diff + original, which is required for the async correction analysis path. v8.6.1 released Jan 2026. Pure Python, tested on 3.9+, no native deps. `dictdiffer` considered but `deepdiff`'s `Delta` object makes patch-then-analyze pattern simpler. |
+| `instructor` | `>=1.14.5` | Structured LLM output for scoring rubric generation (proposal engine) | Wraps Anthropic's `tool_use` to enforce a Pydantic schema on Claude responses. The scoring rubric has 7 fixed dimensions (complexity, coordination overhead, risk containment, time-to-first-output, cost estimate, preference fit, overall confidence) — `instructor` guarantees Claude returns a validated `RubricScore` Pydantic model, not free-text. Uses `Mode.TOOLS` with the existing Anthropic SDK. Eliminates JSON parsing errors in the critical proposal path. v1.14.5 released Jan 2026, 3M+ monthly downloads, full Anthropic support. Alternative: direct `tool_use` with manual schema — more fragile, requires custom retry logic that `instructor` already provides. |
 
-### Supporting Libraries — Net New
+### Supporting Libraries — Net New (Python)
 
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
-| `jsonschema` | `>=4.26.0` | Schema validation for config files | Add to `packages/orchestration/pyproject.toml` dependencies. Used in `config_validator.py` to replace hand-written field checks with declarative `Draft7Validator` or `Draft202012Validator`. Enables strict fail-fast on startup (CONF-06) and comprehensive integration testing (CONF-07). |
+| `pydantic` | `>=2.9` (already transitive via `instructor`) | Typed models for `TopologyGraph`, `ProposalCandidate`, `RubricScore`, `CorrectionDiff` | Define the canonical data shapes that flow between proposal engine, state engine, memU storage, and dashboard API. Pydantic v2 `model_dump(mode="json")` gives JSON-serializable dicts directly; `model_validate()` deserializes from storage. Already present as a transitive dep of `instructor` — not a new install. |
+| `anthropic` | `>=0.40` (already used by existing agents) | LLM calls in proposal engine and correction analyzer | Existing SDK, already in the environment. `instructor` wraps it — no direct import needed in proposal engine code. Listed here to clarify: no SDK version change required. |
 
-**All other v1.5 features are stdlib-only.** No further new pip installs required.
+### Core Technologies — Net New (TypeScript/Dashboard)
 
-### What is Already Available — Do NOT Add Again
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| `@xyflow/react` | `>=12.10.1` | Node-based topology visualization in dashboard | De-facto standard for node-edge diagrams in React. Renders the agent topology as an interactive graph (pan, zoom, select). Accepts `nodes[]` and `edges[]` arrays that map 1:1 to NetworkX `node_link_data` format — the backend serializes with NetworkX, the frontend renders with React Flow. v12 (package: `@xyflow/react`, not deprecated `reactflow`) is the current release as of late 2025. Supports SSR/SSG needed for Next.js 15. React 19 compatible. Latest verified version: 12.10.1. |
+| `@dagrejs/dagre` | `>=2.0.4` | Hierarchical layout engine for topology DAG | Computes node positions for a directed acyclic graph (Sugiyama/layered layout), which matches the L1→L2→L3 hierarchy. Used alongside `@xyflow/react` via the documented "Dagre Layout" pattern — auto-positions nodes without manual coordinate entry. v2.0.4 is the current maintained fork of the original dagre. |
 
-| Capability | Where It Lives | v1.5 Use |
-|------------|---------------|---------|
-| Path resolution helpers | `packages/orchestration/src/openclaw/project_config.py` — `_find_project_root()`, `get_workspace_path()`, `get_state_path()`, `get_snapshot_dir()` | CONF-01: Audit all callsites and unify through these helpers. No new module needed — refactor existing divergent paths. |
-| Config loading | `project_config.py` — `load_and_validate_openclaw_config()`, `load_project_config()` | CONF-02: Extend these functions with jsonschema validation instead of re-implementing load logic. |
-| Config validation | `config_validator.py` — `validate_project_config()`, `validate_agent_hierarchy()`, `ConfigValidationError` | CONF-06: Replace field-by-field checks with jsonschema Draft 7 validator. Keep `ConfigValidationError` exception — callers already handle it. |
-| Constants / defaults | `config.py` — `LOCK_TIMEOUT`, `POLL_INTERVAL`, `CACHE_TTL_SECONDS`, `LOG_LEVEL`, `ACTIVITY_LOG_MAX_ENTRIES`. Pool defaults in `project_config.py` `_POOL_CONFIG_DEFAULTS`. | CONF-05: Move ALL magic numbers here. `project_config.py`'s `_POOL_CONFIG_DEFAULTS` dict moves to `config.py`. |
-| Migration CLI pattern | `cli/migrate_state.py` — argparse subcommand, idempotent with sentinel file, in-flight guard | CONF-03: New `openclaw-config migrate` command follows the same idempotent-with-guard pattern. |
-| Argparse subcommands | `cli/project.py`, `cli/monitor.py`, `cli/suggest.py` — established subcommand pattern | CONF-03: Config migrate CLI uses the same `argparse.ArgumentParser` + `add_subparsers()` pattern already in project.py. No new CLI framework. |
-| Env var precedence | `OPENCLAW_ROOT`, `OPENCLAW_PROJECT`, `OPENCLAW_LOG_LEVEL`, `OPENCLAW_ACTIVITY_LOG_MAX` — all read via `os.environ.get()` in their respective modules | CONF-04: Document the precedence chain (env > config file > hardcoded default) in code comments and ensure it is applied consistently across all four env vars. No new code — consistency audit. |
-| Docker SDK client | `docker>=7.1.0` (already pinned) | REL-09: `container.reload(); container.attrs["State"]["Health"]` reads health status from the same client used in pool.py and review.py. |
-| Structured JSON logging | `openclaw/logging.py` `get_logger()` factory | All new modules use existing logger. No new logging dep. |
-| `pytest>=7.0` + `pytest-asyncio` | Already in dev dependencies | CONF-07: Config integration tests use the existing test suite infrastructure. No new testing library. |
-| `time.monotonic()` (stdlib) | built-in | OBS-05: Adaptive poll interval calculation. Already used in state_engine.py context. |
+### Supporting Libraries — Net New (TypeScript/Dashboard)
+
+| Library | Version | Purpose | When to Use |
+|---------|---------|---------|-------------|
+| `elkjs` | `>=0.11.1` | Alternative layout engine for complex topology proposals | ELK provides more sophisticated layouts (layered with port assignments, force-directed) than dagre for cases where three simultaneous proposals are shown side-by-side. Import lazily — only when rendering the multi-proposal comparison view. Do not replace dagre; use elk only for the proposal comparison panel. |
 
 ---
 
-## Integration Points with Existing Stack
+## What is Already Available — Do NOT Add
 
-### Feature Area 1: Config Consolidation (CONF-01 through CONF-07)
+| Capability | Where It Lives | v2.0 Use |
+|------------|---------------|---------|
+| memU REST API (`/memorize`, `/retrieve`) | `docker/memory/memory_service/` on port 18791 | Structural memory storage: topology diffs, correction rationales, preference profiles stored as memU memories with `agent_id="topology_engine"` namespace. No API changes needed — use existing `memory_client.py` patterns. |
+| `memory_client.py` | `packages/orchestration/src/openclaw/memory_client.py` | Retrieve structural preferences on proposal generation; store diffs on correction. Reuse `memorize()` and `retrieve()` directly. |
+| State engine file locking (`fcntl.flock`) | `state_engine.py` | Topology proposals stored as JSON alongside `workspace-state.json` under the same locking discipline. New `topology-proposals.json` file follows the same `LOCK_EX` write / `LOCK_SH` read pattern. |
+| SSE event transport | `events/transport.py` `event_bridge` | Topology proposal events, correction events, structural diff notes emitted via existing `OrchestratorEvent` protocol. New `EventDomain.TOPOLOGY` domain constant added to `events/protocol.py`. |
+| Dashboard SSE hooks | `packages/dashboard/src/hooks/useEvents.ts` | Dashboard topology panel subscribes to `TOPOLOGY` domain events via existing SSE infrastructure. No new streaming mechanism. |
+| `Recharts` | Already in `package.json` at `>=3.7.0` | Confidence score timeline (RadarChart for rubric dimensions, LineChart for confidence evolution) uses existing Recharts. No new charting library. |
+| `zod` | Already in `package.json` at `>=3.23.8` | Validates topology API response shapes in dashboard API routes. No new validation library. |
+| `jsonschema>=4.26.0` | Already in orchestration `pyproject.toml` | Validates topology JSON schemas at load time. No new install. |
+| `better-sqlite3` | Already in `package.json` at `>=12.6.2` | Dashboard API reads correction history from state files. Same pattern as existing metrics routes. |
+| `asyncio` stdlib | Used throughout orchestration | Correction analysis runs as a background task via `asyncio.create_task()` — existing pattern from `_run_memory_injector()`. No new async library. |
 
-**The problem:** Multiple modules independently read `openclaw.json` via `_find_project_root()`. The `workspace/` path is constructed differently in `project_config.py` (`root / "workspace" / ".openclaw" / project_id`) vs `cli/monitor.py` (`root / "workspace" / ".openclaw" / entry.name`). Constants are split between `config.py` and `project_config.py`.
+---
 
-**CONF-01 — Authoritative path resolver:**
-No new library. Consolidate `get_state_path()` and `get_snapshot_dir()` in `project_config.py` as the single canonical source. Audit callers: `state_engine.py`, `cli/monitor.py`, `cli/migrate_state.py`, `skills/spawn/spawn.py`. Each must call `get_state_path(project_id)` — no inline path construction.
+## Integration Points by Feature
 
-**CONF-02 + CONF-06 — Schema validation with jsonschema:**
+### Feature 1: Topology as Data
+
+**Python model** — `packages/orchestration/src/openclaw/topology/model.py` (new module):
 ```python
-# config_validator.py (new pattern)
-from jsonschema import Draft7Validator, ValidationError
+import networkx as nx
+from networkx.readwrite import json_graph
+import json
 
-OPENCLAW_JSON_SCHEMA = {
-    "type": "object",
-    "required": ["active_project", "agents"],
-    "properties": {
-        "active_project": {"type": "string", "minLength": 1},
-        "agents": {
-            "type": "object",
-            "required": ["list"],
-            "properties": {
-                "list": {"type": "array", "items": {"type": "object"}}
-            }
-        },
-        "memory": {
-            "type": "object",
-            "properties": {
-                "memu_api_url": {"type": "string"},
-                "enabled": {"type": "boolean"}
-            }
-        }
+def build_topology(agents: list[dict], edges: list[dict]) -> nx.DiGraph:
+    G = nx.DiGraph(archetype="balanced", version=1)
+    for agent in agents:
+        G.add_node(agent["id"], role=agent["role"], level=agent["level"])
+    for edge in edges:
+        G.add_edge(edge["source"], edge["target"], delegation_type=edge.get("type", "direct"))
+    return G
+
+def topology_to_json(G: nx.DiGraph) -> dict:
+    return json_graph.node_link_data(G, edges="links")
+
+def topology_from_json(data: dict) -> nx.DiGraph:
+    return json_graph.node_link_graph(data, directed=True, edges="links")
+```
+
+**Persistence** — stored as `topology-proposals.json` in `workspace/.openclaw/{project_id}/` alongside `workspace-state.json`. Same locking discipline. Versioned with `version` integer field on the graph object.
+
+**Wire format** — `node_link_data()` output is directly consumable by `@xyflow/react` with a thin transformer (node `id` → React Flow `id`, edge `source`/`target` already match).
+
+### Feature 2: Structure Proposal Engine
+
+**Structured scoring via instructor**:
+```python
+import instructor
+from anthropic import Anthropic
+from pydantic import BaseModel, Field
+
+class RubricScore(BaseModel):
+    complexity: float = Field(ge=0.0, le=1.0)
+    coordination_overhead: float = Field(ge=0.0, le=1.0)
+    risk_containment: float = Field(ge=0.0, le=1.0)
+    time_to_first_output: float = Field(ge=0.0, le=1.0)
+    cost_estimate: float = Field(ge=0.0, le=1.0)
+    preference_fit: float = Field(ge=0.0, le=1.0)
+    overall_confidence: float = Field(ge=0.0, le=1.0)
+    justification: str
+
+class ProposalCandidate(BaseModel):
+    archetype: str  # "lean" | "balanced" | "robust"
+    topology: dict  # node_link_data output
+    score: RubricScore
+
+client = instructor.from_anthropic(Anthropic())
+
+def score_proposal(archetype: str, topology_json: dict, task_context: str) -> ProposalCandidate:
+    return client.chat.completions.create(
+        model="claude-sonnet-4-6",
+        max_tokens=1024,
+        messages=[{"role": "user", "content": f"Score this {archetype} topology for task: {task_context}"}],
+        response_model=ProposalCandidate,
+    )
+```
+
+**Preference retrieval** — before generating proposals, call `memory_client.retrieve(agent_id="topology_engine", query=task_context, top_k=5)` to inject past correction rationales into the prompt. This is the learning loop.
+
+### Feature 3: Dual Correction System
+
+**Structural diff via deepdiff**:
+```python
+from deepdiff import DeepDiff, Delta
+
+def analyze_correction(original_topology: dict, edited_topology: dict) -> dict:
+    diff = DeepDiff(original_topology, edited_topology, ignore_order=True)
+    return {
+        "added_nodes": list(diff.get("iterable_item_added", {}).keys()),
+        "removed_nodes": list(diff.get("iterable_item_removed", {}).keys()),
+        "changed_edges": list(diff.get("dictionary_item_changed", {}).keys()),
+        "raw_diff": diff.to_dict(),
     }
+```
+
+**Async analysis path** — on hard edit (user directly edits topology), execute immediately then `asyncio.create_task(analyze_and_store_correction(...))`. Analysis runs non-blocking, surfaces a note via SSE only if `overall_confidence` of original was ≥0.8 and the diff is non-trivial (>2 node changes). Follows the same daemon thread pattern as `_run_memory_extractor()` in `state_engine.py`.
+
+### Feature 4: Structural Memory
+
+**Storage** — topology diffs and correction rationales stored via existing `memory_client.memorize()` with:
+- `agent_id="topology_engine"`
+- `project_id` scoped (existing pattern)
+- Content: `json.dumps({"diff": diff_result, "rationale": user_rationale, "original_archetype": archetype})`
+
+**Preference profiling** — retrieved via `memory_client.retrieve(query="topology preferences for {task_type}")` at proposal generation time. No new data store. PostgreSQL + pgvector handles semantic similarity retrieval natively.
+
+**No new tables or schema changes** — memU's `memories` table already has `agent_id`, `project_id`, `content`, `embedding` columns. Topology memories are just another agent namespace.
+
+### Feature 5: Topology Observability (Dashboard)
+
+**React Flow component** — new `TopologyCanvas.tsx` using `@xyflow/react` with dagre layout:
+```typescript
+import ReactFlow, { useNodesState, useEdgesState } from '@xyflow/react';
+import dagre from '@dagrejs/dagre';
+
+// Transform node_link_data from backend → React Flow nodes/edges
+function topologyToFlow(topology: NodeLinkData): { nodes: Node[], edges: Edge[] } {
+  const graph = new dagre.graphlib.Graph();
+  // ... dagre layout calculation
+  return { nodes: layoutedNodes, edges: layoutedEdges };
 }
-
-PROJECT_JSON_SCHEMA = {
-    "type": "object",
-    "required": ["workspace", "tech_stack"],
-    "properties": {
-        "workspace": {"type": "string", "minLength": 1},
-        "tech_stack": {"type": "object"},
-        "l3_overrides": {"type": "object"}
-    }
-}
-
-def validate_openclaw_config(config: dict, config_path: str) -> None:
-    validator = Draft7Validator(OPENCLAW_JSON_SCHEMA)
-    errors = list(validator.iter_errors(config))
-    if errors:
-        raise ConfigValidationError([e.message for e in errors])
 ```
 
-**CONF-03 — Migration CLI:**
-New `openclaw-config` entry point in `pyproject.toml` pointing to `cli/config_migrate.py`. Subcommands: `validate`, `migrate`. Pattern mirrors `cli/migrate_state.py` — idempotent, in-flight guard, sentinel on completion. No new library.
+**Diff timeline** — `CorrectionTimeline.tsx` using Recharts `LineChart` for confidence evolution over corrections. Uses existing Recharts already installed. No new charting library.
 
-**CONF-04 — Env var precedence:**
-Document and enforce: `OPENCLAW_ROOT` (root resolution) > `openclaw.json:active_project` for `OPENCLAW_PROJECT`. Precedence is already implemented; this is a consistency audit with added comments and a test.
-
-**CONF-05 — Constants consolidation:**
-Move `_POOL_CONFIG_DEFAULTS` from `project_config.py` to `config.py`. Add `HEALTH_CHECK_INTERVAL = 30` (Docker HEALTHCHECK default), `MONITOR_POLL_MIN = 0.5`, `MONITOR_POLL_MAX = 5.0` (OBS-05 bounds). One module owns all tunable numbers.
-
-**CONF-07 — Integration test suite:**
-Uses existing `pytest>=7.0` + `pytest-asyncio` + `tmp_path` fixture. Tests cover: path resolution for known project IDs, `ConfigValidationError` raised on bad schema, env var override of `OPENCLAW_ROOT`, migration CLI dry-run and actual migration idempotency.
-
-### Feature Area 2: Docker Health Checks for L3 Containers (REL-09)
-
-**Dockerfile change** — add to `docker/l3-specialist/Dockerfile`:
-```dockerfile
-# Health check: verify the entrypoint marker file exists (L3 creates it on startup)
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD test -f /tmp/.openclaw_alive || exit 1
-```
-
-The `--start-period=60s` accounts for L3 startup time (Claude CLI initialization, git clone, etc.). The check itself is a file-existence test — L3 `entrypoint.sh` writes `/tmp/.openclaw_alive` on successful startup. This avoids network port dependency for a task-runner container.
-
-**Rationale for file-based health check vs HTTP:**
-- L3 containers do not expose HTTP ports
-- `curl` would require the container to bind a port just for health checking
-- `test -f /file` is zero-dependency (bash builtin), instant, and sufficient for "container is up and running" signal
-- Docker health state flows: `starting` (during `--start-period`) → `healthy` → `unhealthy` (if 3 consecutive failures)
-
-**Python SDK read** — in `skills/spawn/pool.py` or `review.py` after container operations:
-```python
-container.reload()  # Refresh attrs from daemon
-health = container.attrs.get("State", {}).get("Health", {})
-health_status = health.get("Status", "none")  # "starting"|"healthy"|"unhealthy"|"none"
-```
-
-`container.reload()` is already called in pool.py to check `container.status`. Adding health check read is a one-line addition.
-
-**Dashboard exposure:** Pass `health_status` field in the existing swarm stream SSE payload. Dashboard `useContainers()` hook already polls every 5s; the new field appears alongside `status` in the container list response.
-
-### Feature Area 3: Cosine Similarity Threshold Calibration (QUAL-07)
-
-**What needs calibrating:** The conflict detection window in `docker/memory/memory_service/scan_engine.py` uses `similarity_min=0.75` and `similarity_max=0.92`. The 0.92 upper bound was flagged at v1.4 as needing empirical tuning.
-
-**No new library.** The calibration is a methodology + test, not a runtime library change:
-
-1. **Test harness** — new `pytest` parametrize test that runs `_find_conflicts()` against a fixture corpus of known-conflicting and known-distinct memory pairs with varying thresholds (0.75, 0.80, 0.85, 0.88, 0.90, 0.92, 0.95).
-2. **Precision/recall metrics** — pure Python: `precision = true_positives / (true_positives + false_positives)`, `recall = true_positives / (true_positives + false_negatives)`. F1 score derivation.
-3. **Fixture generation** — small deterministic corpus (20-30 pairs) with known similarity ground truth. Embeddings can be synthetic numpy arrays for the unit test; real pgvector embeddings used in integration test against a live memU instance.
-4. **Outcome** — calibrated `similarity_min` and `similarity_max` constants moved to `config.py` as `CONFLICT_SIMILARITY_MIN` and `CONFLICT_SIMILARITY_MAX`. Currently 0.75/0.92 — final values determined by test results.
-
-**Why this is the right approach:** NLP research consistently shows cosine similarity thresholds are domain-specific with no universal value. The [0.75, 0.85] range is typical for OOD detection on sentence embeddings; OpenClaw's task-description embeddings may differ. Empirical testing on the actual corpus is the only reliable calibration method (confirmed by ACL/EMNLP literature).
-
-**`numpy` usage note:** `numpy` is already a transitive dep of `pgvector`/`memu` in the memory service Docker container. The calibration test can use `numpy` in the test environment only — it must NOT be added to orchestration's `pyproject.toml` dependencies.
-
-### Feature Area 4: Adaptive Monitor Poll Interval (OBS-05)
-
-**No new library.** Pure stdlib pattern using `time.monotonic()` for elapsed time tracking and `min()`/`max()` for interval clamping.
-
-**Algorithm** (implemented in `cli/monitor.py` `tail_state()`):
-```python
-# Constants from config.py
-MONITOR_POLL_MIN = 0.5   # seconds — floor when activity is high
-MONITOR_POLL_MAX = 5.0   # seconds — ceiling when idle
-MONITOR_BACKOFF_FACTOR = 1.5  # interval growth factor on idle cycle
-MONITOR_ACTIVITY_RESET = True  # reset to POLL_MIN on any new activity
-
-interval = MONITOR_POLL_MIN
-last_activity_time = time.monotonic()
-
-while True:
-    had_activity = _poll_all_projects(...)  # returns bool
-    if had_activity:
-        interval = MONITOR_POLL_MIN
-        last_activity_time = time.monotonic()
-    else:
-        idle_secs = time.monotonic() - last_activity_time
-        # Back off exponentially up to MONITOR_POLL_MAX
-        interval = min(interval * MONITOR_BACKOFF_FACTOR, MONITOR_POLL_MAX)
-
-    time.sleep(interval)
-```
-
-**Integration point:** `tail_state()` in `cli/monitor.py` currently calls `time.sleep(interval)` with a fixed interval passed from CLI args. The adaptive version replaces the fixed sleep with the above pattern. The `--interval` CLI arg becomes the `POLL_MIN` override (when user specifies, use as floor instead of default).
-
-**Dashboard SSE stream:** The dashboard monitor (`packages/dashboard/src/app/api/swarm/stream/route.ts`) polls via `useContainers()` at a fixed 5s interval on the client side. This is a separate codepath — OBS-05 only targets the CLI monitor, not the dashboard SSE. Dashboard polling remains fixed.
+**SSE subscription** — `useTopology()` hook subscribes to `EventDomain.TOPOLOGY` events via existing `useEvents.ts` infrastructure.
 
 ---
 
 ## Installation
 
 ```bash
-# Add jsonschema to orchestration dependencies
+# Python — orchestration package
 # Edit packages/orchestration/pyproject.toml:
-# dependencies = ["docker>=7.1.0", "httpx", "jsonschema>=4.26.0"]
+# dependencies = [
+#   "docker>=7.1.0", "httpx", "jsonschema>=4.26.0",
+#   "networkx>=3.6.1",
+#   "deepdiff>=8.6.1",
+#   "instructor>=1.14.5",
+# ]
 
-uv pip install "jsonschema>=4.26.0"
+uv pip install "networkx>=3.6.1" "deepdiff>=8.6.1" "instructor>=1.14.5"
 
-# All other v1.5 features require NO new pip installs.
-# REL-09: Dockerfile instruction change only (no Python package)
-# QUAL-07: Calibration test only (numpy available in memory service container already)
-# OBS-05: stdlib time.monotonic() only
-```
+# Verify
+python3 -c "import networkx; print(networkx.__version__)"  # 3.6.1
+python3 -c "import deepdiff; print(deepdiff.__version__)"  # 8.6.1
+python3 -c "import instructor; print(instructor.__version__)"  # 1.14.5
 
-Verify single new dep:
-```bash
-python3 -c "import jsonschema; print(jsonschema.__version__)"
-# Expected: 4.26.0 (or later)
+# TypeScript — dashboard
+# Edit packages/dashboard/package.json dependencies:
+# "@xyflow/react": "^12.10.1",
+# "@dagrejs/dagre": "^2.0.4",
+# "elkjs": "^0.11.1"  (optional, lazy-load for proposal comparison view)
 
-# Confirm all other needed modules are stdlib
-python3 -c "import time, os, json, argparse; print('all stdlib OK')"
+cd packages/dashboard
+pnpm add @xyflow/react @dagrejs/dagre elkjs
 ```
 
 ---
@@ -229,12 +227,15 @@ python3 -c "import time, os, json, argparse; print('all stdlib OK')"
 
 | Recommended | Alternative | When to Use Alternative |
 |-------------|-------------|-------------------------|
-| `jsonschema>=4.26.0` with `Draft7Validator` | Hand-rolled field checks (current `config_validator.py`) | Keep hand-rolled only if you need custom error messages that jsonschema cannot produce. jsonschema's `iter_errors()` gives field paths — sufficient for actionable errors. The current hand-rolled approach was appropriate for v1.2 (2 fields), but CONF-02 adds 8+ schema constraints making declarative validation the lower-maintenance choice. |
-| `jsonschema>=4.26.0` | `pydantic>=2.0` | Use pydantic if OpenClaw config objects need to be passed as typed Python objects throughout the codebase. jsonschema validates raw dicts (which is what config files are) without creating model classes. At v1.5 scope, raw dict access is sufficient and pydantic would require refactoring all callers. |
-| `jsonschema>=4.26.0` | `jsonschema-rs` (Rust-based) | Use jsonschema-rs if validation throughput exceeds 10,000 configs/second. OpenClaw validates at most 2 config files on startup. Pure-Python jsonschema is ample. |
-| File-based `HEALTHCHECK` (`test -f /tmp/.openclaw_alive`) | HTTP-based `HEALTHCHECK` (`curl -f http://localhost:PORT/health`) | Use HTTP check if L3 containers ever expose a port (e.g., future local API). Current L3 containers are task runners with no listening port — file-based is simpler and zero-dependency. |
-| Exponential backoff with `min(interval * 1.5, MAX)` | `backoff` PyPI library | Use backoff library if retry/backoff is needed across many functions with decorator syntax. OBS-05 is one polling loop — inline `min()` calculation needs no library. |
-| Empirical calibration test harness | Static threshold (keep 0.92) | Keep static only if no real memory corpus is available for testing. The v1.4 decision log explicitly flags 0.92 as "revisit" — QUAL-07 mandates calibration rather than accepting the unvalidated value. |
+| `networkx>=3.6.1` | `igraph` (Python) | Use igraph if topologies exceed 1,000+ nodes and algorithmic performance matters. OpenClaw topologies are ≤20 nodes (L1=1, L2=1-3, L3=1-10) — networkx's pure Python is ample and has built-in JSON serialization. igraph requires C extensions and changes the API completely. |
+| `networkx>=3.6.1` | Plain Python `dict` with adjacency lists | Acceptable for simple topologies but loses graph algorithm support (`nx.is_dag()`, `nx.topological_sort()`, cycle detection) which are needed to validate proposed topologies. Migration to networkx mid-project is more expensive than adopting it upfront. |
+| `deepdiff>=8.6.1` | `dictdiffer` | Use dictdiffer if you only need diff reporting and not patch application. deepdiff's `Delta` class is required for the "reconstruct edited topology from original + diff" use case in the correction analysis path. dictdiffer has no equivalent. |
+| `deepdiff>=8.6.1` | Custom dict comparison | Custom comparison is viable but requires re-implementing typed change categories (added/removed/changed), path extraction, and serialization. deepdiff provides all of this in 1 function call. |
+| `instructor>=1.14.5` | Direct `tool_use` with manual Pydantic validation | Direct tool_use works but requires custom retry logic, schema generation, and response parsing. instructor provides all three, has 3M+ monthly downloads, and is battle-tested with Anthropic specifically. For a scoring rubric that must be validated on every proposal, the retry-on-validation-failure behavior of instructor is essential. |
+| `instructor>=1.14.5` | Anthropic native structured outputs (beta) | Anthropic's structured outputs (beta, Nov 2025) uses `anthropic-beta: structured-outputs-2025-11-13` header. Viable but still in public beta as of Mar 2026. instructor wraps this internally and adds retry logic. Use native structured outputs directly in v2.1+ once it exits beta. |
+| `@xyflow/react>=12.10.1` | `cytoscape.js` + `react-cytoscapejs` | Cytoscape is better for large graph analysis (1000+ nodes, complex algorithms). React Flow is better for interactive node-based UIs with custom node components — which is exactly what topology observability needs (custom nodes showing agent role, container status, confidence score). Cytoscape's React integration is also less maintained. |
+| `@xyflow/react>=12.10.1` | `reagraph` (WebGL) | reagraph uses WebGL for large graphs (10,000+ nodes). OpenClaw topologies are ≤20 nodes — WebGL overhead is unjustified. React Flow's SVG rendering is simpler to style with Tailwind. |
+| `@dagrejs/dagre` | `elkjs` (for default layout) | ELK is more capable but heavier. Use elkjs only for the side-by-side multi-proposal comparison panel where 3 topologies must be laid out simultaneously without overlap. Default single-topology view uses dagre (lighter, simpler API). |
 
 ---
 
@@ -242,35 +243,37 @@ python3 -c "import time, os, json, argparse; print('all stdlib OK')"
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| `pydantic` for config validation | Creates typed model classes requiring refactoring all dict-access callers throughout codebase. Disproportionate change for a config validation improvement. | `jsonschema.Draft7Validator` validates raw dicts in-place — zero caller changes needed. |
-| `numpy` in `packages/orchestration/` | Already explicitly rejected in v1.4 and v1.3 research. Adds 15MB+ compiled dep to what is otherwise a zero-C-extension Python package. Vector math for QUAL-07 calibration runs only in the memory service Docker container where numpy is already present transitively. | Calibration test imports numpy only in `tests/test_threshold_calibration.py`, not in orchestration production code. |
-| HTTP `HEALTHCHECK` with `curl` in L3 Dockerfile | Requires installing curl in the image (already present) AND L3 container exposing a port just for health checking. Port binding is unnecessary complexity for a task-runner container. | `test -f /tmp/.openclaw_alive` — bash builtin, no port, no network, instant. |
-| `APScheduler` or similar for adaptive polling | Library dependency for a pattern expressible in 5 lines of stdlib code. OBS-05 is one while-loop with exponential backoff — not a multi-job scheduling problem. | `time.monotonic()` + `time.sleep()` + inline interval calculation. |
-| `ConfigArgParse` or similar config-arg bridges | Introduces a new CLI framework over the existing argparse patterns. All env var / config file precedence is already implemented via `os.environ.get()` — consistent with the locked v1.1 decision to use argparse subparsers. | `os.environ.get("OPENCLAW_ROOT")` + argparse (already established pattern). |
-| `click` for migration CLI | Inconsistent with all existing CLI modules (`monitor.py`, `project.py`, `suggest.py`) which use argparse. Introducing click creates two CLI frameworks in one package. | `argparse.ArgumentParser` + `add_subparsers()` — established in-codebase pattern. |
+| `pydantic-graph` (pydantic-ai sub-library) | Designed for state machine workflow execution graphs, not data model graphs. API is oriented around running nodes as async callables, not storing/serializing/diffing topology structures as data. Confusingly named but wrong tool. | `networkx.DiGraph` for topology data model + `pydantic.BaseModel` for scoring/proposal schemas. |
+| `graph-tool` (Python) | Requires compiled C++ extension, complex install, only available via conda or manual build. Completely unjustified for ≤20 node topologies. | `networkx>=3.6.1` — pure Python, pip installable. |
+| `reactflow` (npm package) | The old package name. Replaced by `@xyflow/react` in v12. Using `reactflow` pins to v11 which is in maintenance mode and does not support React 19. | `@xyflow/react>=12.10.1`. |
+| Adding new PostgreSQL tables for topology | topology proposals are already expressible as JSON files under the Jarvis Protocol state directory. Adding Postgres tables would require schema migrations, a new ORM, and changes to the memU service — disproportionate for what is essentially structured JSON. | Store as `topology-proposals.json` alongside `workspace-state.json` under existing `fcntl.flock` discipline. Use memU only for the preference/correction memory (free-text narratives + embeddings). |
+| New embedding model or vector store | memU already runs PostgreSQL + pgvector with embeddings. Structural preferences retrieved via semantic similarity fit this model exactly. | Reuse existing `memory_client.retrieve()` with `agent_id="topology_engine"` namespace. Zero infrastructure change. |
+| `numpy` in orchestration package | Established constraint from v1.3–v1.5 research. Not needed for topology math (networkx handles graph algorithms natively, scoring is float arithmetic). | Float arithmetic via stdlib `statistics.mean()` if aggregation is needed. |
+| A separate "proposal store" database | The dashboard already reads from state files via `better-sqlite3` for metrics. A new database for proposals adds operational complexity with no advantage at this scale. | JSON files in state directory, served by new `/api/topology` Next.js route (same pattern as `/api/metrics`). |
 
 ---
 
 ## Stack Patterns by Variant
 
-**If `openclaw.json` schema grows beyond simple type checks (e.g., cross-field validation):**
-- Use jsonschema `if/then/else` keywords within the Draft 7 schema
-- Example: `if active_project is set, then projects/<id>/project.json must exist`
-- Implement as a post-schema custom validator function (not a separate library)
+**If the proposal engine needs to batch-score all three archetypes in parallel:**
+- Use `asyncio.gather()` with three concurrent `instructor` calls
+- Each archetype scored independently — no shared state between calls
+- Respect Anthropic rate limits; add `asyncio.Semaphore(2)` if needed
 
-**If the HEALTHCHECK file approach proves unreliable (container dies before writing marker):**
-- Add the `test -f` check as a fallback to the entrypoint exit trap
-- Alternative: check for the process itself via `pgrep -f entrypoint` or check for a known artifact (git repo, virtualenv)
-- Do NOT switch to HTTP check unless L3 containers expose ports for other reasons
+**If topology JSON exceeds 10KB (large swarms with many L3s):**
+- Store topology in a separate `topology-{version}.json` file rather than embedding in workspace-state
+- The `topology-proposals.json` index file holds metadata (archetype, confidence, timestamp) with a `file` pointer
+- React Flow handles graphs up to ~500 nodes without performance issues
 
-**If adaptive poll interval needs to be configurable per-project:**
-- Add `monitor.poll_min` and `monitor.poll_max` to `project.json`'s `l3_overrides`
-- Read via `get_pool_config()` extension (follow existing override pattern)
-- For v1.5, global constants in `config.py` are sufficient
+**If correction analysis should block (synchronous) rather than async:**
+- Replace `asyncio.create_task()` with direct `await analyze_correction()`
+- Only do this for testing or if the correction note must appear before the user proceeds
+- Default behavior: async/non-blocking to respect user authority (design decision from PROJECT.md)
 
-**If jsonschema validation errors need more human-friendly formatting:**
-- Use `jsonschema.exceptions.best_match(errors)` to surface the most relevant error when multiple errors exist
-- Wrap in `ConfigValidationError` as before — callers already handle that exception type
+**If `@dagrejs/dagre` layout produces poor results for multi-tier hierarchy:**
+- Switch the proposal comparison panel to `elkjs` with `algorithm: "layered"` and `elk.direction: "DOWN"`
+- ELK's layered algorithm handles the L1→L2→L3 hierarchy better than dagre for >2 levels
+- Keep dagre for the single-topology default view (simpler, faster)
 
 ---
 
@@ -278,33 +281,36 @@ python3 -c "import time, os, json, argparse; print('all stdlib OK')"
 
 | Package | Compatible With | Notes |
 |---------|-----------------|-------|
-| `jsonschema>=4.26.0` | Python >=3.10 | Current release 4.26.0 (Jan 7 2026). No C extensions. Works with Python 3.10–3.14 (OpenClaw's target range). Lazy `iter_errors()` works on Python 3.10+. |
-| `docker>=7.1.0` (existing) | Python >=3.10 | `container.attrs["State"]["Health"]` available in all docker-py 7.x releases. No version change needed. |
-| `jsonschema` Draft 7 | `openclaw.json` current structure | Draft 7 is the stable, well-supported target. Draft 2020-12 is also available but Draft 7 is sufficient for the schema complexity involved. |
-| `time.monotonic()` | Python >=3.3 | Available on all supported Python versions. Monotonic clock — immune to system clock adjustments. |
-| `test -f` in `HEALTHCHECK CMD` | Docker 17.05+ | HEALTHCHECK instruction stable since Docker 1.12. `--start-period` (used for L3 grace period) requires Docker 17.05+. Docker 29.1.5 fully supports all options. |
+| `networkx>=3.6.1` | Python >=3.11 | v3.6.1 requires Python >=3.11 (upgrade from 3.10). Confirm `packages/orchestration/pyproject.toml` `requires-python` is updated to `>=3.11`. All existing code is compatible — networkx uses no deprecated 3.10 features in OpenClaw's scope. |
+| `deepdiff>=8.6.1` | Python >=3.9 | Compatible with Python 3.11. No conflicts with existing deps. |
+| `instructor>=1.14.5` | `anthropic>=0.40` | instructor pulls in `anthropic` as a dep. If the existing environment has anthropic<0.40, instructor's install will upgrade it. Verify no breaking changes in the anthropic SDK version used by existing agent runners. |
+| `@xyflow/react>=12.10.1` | React 19, Next.js 15 | v12 explicitly supports React 19 (confirmed via official blog). Next.js 15 App Router compatible. Dashboard already on React 19 (`"react": "^19"` in package.json). |
+| `@dagrejs/dagre>=2.0.4` | `@xyflow/react>=12` | Standard pairing per React Flow documentation. `@dagrejs/dagre` v2 is the maintained fork — do not use the unmaintained `dagre` v0.8.x package. |
+| `elkjs>=0.11.1` | `@xyflow/react>=12` | ELK runs in a Web Worker in production for non-blocking layout computation. Next.js requires `ssr: false` in dynamic import for the ELK worker. |
 
 ---
 
 ## Sources
 
-- PyPI jsonschema 4.26.0 — current version (Jan 7 2026), Python >=3.10, MIT license, no C extensions (HIGH confidence, fetched 2026-02-25)
-- [jsonschema official docs — Schema Validation](https://python-jsonschema.readthedocs.io/en/stable/validate/) — `Draft7Validator`, `iter_errors()`, `best_match()` (HIGH confidence)
-- [Docker HEALTHCHECK docs](https://gdevops.frama.io/containerization/dockerfile/instructions/HEALTHCHECK/HEALTHCHECK.html) — `--interval`, `--timeout`, `--start-period`, `--retries` parameters (HIGH confidence)
-- [Docker HEALTHCHECK best practices 2026](https://oneuptime.com/blog/post/2026-01-30-docker-health-check-best-practices/view) — file-based vs HTTP check patterns (MEDIUM confidence)
-- docker-py SDK docs (7.1.0) — `container.attrs` raw response structure; `container.reload()` for refreshing attrs (HIGH confidence via WebSearch verification against SDK docs)
-- `container.attrs["State"]["Health"]["Status"]` pattern — verified via WebSearch against multiple practical examples showing "starting"/"healthy"/"unhealthy"/"none" status values (MEDIUM confidence, multiple sources agree)
-- ACL/EMNLP literature on cosine similarity thresholds — domain-specific calibration required, no universal value; [0.75, 0.85] typical for sentence embeddings (MEDIUM confidence, academic sources via WebSearch)
-- `/home/ollie/.openclaw/docker/memory/memory_service/scan_engine.py` — confirmed `similarity_min=0.75`, `similarity_max=0.92` with `cosine_topk()` from memu; calibration target is these two constants (HIGH confidence, direct code inspection)
-- `/home/ollie/.openclaw/packages/orchestration/src/openclaw/config.py` — confirmed all current constants; `POLL_INTERVAL = 1.0` is the fixed interval OBS-05 makes adaptive (HIGH confidence, direct code inspection)
-- `/home/ollie/.openclaw/packages/orchestration/src/openclaw/cli/monitor.py` — confirmed `time.sleep(interval)` call pattern and `POLL_INTERVAL` import; adaptive replacement point identified (HIGH confidence, direct code inspection)
-- `/home/ollie/.openclaw/packages/orchestration/src/openclaw/config_validator.py` — confirmed current hand-rolled validation; jsonschema replaces field-by-field checks (HIGH confidence, direct code inspection)
-- `/home/ollie/.openclaw/packages/orchestration/src/openclaw/project_config.py` — confirmed `_POOL_CONFIG_DEFAULTS` lives here (not config.py), divergence from config.py to fix in CONF-05 (HIGH confidence, direct code inspection)
-- `/home/ollie/.openclaw/docker/l3-specialist/Dockerfile` — confirmed no HEALTHCHECK instruction present; `l3worker` non-root user confirmed; `bash /entrypoint.sh` confirmed (HIGH confidence, direct code inspection)
-- [backoff PyPI](https://pypi.org/project/backoff/) — reviewed and rejected for OBS-05; inline `min()` calculation is sufficient (MEDIUM confidence)
+- [networkx PyPI](https://pypi.org/project/networkx/) — v3.6.1 current, Python >=3.11, Dec 2025 (HIGH confidence, PyPI index verified)
+- [NetworkX JSON serialization docs](https://networkx.org/documentation/stable/reference/readwrite/json_graph.html) — `node_link_data`, `node_link_graph` API (HIGH confidence, official docs)
+- [deepdiff PyPI](https://pypi.org/project/deepdiff/) — v8.6.1 current, Python >=3.9 (HIGH confidence, PyPI index verified)
+- [deepdiff 8.6.1 docs](https://zepworks.com/deepdiff/current/) — `DeepDiff`, `Delta`, `to_dict()` API (HIGH confidence, official docs)
+- [instructor PyPI](https://pypi.org/project/instructor/) — v1.14.5 current, Jan 2026 (HIGH confidence, PyPI index verified)
+- [instructor Anthropic integration](https://python.useinstructor.com/integrations/anthropic/) — `Mode.TOOLS`, `from_anthropic()` pattern (HIGH confidence, official docs)
+- [Anthropic structured outputs beta](https://platform.claude.com/docs/en/build-with-claude/structured-outputs) — `structured-outputs-2025-11-13` beta header (MEDIUM confidence — still in beta as of Mar 2026)
+- [@xyflow/react npm](https://www.npmjs.com/package/@xyflow/react) — v12.10.1 current (HIGH confidence, npm registry verified)
+- [React Flow v12 release notes](https://xyflow.com/blog/react-flow-12-release) — React 19 + Next.js SSR support confirmed (HIGH confidence, official blog)
+- [@dagrejs/dagre npm](https://www.npmjs.com/package/@dagrejs/dagre) — v2.0.4 current (HIGH confidence, npm registry verified)
+- [elkjs npm](https://www.npmjs.com/package/elkjs) — v0.11.1 current (HIGH confidence, npm registry verified)
+- Codebase inspection of `packages/orchestration/pyproject.toml` — confirmed existing deps: `docker>=7.1.0`, `httpx`, `jsonschema>=4.26.0` (HIGH confidence, direct inspection)
+- Codebase inspection of `packages/dashboard/package.json` — confirmed existing: `recharts>=3.7.0`, `zod>=3.23.8`, `better-sqlite3>=12.6.2`, `react: ^19`, `next: 15.x` (HIGH confidence, direct inspection)
+- Codebase inspection of `packages/orchestration/src/openclaw/state_engine.py` — confirmed `fcntl.flock`, `asyncio.create_task` patterns for new feature integration (HIGH confidence, direct inspection)
 
 ---
 
-*Stack research for: OpenClaw v1.5 Config Consolidation*
-*Researched: 2026-02-25*
-*Previous baseline (v1.0–v1.4): Python 3 stdlib + docker>=7.1.0 + httpx + asyncio + Next.js 16 + memU/FastAPI/PostgreSQL+pgvector — all unchanged. v1.4 added no new deps (stdlib-only). v1.5 adds jsonschema>=4.26.0 as the sole new dependency.*
+*Stack research for: OpenClaw v2.0 Structural Intelligence*
+*Researched: 2026-03-03*
+*Previous baseline (v1.0–v1.6): Python stdlib + docker + httpx + jsonschema + Next.js 15 + memU/FastAPI/PostgreSQL+pgvector — all unchanged.*
+*v2.0 net-new Python deps: networkx>=3.6.1, deepdiff>=8.6.1, instructor>=1.14.5*
+*v2.0 net-new npm deps: @xyflow/react>=12.10.1, @dagrejs/dagre>=2.0.4, elkjs>=0.11.1*

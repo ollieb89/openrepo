@@ -1,26 +1,27 @@
 # Feature Research
 
-**Domain:** AI swarm orchestration — v1.5 Config Consolidation
-**Researched:** 2026-02-25
-**Confidence:** HIGH (codebase analysis + verified patterns from official sources)
+**Domain:** Multi-agent orchestration — v2.0 Structural Intelligence
+**Researched:** 2026-03-03
+**Confidence:** MEDIUM-HIGH (verified against published research, ecosystem analysis, and codebase inspection)
 
 ---
 
 ## Context: What This Milestone Adds
 
-v1.4 shipped Operational Maturity (graceful shutdown, memory health monitoring, L1 SOUL suggestions,
-delta snapshots). The system is behaviorally robust but carries config debt from four milestones of
-organic growth:
+v1.6 shipped the autonomy framework (confidence scoring, self-directed decomposition, escalation).
+The system can execute, but the structure it executes against is designed entirely by humans.
 
-1. **Path divergence** — three different root resolution strategies exist across the codebase: `project_config.py::_find_project_root()`, `spawn.py::Path(__file__).parent.parent.parent`, and `init.py::find_project_root()` (walk-up). These agree currently but can diverge silently if the package is installed somewhere unexpected.
+v2.0 makes the system propose its own structure — before execution, with inspectable reasoning, and
+learning from corrections. Five capability areas are in scope:
 
-2. **Schema not enforced at startup** — `openclaw.json` is loaded and partially validated (agent hierarchy), but many fields (gateway config, memory config, channels) have no validation at all. Bad values are silently ignored until they cause a runtime error deep in the call stack.
+1. **Topology as Data** — swarm structures as explicit, serializable, versionable, diffable objects
+2. **Structure Proposal Engine** — multi-proposal with scored rubric and archetype rationale
+3. **Dual Correction System** — soft feedback (re-propose) + hard direct edit (execute, diff-analyze async)
+4. **Structural Memory** — topology diffs, correction rationales, preference profiling
+5. **Topology Observability** — proposed/approved structures, correction history, confidence evolution
 
-3. **Scattered constants** — `POLL_INTERVAL`, `LOCK_TIMEOUT`, `CACHE_TTL_SECONDS` live in `config.py`; pool defaults live in `project_config.py` (`_POOL_CONFIG_DEFAULTS`); cosine similarity thresholds live in `scan_engine.py` hardcoded; staleness thresholds live in the dashboard API handler. No single authoritative location.
-
-4. **Three deferred items** (REL-09, QUAL-07, OBS-05) — Docker health checks, calibrated cosine threshold, and adaptive monitor polling were deferred from v1.4. They fit naturally here.
-
-None of the four feature areas require new external services. All build on existing infrastructure.
+This document covers table stakes, differentiators, and anti-features for each capability area,
+with complexity ratings and dependency mapping to existing OpenClaw infrastructure.
 
 ---
 
@@ -28,120 +29,178 @@ None of the four feature areas require new external services. All build on exist
 
 ### Table Stakes (Users Expect These)
 
-Features that a production config layer must provide. Missing them = config bugs are impossible to
-diagnose and easy to introduce silently.
+Features that any pre-execution structural intelligence system must provide. Missing these means the
+system feels like a toy or a black box.
 
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| Single authoritative path resolver | All components must agree on where `workspace/`, `projects/`, `agents/` live. Divergent resolvers mean "it works on my machine" bugs that are invisible in tests | MEDIUM | Expose one `get_project_root()` function from `project_config.py`; update all callers. `spawn.py` line 433 uses `Path(__file__).parent.parent.parent` independently — this is the primary divergence point |
-| Strict fail-fast startup validation for `openclaw.json` | Users expect bad config to produce a clear error message on startup, not a silent misbehavior 30 minutes later | MEDIUM | Extend `config_validator.py::validate_agent_hierarchy()` to also validate gateway port, memory.memu_api_url format, channels fields. Raise `ConfigValidationError` with actionable messages |
-| Strict fail-fast startup validation for `project.json` | Same expectation — missing `workspace` or malformed `tech_stack` should fail immediately with an actionable message | LOW | `validate_project_config()` already catches `workspace` and `tech_stack`. Extend to validate `l3_overrides` required types (currently advisory warnings, promote to errors for unknown keys) |
-| Constants consolidated into one module | Operators and developers should not need to hunt across three files to find timeout or threshold values | LOW | Move all defaults into `config.py`. Pool defaults from `project_config.py`, cosine thresholds from `scan_engine.py`, dashboard staleness defaults from API handler. Single import path for all tunable values |
-| Env var precedence documented and enforced | `OPENCLAW_ROOT`, `OPENCLAW_PROJECT`, `OPENCLAW_LOG_LEVEL`, `OPENCLAW_ACTIVITY_LOG_MAX` have different scopes; undefined precedence order causes confusion when debugging | LOW | Document in `config.py` docstring. Enforce: env vars > config file values > coded defaults, consistently. Currently `OPENCLAW_ROOT` is checked in `_find_project_root()` but not all helpers respect it |
-| Migration CLI for existing configs | Users with existing `openclaw.json` files need a non-destructive upgrade path when schema changes | MEDIUM | `openclaw-migrate --dry-run` reads existing config, reports what would change, writes new version. Not a database migration — just JSON schema normalization. Backed by the existing argparse CLI pattern |
-| Config integration test suite | Regressions in path resolution and validation are silent — no test coverage verifies the resolver agrees across all call sites | MEDIUM | Tests for: path resolver agreement, validation error messages, env var override semantics, migration CLI idempotency |
+| Feature | Why Expected | Complexity | Infrastructure Dependency |
+|---------|--------------|------------|--------------------------|
+| Topology serialization to JSON | Users need to inspect, version-control, and diff structures without running the system. Research shows "Agent Spec" and similar approaches treat agent configs as portable, platform-agnostic serializable objects (HIGH confidence — arxiv 2510.04173) | MEDIUM | Extends `workspace-state.json` pattern from `state_engine.py` |
+| Multiple scored candidates (not one answer) | In orchestration design, "best answer" depends on context the system cannot fully know. Multi-candidate output with scoring criteria surfaces the reasoning so humans can make informed choices. AI evaluation research shows rubric-based scoring is the accepted pattern (MEDIUM confidence — Arize/Galileo patterns) | MEDIUM | Extends `autonomy/confidence.py` scoring model |
+| Human approval gate before execution | Pre-execution human review is table stakes for consequential structure changes. HITL research confirms it is the dominant pattern for high-stakes agentic decisions (HIGH confidence — Microsoft reference architecture, AWS patterns) | LOW | Fits into existing L2 → L3 spawn gate in `spawn.py` |
+| Soft feedback pathway (re-propose) | Users expect to say "try again with fewer agents" without rewriting JSON manually. This is the baseline interactive pattern in HITL orchestration systems | LOW | New API endpoint; calls proposal engine again with feedback context |
+| Hard edit pathway (execute immediately) | Users who know what they want should be able to edit the structure directly and proceed without friction. Execute-then-analyze is the standard pattern (respects user authority) | MEDIUM | Requires edit input, topology validation, then spawn |
+| Structured scoring rubric (visible dimensions) | Scoring must be transparent to be trusted. Research shows users disengage from opaque recommendations — criteria must be named and each score justified, not just a single confidence number | LOW | New data field; extends existing confidence score model |
+| Topology version history | "What changed between the approved structure and what was actually spawned?" is a basic audit question. Version history is standard in any configuration-as-code system | MEDIUM | New persistence layer; reuses `state_engine.py` flock pattern |
+| Topology diff display | When a user edits a proposed topology, they need to see what changed. Structural diff is the same expectation as git diff for code | MEDIUM | Python `deepdiff` or JSON patch (RFC 6902); dashboard display |
+| Correction storage | The system must store what correction was made, by whom, and what topology it produced. Without this, learning is impossible and the audit trail is missing | LOW | New storage schema; integrates with existing memU REST API |
 
 ### Differentiators (Competitive Advantage)
 
-Features that improve operator trust and system reliability beyond baseline config hygiene.
+Features that make OpenClaw's structural intelligence meaningfully better than a basic
+"suggest a plan" prompt.
 
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| Docker health checks for L3 containers | L2 and the dashboard can distinguish "container running but stuck" from "container healthy and making progress". Without HEALTHCHECK, `docker inspect` only reports if the process is alive, not if it's doing useful work | MEDIUM | Add `HEALTHCHECK` to `docker/l3-specialist/Dockerfile`. Script checks for Jarvis state file existence and last `updated_at` recency. Reports unhealthy if state has not been written in >60s. Surfaces in `docker ps` output and dashboard container list |
-| Adaptive monitor poll interval | Monitor CPU usage drops to near zero during idle periods (no active L3 tasks); responsive during active periods without fixed 1s overhead across all projects | MEDIUM | Replace fixed `time.sleep(interval)` in `tail_state()` with exponential backoff: 0.5s when activity seen → step up to 5s when quiescent → back to 0.5s on any new activity. State: `consecutive_quiet_cycles` counter per project. Max interval configurable |
-| Cosine similarity threshold calibration | 0.92 (near-duplicate) and 0.75 (conflict) thresholds were chosen heuristically without empirical tuning. Miscalibrated thresholds produce false positive conflict alerts (noisy) or miss real conflicts (silent quality degradation) | LOW-MEDIUM | Add a `calibrate-thresholds` sub-command to `openclaw-memory` or new `openclaw-health` CLI. Samples existing memory store, computes similarity distribution, recommends thresholds at configurable percentiles. No automatic adjustment — outputs recommended values for operator review |
+| Feature | Value Proposition | Complexity | Infrastructure Dependency |
+|---------|-------------------|------------|--------------------------|
+| Fixed archetype system (Lean / Balanced / Robust) | Most orchestration frameworks produce one-off outputs with no interpretable shape. Named archetypes make proposals legible — users learn what "Lean" means over time, reducing cognitive load on each decision. Research on multi-agent architectures shows archetypes (hierarchical, swarm, pipeline) are the dominant conceptual model, but systems rarely make them explicit and comparable | MEDIUM | New archetype engine in orchestration package |
+| Per-dimension rubric scoring with justification | A composite confidence number is not inspectable. Per-dimension scoring (complexity, coordination overhead, risk containment, time-to-first-output, cost estimate, preference fit, overall confidence) lets users understand *why* Balanced scores higher than Lean on a given task. Rubric research confirms 7 primary dimensions is the operationally optimal range before cognitive overload (MEDIUM confidence — Galileo agent evaluation 2026) | MEDIUM | New scoring data model; LLM prompt for justification text |
+| Async diff analysis after direct edits | When a user edits a proposal and runs it, OpenClaw should asynchronously compare the edit against what it would have proposed and surface non-blocking notes when divergence is high-confidence and significant. This closes the learning loop without slowing execution. No existing framework does this | HIGH | New async task; requires topology diff engine; memU for storage |
+| Preference profiling from correction history | By accumulating diffs between proposals and corrections, the system builds a preference profile per project. Future proposals are then biased toward known preferences. Research on PRELUDE-style learning from user edits confirms this is viable with structured diff inputs (MEDIUM confidence — RLHF/HITL literature 2025) | HIGH | Requires structural memory store + LLM analysis of correction diffs |
+| Confidence evolution timeline | Showing how the system's structural confidence has changed across tasks for a project makes learning visible and auditable. Users can see whether corrections are improving proposal quality | MEDIUM | Requires time-series storage of per-proposal confidence scores |
+| Structural memory as retrieval context | Before proposing a structure, retrieve similar past topologies and their outcomes from memU. Use successful past structures as positive anchors, failed ones as negative examples. This is the "memory-augmented recommendation" pattern from 2025 research (MEDIUM confidence — MAP framework, MARM) | HIGH | Integrates with existing `memory_client.py` and memU REST API |
+| Non-blocking insight surfacing | When async diff analysis completes and finds significant divergence, surface a non-blocking note in the dashboard rather than blocking execution or raising an alert. This respects user authority while building the learning dataset | MEDIUM | SSE event to dashboard; new event type in `events/protocol.py` |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| Auto-hot-reload `openclaw.json` without restart | "Config changes should take effect immediately" | `openclaw.json` contains agent hierarchy, gateway settings, and memory API URL — these are startup-time dependencies. Hot-reloading mid-run risks inconsistent state between components that have already used the old values | Pool config (`project.json l3_overrides`) already supports hot-reload via `get_pool_config()` per-call. That is the right scope. `openclaw.json` changes legitimately require restart |
-| Pydantic for config validation | Type-safe, generates errors automatically | Adds an external dependency to a package that currently has no external Python deps. The existing `validate_project_config()` pattern with explicit error collection is equivalent for JSON config validation | Keep `config_validator.py` with the existing collect-all strategy. Add more validations to the existing function, not a new dependency |
-| CWD-based project auto-detection | "It should just know which project I'm in" | Conflicts with scripts calling `openclaw` from arbitrary directories (cron jobs, L3 containers, CI). Accepted and locked as out of scope in PROJECT.md | `OPENCLAW_PROJECT` env var + `active_project` in `openclaw.json` is the correct mechanism. Document clearly |
-| Environment-specific config files (`openclaw.prod.json`) | "Different configs for dev/prod" | Adds implicit loading order complexity; conflicts with the current explicit model | Use `${ENV_VAR}` placeholders for environment-specific values (already supported in `openclaw.json`). Document the pattern |
-| Config inheritance / extends | "Base config with project-level overrides" | Two levels of override already exist (`openclaw.json` + `project.json`). A third level adds complexity without clear value for a single-host system | Per-project `l3_overrides` in `project.json` is the correct extension point. Document what belongs where |
-| Automatic threshold adjustment based on scan results | "System should learn the right thresholds from data" | Thresholds affect what gets flagged — auto-adjustment creates a feedback loop where the system can drift away from useful detection without operator visibility | Calibration tool outputs recommendations; operator decides. Log the thresholds in use on every health scan run so changes are auditable |
+| Mid-flight topology adaptation | "The structure should evolve as the task progresses" | Requires topology-as-data to be proven and stable first. Mid-flight changes invalidate the approval gate (users approved structure A, system changed to structure B). Container lifecycle and pool management are designed for static topologies. This is explicitly deferred to v2.1+ in PROJECT.md | Pre-execution proposal covers 90% of the value. Post-execution retrospective analysis captures the rest |
+| Single-best recommendation | "Just tell me the right answer" | Single-best removes the reasoning surface and makes the learning signal weaker. When the system is wrong, there is no alternative to fall back to. Multi-proposal is the correct default per PROJECT.md key decisions | Present all three archetypes, clearly rank them, and make the top candidate visually prominent — this satisfies users who want a recommendation without hiding the alternatives |
+| Auto-approval on high-confidence proposals | "If confidence > 0.95, just run it automatically" | Removes the human from consequential structure decisions. Autonomy v1.6 already has confidence-based escalation for task execution — structural decisions are a tier above task decisions in consequence. Auto-approval erodes the trust model | Reduce friction on high-confidence proposals (pre-fill the approval form, highlight "this matches your past preferences") but never remove the gate |
+| Freeform topology editor (drag-and-drop) | "I want a GUI to design agent graphs" | Visual graph editors have high implementation cost and are the wrong interaction model for a platform used by developers and researchers who work in code and config | Structured JSON edit with schema validation and diff preview is the right interface for this audience |
+| Topology diff on every task run | "Compare every run to the last one" | Most task-to-task topology variation is intentional (different task types get different structures). Diffing everything creates noise. The relevant diff is proposal vs user correction, not run vs run | Diff on correction events only. Store the proposed topology and the approved topology; compute the delta explicitly when a correction occurs |
+| LLM-generated scoring without rubric constraints | "Let the LLM score proposals however it wants" | Unconstrained LLM scoring is non-deterministic and non-comparable across proposals. Users cannot build intuition about what scores mean. Research on rubric-based evaluation confirms that constrained, named dimensions produce more reliable and trustworthy outputs (HIGH confidence — Arize, Galileo patterns) | Fixed 7-dimension rubric with LLM filling in justification text per dimension. Scores are computed from structured criteria, not free-form assessment |
+| Dynamic role spawning at runtime | "Add a specialized agent when the task needs one" | Same reason as mid-flight adaptation — changes the topology after approval. L3 pool management uses static semaphores per project. Dynamic spawning requires pool capacity reservation at proposal time and runtime renegotiation | Define all roles in the pre-execution proposal. If a task genuinely needs an unexpected role, that is a signal that the proposal engine needs to be improved for that task type |
+| Correction feedback as RLHF fine-tuning | "Use corrections to fine-tune the proposal LLM" | Fine-tuning requires large labeled datasets, infrastructure for training runs, and introduces model versioning complexity that is out of scope. The proposal engine is a prompted LLM, not a trained model | Use corrections as retrieval context (structural memory) and heuristic updates (preference profile). This achieves learning without fine-tuning overhead |
 
 ---
 
 ## Feature Dependencies
 
 ```
-[Single authoritative path resolver]
-    └──required by──> [Config integration tests] (tests need consistent paths to assert against)
-    └──required by──> [Startup validation] (validator needs to know where to find configs)
-    └──enables──> [Migration CLI] (migration needs to find existing configs reliably)
+[Topology Serialization]
+    └──required by──> [Multi-Candidate Proposals] (candidates are serialized topology objects)
+    └──required by──> [Human Approval Gate] (gate operates on serialized topology)
+    └──required by──> [Topology Version History] (serialized objects are what gets versioned)
+    └──required by──> [Topology Diff Display] (diff operates on two serialized objects)
+    └──required by──> [Correction Storage] (corrections are stored as before/after topology pairs)
 
-[Constants consolidation]
-    └──required by──> [Adaptive polling] (min/max interval lives in config.py)
-    └──required by──> [Cosine calibration] (thresholds live in config.py, calibration tool reads + recommends)
-    └──required by──> [Docker health checks] (health check timeout threshold in config.py)
+[Multi-Candidate Proposals]
+    └──required by──> [Per-Dimension Rubric Scoring] (rubric is evaluated per candidate)
+    └──required by──> [Archetype System] (each candidate maps to an archetype)
+    └──requires──> [Topology Serialization]
 
-[openclaw.json strict startup validation]
-    └──independent of──> [project.json strict startup validation]
-    └──feeds──> [Config integration tests]
-    └──depends on──> [Single authoritative path resolver] (validation needs to find openclaw.json reliably)
+[Human Approval Gate]
+    └──required by──> [Soft Feedback Pathway] (gate provides the "re-propose" action)
+    └──required by──> [Hard Edit Pathway] (gate provides the "edit and approve" action)
+    └──requires──> [Multi-Candidate Proposals]
 
-[Migration CLI]
-    └──depends on──> [Single authoritative path resolver]
-    └──depends on──> [openclaw.json strict startup validation] (validates the migrated output)
-    └──independent of──> [Docker health checks, adaptive polling, cosine calibration]
+[Correction Storage]
+    └──required by──> [Preference Profiling] (profiling reads correction history)
+    └──required by──> [Async Diff Analysis] (diff results are stored as corrections)
+    └──required by──> [Confidence Evolution Timeline] (timeline reads per-correction confidence)
+    └──requires──> [Topology Serialization]
+    └──integrates──> [memU REST API] (existing infrastructure)
 
-[Docker health checks]
-    └──depends on──> [Constants consolidation] (timeout values from config.py)
-    └──independent of──> [all other v1.5 features]
+[Async Diff Analysis]
+    └──requires──> [Hard Edit Pathway] (diff is triggered by direct edit)
+    └──requires──> [Topology Diff Display] (diff engine is shared)
+    └──requires──> [Correction Storage] (diff result is written to structural memory)
+    └──feeds──> [Non-Blocking Insight Surfacing] (insight is the async diff result)
 
-[Adaptive monitor polling]
-    └──depends on──> [Constants consolidation] (min_poll, max_poll, backoff_factor in config.py)
-    └──independent of──> [Docker health checks, cosine calibration]
+[Preference Profiling]
+    └──requires──> [Correction Storage] (minimum 3-5 corrections needed for signal)
+    └──feeds──> [Multi-Candidate Proposals] (profile biases future proposals)
+    └──feeds──> [Structural Memory as Retrieval Context]
 
-[Cosine similarity threshold calibration]
-    └──depends on──> [Constants consolidation] (current thresholds read from config.py)
-    └──independent of──> [Docker health checks, adaptive polling]
+[Structural Memory as Retrieval Context]
+    └──requires──> [Correction Storage]
+    └──requires──> [Topology Version History]
+    └──integrates──> [memory_client.py] (existing retrieve/store API)
+    └──feeds──> [Multi-Candidate Proposals] (retrieved past structures as context)
 
-[Config integration test suite]
-    └──depends on──> [Single authoritative path resolver] (prerequisite for meaningful path tests)
-    └──depends on──> [Constants consolidation] (tests verify defaults match expected values)
-    └──should cover──> [Migration CLI] (migration idempotency test)
+[Non-Blocking Insight Surfacing]
+    └──requires──> [Async Diff Analysis]
+    └──integrates──> [SSE event transport] (existing events/transport.py)
+    └──integrates──> [Dashboard] (existing notification patterns)
 ```
 
 ### Dependency Notes
 
-- **Path resolver is the foundation** — all other config features assume there is one correct root. Build CONF-01 first. The fix is small: expose `_find_project_root()` as public API, remove the independent `Path(__file__).parent.parent.parent` calculation in `spawn.py` line 433, and update `init.py::find_project_root()` to call the canonical function instead of walking up independently.
+- **Topology Serialization is the foundation.** Everything else operates on serialized topology objects.
+  Build this first. No other v2.0 feature is possible without it.
 
-- **Constants consolidation is the second foundation** — adaptive polling, Docker health check thresholds, and cosine calibration all need somewhere to read from. Move everything to `config.py` before building those features.
+- **Correction Storage is the memory anchor.** Preference profiling, async diff analysis, confidence
+  evolution, and structural memory retrieval all read from or write to the correction store.
+  Build this second (after serialization and proposal engine exist to produce data to store).
 
-- **Startup validation and migration CLI are sequenced** — validate first (defines what valid looks like), migrate second (produces valid configs). Running them in the wrong order means the migration target is undefined.
+- **Async Diff Analysis depends on Hard Edit being built first.** You cannot analyze a diff until
+  users can perform direct edits. Hard Edit must ship before Async Diff Analysis.
 
-- **Docker health checks, adaptive polling, and cosine calibration are independent** — once foundations are in place, these three can be built in any order or in parallel.
+- **Preference Profiling requires data accumulation.** It cannot produce useful output on the first
+  1-2 tasks. The feature becomes useful only after 5+ corrections have been stored. Build the
+  storage and retrieval first; enable profiling as a background enrichment process that improves
+  silently as data accumulates.
 
-- **Config integration tests should be written last** — they verify the correctness of everything above. Writing them first as specs is useful but they cannot pass until the other features are in place.
+- **Structural Memory as Retrieval Context enhances Proposal Engine but is not required for it.**
+  The Proposal Engine can launch without retrieval context (cold start), then gradually improve as
+  memory accumulates. This means Proposal Engine and Structural Memory can be built in parallel.
 
 ---
 
 ## MVP Definition
 
-### Launch With (v1.5 core — must ship for "Config Consolidation" to be true)
+### Launch With (v2.0 core — structural intelligence is not functional without these)
 
-- [ ] CONF-01: Single authoritative path resolver — `get_project_root()` in `project_config.py`, all callers updated
-- [ ] CONF-02: `openclaw.json` schema cleanup + documented fields
-- [ ] CONF-03: Migration CLI (`openclaw-migrate`) — reads existing config, reports changes, writes new version
-- [ ] CONF-04: Env var precedence documented and enforced consistently in `config.py`
-- [ ] CONF-05: Constants/defaults consolidated into `config.py` — no duplicated magic values across modules
-- [ ] CONF-06: Strict fail-fast startup validation for both config files
-- [ ] CONF-07: Config integration test suite covering path resolution, validation, migration idempotency
+- [ ] **TOPO-01: Topology Serialization Schema** — JSON schema for topology objects (nodes, edges,
+  roles, resource limits, archetype tag). The foundation. All other features depend on this shape.
 
-### Add After Validation (v1.5 extension — deferred items)
+- [ ] **PROP-01: Multi-Candidate Proposal Engine** — Given a task directive, produce 2-3 topology
+  candidates (Lean, Balanced, Robust archetypes) with per-dimension rubric scores and justification
+  text. Integrates with existing L2 agent context.
 
-- [ ] REL-09: Docker health checks for L3 containers
-- [ ] QUAL-07: Cosine similarity threshold calibration tool
-- [ ] OBS-05: Adaptive monitor poll interval
+- [ ] **PROP-02: Archetype System** — Lean (1-2 agents, fast, minimal coordination), Balanced
+  (explicit coordinator + specialists), Robust (reviewer gate, risk containment, slower). Fixed
+  archetypes with defined characteristics, not generated on the fly.
 
-### Future Consideration (v2+)
+- [ ] **GATE-01: Human Approval Gate** — Before L3 spawn, present proposals to the human. Accept
+  approval, soft feedback, or direct edit. Block spawn until approved. Integrates with existing
+  spawn.py gate pattern.
 
-- [ ] Config versioning / changelog — track which version of the schema each config file was last migrated to
-- [ ] Multi-environment config support — properly scoped env var overlays with audit log
-- [ ] Automatic threshold learning — only viable once enough calibration data exists across projects
+- [ ] **CORR-01: Correction Storage** — Store every correction event: task context, proposed
+  topologies, which was approved, direct edits made, feedback text. This is the data foundation for
+  all learning features.
+
+- [ ] **DIFF-01: Topology Diff Engine** — Compute structural diff between two topology objects
+  (node additions/removals, edge changes, resource limit changes). Used by both the UI display and
+  the async analysis pipeline.
+
+- [ ] **OBS-01: Topology Observability Panel** — Dashboard view showing proposed topologies, which
+  was approved, correction history for a task/project. Uses existing SSE infrastructure and
+  dashboard patterns.
+
+### Add After Validation (v2.0 extension — once core is working and data is accumulating)
+
+- [ ] **CORR-02: Async Diff Analysis** — After direct edit + execution, asynchronously analyze
+  the diff between proposed and approved topology. Store analysis. Surface non-blocking note if
+  divergence is significant and high-confidence. Trigger: after correction event is stored.
+
+- [ ] **MEM-01: Structural Memory Retrieval** — Before proposing, retrieve similar past topologies
+  from memU. Use as positive/negative anchors in the proposal prompt. Trigger: add to proposal
+  engine once correction data exists.
+
+- [ ] **OBS-02: Confidence Evolution Timeline** — Show per-project trend of proposal confidence
+  scores over time. Requires accumulated correction data (minimum 5 tasks).
+
+### Future Consideration (v2.1+)
+
+- [ ] **MEM-02: Preference Profiling** — Derive structured preference profile from correction diff
+  history. Requires substantial correction data (10+ per project). Feeds future proposals.
+
+- [ ] **TOPO-MID: Mid-Flight Topology Adaptation** — Explicitly deferred in PROJECT.md. Requires
+  topology-as-data to be stable and proven under real workload first.
+
+- [ ] **TOPO-AUTO: Auto-Approval on High Confidence** — Only viable once preference profiling is
+  accurate enough to predict approval reliably (estimated 50+ corrections per project minimum).
 
 ---
 
@@ -149,446 +208,274 @@ Features that improve operator trust and system reliability beyond baseline conf
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Single authoritative path resolver | HIGH — prevents silent divergence bugs | LOW — refactor, not new code | P1 |
-| Constants consolidation | HIGH — prerequisite for other features, reduces DRY violations | LOW — move values, update imports | P1 |
-| openclaw.json strict startup validation | HIGH — operator gets actionable error on bad config immediately | MEDIUM — extend existing validator | P1 |
-| project.json strict startup validation extensions | MEDIUM — current coverage is already good for critical fields | LOW — promote warnings to errors for unknown keys | P1 |
-| Env var precedence | MEDIUM — reduces debugging confusion | LOW — documentation + consistency audit | P1 |
-| Migration CLI | HIGH — without it, operators have to hand-edit configs on upgrade | MEDIUM — argparse subcommand + JSON normalization | P1 |
-| Config integration test suite | HIGH — prevents regressions in complex resolution logic | MEDIUM — test matrix across env vars, file states | P1 |
-| Docker health checks | MEDIUM — improves container observability | MEDIUM — Dockerfile + health script | P2 |
-| Adaptive monitor polling | LOW-MEDIUM — reduces idle CPU; not blocking | LOW — replace `time.sleep()` with backoff logic | P2 |
-| Cosine similarity threshold calibration | MEDIUM — improves memory health scan accuracy | LOW — CLI tool + distribution analysis | P2 |
+| Topology Serialization Schema (TOPO-01) | HIGH — everything depends on it | LOW-MEDIUM — data modeling, no new services | P1 |
+| Multi-Candidate Proposal Engine (PROP-01) | HIGH — core value proposition | HIGH — LLM integration + rubric evaluation | P1 |
+| Archetype System (PROP-02) | HIGH — makes proposals interpretable | MEDIUM — fixed definitions + constraints | P1 |
+| Human Approval Gate (GATE-01) | HIGH — required for responsible execution | MEDIUM — new API endpoint + spawn integration | P1 |
+| Correction Storage (CORR-01) | HIGH — data foundation for all learning | LOW — schema + storage; reuses memU patterns | P1 |
+| Topology Diff Engine (DIFF-01) | HIGH — needed by gate display and async analysis | MEDIUM — deepdiff or JSON patch + test suite | P1 |
+| Topology Observability Panel (OBS-01) | MEDIUM-HIGH — structural visibility | MEDIUM — new dashboard panel + SSE integration | P1 |
+| Async Diff Analysis (CORR-02) | MEDIUM — closes learning loop | HIGH — async pipeline + LLM analysis | P2 |
+| Structural Memory Retrieval (MEM-01) | MEDIUM — improves proposals with history | MEDIUM — extends existing memory_client.py | P2 |
+| Confidence Evolution Timeline (OBS-02) | MEDIUM — makes learning visible | LOW — time-series query + chart | P2 |
+| Preference Profiling (MEM-02) | HIGH long-term — drives personalization | HIGH — requires substantial data + LLM analysis | P3 |
 
 **Priority key:**
-- P1: Must have for v1.5 to be called "Config Consolidation"
-- P2: Should have — deferred v1.4 items, high value-to-cost ratio
-- P3: Nice to have, future consideration
+- P1: Must have for v2.0 to be called "Structural Intelligence"
+- P2: Should have — builds on P1 foundations, high value-to-cost ratio once core works
+- P3: Future consideration — high value but requires substantial data accumulation first
 
 ---
 
-## Detailed Feature Behavior: Expected Patterns
+## Capability Area Deep-Dives
 
-### 1. Single Authoritative Path Resolver (CONF-01)
+### 1. Topology as Data
 
-**Current problem (verified by codebase inspection):**
+**What it is:** Swarm structures represented as explicit serializable objects — not implicit agent
+spawn calls buried in code.
 
-Three independent root resolution strategies currently coexist:
+**Table stakes behavior:**
+- Every proposed and approved topology is a named, timestamped JSON object stored to disk
+- Topology objects are diffable: two topologies produce a structured diff (nodes added/removed,
+  edges changed, resource limits modified)
+- Topology objects reference existing agent configs (agents/ directory) rather than redefining them
+- Topology objects include the archetype tag, the scoring rubric results, and the task context
 
-| Location | Strategy | Risk |
-|----------|----------|------|
-| `project_config.py::_find_project_root()` | `OPENCLAW_ROOT` env var, else walk up from `__file__` parent | Correct — canonical |
-| `spawn.py` line 433 | `Path(__file__).parent.parent.parent` | Hardcoded depth — breaks if package structure changes |
-| `init.py::find_project_root()` | Walk up looking for `openclaw.json` presence | Different walk-up strategy, no env var check |
-
-**Expected resolution:**
-
-```python
-# project_config.py — promote _find_project_root() to public API
-def get_project_root() -> Path:
-    """
-    Return the OpenClaw project root directory.
-
-    Resolution order:
-    1. OPENCLAW_ROOT env var (explicit override)
-    2. Walk up from this file's location until openclaw.json is found
-    3. FileNotFoundError if neither succeeds
-
-    All components that need the project root MUST call this function.
-    Do not use Path(__file__).parent.parent or custom walk-up logic.
-    """
-    env_root = os.environ.get("OPENCLAW_ROOT")
-    if env_root:
-        return Path(env_root)
-    current = Path(__file__).resolve().parent
-    for _ in range(10):
-        if (current / "openclaw.json").exists():
-            return current
-        if current.parent == current:
-            break
-        current = current.parent
-    raise FileNotFoundError(
-        "Cannot find openclaw.json. Set OPENCLAW_ROOT env var or run from within the project."
-    )
+**Schema shape (recommended):**
+```json
+{
+  "topology_id": "topo-20260303-abc123",
+  "task_id": "task-001",
+  "project_id": "pumplai",
+  "archetype": "balanced",
+  "created_at": "2026-03-03T10:00:00Z",
+  "status": "proposed | approved | rejected | executed",
+  "nodes": [
+    { "role": "coordinator", "agent_id": "pumplai_pm", "resource_limit_gb": 4 },
+    { "role": "coder", "agent_id": "python_backend_worker", "resource_limit_gb": 4 }
+  ],
+  "edges": [
+    { "from": "coordinator", "to": "coder", "type": "delegate" }
+  ],
+  "scoring": {
+    "complexity": { "score": 0.3, "justification": "Two-agent structure..." },
+    "coordination_overhead": { "score": 0.4, "justification": "..." },
+    "risk_containment": { "score": 0.5, "justification": "..." },
+    "time_to_first_output": { "score": 0.8, "justification": "..." },
+    "cost_estimate": { "score": 0.7, "justification": "..." },
+    "preference_fit": { "score": 0.6, "justification": "..." },
+    "overall_confidence": 0.62
+  },
+  "correction": null
+}
 ```
 
-**Callers to update:**
-- `spawn.py` line 433: replace `Path(__file__).parent.parent.parent` with `from openclaw.project_config import get_project_root; project_root = get_project_root()`
-- `init.py::find_project_root()`: replace body with `from .project_config import get_project_root; return get_project_root()`
-- All other callers of `_find_project_root()` (internal) are already in `project_config.py` — no changes needed
-
-**Confidence:** HIGH — refactor only, no behavior change.
+**Infrastructure dependency:** Extends workspace-state.json pattern. Uses same `fcntl.flock()` mechanism as Jarvis Protocol. New file path: `workspace/.openclaw/{project_id}/topologies/{topology_id}.json`.
 
 ---
 
-### 2. Constants Consolidation (CONF-05)
+### 2. Structure Proposal Engine
 
-**Current state (verified):**
+**What it is:** Given a task directive, generates 2-3 candidate topologies using fixed archetypes, a
+common scoring rubric, and justification text per dimension.
 
-| Constant | Current Location | Value |
-|----------|-----------------|-------|
-| `LOCK_TIMEOUT` | `config.py` | 5s |
-| `LOCK_RETRY_ATTEMPTS` | `config.py` | 3 |
-| `POLL_INTERVAL` | `config.py` | 1.0s |
-| `CACHE_TTL_SECONDS` | `config.py` | 5.0s |
-| `LOG_LEVEL` | `config.py` | from env |
-| `ACTIVITY_LOG_MAX_ENTRIES` | `config.py` | from env, default 100 |
-| Pool defaults (`max_concurrent`, `pool_mode`, etc.) | `project_config.py::_POOL_CONFIG_DEFAULTS` | Scattered dict |
-| Cosine similarity thresholds | `scan_engine.py` (hardcoded in `_find_conflicts()` call sites) | 0.75 / 0.97 |
-| Staleness thresholds | Dashboard API handler (unverified location) | age_threshold_days=30, retrieval_window_days=14 |
-| Adaptive poll min/max | Does not exist yet | New in v1.5 |
+**Table stakes behavior:**
+- Always produces at least 2 candidates (Lean and Balanced minimum; Robust when task risk is high)
+- Each candidate has a named archetype with documented characteristics
+- Each candidate has per-dimension scores with one sentence of justification text
+- Proposals are generated before any L3 container is spawned
+- Proposal generation time < 30 seconds (acceptable latency for a pre-execution gate)
 
-**Target state:**
+**Archetype definitions:**
+- **Lean:** 1-2 agents, minimal coordination overhead, fast time-to-first-output, appropriate for
+  well-understood tasks with clear scope. Higher risk if requirements are ambiguous.
+- **Balanced:** Explicit coordinator + 1-2 specialists, structured handoffs, moderate coordination
+  overhead. Good default for most tasks.
+- **Robust:** Coordinator + specialists + reviewer gate, risk containment built in, slower but safer.
+  Appropriate for tasks touching production systems, large diffs, or ambiguous requirements.
 
-```python
-# config.py — authoritative location for ALL tunable constants
+**Scoring rubric (7 dimensions, 0.0-1.0 each, higher = better):**
+1. `complexity` — how many moving parts (lower complexity = higher score)
+2. `coordination_overhead` — inter-agent communication cost (lower overhead = higher score)
+3. `risk_containment` — safety nets built into the structure (more containment = higher score)
+4. `time_to_first_output` — how quickly results start flowing (faster = higher score)
+5. `cost_estimate` — relative token/compute cost (lower cost = higher score)
+6. `preference_fit` — alignment with past approved topologies for this project (higher fit = higher score)
+7. `overall_confidence` — weighted composite of the above
 
-# --- Locking ---
-LOCK_TIMEOUT = 5          # seconds; max wait for fcntl.LOCK_EX
-LOCK_RETRY_ATTEMPTS = 3   # retries before raising TimeoutError
-
-# --- Polling ---
-POLL_INTERVAL = 1.0       # base polling interval (seconds)
-POLL_INTERVAL_MIN = 0.5   # adaptive poll: fastest (seconds)
-POLL_INTERVAL_MAX = 10.0  # adaptive poll: slowest when quiescent (seconds)
-POLL_BACKOFF_FACTOR = 2.0 # multiply interval after each quiet cycle
-POLL_QUIET_THRESHOLD = 3  # consecutive quiet cycles before backing off
-
-# --- Cache ---
-CACHE_TTL_SECONDS = 5.0   # max state cache age before forced re-read
-
-# --- Logging ---
-LOG_LEVEL = os.environ.get("OPENCLAW_LOG_LEVEL", "INFO").upper()
-ACTIVITY_LOG_MAX_ENTRIES = int(os.environ.get("OPENCLAW_ACTIVITY_LOG_MAX", "100"))
-
-# --- Pool defaults ---
-POOL_MAX_CONCURRENT = 3
-POOL_MODE_DEFAULT = "shared"
-POOL_OVERFLOW_POLICY_DEFAULT = "wait"
-POOL_QUEUE_TIMEOUT_S = 300
-POOL_RECOVERY_POLICY_DEFAULT = "mark_failed"
-
-# --- Memory health ---
-MEMORY_STALENESS_AGE_DAYS = 30        # flag memories older than this
-MEMORY_STALENESS_WINDOW_DAYS = 14     # unless retrieved within this window
-MEMORY_CONFLICT_SIMILARITY_MIN = 0.75 # lower bound of conflict window
-MEMORY_CONFLICT_SIMILARITY_MAX = 0.97 # upper bound (above = near-duplicate)
-MEMORY_NEAR_DUPLICATE_THRESHOLD = 0.97
-
-# --- Docker health check ---
-HEALTH_CHECK_INTERVAL_S = 30          # how often Docker runs the health check
-HEALTH_CHECK_TIMEOUT_S = 10           # health check script must complete within
-HEALTH_CHECK_RETRIES = 3              # failures before marking unhealthy
-HEALTH_CHECK_START_PERIOD_S = 60      # don't count failures during startup
-HEALTH_CHECK_STALE_STATE_S = 90       # state not updated in this window = unhealthy
-```
-
-**Confidence:** HIGH — purely mechanical consolidation.
+**Implementation approach:** LLM-generated proposals with structured output schema. The proposal
+prompt includes: task directive, task complexity estimate (from existing `autonomy/confidence.py`),
+past approved topologies for this project (from structural memory), and archetype definitions.
+LLM fills in nodes, edges, and scoring justifications; scoring numbers are computed deterministically
+from the structured output, not generated by the LLM.
 
 ---
 
-### 3. openclaw.json Startup Validation (CONF-02, CONF-06)
+### 3. Dual Correction System
 
-**Current state:** `validate_agent_hierarchy()` validates `agents.list` only. Everything else
-(`gateway`, `memory`, `channels`, `source_directories`) is loaded and used without validation.
+**What it is:** Two distinct pathways for human input at the approval gate.
 
-**Expected extended validation:**
+**Soft feedback (re-propose):**
+- User provides natural language feedback: "Try with fewer agents", "Add a reviewer"
+- System passes feedback text + original proposals back to the proposal engine
+- New proposals are generated incorporating the feedback
+- Original proposals remain visible for comparison
+- Feedback text is stored in correction record
 
-```python
-def validate_openclaw_config(config: dict, config_path: str) -> None:
-    """
-    Validate all top-level sections of openclaw.json at startup.
-    Fail-fast: raises ConfigValidationError listing all problems at once.
-    """
-    errors = []
+**Hard edit (direct edit):**
+- User edits the topology JSON directly (or via a structured form) and approves
+- Spawn proceeds immediately — no re-proposal, no waiting
+- The topology diff (proposed vs approved) is computed and stored
+- An async task begins: analyze the diff, determine if it represents a preference signal or
+  a one-off override
+- Non-blocking note is surfaced in dashboard if divergence is high-confidence and significant
+  (does not block the running task)
 
-    # gateway.port: must be an integer in 1–65535
-    gateway = config.get("gateway", {})
-    if "port" in gateway:
-        port = gateway["port"]
-        if not isinstance(port, int) or not (1 <= port <= 65535):
-            errors.append(
-                f'openclaw.json: gateway.port must be an integer 1–65535, got {port!r}'
-            )
+**Key interaction principle:** User authority is never blocked or second-guessed synchronously.
+The system learns asynchronously. This is the "execute-then-analyze" pattern from PROJECT.md.
 
-    # memory.memu_api_url: must be a string starting with http:// or https://
-    memory = config.get("memory", {})
-    if "memu_api_url" in memory:
-        url = memory["memu_api_url"]
-        if not isinstance(url, str) or not (url.startswith("http://") or url.startswith("https://")):
-            errors.append(
-                f'openclaw.json: memory.memu_api_url must start with http:// or https://, got {url!r}'
-            )
-
-    # source_directories: must be a list of non-empty strings
-    src_dirs = config.get("source_directories", [])
-    if not isinstance(src_dirs, list):
-        errors.append('openclaw.json: source_directories must be a list')
-    else:
-        for i, d in enumerate(src_dirs):
-            if not isinstance(d, str) or not d.strip():
-                errors.append(f'openclaw.json: source_directories[{i}] must be a non-empty string')
-
-    # Delegate agent hierarchy to existing validator
-    _validate_agent_hierarchy_section(config, config_path, errors)
-
-    if errors:
-        raise ConfigValidationError(errors)
-```
-
-**Startup hook:** `load_and_validate_openclaw_config()` in `project_config.py` calls
-`validate_openclaw_config()` — this is already the entry point. Extend it, not a new call site.
-
-**Confidence:** HIGH — extends existing pattern.
+**Infrastructure dependency:**
+- Soft feedback: New API endpoint calling proposal engine again with feedback context
+- Hard edit: Topology validation (schema check) → existing spawn.py gate → async diff analysis task
+- Non-blocking note: New event type in `events/protocol.py`, SSE to dashboard
 
 ---
 
-### 4. Migration CLI (CONF-03)
+### 4. Structural Memory
 
-**Standard pattern for JSON config migration:**
+**What it is:** The persistence layer that makes correction learning possible.
 
-The migration CLI is an `openclaw-migrate` entry point (new `cli/migrate.py`, registered in
-`pyproject.toml`). It follows the standard collect-diff-apply pattern:
-
-```bash
-# Dry-run mode: show what would change
-openclaw-migrate --dry-run
-
-# Apply mode: write normalized config in-place (takes backup first)
-openclaw-migrate
-
-# Specific file
-openclaw-migrate --config /path/to/openclaw.json
+**Correction record schema:**
+```json
+{
+  "correction_id": "corr-20260303-xyz789",
+  "task_id": "task-001",
+  "project_id": "pumplai",
+  "created_at": "2026-03-03T10:05:00Z",
+  "correction_type": "direct_edit | soft_feedback | approval",
+  "proposed_topology_ids": ["topo-abc", "topo-def", "topo-ghi"],
+  "approved_topology_id": "topo-abc-edited",
+  "feedback_text": "Reduced to one agent — task is simpler than estimated",
+  "diff_summary": { "nodes_removed": ["reviewer"], "edges_removed": [...] },
+  "async_analysis": {
+    "completed_at": "2026-03-03T10:12:00Z",
+    "confidence": 0.82,
+    "interpretation": "User consistently removes reviewer gate for read-only tasks",
+    "preference_signal": true
+  }
+}
 ```
 
-**Migration operations:**
+**Preference profiling (deferred to v2.1 MVP, built in P3):**
+After 5+ corrections, extract recurring patterns:
+- "This project consistently prefers Lean archetype for data analysis tasks"
+- "This project always removes the reviewer gate for read-only tasks"
+- "This project always adds a reviewer gate for tasks touching the payments module"
 
-| Operation | Condition | Action |
-|-----------|-----------|--------|
-| Normalize env var placeholders | Field values contain raw secrets | Warn user, do not modify (can't know the right var name) |
-| Add missing `active_project: null` | Key absent | Insert with null value and comment |
-| Normalize `source_directories` | Missing entirely | Insert empty list `[]` |
-| Remove unknown top-level keys | Keys not in schema | Log removed key names; strip from output |
-| Validate result | After normalization | Run `validate_openclaw_config()` on output; fail if still invalid |
+These are stored as structured preference rules, not free-form text, so they can be applied
+deterministically to bias future proposals.
 
-**Output format:**
-
-```
-OpenClaw Config Migration
-Reading: /home/ollie/.openclaw/openclaw.json
-
-Changes:
-  + Added missing field: source_directories = []
-  ~ Removed unknown key: legacy_field
-
-Backup written: /home/ollie/.openclaw/openclaw.json.bak.20260225T120000
-Config updated: /home/ollie/.openclaw/openclaw.json
-
-Validation: PASSED
-```
-
-**Confidence:** HIGH — argparse subcommand pattern is already established in the codebase.
+**Infrastructure dependency:** memU REST API (existing). New collection/namespace in memU:
+`structural_memory` scoped per project. Uses same `memory_client.py` patterns as task memory.
 
 ---
 
-### 5. Docker Health Checks for L3 Containers (REL-09)
+### 5. Topology Observability
 
-**Standard Docker HEALTHCHECK pattern (verified from official docs):**
+**What it is:** Dashboard views and event streams for structural decisions.
 
-```dockerfile
-# docker/l3-specialist/Dockerfile
+**Required views:**
+- **Proposal view:** For a given task, show all proposed topologies side-by-side with rubric scores.
+  Highlight which was approved. Show correction type.
+- **Correction history:** Per-project timeline of corrections. Diff visualization for direct edits.
+  Feedback text for soft re-proposals.
+- **Confidence evolution:** Per-project chart of `overall_confidence` scores over time across tasks.
+  Shows whether corrections are improving proposal quality.
+- **Structural diff view:** When a direct edit occurred, show the diff between proposed and approved
+  topology. Highlight additions (green) and removals (red). Format as structured change list, not
+  raw JSON diff.
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD ["/entrypoint-health.sh"]
-```
+**Event types needed (new additions to `events/protocol.py`):**
+- `TOPOLOGY_PROPOSED` — emitted when proposal engine completes
+- `TOPOLOGY_APPROVED` — emitted when human approves (with or without edit)
+- `TOPOLOGY_CORRECTION` — emitted when direct edit occurs (includes diff summary)
+- `TOPOLOGY_INSIGHT` — emitted when async diff analysis completes with a preference signal
 
-```bash
-#!/bin/bash
-# docker/l3-specialist/entrypoint-health.sh
-# Exit 0 = healthy, non-zero = unhealthy
-
-set -e
-
-STATE_FILE="${OPENCLAW_STATE_FILE:-/workspace/.openclaw/${OPENCLAW_PROJECT}/workspace-state.json}"
-
-# Rule 1: State file must exist (container has made progress)
-if [[ ! -f "$STATE_FILE" ]]; then
-    echo "UNHEALTHY: state file not found: $STATE_FILE" >&2
-    exit 1
-fi
-
-# Rule 2: State file must have been written within HEALTH_CHECK_STALE_STATE_S seconds
-STALE_THRESHOLD="${HEALTH_CHECK_STALE_STATE_S:-90}"
-MTIME=$(stat -c %Y "$STATE_FILE" 2>/dev/null || echo 0)
-NOW=$(date +%s)
-AGE=$(( NOW - MTIME ))
-
-if (( AGE > STALE_THRESHOLD )); then
-    echo "UNHEALTHY: state file not updated for ${AGE}s (threshold: ${STALE_THRESHOLD}s)" >&2
-    exit 1
-fi
-
-echo "HEALTHY: state updated ${AGE}s ago"
-exit 0
-```
-
-**Parameter rationale:**
-- `--start-period=60s`: L3 containers need time for Claude/Gemini to produce first output before state is written. 60s is conservative; task startup typically completes in 5-15s but model calls can be slow.
-- `--interval=30s`: Frequent enough to detect stuck containers within a minute.
-- `--timeout=10s`: Health script is a filesystem stat — should complete in milliseconds.
-- `--retries=3`: Three consecutive failures (90s total) before declaring unhealthy, absorbs transient slow model calls.
-
-**Dashboard integration:** The container list in occc already calls `docker inspect` for container
-metadata. `Health.Status` is available in the inspect output (`healthy`, `unhealthy`, `starting`).
-Add a health status badge to the container row in the existing `useContainers()` hook.
-
-**Ephemeral container caveat:** L3 containers are short-lived (minutes to hours). Health check status
-is primarily useful to detect containers that are stuck (model API timeout, file lock deadlock) rather
-than for restart orchestration. The `unhealthy` status is informational — L2 is the appropriate
-entity to decide whether to kill and restart a stuck container.
-
-**Confidence:** MEDIUM — Docker HEALTHCHECK semantics are well-documented (HIGH). The health script
-logic (state file recency) is appropriate for this workload (MEDIUM — assumes state file is written
-frequently enough; tasks with no intermediate state writes will appear unhealthy even if running).
+**Infrastructure dependency:** All events route through existing `events/transport.py` → gateway
+SSE bridge → dashboard. New dashboard panel alongside existing TaskBoard, AutonomyPanel,
+EscalationContextPanel, and CourseCorrectionHistory components.
 
 ---
 
-### 6. Adaptive Monitor Poll Interval (OBS-05)
+## User Interaction Patterns
 
-**Current state:** `tail_state()` in `monitor.py` does `time.sleep(interval)` with a fixed 1.0s
-interval. The `POLL_INTERVAL` constant is used as the default for `--interval` CLI argument.
+Based on research into HITL orchestration patterns and the existing OpenClaw user base (AI-native
+product teams, platform engineers, multi-agent researchers):
 
-**Expected behavior — exponential backoff on quiescence:**
+**Expected primary flow (most common):**
+1. User submits task directive to L2
+2. Proposal engine generates 3 candidates (takes < 30s)
+3. User reviews proposals in dashboard, selects Balanced candidate
+4. L3 containers spawn against approved topology
+5. No correction stored (straight approval is still a data point)
 
-```python
-# Adaptive polling state per monitoring session (not per project)
-_consecutive_quiet: int = 0  # cycles with no new activity
+**Expected secondary flow (soft feedback):**
+1. Same as above, but user sees "Add a dedicated test agent" is missing from all proposals
+2. User types "Add a test agent role" in the feedback box
+3. System re-proposes with test agent included in all candidates
+4. User approves
 
-def _compute_next_interval(had_activity: bool, current_interval: float) -> float:
-    """
-    Compute next poll interval.
-    - Activity seen: reset to POLL_INTERVAL_MIN
-    - No activity: double up to POLL_INTERVAL_MAX
-    """
-    if had_activity:
-        return POLL_INTERVAL_MIN
-    return min(current_interval * POLL_BACKOFF_FACTOR, POLL_INTERVAL_MAX)
-```
+**Expected secondary flow (direct edit):**
+1. User sees proposals but knows exactly what they want
+2. User removes the reviewer node from Balanced candidate, approves
+3. Spawn proceeds immediately
+4. 2-3 minutes later, async analysis completes
+5. Dashboard shows non-blocking note: "You removed the reviewer gate — this matches your pattern
+   for low-risk data tasks"
 
-**Integration into `tail_state()` main loop:**
-
-```python
-current_interval = POLL_INTERVAL_MIN
-while True:
-    had_activity = False
-    for proj_id, state_file in projects:
-        # ... existing poll logic ...
-        if new_entries or status_changed:
-            had_activity = True
-    current_interval = _compute_next_interval(had_activity, current_interval)
-    time.sleep(current_interval)
-```
-
-**Behavior characteristics:**
-- System with active L3 tasks: polls at 0.5s (same responsiveness as before, faster than current 1.0s)
-- System idle for 3 cycles: 0.5s → 1.0s → 2.0s → 4.0s → capped at 10.0s
-- Any new activity: immediately resets to 0.5s on next cycle
-- CPU usage during sustained idle: ~18 polls/minute vs ~60/minute at fixed 1.0s — 70% reduction
-
-**CLI flag behavior:** `--interval` becomes the base interval (default: `POLL_INTERVAL_MIN`). Users
-who pass `--interval 5` get a 5s base with backoff to `POLL_INTERVAL_MAX`.
-
-**Confidence:** HIGH — standard exponential backoff pattern; no external dependencies.
+**Expected power user pattern:**
+- User with 20+ corrections stored
+- Proposals are now biased toward known preferences
+- Proposals feel "on target" more often
+- Approval rate increases, corrections decrease
 
 ---
 
-### 7. Cosine Similarity Threshold Calibration (QUAL-07)
+## Existing Integration Points (v1.6 foundations v2.0 builds on)
 
-**Current state:** `scan_engine.py::_find_conflicts()` uses `similarity_min=0.75` and
-`similarity_max=0.97` hardcoded in call sites. The v1.4 key decisions table explicitly marked this as
-"⚠️ Revisit — threshold needs empirical tuning under real workload."
-
-**Research findings on cosine threshold values (MEDIUM confidence):**
-
-No universal threshold exists. Values depend on embedding model, domain vocabulary density, and task.
-Community patterns for text embeddings (OpenAI, sentence-transformers):
-- Near-duplicate detection: 0.95–0.99 range is widely used
-- Semantic similarity: 0.75–0.85 is the standard "related" range
-- Conflict detection (similar topic, opposing content): this is a harder problem — similarity alone
-  cannot distinguish "these say the same thing" from "these say opposite things about the same topic"
-
-**What calibration means for OpenClaw:**
-
-The `similarity_max=0.97` (near-duplicate ceiling) is likely too low — memories about the same task
-from different angles can legitimately have similarity >0.92 without being conflicting. The
-`similarity_min=0.75` (conflict floor) is a reasonable starting point.
-
-**Calibration tool behavior:**
-
-```bash
-# Sample existing memory store and analyze similarity distribution
-openclaw-health calibrate-thresholds --project pumplai
-
-# Output:
-Analyzing 142 memories for project: pumplai
-Computing pairwise similarities...
-
-Similarity distribution:
-  Pairs with sim > 0.97: 8  (near-duplicate candidates)
-  Pairs with sim 0.90-0.97: 23 (high similarity)
-  Pairs with sim 0.75-0.90: 41 (moderate similarity — current conflict window)
-  Pairs with sim < 0.75: 1,847 (dissimilar)
-
-Recommendations:
-  Near-duplicate threshold: 0.97 (current: 0.97) ✓ OK
-  Conflict window min: 0.82 (current: 0.75) ↑ Consider raising to reduce false positives
-  Conflict window max: 0.97 (current: 0.97) ✓ OK
-
-Manual review recommended for: 8 near-duplicate pairs (see --verbose for details)
-```
-
-**Implementation:** New `cli/health.py` with `calibrate-thresholds` subcommand. Calls `MemoryClient`
-to retrieve all memories for a project, computes pairwise cosine similarities using the same
-`cosine_topk` function already in `scan_engine.py`, outputs distribution and recommendations.
-Thresholds are in `config.py` and the calibration tool outputs suggested values — operator updates
-`config.py` constants manually.
-
-**Why not automatic adjustment:** The system does not have enough labeled examples of "true conflict"
-vs "legitimately similar" to learn a threshold automatically. Manual review of a sample is required
-to validate recommendations. Automatic adjustment creates an audit gap.
-
-**Confidence:** MEDIUM — the calibration tool logic is straightforward (HIGH); the recommended
-threshold values require empirical validation against real project memory data (MEDIUM).
-
----
-
-## Existing Integration Points (v1.4 foundations v1.5 builds on)
-
-| v1.4 Component | v1.5 Usage |
+| v1.6 Component | v2.0 Usage |
 |----------------|------------|
-| `project_config.py::_find_project_root()` | Promoted to public `get_project_root()`, becomes the canonical resolver |
-| `config.py` | Extended with all constants migrated from other modules |
-| `config_validator.py::validate_project_config()` | Extended with `openclaw.json` section validation |
-| `config_validator.py::validate_agent_hierarchy()` | Unchanged — called by the new `validate_openclaw_config()` wrapper |
-| `scan_engine.py::_find_conflicts()` | Thresholds read from `config.py` instead of hardcoded |
-| `cli/monitor.py::tail_state()` | Adaptive interval replaces fixed `time.sleep(interval)` |
-| `docker/l3-specialist/Dockerfile` | `HEALTHCHECK` instruction added |
-| `MemoryClient.retrieve()` | Used by calibration tool to sample memories |
-| `packages/orchestration/tests/` | Extended with config integration test suite |
+| `autonomy/confidence.py::ConfidenceFactors` | Extended with structural confidence dimensions; 7-dimension rubric maps onto existing complexity/ambiguity/past_success factors |
+| `autonomy/confidence.py::ConfidenceScorer` | Proposal engine uses this protocol to score each candidate |
+| `state_engine.py` (Jarvis Protocol) | Topology objects stored using same flock pattern; new topology file alongside workspace-state.json |
+| `skills/spawn/spawn.py` | Approval gate inserted before container spawn; topology object passed as spawn context |
+| `memory_client.py` | Used for structural memory retrieval (retrieve similar past topologies) and correction storage |
+| `events/protocol.py` | Extended with 4 new topology event types |
+| `events/transport.py` | Topology events route through existing SSE bridge |
+| `soul_renderer.py` | L3 SOUL injection extended to include approved topology as context |
+| `packages/dashboard/` | New topology observability panel alongside existing AutonomyPanel and CourseCorrectionHistory |
+| `agent_registry.py` | Proposal engine queries agent registry to enumerate available agent roles |
+| `autonomy/hooks.py` | Topology approval hook added to before-spawn lifecycle |
 
 ---
 
 ## Sources
 
-- Codebase analysis: `packages/orchestration/src/openclaw/config.py`, `project_config.py`, `config_validator.py`, `init.py`, `cli/monitor.py`, `skills/spawn/spawn.py`, `docker/l3-specialist/Dockerfile`, `docker/memory/memory_service/scan_engine.py`
-- [Docker HEALTHCHECK documentation — official Dockerfile reference](https://docs.docker.com/reference/dockerfile/#healthcheck)
-- [Docker Health Check Best Practices 2026 — OneUptime](https://oneuptime.com/blog/post/2026-01-30-docker-health-check-best-practices/view)
-- [Cosine Similarity Thresholds — rule-of-thumb discussion (OpenAI forum)](https://community.openai.com/t/rule-of-thumb-cosine-similarity-thresholds/693670)
-- [Adaptive Polling Mechanisms — emergentmind](https://www.emergentmind.com/topics/adaptive-polling)
-- [Exponential backoff — Wikipedia](https://en.wikipedia.org/wiki/Exponential_backoff)
-- PROJECT.md requirement IDs: CONF-01 through CONF-07, REL-09, QUAL-07, OBS-05
+- [AgentConductor: Topology Evolution for Multi-Agent Code Generation (arxiv 2602.17100)](https://arxiv.org/abs/2602.17100) — RL-optimized topology evolution, density-aware design, difficulty-adaptive structures
+- [Multi-Agent Collaboration via Evolving Orchestration (arxiv 2505.19591)](https://arxiv.org/html/2505.19591v1) — graph topology evolution patterns, inspection of activation patterns
+- [Open Agent Specification Technical Report (arxiv 2510.04173)](https://arxiv.org/html/2510.04173v1) — portable, serializable agent configs, platform-agnostic schema
+- [AI Agent Orchestration Patterns — Microsoft Azure Architecture Center (2026)](https://learn.microsoft.com/en-us/azure/architecture/ai-ml/guide/ai-agent-design-patterns) — sequential, concurrent, hierarchical patterns; complexity spectrum guidance
+- [Multi-Agent Reference Architecture: Observability — Microsoft](https://microsoft.github.io/multi-agent-reference-architecture/docs/observability/Observability.html) — observability signals for multi-agent systems
+- [Agent Evaluation Framework: Rubrics and Benchmarks — Galileo 2026](https://galileo.ai/blog/agent-evaluation-framework-metrics-rubrics-benchmarks) — 7-dimension rubric structure, sub-dimensions
+- [Rubric-Based Evaluation for Agentic Systems — AI4HUMAN/Medium 2025](https://medium.com/@aiforhuman/rubric-based-evaluation-for-agentic-systems-db6cb14d8526) — constrained rubric vs free-form LLM scoring
+- [Human-in-the-Loop Agentic AI Systems — OneReach 2026](https://onereach.ai/blog/human-in-the-loop-agentic-ai-systems/) — HITL patterns for high-stakes decisions, approval gates
+- [LLM-Based Human-Agent Collaboration Survey (arxiv 2505.00753)](https://arxiv.org/html/2505.00753v4) — HITL collaboration patterns, corrective feedback mechanisms
+- [RLHF and Learning from Corrections (arxiv 2504.12501)](https://arxiv.org/html/2504.12501v3) — preference learning from edit diffs, PRELUDE-style approaches
+- [Multi-Agent Architectures — Swarms Framework Docs](https://docs.swarms.world/en/latest/swarms/concept/swarm_architectures/) — chain, star, mesh, hierarchical archetype patterns
+- [Best Practices for Multi-Agent Orchestration — Skywork 2025](https://skywork.ai/blog/ai-agent-orchestration-best-practices-handoffs/) — handoff patterns, schema versioning pitfalls
+- Codebase analysis: `packages/orchestration/src/openclaw/autonomy/`, `state_engine.py`, `memory_client.py`, `events/protocol.py`, `skills/spawn/spawn.py`, `packages/dashboard/src/components/`
 
 ---
 
-*Feature research for: OpenClaw v1.5 Config Consolidation*
-*Researched: 2026-02-25*
+*Feature research for: OpenClaw v2.0 Structural Intelligence*
+*Researched: 2026-03-03*
