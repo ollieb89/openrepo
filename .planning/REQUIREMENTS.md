@@ -27,13 +27,13 @@ Requirements for structural intelligence milestone. Each maps to roadmap phases.
 
 ### Correction System
 
-- [ ] **CORR-01**: User can give textual feedback on a proposal and receive a re-proposal that addresses the feedback (soft correction)
-- [ ] **CORR-02**: User can directly edit a proposed topology (add/remove/modify roles, change hierarchy) and the system executes the edited version (hard correction)
-- [ ] **CORR-03**: System computes and stores the diff between proposed and approved topology after every correction
-- [ ] **CORR-04**: On hard correction, system executes immediately then analyzes the diff asynchronously
-- [ ] **CORR-05**: When system had high confidence in its original proposal and the edit contradicts it, system surfaces a non-blocking note explaining its reasoning
-- [ ] **CORR-06**: System enforces a cycle limit (max 3 re-proposals per soft correction loop) to prevent infinite iteration
-- [ ] **CORR-07**: User must explicitly approve a topology before it can be used for execution (approval gate)
+- [x] **CORR-01**: User can give textual feedback on a proposal and receive a re-proposal that addresses the feedback (soft correction)
+- [x] **CORR-02**: User can directly edit a proposed topology (add/remove/modify roles, change hierarchy) and the system executes the edited version (hard correction)
+- [x] **CORR-03**: System computes and stores the diff between proposed and approved topology after every correction
+- [x] **CORR-04**: On hard correction, system executes immediately then analyzes the diff asynchronously
+- [x] **CORR-05**: When system had high confidence in its original proposal and the edit contradicts it, system surfaces a non-blocking note explaining its reasoning
+- [x] **CORR-06**: System enforces a cycle limit (max 3 re-proposals per soft correction loop) to prevent infinite iteration
+- [x] **CORR-07**: User must explicitly approve a topology before it can be used for execution (approval gate)
 
 ### Structural Memory
 
@@ -101,13 +101,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PROP-04 | Phase 62 | Complete |
 | PROP-05 | Phase 62 | Complete |
 | PROP-06 | Phase 62 | Complete |
-| CORR-01 | Phase 63 | Pending |
-| CORR-02 | Phase 63 | Pending |
-| CORR-03 | Phase 63 | Pending |
-| CORR-04 | Phase 63 | Pending |
-| CORR-05 | Phase 63 | Pending |
-| CORR-06 | Phase 63 | Pending |
-| CORR-07 | Phase 63 | Pending |
+| CORR-01 | Phase 63 | Complete |
+| CORR-02 | Phase 63 | Complete |
+| CORR-03 | Phase 63 | Complete |
+| CORR-04 | Phase 63 | Complete |
+| CORR-05 | Phase 63 | Complete |
+| CORR-06 | Phase 63 | Complete |
+| CORR-07 | Phase 63 | Complete |
 | SMEM-01 | Phase 64 | Pending |
 | SMEM-02 | Phase 64 | Pending |
 | SMEM-03 | Phase 64 | Pending |
