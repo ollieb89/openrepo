@@ -15,8 +15,9 @@ Public API:
 
 import shutil
 import textwrap
-from typing import List
+from typing import List, Optional
 
+from .diff import topology_diff
 from .models import EdgeType, TopologyGraph
 from .proposal_models import ProposalSet, RubricScore, TopologyProposal
 
@@ -38,6 +39,73 @@ DIMENSION_LABELS = {
 }
 
 DIMENSIONS_ORDER = list(DIMENSION_LABELS.keys())
+
+
+# ANSI color codes for diff summary (green=improvement, red=regression)
+_C_GREEN = '\033[92m'
+_C_RED = '\033[91m'
+_C_YELLOW = '\033[93m'
+_C_RESET = '\033[0m'
+_C_BOLD = '\033[1m'
+
+
+# ---------------------------------------------------------------------------
+# Diff summary renderer
+# ---------------------------------------------------------------------------
+
+def render_diff_summary(
+    old_proposal: TopologyProposal,
+    new_proposal: TopologyProposal,
+) -> str:
+    """
+    Render a compact summary of structural changes between two proposals.
+
+    Shows node/edge delta counts and rubric score changes (colored by direction).
+
+    Args:
+        old_proposal: The original TopologyProposal.
+        new_proposal: The updated TopologyProposal after soft/hard correction.
+
+    Returns:
+        Multi-line string with diff summary for terminal display.
+    """
+    diff = topology_diff(old_proposal.topology, new_proposal.topology)
+
+    # Node/edge change counts
+    added_n = len(diff.added_nodes)
+    removed_n = len(diff.removed_nodes)
+    modified_n = len(diff.modified_nodes)
+    added_e = len(diff.added_edges)
+    removed_e = len(diff.removed_edges)
+    modified_e = len(diff.modified_edges)
+
+    archetype = new_proposal.archetype.upper()
+    lines = [f"  {_C_BOLD}[{archetype}] Changes:{_C_RESET}"]
+    lines.append(
+        f"    Nodes: {_C_GREEN}+{added_n}{_C_RESET} {_C_RED}-{removed_n}{_C_RESET} ~{modified_n}  "
+        f"Edges: {_C_GREEN}+{added_e}{_C_RESET} {_C_RED}-{removed_e}{_C_RESET} ~{modified_e}"
+    )
+
+    # Score deltas (if both proposals have rubric scores)
+    if old_proposal.rubric_score and new_proposal.rubric_score:
+        old_s = old_proposal.rubric_score
+        new_s = new_proposal.rubric_score
+        score_parts = []
+        for dim in DIMENSIONS_ORDER:
+            old_val = getattr(old_s, dim)
+            new_val = getattr(new_s, dim)
+            delta = new_val - old_val
+            if delta == 0:
+                continue
+            label = DIMENSION_LABELS.get(dim, dim)
+            if delta > 0:
+                score_parts.append(f"{_C_GREEN}{label}: {old_val}->{new_val}{_C_RESET}")
+            else:
+                score_parts.append(f"{_C_RED}{label}: {old_val}->{new_val}{_C_RESET}")
+        if score_parts:
+            lines.append("    Scores: " + ", ".join(score_parts))
+
+    return "\n".join(lines)
 
 
 # ---------------------------------------------------------------------------

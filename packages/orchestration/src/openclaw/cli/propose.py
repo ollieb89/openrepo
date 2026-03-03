@@ -7,16 +7,24 @@ returns 2-3 scored topology proposals as a formatted comparative matrix.
 Full pipeline:
   input -> clarify -> generate -> lint -> score -> classify -> render
 
+When running interactively (TTY), enters a correction session loop:
+  feedback -> soft correction (re-proposal with feedback)
+  edit [N]  -> hard correction (export draft, wait for 'done')
+  approve N -> approve the selected topology (saves to storage)
+  quit      -> save pending proposals and exit
+
 Usage:
     openclaw-propose "build a chat app"
     openclaw-propose --json "deploy ML pipeline"
     openclaw-propose --fresh --project myproj "refactor auth service"
+    openclaw-propose --edit "build something"
     echo "build a chat app" | openclaw-propose
 """
 
 import argparse
 import json
 import sys
+from typing import Optional
 
 from openclaw.config import get_project_root, get_topology_config
 from openclaw.project_config import get_active_project_id
@@ -30,7 +38,15 @@ from openclaw.topology.linter import ConstraintLinter, MAX_RETRIES
 from openclaw.topology.rubric import score_proposal, find_key_differentiators
 from openclaw.topology.classifier import ArchetypeClassifier
 from openclaw.topology.proposal_models import TopologyProposal, ProposalSet
-from openclaw.topology.renderer import render_full_output
+from openclaw.topology.renderer import render_full_output, render_diff_summary
+from openclaw.topology.correction import (
+    CorrectionSession,
+    apply_soft_correction,
+    export_draft,
+    import_draft,
+)
+from openclaw.topology.approval import approve_topology, compute_pushback_note
+from openclaw.topology.storage import save_pending_proposals
 
 
 # ---------------------------------------------------------------------------
@@ -80,6 +96,267 @@ def _to_pm_proposals(proposer_proposals: list) -> list:
 
 
 # ---------------------------------------------------------------------------
+# Selection helpers
+# ---------------------------------------------------------------------------
+
+def _parse_selection(
+    input_str: str,
+    proposal_set: ProposalSet,
+) -> Optional[TopologyProposal]:
+    """Parse a selection from user input like 'approve 1', 'edit lean', 'approve'.
+
+    Supports:
+    - 1-based numeric index: 'approve 1' -> proposals[0]
+    - Archetype name: 'approve lean' -> first proposal with archetype 'lean'
+    - Bare command: 'approve' -> proposals[0] (first proposal)
+
+    Returns:
+        The matching TopologyProposal, or None if index out of range.
+    """
+    parts = input_str.strip().lower().split()
+    # Strip command prefix (approve/edit) if present
+    if parts and parts[0] in ("approve", "edit"):
+        parts = parts[1:]
+
+    if not parts:
+        # Bare command: return first proposal
+        return proposal_set.proposals[0] if proposal_set.proposals else None
+
+    token = parts[0]
+
+    # Try numeric index (1-based)
+    try:
+        idx = int(token) - 1
+        if 0 <= idx < len(proposal_set.proposals):
+            return proposal_set.proposals[idx]
+        return None  # Out of range
+    except ValueError:
+        pass
+
+    # Try archetype name match
+    for p in proposal_set.proposals:
+        if p.archetype.lower() == token:
+            return p
+
+    return None
+
+
+def _find_original_proposal(
+    session: CorrectionSession,
+    archetype: str,
+) -> Optional[TopologyProposal]:
+    """Find the original proposal for a given archetype from session history.
+
+    Looks first in correction_history initial state, then falls back to
+    best_proposal_set.
+
+    Returns:
+        The original TopologyProposal for this archetype, or None.
+    """
+    # Walk correction_history to find the first proposal_set (before any correction)
+    # Since we don't store the initial proposal_set in history, use best_proposal_set
+    for p in session.best_proposal_set.proposals:
+        if p.archetype == archetype:
+            return p
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Interactive session loop
+# ---------------------------------------------------------------------------
+
+def _run_session(
+    session: CorrectionSession,
+    weights: dict,
+    threshold: int,
+    pushback_threshold: int = 8,
+) -> int:
+    """Run the interactive correction/approval session loop.
+
+    Commands:
+        feedback text   — soft correction (re-proposal with feedback)
+        edit [N]        — hard correction (export draft, wait for done/cancel)
+        approve [N]     — approve the Nth proposal
+        quit            — save pending and exit 0
+
+    At cycle limit: display best proposals, offer approve/edit only.
+
+    Returns:
+        0 on successful approval or quit, 1 on unrecoverable error.
+    """
+    correction_type = "initial"
+
+    while True:
+        if session.cycle_limit_reached:
+            print(
+                f"\n{Colors.BOLD}I've refined this {session.max_cycles} times."
+                f" Here's the best I achieved:{Colors.RESET}"
+            )
+            print(render_full_output(session.best_proposal_set, threshold))
+            prompt = "Approve [N] or edit [N]: "
+        else:
+            prompt = "Feedback, 'edit [N]', 'approve [N]', or 'quit': "
+
+        try:
+            user_input = input(prompt).strip()
+        except (EOFError, KeyboardInterrupt):
+            save_pending_proposals(session.project_id, session.proposal_set.to_dict())
+            print("\nProposals saved. Resume with: openclaw-approve")
+            return 0
+
+        lower = user_input.lower()
+
+        # --- Quit ---
+        if lower == "quit":
+            save_pending_proposals(session.project_id, session.proposal_set.to_dict())
+            print("Proposals saved. Resume with: openclaw-approve")
+            return 0
+
+        # --- Approve ---
+        if lower.startswith("approve"):
+            selected = _parse_selection(user_input, session.proposal_set)
+            if selected is None:
+                print(f"{Colors.RED}Invalid selection. Use 'approve 1', 'approve lean', etc.{Colors.RESET}")
+                continue
+
+            # Compute pushback note
+            pushback = ""
+            if selected.rubric_score:
+                original = _find_original_proposal(session, selected.archetype)
+                if original and original.rubric_score:
+                    pushback = compute_pushback_note(
+                        original.rubric_score,
+                        selected.topology,
+                        weights,
+                        pushback_threshold,
+                    )
+
+            entry = approve_topology(
+                session.project_id,
+                selected.topology,
+                correction_type,
+                pushback,
+            )
+
+            if pushback:
+                print(f"\n{Colors.YELLOW}{pushback}{Colors.RESET}\n")
+            print(f"{Colors.GREEN}Topology approved and saved.{Colors.RESET}")
+            return 0
+
+        # --- Edit (hard correction) ---
+        if lower.startswith("edit"):
+            selected = _parse_selection(user_input, session.proposal_set)
+            if selected is None:
+                selected = session.proposal_set.proposals[0]
+
+            draft_path = export_draft(selected, session.project_id)
+            print(f"Draft exported to: {draft_path}")
+            print("Edit the file, then type 'done' to import or 'cancel':")
+
+            try:
+                resp = input("> ").strip().lower()
+            except (EOFError, KeyboardInterrupt):
+                print("\nEdit cancelled.")
+                continue
+
+            if resp == "done":
+                try:
+                    graph, lint_result = import_draft(
+                        session.project_id,
+                        session.registry,
+                        session.max_concurrent,
+                    )
+                except (FileNotFoundError, ValueError) as e:
+                    print(f"{Colors.RED}Import error: {e}{Colors.RESET}")
+                    print("Your file has been left in place. Fix the error and try again.")
+                    continue
+
+                if not lint_result.valid:
+                    print(f"{Colors.RED}Blocked: {lint_result.rejected_roles}{Colors.RESET}")
+                    print("Your file has been left in place.")
+                    continue
+
+                if lint_result.adjusted:
+                    for adj in lint_result.adjustments:
+                        print(f"{Colors.YELLOW}  Adjusted: {adj}{Colors.RESET}")
+
+                # Show diff summary between exported proposal and imported result
+                # Build a temporary proposal wrapping the imported graph for diff
+                from openclaw.topology.proposal_models import TopologyProposal as _TP
+                imported_proposal = _TP(
+                    archetype=selected.archetype,
+                    topology=graph,
+                    delegation_boundaries=selected.delegation_boundaries,
+                    coordination_model=selected.coordination_model,
+                    risk_assessment=selected.risk_assessment,
+                    justification=selected.justification,
+                    rubric_score=None,
+                )
+                diff_summary = render_diff_summary(selected, imported_proposal)
+                print(diff_summary)
+
+                # Compute pushback and approve
+                pushback = ""
+                if selected.rubric_score:
+                    pushback = compute_pushback_note(
+                        selected.rubric_score,
+                        graph,
+                        weights,
+                        pushback_threshold,
+                    )
+
+                entry = approve_topology(
+                    session.project_id,
+                    graph,
+                    "hard",
+                    pushback,
+                )
+
+                if pushback:
+                    print(f"\n{Colors.YELLOW}{pushback}{Colors.RESET}\n")
+                print(f"{Colors.GREEN}Edited topology approved.{Colors.RESET}")
+                return 0
+            else:
+                print("Edit cancelled.")
+                continue
+
+        # --- Feedback (soft correction) ---
+        if session.cycle_limit_reached:
+            print(
+                f"{Colors.YELLOW}Cycle limit reached."
+                f" Use 'approve [N]' or 'edit [N]'.{Colors.RESET}"
+            )
+            continue
+
+        if not user_input:
+            continue
+
+        old_proposals = session.proposal_set
+        try:
+            new_set = apply_soft_correction(session, user_input, weights)
+        except ValueError as e:
+            print(f"{Colors.RED}Re-proposal error: {e}{Colors.RESET}")
+            continue
+        except Exception as e:
+            print(f"{Colors.RED}Re-proposal error: {e}{Colors.RESET}")
+            continue
+
+        correction_type = "soft"
+
+        # Show diff for each archetype pair
+        for old_p in old_proposals.proposals:
+            for new_p in new_set.proposals:
+                if old_p.archetype == new_p.archetype:
+                    print(render_diff_summary(old_p, new_p))
+
+        # Show full updated output
+        print(render_full_output(new_set, threshold))
+        save_pending_proposals(session.project_id, new_set.to_dict())
+
+    return 0  # Unreachable but satisfies type checker
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -111,6 +388,12 @@ def main() -> int:
         dest="json",
         action="store_true",
         help="Output raw JSON instead of formatted terminal table",
+    )
+    parser.add_argument(
+        "--edit",
+        dest="edit",
+        action="store_true",
+        help="Launch $EDITOR on the first proposal draft immediately after generation",
     )
     args = parser.parse_args()
 
@@ -254,11 +537,42 @@ def main() -> int:
     # --- Output ---
     if args.json:
         print(json.dumps(proposal_set.to_dict(), indent=2))
-    else:
-        output = render_full_output(proposal_set, threshold)
-        print(output)
+        return 0
 
-    return 0
+    output = render_full_output(proposal_set, threshold)
+    print(output)
+
+    # --- Non-interactive: exit immediately ---
+    if not interactive:
+        return 0
+
+    # --- Interactive: create session and enter loop ---
+    session = CorrectionSession(
+        outcome=outcome,
+        project_id=project_id,
+        proposal_set=proposal_set,
+        best_proposal_set=proposal_set,
+        clarifications=clarifications,
+        registry=registry,
+        max_concurrent=max_concurrent,
+    )
+
+    # Save proposals for session persistence (openclaw-approve resume)
+    save_pending_proposals(project_id, proposal_set.to_dict())
+
+    # Handle --edit flag: immediately launch hard correction on first proposal
+    if args.edit:
+        selected = proposal_set.proposals[0] if proposal_set.proposals else None
+        if selected:
+            draft_path = export_draft(selected, project_id)
+            import subprocess
+            import os
+            editor = os.environ.get("EDITOR", "nano")
+            subprocess.run([editor, str(draft_path)])
+            # After editor exits, continue session loop normally
+            # (user can type 'done' to import or 'quit')
+
+    return _run_session(session, weights, threshold)
 
 
 if __name__ == "__main__":

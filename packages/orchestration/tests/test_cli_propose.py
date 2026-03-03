@@ -444,6 +444,7 @@ class TestInteractiveSessionLoop:
 
     def test_interactive_feedback_then_approve(self):
         """Interactive: feedback text triggers soft correction, then 'approve 1' approves."""
+        from openclaw.cli.propose import main
         from openclaw.topology.models import TopologyGraph, TopologyNode
         from openclaw.topology.proposal_models import ProposalSet, RubricScore, TopologyProposal
 
@@ -521,6 +522,7 @@ class TestInteractiveSessionLoop:
 
     def test_interactive_cycle_limit(self):
         """After max_cycles feedbacks, system shows best proposals."""
+        from openclaw.cli.propose import main
         from openclaw.topology.models import TopologyGraph, TopologyNode
         from openclaw.topology.proposal_models import ProposalSet, RubricScore, TopologyProposal
 
@@ -577,8 +579,12 @@ class TestInteractiveSessionLoop:
                                                         mock_cls.return_value.classify.return_value = MagicMock(archetype="lean")
                                                         with patch("openclaw.cli.propose.save_pending_proposals"):
                                                             with patch("openclaw.cli.propose.approve_topology"):
+                                                                def soft_correction_side_effect(session, feedback, weights):
+                                                                    session.cycle_count += 1
+                                                                    return new_set
+
                                                                 with patch("openclaw.cli.propose.apply_soft_correction",
-                                                                           return_value=new_set) as mock_soft:
+                                                                           side_effect=soft_correction_side_effect) as mock_soft:
                                                                     with patch("openclaw.cli.propose.render_diff_summary", return_value="diff"):
                                                                         with patch("builtins.print", side_effect=lambda *a, **k: printed_lines.append(" ".join(str(x) for x in a))):
                                                                             with patch("builtins.input", side_effect=[
@@ -598,6 +604,7 @@ class TestInteractiveSessionLoop:
 
     def test_interactive_edit_flow(self):
         """Interactive: 'edit 1' then 'done' runs import_draft, approves with 'hard' type."""
+        from openclaw.cli.propose import main
         from openclaw.topology.models import TopologyGraph, TopologyNode
         from openclaw.topology.proposal_models import RubricScore
 
