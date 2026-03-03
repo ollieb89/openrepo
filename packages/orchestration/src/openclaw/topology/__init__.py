@@ -23,6 +23,17 @@ from .classifier import (
     ArchetypeClassifier,
     ArchetypeResult,
 )
+from .proposal_models import (
+    RubricScore,
+    TopologyProposal,
+    ProposalSet,
+)
+from .rubric import (
+    RubricScorer,
+    find_key_differentiators,
+    DEFAULT_WEIGHTS,
+    DIMENSIONS,
+)
 
 __all__ = [
     "EdgeType",
@@ -36,4 +47,11 @@ __all__ = [
     "format_diff",
     "ArchetypeClassifier",
     "ArchetypeResult",
+    "RubricScore",
+    "TopologyProposal",
+    "ProposalSet",
+    "RubricScorer",
+    "find_key_differentiators",
+    "DEFAULT_WEIGHTS",
+    "DIMENSIONS",
 ]

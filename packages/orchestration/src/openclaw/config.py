@@ -1,4 +1,5 @@
 import os
+import httpx
 from pathlib import Path
 
 # Lock configuration
@@ -52,6 +53,53 @@ MEMORY_CONTEXT_BUDGET = 2000
 MEMORY_CONFLICT_THRESHOLD = 0.85
 
 
+# Agent Registry Schema (Unified)
+AGENT_REGISTRY_SCHEMA: dict = {
+    "type": "object",
+    "required": ["id", "name", "level"],
+    "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_]+$" },
+        "name": { "type": "string" },
+        "level": { "type": "integer", "enum": [1, 2, 3] },
+        "reports_to": { "type": ["string", "null"] },
+        "subordinates": { "type": "array", "items": { "type": "string" } },
+        "model": { "type": "string" },
+        "provider": { "type": "string" },
+        "orchestration": {
+            "type": "object",
+            "properties": {
+                "role": { "type": "string", "enum": ["strategic", "coordinator", "domain", "executor", "tactical"] },
+                "max_concurrent": { "type": "integer", "minimum": 1 },
+                "skill_registry": {
+                    "anyOf": [
+                        { "type": "array", "items": { "type": "string" } },
+                        { "type": "object" }
+                    ]
+                },
+                "identity_ref": { "type": "string" },
+                "soul_ref": { "type": "string" },
+                "projects": { "type": "array", "items": { "type": "string" } },
+                "container": {
+                    "type": "object",
+                    "properties": {
+                        "image": { "type": "string" },
+                        "mem_limit": { "type": "string" },
+                        "cpu_quota": { "type": "integer" }
+                    }
+                },
+                "runtime": {
+                    "type": "object",
+                    "properties": {
+                        "default": { "type": "string" },
+                        "supported": { "type": "array", "items": { "type": "string" } }
+                    }
+                }
+            }
+        },
+        "sandbox": { "type": "object" }
+    }
+}
+
 # JSON Schema for openclaw.json validation (CONF-02)
 # Defines required fields, types, and allowed top-level keys.
 # Unknown top-level fields generate a WARNING at startup; missing required fields
@@ -72,7 +120,7 @@ OPENCLAW_JSON_SCHEMA: dict = {
             "type": "object",
             "required": ["list"],
             "properties": {
-                "list":     {"type": "array"},
+                "list":     {"type": "array", "items": AGENT_REGISTRY_SCHEMA},
                 "defaults": {"type": "object"},
             },
         },
@@ -107,6 +155,28 @@ OPENCLAW_JSON_SCHEMA: dict = {
             },
         },
         "plugins": {"type": "object"},
+        "topology": {
+            "type": "object",
+            "properties": {
+                "proposal_confidence_warning_threshold": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 10,
+                    "default": 5,
+                },
+                "rubric_weights": {
+                    "type": "object",
+                    "properties": {
+                        "complexity":             {"type": "number"},
+                        "coordination_overhead":  {"type": "number"},
+                        "risk_containment":       {"type": "number"},
+                        "time_to_first_output":   {"type": "number"},
+                        "cost_estimate":          {"type": "number"},
+                        "preference_fit":         {"type": "number"},
+                    },
+                },
+            },
+        },
     },
 }
 
@@ -163,6 +233,19 @@ def _find_project_root() -> Path:
         root = Path(env_root)
         root.mkdir(parents=True, exist_ok=True)
         return root
+
+    # Search for openclaw.json in CWD and its parents (root detection)
+    try:
+        current = Path.cwd()
+        for _ in range(10):  # Reasonable depth limit
+            if (current / "openclaw.json").exists():
+                return current
+            if current.parent == current:
+                break
+            current = current.parent
+    except Exception:
+        pass
+
     return Path.home() / ".openclaw"
 
 
@@ -172,7 +255,10 @@ def get_project_root() -> Path:
     Public API wrapper around _find_project_root(). Used by monitor.py
     for projects directory enumeration and other callers needing the root.
 
-    Resolution order: OPENCLAW_ROOT env var → ~/.openclaw
+    Resolution order:
+    1. OPENCLAW_ROOT env var
+    2. Search upward from current working directory for openclaw.json
+    3. Default to ~/.openclaw
     """
     return _find_project_root()
 
@@ -233,6 +319,40 @@ def get_autonomy_config() -> dict:
     }
 
 
+def get_topology_config() -> dict:
+    """Return the topology configuration from openclaw.json with defaults applied.
+
+    Returns safe defaults if the config cannot be loaded.
+
+    Returns:
+        Dict with:
+        - proposal_confidence_warning_threshold: int (default 5)
+        - rubric_weights: dict of 6 dimension -> float weights (sum to 1.0)
+    """
+    try:
+        from openclaw.project_config import load_and_validate_openclaw_config
+        config = load_and_validate_openclaw_config()
+        topology = config.get("topology", {})
+    except Exception:
+        topology = {}
+
+    default_weights = {
+        "complexity":             0.15,
+        "coordination_overhead":  0.15,
+        "risk_containment":       0.20,
+        "time_to_first_output":   0.20,
+        "cost_estimate":          0.10,
+        "preference_fit":         0.20,
+    }
+
+    return {
+        "proposal_confidence_warning_threshold": topology.get(
+            "proposal_confidence_warning_threshold", 5
+        ),
+        "rubric_weights": topology.get("rubric_weights", default_weights),
+    }
+
+
 def get_active_project_env() -> "str | None":
     """Return the OPENCLAW_PROJECT env var value, or None if not set.
 
@@ -244,3 +364,23 @@ def get_active_project_env() -> "str | None":
     var half only — callers must not read OPENCLAW_PROJECT directly.
     """
     return os.environ.get("OPENCLAW_PROJECT") or None
+
+
+def get_gateway_config() -> dict:
+    """Extract gateway config from openclaw.json."""
+    from openclaw.project_config import load_and_validate_openclaw_config
+    try:
+        config = load_and_validate_openclaw_config()
+        return config.get("gateway", {"port": 18789})
+    except Exception:
+        return {"port": 18789}
+
+
+async def gateway_healthy(base_url: str = "http://localhost:18789") -> bool:
+    """Check if the openclaw gateway is responding."""
+    try:
+        async with httpx.AsyncClient(timeout=3.0) as client:
+            r = await client.get(f"{base_url}/health")
+            return r.status_code == 200
+    except httpx.HTTPError:
+        return False
