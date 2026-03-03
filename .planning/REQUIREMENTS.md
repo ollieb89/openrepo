@@ -19,11 +19,11 @@ Requirements for structural intelligence milestone. Each maps to roadmap phases.
 ### Structure Proposal
 
 - [x] **PROP-01**: User can submit an outcome description and receive 2-3 topology proposals (Lean/Balanced/Robust archetypes)
-- [ ] **PROP-02**: Each proposal includes: roles, hierarchy, delegation boundaries, coordination model, risk assessment, estimated complexity, and confidence level
-- [ ] **PROP-03**: Each proposal is scored across a common rubric: complexity, coordination overhead, risk containment, time-to-first-output, cost estimate, preference fit, overall confidence
+- [x] **PROP-02**: Each proposal includes: roles, hierarchy, delegation boundaries, coordination model, risk assessment, estimated complexity, and confidence level
+- [x] **PROP-03**: Each proposal is scored across a common rubric: complexity, coordination overhead, risk containment, time-to-first-output, cost estimate, preference fit, overall confidence
 - [x] **PROP-04**: Each proposal includes written justification explaining why this structure fits the given outcome
-- [ ] **PROP-05**: System validates proposals against constraints (available agent types, resource limits, project config) before presenting to user
-- [ ] **PROP-06**: Proposal confidence scores are comparative across candidates (not absolute) so user can see relative strengths
+- [x] **PROP-05**: System validates proposals against constraints (available agent types, resource limits, project config) before presenting to user
+- [x] **PROP-06**: Proposal confidence scores are comparative across candidates (not absolute) so user can see relative strengths
 
 ### Correction System
 
@@ -96,11 +96,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TOPO-05 | Phase 61 | Complete |
 | TOPO-06 | Phase 61 | Complete |
 | PROP-01 | Phase 62 | Complete |
-| PROP-02 | Phase 62 | Pending |
-| PROP-03 | Phase 62 | Pending |
+| PROP-02 | Phase 62 | Complete |
+| PROP-03 | Phase 62 | Complete |
 | PROP-04 | Phase 62 | Complete |
-| PROP-05 | Phase 62 | Pending |
-| PROP-06 | Phase 62 | Pending |
+| PROP-05 | Phase 62 | Complete |
+| PROP-06 | Phase 62 | Complete |
 | CORR-01 | Phase 63 | Pending |
 | CORR-02 | Phase 63 | Pending |
 | CORR-03 | Phase 63 | Pending |
