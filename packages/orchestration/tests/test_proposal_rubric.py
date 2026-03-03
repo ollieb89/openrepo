@@ -303,3 +303,65 @@ class TestTopologyConfig:
         # Weights should sum to approximately 1.0
         total = sum(weights.values())
         assert abs(total - 1.0) < 0.01, f"Weights sum to {total}, expected ~1.0"
+
+    def test_auto_approve_l1_default_is_false(self):
+        """get_topology_config() must return auto_approve_l1=False by default (CORR-07)."""
+        from openclaw.config import get_topology_config
+        tc = get_topology_config()
+        assert "auto_approve_l1" in tc, "auto_approve_l1 key missing from get_topology_config() return"
+        assert tc["auto_approve_l1"] is False
+
+    def test_pushback_threshold_default_is_8(self):
+        """get_topology_config() must return pushback_threshold=8 by default (CORR-05)."""
+        from openclaw.config import get_topology_config
+        tc = get_topology_config()
+        assert "pushback_threshold" in tc, "pushback_threshold key missing from get_topology_config() return"
+        assert tc["pushback_threshold"] == 8
+
+    def test_auto_approve_l1_in_schema(self):
+        """OPENCLAW_JSON_SCHEMA topology properties must include auto_approve_l1 boolean."""
+        from openclaw.config import OPENCLAW_JSON_SCHEMA
+        topology_props = OPENCLAW_JSON_SCHEMA["properties"]["topology"]["properties"]
+        assert "auto_approve_l1" in topology_props, "auto_approve_l1 missing from topology schema"
+        assert topology_props["auto_approve_l1"]["type"] == "boolean"
+
+    def test_pushback_threshold_in_schema(self):
+        """OPENCLAW_JSON_SCHEMA topology properties must include pushback_threshold number 0-10."""
+        from openclaw.config import OPENCLAW_JSON_SCHEMA
+        topology_props = OPENCLAW_JSON_SCHEMA["properties"]["topology"]["properties"]
+        assert "pushback_threshold" in topology_props, "pushback_threshold missing from topology schema"
+        prop = topology_props["pushback_threshold"]
+        assert prop["type"] == "number"
+        assert prop["minimum"] == 0
+        assert prop["maximum"] == 10
+
+    def test_schema_accepts_auto_approve_l1_true(self):
+        """Validator must accept openclaw.json with topology.auto_approve_l1=true."""
+        import json
+        from openclaw.config_validator import validate_openclaw_config
+        config = {
+            "gateway": {"port": 18789},
+            "agents": {"list": []},
+            "topology": {"auto_approve_l1": True, "pushback_threshold": 5},
+        }
+        fatal, warnings = validate_openclaw_config(config, "test-config.json")
+        assert fatal == [], f"Unexpected fatal errors: {fatal}"
+
+    def test_topology_config_reflects_override(self, monkeypatch, tmp_path):
+        """get_topology_config() returns user-configured auto_approve_l1 and pushback_threshold."""
+        import json
+        config_file = tmp_path / "openclaw.json"
+        config_file.write_text(json.dumps({
+            "gateway": {"port": 18789},
+            "agents": {"list": []},
+            "topology": {
+                "auto_approve_l1": True,
+                "pushback_threshold": 3,
+            },
+        }))
+        monkeypatch.setenv("OPENCLAW_ROOT", str(tmp_path))
+        # Reload config module to pick up new env var
+        from openclaw.config import get_topology_config
+        tc = get_topology_config()
+        assert tc["auto_approve_l1"] is True
+        assert tc["pushback_threshold"] == 3
