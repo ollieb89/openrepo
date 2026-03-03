@@ -1,10 +1,11 @@
 const { execFileSync } = require('child_process');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
 function getConfig() {
   try {
-    const configPath = process.env.OPENCLAW_ROOT 
+    const configPath = process.env.OPENCLAW_ROOT
       ? path.join(process.env.OPENCLAW_ROOT, 'openclaw.json')
       : path.join(process.env.HOME || process.env.USERPROFILE, '.openclaw', 'openclaw.json');
     if (fs.existsSync(configPath)) {
@@ -14,6 +15,40 @@ function getConfig() {
     // Ignore error and return empty config
   }
   return {};
+}
+
+/**
+ * Returns true if the directive is administrative (status, monitoring, logs, etc.)
+ * and should bypass the topology approval gate.
+ *
+ * Administrative directives do not spawn L3 containers and must never be blocked
+ * by the approval gate — blocking them would prevent operators from diagnosing issues.
+ *
+ * @param {string} directive
+ * @returns {boolean}
+ */
+function isAdministrative(directive) {
+  const adminPrefixes = ['status', 'monitor', 'log', 'list', 'health'];
+  const lower = directive.toLowerCase().trim();
+  return adminPrefixes.some(prefix => lower.startsWith(prefix));
+}
+
+/**
+ * Returns true if an approved topology exists for the given project.
+ *
+ * Checks for `workspace/.openclaw/<projectId>/topology/current.json` under
+ * the workspaceRoot. This file is created by approve_topology() (approval.py)
+ * after the user accepts a proposal. Its presence is the gate condition.
+ *
+ * @param {string} projectId - The project identifier.
+ * @param {string} workspaceRoot - Root directory containing the workspace folder.
+ * @returns {boolean}
+ */
+function hasApprovedTopology(projectId, workspaceRoot) {
+  const topoPath = path.join(
+    workspaceRoot, 'workspace', '.openclaw', projectId, 'topology', 'current.json'
+  );
+  return fs.existsSync(topoPath);
 }
 
 class DispatchError extends Error {
@@ -37,6 +72,24 @@ async function dispatchDirective(targetId, directive) {
   const token = process.env.OPENCLAW_GATEWAY_TOKEN || (config.gateway?.auth?.token || config.gateway?.token || '');
 
   console.log(`[Router] Dispatching to ${targetId} :: ${directive}`);
+
+  // Approval gate check (CORR-07): block L3 spawning directives when no approved topology exists.
+  // Administrative directives (status, monitor, log, list, health) bypass the gate — these must
+  // never be blocked since operators need them to diagnose issues even without a topology.
+  // Propose directives are handled below and also bypass the gate (they create the topology).
+  const autoApproveL1 = config.topology?.auto_approve_l1 ?? false;
+  const proposeDirective = directive.match(/\bpropose\b/i) || targetId === '__propose__';
+
+  if (!autoApproveL1 && !proposeDirective && !isAdministrative(directive)) {
+    const projectId = config.active_project || process.env.OPENCLAW_PROJECT || '';
+    const workspaceRoot = process.env.OPENCLAW_ROOT || path.join(os.homedir(), '.openclaw');
+    if (projectId && !hasApprovedTopology(projectId, workspaceRoot)) {
+      throw new DispatchError(
+        targetId,
+        `No approved topology for project '${projectId}'. Run 'openclaw-propose' to generate and approve a topology.`
+      );
+    }
+  }
 
   // Detect 'propose' directives — route to openclaw-propose CLI directly
   // This handles both __propose__ sentinel target and directives containing "propose"
@@ -118,4 +171,4 @@ if (require.main === module) {
   dispatchDirective(targetId, directive).catch(() => process.exit(1));
 }
 
-module.exports = { dispatchDirective };
+module.exports = { dispatchDirective, hasApprovedTopology, isAdministrative };
