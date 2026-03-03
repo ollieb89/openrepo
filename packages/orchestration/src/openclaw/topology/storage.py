@@ -180,3 +180,72 @@ def load_changelog(project_id: str) -> List[Dict]:
             return json.load(f)
         finally:
             fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+
+
+# ---------------------------------------------------------------------------
+# Pending proposals persistence
+# ---------------------------------------------------------------------------
+
+def save_pending_proposals(project_id: str, data: dict) -> None:
+    """Persist pending proposal data to pending-proposals.json using atomic write.
+
+    Uses the same tmp+rename+fcntl pattern as save_topology for crash safety.
+
+    Args:
+        project_id: The project identifier.
+        data: The pending proposal data dict to persist.
+    """
+    topo_dir = _topology_dir(project_id)
+    pending_path = topo_dir / "pending-proposals.json"
+    tmp_path = topo_dir / "pending-proposals.json.tmp"
+
+    with open(tmp_path, "w", encoding="utf-8") as f:
+        fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+        try:
+            json.dump(data, f, indent=2)
+            f.flush()
+        finally:
+            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+
+    tmp_path.rename(pending_path)
+
+
+def load_pending_proposals(project_id: str) -> Optional[dict]:
+    """Load pending proposal data from pending-proposals.json.
+
+    Returns None if the file does not exist.
+
+    Args:
+        project_id: The project identifier.
+
+    Returns:
+        Loaded dict or None if no pending proposals file exists.
+    """
+    topo_dir = _topology_dir(project_id)
+    pending_path = topo_dir / "pending-proposals.json"
+
+    if not pending_path.exists():
+        return None
+
+    with open(pending_path, "r", encoding="utf-8") as f:
+        fcntl.flock(f.fileno(), fcntl.LOCK_SH)
+        try:
+            return json.load(f)
+        finally:
+            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+
+
+def delete_pending_proposals(project_id: str) -> None:
+    """Delete pending-proposals.json if it exists.
+
+    Silently does nothing if the file is not present.
+
+    Args:
+        project_id: The project identifier.
+    """
+    topo_dir = _topology_dir(project_id)
+    pending_path = topo_dir / "pending-proposals.json"
+
+    if pending_path.exists():
+        pending_path.unlink()
+        logger.debug("Deleted pending-proposals.json for project=%s", project_id)
