@@ -58,7 +58,12 @@
   3. Proposals that include roles not in the skill registry, or pool sizes exceeding project `max_concurrent`, are rejected by the constraint linter before they reach the user
   4. Proposal confidence scores are shown comparatively so the user can see which candidate scores higher on each dimension relative to the others
   5. Topology confidence threshold is configured under `topology.proposal_confidence_warning_threshold` — a separate key from the autonomy framework's `autonomy.confidence_threshold`
-**Plans**: TBD
+**Plans**: 5 plans
+- [ ] 62-01-PLAN.md — Topology data model, serialization, and file storage (Phase 61 prerequisite)
+- [ ] 62-02-PLAN.md — Topology diff engine and archetype classifier (Phase 61 prerequisite)
+- [ ] 62-03-PLAN.md — Proposal data models, rubric scoring, and constraint linter
+- [ ] 62-04-PLAN.md — LLM proposal generation pipeline with hybrid input
+- [ ] 62-05-PLAN.md — CLI entry point, ASCII renderer, and config integration
 
 ### Phase 63: Correction System and Approval Gate
 **Goal**: Users can correct proposals through textual feedback or direct edits, with the system enforcing an approval gate before execution and learning from every correction event
@@ -105,7 +110,7 @@ Phases execute in numeric order: 61 → 62 → 63 → 64 → 65
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 61. Topology Foundation | v2.0 | 0/? | Not started | - |
-| 62. Structure Proposal Engine | v2.0 | 0/? | Not started | - |
+| 62. Structure Proposal Engine | v2.0 | 0/5 | Planned | - |
 | 63. Correction System and Approval Gate | v2.0 | 0/? | Not started | - |
 | 64. Structural Memory | v2.0 | 0/? | Not started | - |
 | 65. Topology Observability | v2.0 | 0/? | Not started | - |
