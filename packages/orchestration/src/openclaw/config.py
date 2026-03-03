@@ -175,6 +175,16 @@ OPENCLAW_JSON_SCHEMA: dict = {
                         "preference_fit":         {"type": "number"},
                     },
                 },
+                "auto_approve_l1": {
+                    "type": "boolean",
+                    "default": False,
+                },
+                "pushback_threshold": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 10,
+                    "default": 8,
+                },
             },
         },
     },
@@ -350,6 +360,8 @@ def get_topology_config() -> dict:
             "proposal_confidence_warning_threshold", 5
         ),
         "rubric_weights": topology.get("rubric_weights", default_weights),
+        "auto_approve_l1": topology.get("auto_approve_l1", False),
+        "pushback_threshold": topology.get("pushback_threshold", 8),
     }
 
 
