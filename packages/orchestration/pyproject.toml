@@ -26,6 +26,7 @@ openclaw-project = "openclaw.cli.project:main"
 openclaw-suggest = "openclaw.cli.suggest:main"
 openclaw-config = "openclaw.cli.config:main"
 openclaw-propose = "openclaw.cli.propose:main"
+openclaw-approve = "openclaw.cli.approve:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/openclaw"]
