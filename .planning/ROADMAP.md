@@ -91,7 +91,10 @@ Plans:
   3. User can query per-project correction count and see whether the preference profile has reached the minimum data threshold for active influence
   4. After sufficient corrections accumulate, the system surfaces an extracted pattern (e.g., "user flattens hierarchies for low-complexity tasks") visible in the structural memory report
   5. Preference profiling applies decay (older corrections weighted less) and epsilon-greedy exploration (20% random archetype ordering) so the system does not lock into early archetype preferences
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 64-01-PLAN.md — Config extension, storage functions, MemoryProfiler, and PatternExtractor
+- [ ] 64-02-PLAN.md — L3 isolation, dynamic preference_fit scoring, approval recompute, CLI memory report
 
 ### Phase 65: Topology Observability
 **Goal**: The dashboard surfaces proposed and approved topologies as interactive graphs, shows correction history with structural diffs, and displays confidence and proposal evolution over time
@@ -116,7 +119,7 @@ Phases execute in numeric order: 61 → 62 → 63 → 64 → 65
 | 61. Topology Foundation | v2.0 | 0/? | Not started | - |
 | 62. Structure Proposal Engine | 5/5 | Complete    | 2026-03-03 | - |
 | 63. Correction System and Approval Gate | 3/3 | Complete    | 2026-03-03 | - |
-| 64. Structural Memory | v2.0 | 0/? | Not started | - |
+| 64. Structural Memory | v2.0 | 0/2 | Not started | - |
 | 65. Topology Observability | v2.0 | 0/? | Not started | - |
 
 ---
