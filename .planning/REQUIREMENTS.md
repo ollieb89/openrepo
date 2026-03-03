@@ -9,12 +9,12 @@ Requirements for structural intelligence milestone. Each maps to roadmap phases.
 
 ### Topology Data Model
 
-- [ ] **TOPO-01**: System represents swarm topology as an explicit graph object with nodes (roles) and edges (delegation/coordination relationships)
-- [ ] **TOPO-02**: User can serialize a topology to JSON and deserialize it back without data loss
-- [ ] **TOPO-03**: System tracks topology versions with timestamps and associates each version with a project
+- [x] **TOPO-01**: System represents swarm topology as an explicit graph object with nodes (roles) and edges (delegation/coordination relationships)
+- [x] **TOPO-02**: User can serialize a topology to JSON and deserialize it back without data loss
+- [x] **TOPO-03**: System tracks topology versions with timestamps and associates each version with a project
 - [ ] **TOPO-04**: System can compute a structural diff between two topology versions showing added/removed/modified nodes and edges
 - [ ] **TOPO-05**: System classifies each topology into an archetype (Lean/Balanced/Robust) based on role count, hierarchy depth, and coordination patterns
-- [ ] **TOPO-06**: Topology data is stored in a separate file from workspace-state.json to avoid lock contention with L3 execution
+- [x] **TOPO-06**: Topology data is stored in a separate file from workspace-state.json to avoid lock contention with L3 execution
 
 ### Structure Proposal
 
@@ -89,12 +89,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TOPO-01 | Phase 61 | Pending |
-| TOPO-02 | Phase 61 | Pending |
-| TOPO-03 | Phase 61 | Pending |
+| TOPO-01 | Phase 61 | Complete |
+| TOPO-02 | Phase 61 | Complete |
+| TOPO-03 | Phase 61 | Complete |
 | TOPO-04 | Phase 61 | Pending |
 | TOPO-05 | Phase 61 | Pending |
-| TOPO-06 | Phase 61 | Pending |
+| TOPO-06 | Phase 61 | Complete |
 | PROP-01 | Phase 62 | Pending |
 | PROP-02 | Phase 62 | Pending |
 | PROP-03 | Phase 62 | Pending |
