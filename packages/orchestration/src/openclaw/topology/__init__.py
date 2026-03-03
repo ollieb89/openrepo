@@ -19,6 +19,10 @@ from .diff import (
     topology_diff,
     format_diff,
 )
+from .classifier import (
+    ArchetypeClassifier,
+    ArchetypeResult,
+)
 
 __all__ = [
     "EdgeType",
@@ -30,4 +34,6 @@ __all__ = [
     "TopologyDiff",
     "topology_diff",
     "format_diff",
+    "ArchetypeClassifier",
+    "ArchetypeResult",
 ]
