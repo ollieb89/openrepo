@@ -29,6 +29,7 @@ Usage:
 
 import argparse
 import json
+import os
 import random
 import sys
 from typing import Optional
@@ -238,11 +239,19 @@ def _run_session(
                         pushback_threshold,
                     )
 
+            # Build rubric scores dict from all proposals in current session
+            rubric_scores = {
+                p.archetype: p.rubric_score.to_dict()
+                for p in session.proposal_set.proposals
+                if p.rubric_score is not None
+            } or None
+
             entry = approve_topology(
                 session.project_id,
                 selected.topology,
                 correction_type,
                 pushback,
+                rubric_scores=rubric_scores,
             )
 
             if pushback:
@@ -312,11 +321,24 @@ def _run_session(
                         pushback_threshold,
                     )
 
+                # Re-score the edited (imported) graph under all 3 archetypes
+                rubric_scores = {}
+                try:
+                    for arch in ("lean", "balanced", "robust"):
+                        score = score_proposal(
+                            graph, weights,
+                            project_id=session.project_id, archetype=arch,
+                        )
+                        rubric_scores[arch] = score.to_dict()
+                except Exception:
+                    pass  # Graceful degradation — chart stays empty for this entry
+
                 entry = approve_topology(
                     session.project_id,
                     graph,
                     "hard",
                     pushback,
+                    rubric_scores=rubric_scores or None,
                 )
 
                 if pushback:
@@ -461,6 +483,115 @@ def _run_memory_report(args: list) -> int:
     return 0
 
 
+def _ensure_llm_provider_setup(interactive: bool) -> None:
+    """Ensure LLM provider and credentials are set. If missing and interactive, prompt the user."""
+    # Check if a provider is explicitly configured
+    provider = os.environ.get("OPENCLAW_LLM_PROVIDER")
+    
+    # If not configured, infer from available keys
+    if not provider:
+        if os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_TOKEN"):
+            provider = "anthropic"
+        elif os.environ.get("OPENAI_API_KEY"):
+            provider = "openai"
+        elif os.environ.get("GEMINI_API_KEY"):
+            provider = "gemini"
+        else:
+            provider = "anthropic"  # default
+            
+    # Check if the chosen/default provider is missing its key
+    missing_key = False
+    if provider == "anthropic" and not (os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_TOKEN")):
+        missing_key = True
+    elif provider == "openai" and not os.environ.get("OPENAI_API_KEY"):
+        missing_key = True
+    elif provider == "gemini" and not os.environ.get("GEMINI_API_KEY"):
+        missing_key = True
+        
+    # If we have what we need, or we are not interactive, or running under pytest, skip setup
+    is_pytest = "pytest" in sys.modules
+    
+    if not missing_key or not interactive or is_pytest:
+        return
+        
+    print(f"\n{Colors.BOLD}LLM Setup Required{Colors.RESET}")
+    print("OpenClaw needs an LLM to generate topology proposals.")
+    
+    print("\nSelect provider:")
+    print("  1. Anthropic (default)")
+    print("  2. OpenAI (or compatible API, e.g. Ollama, DeepSeek)")
+    print("  3. Gemini")
+    
+    try:
+        choice = input("Choice [1]: ").strip()
+    except (EOFError, KeyboardInterrupt):
+        sys.exit(1)
+        
+    if choice == "2":
+        provider = "openai"
+    elif choice == "3":
+        provider = "gemini"
+    else:
+        provider = "anthropic"
+        
+    env_updates = {"OPENCLAW_LLM_PROVIDER": provider}
+    os.environ["OPENCLAW_LLM_PROVIDER"] = provider
+    
+    try:
+        if provider == "anthropic":
+            key = input("\nAnthropic API Key: ").strip()
+            if key:
+                env_updates["ANTHROPIC_API_KEY"] = key
+                os.environ["ANTHROPIC_API_KEY"] = key
+        elif provider == "openai":
+            key = input("\nOpenAI API Key: ").strip()
+            if key:
+                env_updates["OPENAI_API_KEY"] = key
+                os.environ["OPENAI_API_KEY"] = key
+                
+            base_url = input("Custom Base URL (optional, e.g. https://api.openai.com/v1): ").strip()
+            if base_url:
+                env_updates["OPENAI_BASE_URL"] = base_url
+                os.environ["OPENAI_BASE_URL"] = base_url
+                
+            model = input("Model name [gpt-4o]: ").strip()
+            if model:
+                env_updates["OPENCLAW_LLM_MODEL"] = model
+                os.environ["OPENCLAW_LLM_MODEL"] = model
+        elif provider == "gemini":
+            key = input("\nGemini API Key: ").strip()
+            if key:
+                env_updates["GEMINI_API_KEY"] = key
+                os.environ["GEMINI_API_KEY"] = key
+                
+        print()
+        save = input("Save these settings to .env in this directory? (y/N): ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        sys.exit(1)
+        
+    if save in ("y", "yes"):
+        from pathlib import Path
+        env_file = Path.cwd() / ".env"
+        
+        lines = []
+        if env_file.exists():
+            lines = env_file.read_text().splitlines()
+            
+        for k, v in env_updates.items():
+            found = False
+            for i, line in enumerate(lines):
+                if line.startswith(f"{k}="):
+                    lines[i] = f"{k}={v}"
+                    found = True
+                    break
+            if not found:
+                lines.append(f"{k}={v}")
+                
+        env_file.write_text("\n".join(lines) + "\n")
+        print(f"{Colors.GREEN}Saved to {env_file}{Colors.RESET}\n")
+    else:
+        print()
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -547,6 +678,7 @@ def main() -> int:
 
     # --- Clarifying questions ---
     interactive = _is_interactive()
+    _ensure_llm_provider_setup(interactive)
     clarifications = ask_clarifications(interactive)
 
     # --- Generate -> Lint -> Retry loop ---

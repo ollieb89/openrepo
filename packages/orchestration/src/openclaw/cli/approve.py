@@ -163,12 +163,20 @@ def main() -> int:
             weights,
         )
 
+    # --- Build rubric scores dict from all proposals ---
+    rubric_scores = {
+        p.archetype: p.rubric_score.to_dict()
+        for p in proposal_set.proposals
+        if p.rubric_score is not None
+    } or None
+
     # --- Approve ---
     approve_topology(
         project_id,
         selected.topology,
         "initial",
         pushback,
+        rubric_scores=rubric_scores,
     )
 
     if pushback:
