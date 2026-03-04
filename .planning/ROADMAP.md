@@ -9,7 +9,7 @@
 - ✅ **v1.4 Operational Maturity** - Phases 39-44 (shipped 2026-02-25)
 - ✅ **v1.5 Config Consolidation** - Phases 45-53 (shipped 2026-02-25)
 - ✅ **v1.6 Agent Autonomy** - Phases 54-60 (shipped 2026-02-26)
-- 🚧 **v2.0 Structural Intelligence** - Phases 61-65 (in progress)
+- 🚧 **v2.0 Structural Intelligence** - Phases 61-66 (in progress)
 
 ---
 
@@ -33,6 +33,7 @@
 - [x] **Phase 63: Correction System and Approval Gate** - Soft re-proposal, hard direct edit, async diff analysis, and execution gate (completed 2026-03-03)
 - [x] **Phase 64: Structural Memory** - Correction storage, preference profiling, isolation from L3 SOUL injection (completed 2026-03-04)
 - [x] **Phase 65: Topology Observability** - Dashboard topology graph, proposal comparison, correction history, confidence timeline (completed 2026-03-04)
+- [ ] **Phase 66: Wire Rubric Scores to Confidence Chart** - Close audit gap: pipe rubric scores through approve_topology() to ConfidenceChart annotations
 
 ## Phase Details
 
@@ -63,10 +64,10 @@ Plans:
   5. Topology confidence threshold is configured under `topology.proposal_confidence_warning_threshold` — a separate key from the autonomy framework's `autonomy.confidence_threshold`
 **Plans**: 5 plans
 - [x] 62-01-PLAN.md — Topology data model, serialization, and file storage (Phase 61 prerequisite) (completed 2026-03-04)
-- [ ] 62-02-PLAN.md — Topology diff engine and archetype classifier (Phase 61 prerequisite)
-- [ ] 62-03-PLAN.md — Proposal data models, rubric scoring, and constraint linter
-- [ ] 62-04-PLAN.md — LLM proposal generation pipeline with hybrid input
-- [ ] 62-05-PLAN.md — CLI entry point, ASCII renderer, and config integration
+- [x] 62-02-PLAN.md — Topology diff engine and archetype classifier (Phase 61 prerequisite) (completed 2026-03-03)
+- [x] 62-03-PLAN.md — Proposal data models, rubric scoring, and constraint linter (completed 2026-03-03)
+- [x] 62-04-PLAN.md — LLM proposal generation pipeline with hybrid input (completed 2026-03-03)
+- [x] 62-05-PLAN.md — CLI entry point, ASCII renderer, and config integration (completed 2026-03-03)
 
 ### Phase 63: Correction System and Approval Gate
 **Goal**: Users can correct proposals through textual feedback or direct edits, with the system enforcing an approval gate before execution and learning from every correction event
@@ -116,10 +117,21 @@ Plans:
 - [ ] 65-02-PLAN.md — React Flow graph visualization, dual panel, rubric bar, proposal comparison
 - [ ] 65-03-PLAN.md — Correction timeline, confidence chart, topology page assembly, visual verification
 
+### Phase 66: Wire Rubric Scores to Confidence Chart
+**Goal**: The confidence evolution chart renders actual rubric score data points from approved topology changelog entries
+**Depends on**: Phase 65, Phase 63
+**Requirements**: TOBS-05
+**Gap Closure**: Closes gaps from v2.0 audit — TOBS-05 partial, approve_topology() → ConfidenceChart integration, Confidence Evolution flow
+**Success Criteria** (what must be TRUE):
+  1. `approve_topology()` accepts optional rubric scores and writes them to `annotations['rubric_scores']` in changelog entries
+  2. CLI callers (`propose.py`, `approve.py`) pass per-archetype rubric scores at approval time
+  3. ConfidenceChart renders non-zero data points when changelog entries contain rubric_scores annotations
+**Plans**: 0 plans (pending `/gsd:plan-phase 66`)
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 61 → 62 → 63 → 64 → 65
+Phases execute in numeric order: 61 → 62 → 63 → 64 → 65 → 66
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -128,6 +140,7 @@ Phases execute in numeric order: 61 → 62 → 63 → 64 → 65
 | 63. Correction System and Approval Gate | 3/3 | Complete    | 2026-03-03 | - |
 | 64. Structural Memory | 2/2 | Complete    | 2026-03-04 | - |
 | 65. Topology Observability | 3/3 | Complete    | 2026-03-04 | - |
+| 66. Wire Rubric Scores to Confidence Chart | 0/0 | Pending     | - | - |
 
 ---
 *Roadmap created: 2026-03-03*

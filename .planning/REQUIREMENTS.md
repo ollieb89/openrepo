@@ -50,7 +50,7 @@ Requirements for structural intelligence milestone. Each maps to roadmap phases.
 - [x] **TOBS-02**: Dashboard displays the approved topology alongside the proposed topology for comparison
 - [x] **TOBS-03**: Dashboard shows correction history for a project with structural diffs between versions
 - [x] **TOBS-04**: Dashboard shows a structural diff timeline — chronological view of how topology evolved across proposals and corrections
-- [x] **TOBS-05**: Dashboard shows confidence evolution — how proposal confidence scores changed across correction cycles
+- [ ] **TOBS-05**: Dashboard shows confidence evolution — how proposal confidence scores changed across correction cycles
 - [x] **TOBS-06**: Dashboard shows the multi-proposal comparison view with rubric scores, key deltas, and archetype labels
 
 ## v2.1 Requirements
@@ -118,12 +118,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TOBS-02 | Phase 65 | Complete |
 | TOBS-03 | Phase 65 | Complete |
 | TOBS-04 | Phase 65 | Complete |
-| TOBS-05 | Phase 65 | Complete |
+| TOBS-05 | Phase 66 | Pending |
 | TOBS-06 | Phase 65 | Complete |
 
 **Coverage:**
 - v2.0 requirements: 31 total
 - Mapped to phases: 31
+- Satisfied: 30
+- Pending (gap closure): 1 (TOBS-05)
 - Unmapped: 0
 
 ---
