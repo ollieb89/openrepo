@@ -37,11 +37,11 @@ Requirements for structural intelligence milestone. Each maps to roadmap phases.
 
 ### Structural Memory
 
-- [ ] **SMEM-01**: System stores all topology correction diffs with timestamps, project context, and correction type (soft/hard)
+- [x] **SMEM-01**: System stores all topology correction diffs with timestamps, project context, and correction type (soft/hard)
 - [ ] **SMEM-02**: Structural memory is categorically isolated from L3 execution memory — topology data never appears in L3 SOUL injection
-- [ ] **SMEM-03**: System extracts recurring patterns from accumulated corrections (e.g., "user flattens hierarchies for low-complexity tasks")
-- [ ] **SMEM-04**: System builds a user structural preference profile from correction history that influences the "preference fit" rubric score
-- [ ] **SMEM-05**: Preference profiling includes decay (older corrections weighted less) and exploration (epsilon-greedy to prevent archetype lock-in)
+- [x] **SMEM-03**: System extracts recurring patterns from accumulated corrections (e.g., "user flattens hierarchies for low-complexity tasks")
+- [x] **SMEM-04**: System builds a user structural preference profile from correction history that influences the "preference fit" rubric score
+- [x] **SMEM-05**: Preference profiling includes decay (older corrections weighted less) and exploration (epsilon-greedy to prevent archetype lock-in)
 - [ ] **SMEM-06**: System can report how many corrections have been accumulated per project and whether preference profiling has reached minimum data threshold
 
 ### Topology Observability
@@ -108,11 +108,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CORR-05 | Phase 63 | Complete |
 | CORR-06 | Phase 63 | Complete |
 | CORR-07 | Phase 63 | Complete |
-| SMEM-01 | Phase 64 | Pending |
+| SMEM-01 | Phase 64 | Complete |
 | SMEM-02 | Phase 64 | Pending |
-| SMEM-03 | Phase 64 | Pending |
-| SMEM-04 | Phase 64 | Pending |
-| SMEM-05 | Phase 64 | Pending |
+| SMEM-03 | Phase 64 | Complete |
+| SMEM-04 | Phase 64 | Complete |
+| SMEM-05 | Phase 64 | Complete |
 | SMEM-06 | Phase 64 | Pending |
 | TOBS-01 | Phase 65 | Pending |
 | TOBS-02 | Phase 65 | Pending |
