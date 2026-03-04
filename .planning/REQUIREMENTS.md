@@ -124,8 +124,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 **Coverage:**
 - v2.0 requirements: 31 total
 - Mapped to phases: 31
-- Satisfied: 30
-- Pending (gap closure): 1 (TOBS-05)
+- Satisfied: 31
+- Pending: 0
 - Unmapped: 0
 
 ---

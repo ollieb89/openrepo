@@ -9,7 +9,7 @@
 - ✅ **v1.4 Operational Maturity** - Phases 39-44 (shipped 2026-02-25)
 - ✅ **v1.5 Config Consolidation** - Phases 45-53 (shipped 2026-02-25)
 - ✅ **v1.6 Agent Autonomy** - Phases 54-60 (shipped 2026-02-26)
-- 🚧 **v2.0 Structural Intelligence** - Phases 61-66 (in progress)
+- 🚧 **v2.0 Structural Intelligence** - Phases 61-67 (in progress)
 
 ---
 
@@ -34,6 +34,7 @@
 - [x] **Phase 64: Structural Memory** - Correction storage, preference profiling, isolation from L3 SOUL injection (completed 2026-03-04)
 - [x] **Phase 65: Topology Observability** - Dashboard topology graph, proposal comparison, correction history, confidence timeline (completed 2026-03-04)
 - [x] **Phase 66: Wire Rubric Scores to Confidence Chart** - Close audit gap: pipe rubric scores through approve_topology() to ConfidenceChart annotations (completed 2026-03-04)
+- [ ] **Phase 67: Integration Cleanup** - Fix incomplete __all__ exports and broken route_directive import (gap closure from audit)
 
 ## Phase Details
 
@@ -130,6 +131,18 @@ Plans:
 Plans:
 - [ ] 66-01-PLAN.md — Add rubric_scores to approve_topology() and wire all CLI call sites
 
+### Phase 67: Integration Cleanup
+**Goal**: Fix two low-severity integration gaps found by milestone audit — complete public API exports and remove broken import
+**Depends on**: Phase 66
+**Requirements**: PROP-02, PROP-03, CORR-02, CORR-07 (integration hardening)
+**Gap Closure**: Closes INT-01 and INT-02 from v2.0 audit
+**Success Criteria** (what must be TRUE):
+  1. `from openclaw.topology import score_proposal, render_diff_summary` works without falling back to submodule imports
+  2. `import agents.main.skills.route_directive` succeeds without ImportError
+**Plans**: 1 plan
+Plans:
+- [ ] 67-01-PLAN.md — Fix __all__ exports in topology/__init__.py and broken route_directive imports
+
 ## Progress
 
 **Execution Order:**
@@ -143,6 +156,7 @@ Phases execute in numeric order: 61 → 62 → 63 → 64 → 65 → 66
 | 64. Structural Memory | 2/2 | Complete    | 2026-03-04 | - |
 | 65. Topology Observability | 3/3 | Complete    | 2026-03-04 | - |
 | 66. Wire Rubric Scores to Confidence Chart | 1/1 | Complete    | 2026-03-04 | - |
+| 67. Integration Cleanup | 0/1 | Pending     | - | - |
 
 ---
 *Roadmap created: 2026-03-03*
