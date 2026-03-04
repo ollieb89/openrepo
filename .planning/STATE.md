@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Structural Intelligence
 status: executing
-stopped_at: Completed 01-protocol-foundations-01-PLAN.md
-last_updated: "2026-03-04T12:57:00.000Z"
+stopped_at: Completed 01-protocol-foundations-02-PLAN.md
+last_updated: "2026-03-04T12:54:39.903Z"
 last_activity: 2026-03-04 — Phase 01 Plan 01 complete (native ACP WebSocket endpoint, ServerAcpTranslator, E2E tests)
 progress:
   total_phases: 5
@@ -60,6 +60,7 @@ Progress: [█░░░░░░░░░] 5% (phase 01 — 1/? plans complete)
 | Phase 65-topology-observability PP03 | 4min | 2 tasks | 6 files |
 | Phase 65-topology-observability P03 | 30min | 3 tasks | 6 files |
 | Phase 01-protocol-foundations P01 | 15min | 3 tasks | 6 files |
+| Phase 01-protocol-foundations P02 | 3min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -105,6 +106,8 @@ Progress: [█░░░░░░░░░] 5% (phase 01 — 1/? plans complete)
 - [Phase 01-01]: ACP endpoint uses separate acpWss instance — clean routing via ACP_WS_PATH="/v1/acp" constant in attachGatewayUpgradeHandler
 - [Phase 01-01]: context.broadcast patched in-place (not replaced) — existing Gateway WS clients unaffected; ACP translators intercept broadcast events via wrap
 - [Phase 01-01]: E2E tests named *.e2e.test.ts in test/e2e/ — matches vitest.e2e.config.ts include pattern
+- [Phase 01-02]: workspaceDir in _meta overrides params.cwd — meta takes precedence for workspace isolation
+- [Phase 01-02]: authProfileId stored on AcpSession and forwarded to chat.send — parse once on session create, use throughout session lifetime
 
 ### Pending Todos
 
@@ -116,6 +119,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-04T12:57:00.000Z
-Stopped at: Completed 01-protocol-foundations-01-PLAN.md
+Last session: 2026-03-04T12:54:39.898Z
+Stopped at: Completed 01-protocol-foundations-02-PLAN.md
 Resume file: None
