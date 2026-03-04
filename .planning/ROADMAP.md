@@ -64,7 +64,10 @@
   2. A single TopologyProposal class exists in proposal_models.py with graph field, rubric_score, and to_dict/from_dict — proposer.py imports and uses it directly
   3. Running `grep -r "/home/ollie\|/home/ob" .` on tracked files returns no results
   4. All runtime configs and SOUL templates reference OPENCLAW_ROOT or environment variables rather than absolute user paths
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 68-01-PLAN.md — Consolidate TopologyProposal and fix test failures (DEBT-01, DEBT-02)
+- [ ] 68-02-PLAN.md — Remove hardcoded user paths from all tracked files (DEBT-03)
 
 ### Phase 69: Docker Base Image
 **Goal**: A shared openclaw-base image exists and L3 containers use it, reducing Dockerfile duplication and standardizing the base layer
@@ -176,7 +179,7 @@
 | 45-53 | v1.5 | 22/22 | Complete | 2026-02-25 |
 | 54-60 | v1.6 | 14/14 | Complete | 2026-02-26 |
 | 61-67 | v2.0 | 17/17 | Complete | 2026-03-04 |
-| 68. Tech Debt Resolution | v2.1 | 0/TBD | Not started | - |
+| 68. Tech Debt Resolution | v2.1 | 0/2 | Not started | - |
 | 69. Docker Base Image | v2.1 | 0/TBD | Not started | - |
 | 70. Event Bridge Activation | v2.1 | 0/TBD | Not started | - |
 | 71. L3 Output Streaming | v2.1 | 0/TBD | Not started | - |
@@ -189,4 +192,4 @@
 
 ---
 *Roadmap created: 2026-02-17*
-*Last updated: 2026-03-04 — v2.1 Programmatic Integration & Real-Time Streaming roadmap created*
+*Last updated: 2026-03-04 — Phase 68 planned (2 plans)*
