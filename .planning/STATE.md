@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Programmatic Integration & Real-Time Streaming
-status: active
-stopped_at: null
-last_updated: "2026-03-04T19:00:00.000Z"
-last_activity: 2026-03-04 — Phase 68 Plan 01 complete — TopologyProposal consolidated, 694 tests pass
+status: executing
+stopped_at: Completed 68-02-PLAN.md — hardcoded path removal (DEBT-03)
+last_updated: "2026-03-04T18:27:08.213Z"
+last_activity: 2026-03-04 — Phase 68 Plan 01 complete, 694 tests pass
 progress:
   total_phases: 10
   completed_phases: 0
-  total_plans: 1
-  completed_plans: 1
+  total_plans: 0
+  completed_plans: 0
   percent: 5
 ---
 
@@ -57,6 +57,9 @@ v2.1 decisions:
 - Renamed topology field to graph in TopologyProposal (68-01); from_dict accepts both for backward compat
 - _to_pm_proposals() converted to identity pass-through (no conversion needed after consolidation)
 - state_engine event publishing wrapped in outer try/except — state operations never fail on event errors
+- [Phase 68-tech-debt-resolution]: Use os.homedir() + path.join() for portable OPENCLAW_ROOT fallback in TypeScript
+- [Phase 68-tech-debt-resolution]: project.json workspace paths use ~/... tilde notation, expanded by os.path.expanduser() in project_config.get_workspace_path()
+- [Phase 68-tech-debt-resolution]: openclaw.json skills.load.extraDirs uses relative ./skills path (not absolute)
 
 ### Pending Todos
 
@@ -70,6 +73,6 @@ None. Previously blocking issues resolved in Phase 68 Plan 01:
 
 ## Session Continuity
 
-Last session: 2026-03-04
-Stopped at: Phase 68 Plan 01 complete (68-01-SUMMARY.md created)
+Last session: 2026-03-04T18:27:08.210Z
+Stopped at: Completed 68-02-PLAN.md — hardcoded path removal (DEBT-03)
 Resume file: None

@@ -125,9 +125,9 @@ Three issues fixed:
 ## Self-Check
 
 ### Files exist
-- [x] `/home/ob/Development/Tools/openrepo/packages/orchestration/src/openclaw/topology/proposal_models.py` — canonical TopologyProposal with graph field
-- [x] `/home/ob/Development/Tools/openrepo/packages/orchestration/src/openclaw/topology/proposer.py` — imports TopologyProposal from proposal_models
-- [x] `/home/ob/Development/Tools/openrepo/packages/orchestration/src/openclaw/state_engine.py` — uses get_active_project_id() in create_task
+- [x] `./packages/orchestration/src/openclaw/topology/proposal_models.py` — canonical TopologyProposal with graph field
+- [x] `./packages/orchestration/src/openclaw/topology/proposer.py` — imports TopologyProposal from proposal_models
+- [x] `./packages/orchestration/src/openclaw/state_engine.py` — uses get_active_project_id() in create_task
 
 ### Only one TopologyProposal class
 ```

@@ -42,7 +42,7 @@
 
 ## Phases
 
-- [ ] **Phase 68: Tech Debt Resolution** - Resolve test failures, consolidate TopologyProposal, remove hardcoded paths
+- [x] **Phase 68: Tech Debt Resolution** - Resolve test failures, consolidate TopologyProposal, remove hardcoded paths (completed 2026-03-04)
 - [ ] **Phase 69: Docker Base Image** - Create shared openclaw-base image and rebase L3 Dockerfile
 - [ ] **Phase 70: Event Bridge Activation** - Start Unix socket server, wire event bus to transport
 - [ ] **Phase 71: L3 Output Streaming** - Stream Docker container output through event bridge to dashboard SSE
@@ -64,7 +64,7 @@
   2. A single TopologyProposal class exists in proposal_models.py with graph field, rubric_score, and to_dict/from_dict — proposer.py imports and uses it directly
   3. Running `grep -r "~/\|~/" .` on tracked files returns no results
   4. All runtime configs and SOUL templates reference OPENCLAW_ROOT or environment variables rather than absolute user paths
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 Plans:
 - [x] 68-01-PLAN.md — Consolidate TopologyProposal and fix test failures (DEBT-01, DEBT-02) [COMPLETE: 694 tests pass]
 - [ ] 68-02-PLAN.md — Remove hardcoded user paths from all tracked files (DEBT-03)
@@ -179,7 +179,7 @@ Plans:
 | 45-53 | v1.5 | 22/22 | Complete | 2026-02-25 |
 | 54-60 | v1.6 | 14/14 | Complete | 2026-02-26 |
 | 61-67 | v2.0 | 17/17 | Complete | 2026-03-04 |
-| 68. Tech Debt Resolution | v2.1 | 0/2 | Not started | - |
+| 68. Tech Debt Resolution | 2/2 | Complete   | 2026-03-04 | - |
 | 69. Docker Base Image | v2.1 | 0/TBD | Not started | - |
 | 70. Event Bridge Activation | v2.1 | 0/TBD | Not started | - |
 | 71. L3 Output Streaming | v2.1 | 0/TBD | Not started | - |
