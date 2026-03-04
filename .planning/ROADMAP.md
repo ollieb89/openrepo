@@ -103,9 +103,10 @@ Plans:
   2. Each output line is tagged with the task ID so the dashboard can route to the correct terminal panel
   3. The SSE endpoint sends heartbeat pings every 30 seconds — browser devtools shows the keepalive traffic
   4. After a network interruption, the dashboard SSE client reconnects automatically and receives the last 100 buffered events for the task without manual refresh
-**Plans**: 1 plan
+**Plans:** 2 plans
 Plans:
-- [ ] 69-01-PLAN.md — Create openclaw-base image and rebase L3 Dockerfile (DOCK-01)
+- [ ] 71-01-PLAN.md — Add TASK_OUTPUT event type, wire pool.py emission, socket heartbeat (EVNT-03)
+- [ ] 71-02-PLAN.md — SSE heartbeat, TypeScript types, LogViewer event bridge consumer (EVNT-04)
 
 ### Phase 72: Gateway-Only Dispatch
 **Goal**: All directive routing goes through the gateway HTTP API — no CLI subprocess fallback exists — and the system can start without a gateway for setup tasks
@@ -200,7 +201,7 @@ Plans:
 | 68. Tech Debt Resolution | 2/2 | Complete    | 2026-03-04 | - |
 | 69. Docker Base Image | 1/1 | Complete    | 2026-03-04 | - |
 | 70. Event Bridge Activation | v2.1 | Complete    | 2026-03-04 | 2026-03-04 |
-| 71. L3 Output Streaming | v2.1 | 0/TBD | Not started | - |
+| 71. L3 Output Streaming | v2.1 | 0/2 | Not started | - |
 | 72. Gateway-Only Dispatch | v2.1 | 0/TBD | Not started | - |
 | 73. Unified Agent Registry | v2.1 | 0/TBD | Not started | - |
 | 74. Dashboard Streaming UI | v2.1 | 0/TBD | Not started | - |
@@ -210,4 +211,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-02-17*
-*Last updated: 2026-03-04 — Phase 70 complete (1 plan, EVNT-01/EVNT-02 satisfied, 707 tests pass)*
+*Last updated: 2026-03-04 — Phase 71 planned (2 plans, EVNT-03/EVNT-04)*
