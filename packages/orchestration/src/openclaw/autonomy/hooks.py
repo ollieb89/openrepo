@@ -25,8 +25,6 @@ from .events import (
     AutonomyStateChanged,
     EVENT_STATE_CHANGED,
 )
-from ..events.protocol import EventType
-from .. import event_bus
 
 logger = logging.getLogger("openclaw.autonomy.hooks")
 
@@ -82,17 +80,8 @@ def on_task_spawn(task_id: str, task_spec: Dict[str, Any]) -> AutonomyContext:
         reason="Task spawned, entering planning phase",
     ))
     
-    try:
-        project_id = task_spec.get("project_id", "default")
-        event_bus.emit({
-            "event_type": EventType.AUTONOMY_STATE_CHANGED.value,
-            "project_id": project_id,
-            "task_id": task_id,
-            "state": AutonomyState.PLANNING.value,
-            "confidence": 0.0,
-        })
-    except Exception as e:
-        logger.error(f"Event bus emit failed: {e}")
+    # AutonomyEventBus.emit() above already forwards to event_bus (cross-runtime).
+    # No additional direct event_bus.emit() needed for autonomy events.
     
     logger.info(f"Created autonomy context for task {task_id} in PLANNING state")
     

@@ -18,23 +18,12 @@ def state_engine(tmp_path):
 @patch("openclaw.state_engine.get_memu_config", return_value={"url": "http://test"})
 @patch("openclaw.state_engine._run_memory_injector")
 @patch("openclaw.state_engine._run_memory_extractor")
-@patch("openclaw.state_engine.event_bridge")
-@patch("openclaw.state_engine.asyncio")
+@patch("openclaw.event_bus.emit")
 def test_state_transition_triggers_memory(
-    mock_asyncio, mock_event_bridge, mock_extractor, mock_injector, mock_memu_cfg, mock_proj_id,
+    mock_emit, mock_extractor, mock_injector, mock_memu_cfg, mock_proj_id,
     state_engine
 ):
-    # Mock event_bridge.publish to prevent real async execution
-    mock_event_bridge.publish = AsyncMock(return_value=None)
-
-    # Mock asyncio so that:
-    # - get_running_loop() returns a mock loop (preventing asyncio.run() from being called)
-    # - create_task() on the mock loop is a no-op
-    mock_loop = MagicMock()
-    mock_loop.create_task = MagicMock()
-    mock_asyncio.get_running_loop = MagicMock(return_value=mock_loop)
-    mock_asyncio.run = MagicMock()
-
+    # event_bus.emit is fire-and-forget (synchronous), no async mocking needed
     task_id = "test-123"
 
     # Create task
