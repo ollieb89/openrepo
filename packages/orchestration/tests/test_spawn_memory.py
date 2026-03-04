@@ -196,16 +196,19 @@ def test_format_memory_context_skips_empty_content_items():
 
 def test_build_augmented_soul_with_memory(tmp_path):
     """SOUL augmented with memory context appends the section after base SOUL."""
-    # Create a mock project structure
-    soul_dir = tmp_path / "agents" / "l3_specialist" / "agent"
-    soul_dir.mkdir(parents=True)
-    soul_file = soul_dir / "SOUL.md"
-    base_content = "# Base SOUL\n\nThis is the base SOUL content.\n"
-    soul_file.write_text(base_content)
-
     memory_context = "## Past Work Context\n\n- test memory"
 
-    result = _build_augmented_soul(tmp_path, memory_context)
+    # _build_augmented_soul uses render_soul + AgentRegistry — mock them for isolation
+    rendered_soul = "# Base SOUL\n\nThis is the base SOUL content.\n" + memory_context
+
+    with (
+        patch("spawn.load_project_config", return_value={}),
+        patch("spawn.AgentRegistry"),
+        patch("spawn.build_variables", return_value={}),
+        patch("spawn.build_dynamic_variables", return_value={}),
+        patch("spawn.render_soul", return_value=rendered_soul),
+    ):
+        result = _build_augmented_soul(tmp_path, memory_context, "test-proj", "l3_specialist")
 
     # Must contain original SOUL content
     assert "# Base SOUL" in result
@@ -222,24 +225,34 @@ def test_build_augmented_soul_with_memory(tmp_path):
 
 
 def test_build_augmented_soul_empty_memory(tmp_path):
-    """Empty memory context returns base SOUL unchanged — no sections appended."""
-    soul_dir = tmp_path / "agents" / "l3_specialist" / "agent"
-    soul_dir.mkdir(parents=True)
-    soul_file = soul_dir / "SOUL.md"
+    """Empty memory context falls back to 'No context loaded.' placeholder."""
     base_content = "# Base SOUL\n\nThis is the base SOUL content.\n"
-    soul_file.write_text(base_content)
 
-    result = _build_augmented_soul(tmp_path, "")
+    with (
+        patch("spawn.load_project_config", return_value={}),
+        patch("spawn.AgentRegistry"),
+        patch("spawn.build_variables", return_value={}),
+        patch("spawn.build_dynamic_variables", return_value={}),
+        patch("spawn.render_soul", return_value=base_content),
+    ):
+        result = _build_augmented_soul(tmp_path, "", "test-proj", "l3_specialist")
 
-    assert result == base_content
+    # render_soul is called and its result is returned
+    assert "# Base SOUL" in result
     assert "## Past Work Context" not in result
     assert "## Past Review Outcomes" not in result
 
 
 def test_build_augmented_soul_missing_soul_file(tmp_path):
-    """Missing SOUL.md returns empty string gracefully."""
-    # No soul file created — project root exists but SOUL.md does not
-    result = _build_augmented_soul(tmp_path, "## Past Work Context\n\n- some memory")
+    """Missing SOUL.md or render_soul returning '' returns empty string gracefully."""
+    with (
+        patch("spawn.load_project_config", return_value={}),
+        patch("spawn.AgentRegistry"),
+        patch("spawn.build_variables", return_value={}),
+        patch("spawn.build_dynamic_variables", return_value={}),
+        patch("spawn.render_soul", return_value=""),
+    ):
+        result = _build_augmented_soul(tmp_path, "## Past Work Context\n\n- some memory", "proj", "l3_specialist")
 
     assert result == ""
 

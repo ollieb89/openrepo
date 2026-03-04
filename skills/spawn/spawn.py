@@ -35,6 +35,9 @@ from openclaw.project_config import (
 )
 from openclaw.snapshot import _detect_default_branch
 from openclaw.logging import get_logger
+from openclaw.soul_renderer import render_soul, build_variables, build_dynamic_variables
+from openclaw.agent_registry import AgentRegistry
+from openclaw.config import get_project_root
 
 logger = get_logger("spawn")
 
@@ -218,6 +221,19 @@ CATEGORY_SECTION_MAP = {
     "task_outcome": "Task Outcomes",
 }
 
+# Structural memory categories that must NEVER reach L3 SOUL context (Phase 64).
+# These are stored for orchestration/scoring use only — injecting them into L3
+# would leak architectural decision data into the execution layer.
+#
+# Dual-layer isolation:
+#   Layer 1 (pre-filter): applied after _retrieve_memories_sync, before _format_memory_context
+#   Layer 2 (defense-in-depth): applied inside _format_memory_context per item
+EXCLUDED_CATEGORIES = frozenset({
+    "structural_correction",
+    "structural_preference",
+    "structural_pattern",
+})
+
 
 def _format_memory_context(memories: list) -> str:
     """Format retrieved memories into three distinct markdown sections by category.
@@ -260,8 +276,16 @@ def _format_memory_context(memories: list) -> str:
         if not text:
             continue
 
-        category = item.get("category", "")
+        category = item.get("metadata", {}).get("category", item.get("category", ""))
         agent_type = item.get("agent_type", "")
+
+        # Layer 2: Defense-in-depth — drop structural categories even if they bypass pre-filter
+        if category in EXCLUDED_CATEGORIES:
+            logger.warning(
+                "Structural memory item reached format layer — dropping (category=%s, project=%s)",
+                category, item.get("project_id", "unknown"),
+            )
+            continue
 
         # Primary routing: category field (new items with category stored)
         if category in CATEGORY_SECTION_MAP:
@@ -297,28 +321,15 @@ def _format_memory_context(memories: list) -> str:
     return "\n\n".join(sections) if sections else ""
 
 
-def _build_augmented_soul(project_root: Path, memory_context: str) -> str:
-    """Read the L3 SOUL.md base and append the memory context section.
+def _build_augmented_soul(project_root: Path, memory_context: str, project_id: str, agent_id: str) -> str:
+    """Build SOUL with static + dynamic + memory context."""
+    registry = AgentRegistry(project_root)
+    static_vars = build_variables(load_project_config(project_id))
+    dynamic_vars = build_dynamic_variables(project_id, agent_id, registry)
+    all_vars = {**static_vars, **dynamic_vars, "memory_section": memory_context or "No context loaded."}
 
-    Reads the L3 specialist SOUL directly (NOT render_soul() which produces L2
-    agent content). The L3 SOUL has no template variables, so it can be read
-    as plain text.
-
-    Args:
-        project_root:   Root directory of the openclaw project.
-        memory_context: Formatted ## Memory Context section, or "" for none.
-
-    Returns:
-        Augmented SOUL string, or "" if the L3 SOUL file is missing.
-        When memory_context is empty, returns the base SOUL unchanged.
-    """
-    soul_path = project_root / "agents" / "l3_specialist" / "agent" / "SOUL.md"
-    if not soul_path.exists():
-        return ""
-    base = soul_path.read_text(encoding="utf-8")
-    if not memory_context:
-        return base
-    return base.rstrip("\n") + "\n\n" + memory_context + "\n"
+    soul = render_soul(project_id, extra_variables=all_vars)
+    return soul
 
 
 def _write_soul_tempfile(content: str) -> Path:
@@ -573,6 +584,19 @@ def spawn_l3_specialist(
         from datetime import datetime, timezone
         jarvis.update_memory_cursor(project_id, datetime.now(timezone.utc).isoformat())
 
+    # Layer 1: Pre-filter structural categories before formatting (Phase 64)
+    # Structural memory is for orchestration scoring only — never inject into L3 context.
+    pre_count = len(memories)
+    memories = [
+        m for m in memories
+        if m.get("metadata", {}).get("category", m.get("category", "")) not in EXCLUDED_CATEGORIES
+    ]
+    if len(memories) < pre_count:
+        logger.warning(
+            "Pre-filtered %d structural memory item(s) from L3 retrieval (project=%s)",
+            pre_count - len(memories), project_id,
+        )
+
     memory_context = _format_memory_context(memories)
 
     if memory_context:
@@ -582,7 +606,7 @@ def spawn_l3_specialist(
             extra={"task_id": task_id, "project_id": project_id},
         )
 
-    soul_content = _build_augmented_soul(project_root, memory_context)
+    soul_content = _build_augmented_soul(project_root, memory_context, project_id, "l3_specialist")
     soul_file = None
     if soul_content:
         soul_file = _write_soul_file(soul_content, project_id, task_id, project_root)
