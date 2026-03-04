@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Programmatic Integration & Real-Time Streaming
 status: executing
-stopped_at: Phase 72 context gathered
-last_updated: "2026-03-04T21:52:10.025Z"
+stopped_at: Completed 72-gateway-only-dispatch-01-PLAN.md
+last_updated: "2026-03-04T22:08:04.635Z"
 last_activity: 2026-03-04 — Phase 70 Plan 01 complete, 707 tests pass
 progress:
   total_phases: 10
-  completed_phases: 3
-  total_plans: 4
-  completed_plans: 4
+  completed_phases: 4
+  total_plans: 5
+  completed_plans: 5
   percent: 10
 ---
 
@@ -70,6 +70,8 @@ v2.1 decisions:
 - [Phase 71]: UnixSocketTransport heartbeat interval stored as _heartbeat_interval instance attr (default 30s) enabling test override without monkey-patching asyncio.sleep
 - [Phase 71-l3-output-streaming]: Ring buffer is module-level (shared across SSE connections) — simple approach sufficient for phase 71
 - [Phase 71-l3-output-streaming]: containerId prop kept as deprecated backward-compat fallback in LogViewer
+- [Phase 72-gateway-only-dispatch]: Router dispatches exclusively via gateway HTTP API — execFileSync fallback removed
+- [Phase 72-gateway-only-dispatch]: ensure_gateway() skips check in bootstrap mode (OPENCLAW_BOOTSTRAP=1); monitor status and project commands are bootstrap-safe
 
 ### Pending Todos
 
@@ -83,6 +85,6 @@ None. Previously blocking issues resolved in Phase 68 Plan 01:
 
 ## Session Continuity
 
-Last session: 2026-03-04T21:52:10.021Z
-Stopped at: Phase 72 context gathered
-Resume file: .planning/phases/72-gateway-only-dispatch/72-CONTEXT.md
+Last session: 2026-03-04T22:08:04.631Z
+Stopped at: Completed 72-gateway-only-dispatch-01-PLAN.md
+Resume file: None

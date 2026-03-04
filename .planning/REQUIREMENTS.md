@@ -22,9 +22,9 @@ Requirements for v2.1 Programmatic Integration & Real-Time Streaming. Each maps 
 
 ### Gateway Integration
 
-- [ ] **GATE-01**: Router dispatches all directives (including propose) exclusively through gateway HTTP API — no execFileSync fallback
-- [ ] **GATE-02**: Gateway health check runs at startup with fail-fast error if gateway unavailable (outside bootstrap mode)
-- [ ] **GATE-03**: Bootstrap mode flag (OPENCLAW_BOOTSTRAP=1 or --bootstrap) allows CLI commands (project init, monitor status) without running gateway
+- [x] **GATE-01**: Router dispatches all directives (including propose) exclusively through gateway HTTP API — no execFileSync fallback
+- [x] **GATE-02**: Gateway health check runs at startup with fail-fast error if gateway unavailable (outside bootstrap mode)
+- [x] **GATE-03**: Bootstrap mode flag (OPENCLAW_BOOTSTRAP=1 or --bootstrap) allows CLI commands (project init, monitor status) without running gateway
 
 ### Agent Registry
 
@@ -95,9 +95,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EVNT-02 | Phase 70, Plan 01 | Complete |
 | EVNT-03 | Phase 71 | Complete |
 | EVNT-04 | Phase 71 | Complete |
-| GATE-01 | Phase 72 | Pending |
-| GATE-02 | Phase 72 | Pending |
-| GATE-03 | Phase 72 | Pending |
+| GATE-01 | Phase 72 | Complete |
+| GATE-02 | Phase 72 | Complete |
+| GATE-03 | Phase 72 | Complete |
 | AREG-01 | Phase 73 | Pending |
 | AREG-02 | Phase 73 | Pending |
 | AREG-03 | Phase 73 | Pending |

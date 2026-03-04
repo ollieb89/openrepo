@@ -46,7 +46,7 @@
 - [x] **Phase 69: Docker Base Image** - Create shared openclaw-base image and rebase L3 Dockerfile (completed 2026-03-04)
 - [x] **Phase 70: Event Bridge Activation** - Start Unix socket server, wire event bus to transport (completed 2026-03-04)
 - [x] **Phase 71: L3 Output Streaming** - Stream Docker container output through event bridge to dashboard SSE (completed 2026-03-04)
-- [ ] **Phase 72: Gateway-Only Dispatch** - Remove execFileSync fallback, add bootstrap mode, gateway health check at startup
+- [x] **Phase 72: Gateway-Only Dispatch** - Remove execFileSync fallback, add bootstrap mode, gateway health check at startup (completed 2026-03-04)
 - [ ] **Phase 73: Unified Agent Registry** - Merge agent configs, auto-discovery, config drift detection
 - [ ] **Phase 74: Dashboard Streaming UI** - Terminal-style live output panel with task board integration
 - [ ] **Phase 75: Unified Observability** - Consolidated metrics endpoint and pipeline timeline view
@@ -117,7 +117,7 @@ Plans:
   2. `grep -r "execFileSync" skills/router/` returns no results
   3. Running `openclaw monitor status` with `OPENCLAW_BOOTSTRAP=1` succeeds even when the gateway process is not running
   4. Starting the orchestration layer without bootstrap mode and without a gateway running produces a fatal startup error with a human-readable message
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
 - [ ] 72-01-PLAN.md — Remove execFileSync fallback, add bootstrap mode and gateway health check (GATE-01, GATE-02, GATE-03)
 
@@ -202,7 +202,7 @@ Plans:
 | 69. Docker Base Image | 1/1 | Complete    | 2026-03-04 | - |
 | 70. Event Bridge Activation | v2.1 | Complete    | 2026-03-04 | 2026-03-04 |
 | 71. L3 Output Streaming | 2/2 | Complete    | 2026-03-04 | - |
-| 72. Gateway-Only Dispatch | v2.1 | 0/1 | Planned | - |
+| 72. Gateway-Only Dispatch | 1/1 | Complete   | 2026-03-04 | - |
 | 73. Unified Agent Registry | v2.1 | 0/TBD | Not started | - |
 | 74. Dashboard Streaming UI | v2.1 | 0/TBD | Not started | - |
 | 75. Unified Observability | v2.1 | 0/TBD | Not started | - |
