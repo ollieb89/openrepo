@@ -1,7 +1,8 @@
 .PHONY: help dev test lint dashboard memory clean memory-health \
         submodule-init submodule-update \
         openclaw-install openclaw-build openclaw-link openclaw-skills \
-        setup dev-all dev-dashboard dev-services
+        setup dev-all dev-dashboard dev-services \
+        docker-base docker-sandbox-base docker-sandbox-common docker-l3 docker-all
 
 help: ## Show available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -58,8 +59,19 @@ memory-health: ## Check memU service health (port 18791; override via MEMU_API_U
 
 # --- Docker ---
 
-docker-l3: ## Build L3 specialist container image
+docker-base: ## Build openclaw base image
+	docker build -t openclaw-base:bookworm-slim docker/base/
+
+docker-sandbox-base: ## Build openclaw sandbox base image
+	cd openclaw && docker build -f Dockerfile.sandbox -t openclaw-sandbox:bookworm-slim .
+
+docker-sandbox-common: docker-sandbox-base ## Build openclaw sandbox-common image (full runtime stack)
+	cd openclaw && docker build -f Dockerfile.sandbox-common -t openclaw-sandbox-common:bookworm-slim .
+
+docker-l3: docker-base ## Build L3 specialist container image (depends on base image)
 	docker build -t openclaw-l3-specialist:latest docker/l3-specialist/
+
+docker-all: docker-base docker-sandbox-base docker-sandbox-common docker-l3 ## Build the full Docker image chain
 
 # --- Submodule Management ---
 
