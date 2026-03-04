@@ -760,6 +760,66 @@ def show_pool_utilization(project_filter: Optional[str] = None) -> None:
     print()
 
 
+
+import asyncio
+from openclaw.events.bridge import ensure_event_bridge
+from openclaw.events.transport import get_socket_path
+from openclaw.events.protocol import OrchestratorEvent
+
+async def tail_events(project_id: str = None):
+    """Stream events in real-time via the shared event bridge."""
+    print(f"{Colors.BLUE}Streaming live events...{Colors.RESET}")
+
+    # Ensure the shared bridge server is running
+    started = ensure_event_bridge()
+    if not started:
+        print(f"{Colors.RED}Warning: Event bridge could not be started. Events may not be available.{Colors.RESET}")
+
+    socket_path = get_socket_path()
+
+    def render_event(event: OrchestratorEvent) -> None:
+        if project_id and event.project_id != project_id:
+            return
+
+        color = Colors.BLUE
+        if 'error' in event.type.value or 'failed' in event.type.value:
+            color = Colors.RED
+        elif 'completed' in event.type.value:
+            color = Colors.GREEN
+
+        task_str = f" [Task: {event.task_id}]" if event.task_id else ""
+        print(f"[{event.timestamp:.2f}] {color}{event.type.value}{Colors.RESET}{task_str} Domain: {event.domain.value} Payload: {event.payload}")
+
+    try:
+        reader, writer = await asyncio.open_unix_connection(socket_path)
+        print(f"{Colors.GREEN}Connected to event socket: {socket_path}{Colors.RESET}")
+        try:
+            while True:
+                line = await reader.readline()
+                if not line:
+                    break
+                try:
+                    event = OrchestratorEvent.from_json(line.decode('utf-8').strip())
+                    render_event(event)
+                except Exception as e:
+                    print(f"{Colors.RED}Error parsing event: {e}{Colors.RESET}")
+        except KeyboardInterrupt:
+            pass
+        finally:
+            writer.close()
+            try:
+                await writer.wait_closed()
+            except Exception:
+                pass
+    except (FileNotFoundError, ConnectionRefusedError) as e:
+        print(f"{Colors.RED}Could not connect to event socket ({socket_path}): {e}{Colors.RESET}")
+    except KeyboardInterrupt:
+        pass
+
+
+def run_tail_events(project_id: str = None):
+    asyncio.run(tail_events(project_id))
+
 def main():
     """CLI entrypoint for OpenClaw L3 Monitor."""
     parser = argparse.ArgumentParser(
@@ -779,6 +839,12 @@ def main():
         type=float,
         default=POLL_INTERVAL,
         help=f'Polling interval in seconds (default: {POLL_INTERVAL})'
+    )
+
+    tail_parser.add_argument(
+        '--events',
+        action='store_true',
+        help='Stream via cross-runtime event bridge instead of polling'
     )
     tail_parser.add_argument(
         '--state-file',
