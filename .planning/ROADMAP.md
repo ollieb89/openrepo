@@ -32,7 +32,7 @@
 - [x] **Phase 62: Structure Proposal Engine** - Multi-candidate proposals (Lean/Balanced/Robust) with rubric scoring and constraint linting (completed 2026-03-03)
 - [x] **Phase 63: Correction System and Approval Gate** - Soft re-proposal, hard direct edit, async diff analysis, and execution gate (completed 2026-03-03)
 - [x] **Phase 64: Structural Memory** - Correction storage, preference profiling, isolation from L3 SOUL injection (completed 2026-03-04)
-- [ ] **Phase 65: Topology Observability** - Dashboard topology graph, proposal comparison, correction history, confidence timeline
+- [x] **Phase 65: Topology Observability** - Dashboard topology graph, proposal comparison, correction history, confidence timeline (completed 2026-03-04)
 
 ## Phase Details
 
@@ -124,7 +124,7 @@ Phases execute in numeric order: 61 → 62 → 63 → 64 → 65
 | 62. Structure Proposal Engine | 5/5 | Complete    | 2026-03-03 | - |
 | 63. Correction System and Approval Gate | 3/3 | Complete    | 2026-03-03 | - |
 | 64. Structural Memory | 2/2 | Complete    | 2026-03-04 | - |
-| 65. Topology Observability | 2/3 | In Progress|  | - |
+| 65. Topology Observability | 3/3 | Complete   | 2026-03-04 | - |
 
 ---
 *Roadmap created: 2026-03-03*
