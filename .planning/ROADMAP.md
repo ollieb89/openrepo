@@ -77,7 +77,9 @@ Plans:
   1. `docker build -t openclaw-base:bookworm-slim docker/base/` succeeds
   2. L3 Dockerfile uses `FROM openclaw-base:bookworm-slim` instead of a raw debian/ubuntu base
   3. `make docker-l3` builds successfully using the shared base image
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 69-01-PLAN.md — Create openclaw-base image and rebase L3 Dockerfile (DOCK-01)
 
 ### Phase 70: Event Bridge Activation
 **Goal**: The event bridge Unix socket server starts automatically and all published events flow through it to connected clients
@@ -88,7 +90,9 @@ Plans:
   2. A test client connecting to the Unix socket receives events published via the event bus within 100ms
   3. All 17 event types published to the event bus are forwarded to connected socket clients without filtering or loss
   4. Socket server handles client disconnect gracefully without crashing the orchestration process
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 69-01-PLAN.md — Create openclaw-base image and rebase L3 Dockerfile (DOCK-01)
 
 ### Phase 71: L3 Output Streaming
 **Goal**: L3 container stdout/stderr flows in real-time from pool.py through the event bridge and appears in the dashboard SSE stream
@@ -99,7 +103,9 @@ Plans:
   2. Each output line is tagged with the task ID so the dashboard can route to the correct terminal panel
   3. The SSE endpoint sends heartbeat pings every 30 seconds — browser devtools shows the keepalive traffic
   4. After a network interruption, the dashboard SSE client reconnects automatically and receives the last 100 buffered events for the task without manual refresh
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 69-01-PLAN.md — Create openclaw-base image and rebase L3 Dockerfile (DOCK-01)
 
 ### Phase 72: Gateway-Only Dispatch
 **Goal**: All directive routing goes through the gateway HTTP API — no CLI subprocess fallback exists — and the system can start without a gateway for setup tasks
@@ -110,7 +116,9 @@ Plans:
   2. `grep -r "execFileSync" skills/router/` returns no results
   3. Running `openclaw monitor status` with `OPENCLAW_BOOTSTRAP=1` succeeds even when the gateway process is not running
   4. Starting the orchestration layer without bootstrap mode and without a gateway running produces a fatal startup error with a human-readable message
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 69-01-PLAN.md — Create openclaw-base image and rebase L3 Dockerfile (DOCK-01)
 
 ### Phase 73: Unified Agent Registry
 **Goal**: Agent configuration has one source of truth — per-agent config.json files — with auto-discovery at startup and drift warnings when central config diverges
@@ -121,7 +129,9 @@ Plans:
   2. `openclaw agent list` shows agents discovered from the filesystem, not only those in openclaw.json
   3. A mismatch between openclaw.json agents.list and agents/*/agent/config.json produces a startup warning that names the conflicting fields
   4. Removing an agent directory removes it from the registry on next startup
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 69-01-PLAN.md — Create openclaw-base image and rebase L3 Dockerfile (DOCK-01)
 
 ### Phase 74: Dashboard Streaming UI
 **Goal**: Users can open any active task on the task board and watch its L3 output stream live in a terminal-style panel
@@ -132,7 +142,9 @@ Plans:
   2. Clicking a task row opens its output stream in the terminal panel within 500ms
   3. Output auto-scrolls to the bottom as new lines arrive; scrolling up pauses auto-scroll with a visual indicator
   4. Scrolling back to the bottom resumes auto-scroll automatically without clicking a button
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 69-01-PLAN.md — Create openclaw-base image and rebase L3 Dockerfile (DOCK-01)
 
 ### Phase 75: Unified Observability
 **Goal**: A single metrics endpoint consolidates all system metrics and the dashboard shows a pipeline timeline from L1 dispatch through L3 completion
@@ -142,7 +154,9 @@ Plans:
   1. `GET /api/metrics` returns a JSON response containing both orchestration metrics (from Python) and dashboard-computed metrics in a single payload
   2. The dashboard metrics page shows a timeline row per task with labeled segments: L1 dispatch, L2 decomposition, L3 execution — each with a timestamp and duration
   3. Timestamps and durations in the timeline are accurate to within 1 second of actual event times
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 69-01-PLAN.md — Create openclaw-base image and rebase L3 Dockerfile (DOCK-01)
 
 ### Phase 76: SOUL Injection Verification
 **Goal**: Every L3 container spawned has its SOUL variables fully populated including active task count, pool utilization, and current topology context
@@ -152,7 +166,9 @@ Plans:
   1. Spawning an L3 container and inspecting its SOUL file shows non-empty values for active_task_count, pool_utilization, and topology_context
   2. Spawning two concurrent L3 tasks shows different active_task_count values in their respective SOUL files
   3. After proposing a topology, spawned L3 containers have the current topology archetype name and agent count in their SOUL context
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 69-01-PLAN.md — Create openclaw-base image and rebase L3 Dockerfile (DOCK-01)
 
 ### Phase 77: Integration E2E Verification
 **Goal**: The full pipeline works end-to-end — L1 dispatches through the gateway, L2 decomposes, L3 spawns with populated SOUL, output streams to the dashboard, events flow, and metrics update
@@ -163,7 +179,9 @@ Plans:
   2. The L3 task's live output stream appears in the terminal panel while the container is running
   3. After L3 completes, the metrics endpoint reflects the completed task count and the pipeline timeline shows the full L1→L2→L3 duration
   4. The event stream shows no gaps — all expected event types (dispatch, spawn, output, complete) appear in correct order
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 69-01-PLAN.md — Create openclaw-base image and rebase L3 Dockerfile (DOCK-01)
 
 ---
 
