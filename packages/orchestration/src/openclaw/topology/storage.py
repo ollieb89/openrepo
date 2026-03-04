@@ -249,3 +249,119 @@ def delete_pending_proposals(project_id: str) -> None:
     if pending_path.exists():
         pending_path.unlink()
         logger.debug("Deleted pending-proposals.json for project=%s", project_id)
+
+
+# ---------------------------------------------------------------------------
+# Structural memory persistence (Phase 64)
+# ---------------------------------------------------------------------------
+
+def _default_memory_profile() -> dict:
+    """Return the default (empty) memory profile dict."""
+    return {
+        "project_id": "",
+        "correction_count": 0,
+        "soft_correction_count": 0,
+        "hard_correction_count": 0,
+        "threshold_status": "below_threshold",
+        "archetype_affinity": {"lean": 5.0, "balanced": 5.0, "robust": 5.0},
+        "last_computed": "",
+        "active_pattern_ids": [],
+    }
+
+
+def save_memory_profile(project_id: str, profile: dict) -> None:
+    """Persist memory profile data to memory-profile.json using atomic write.
+
+    Uses the same tmp+rename+fcntl pattern as save_pending_proposals for crash safety.
+
+    Args:
+        project_id: The project identifier.
+        profile: The memory profile dict to persist.
+    """
+    topo_dir = _topology_dir(project_id)
+    profile_path = topo_dir / "memory-profile.json"
+    tmp_path = topo_dir / "memory-profile.json.tmp"
+
+    with open(tmp_path, "w", encoding="utf-8") as f:
+        fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+        try:
+            json.dump(profile, f, indent=2)
+            f.flush()
+        finally:
+            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+
+    tmp_path.rename(profile_path)
+
+
+def load_memory_profile(project_id: str) -> dict:
+    """Load memory profile data from memory-profile.json.
+
+    Returns the default profile dict if the file does not exist.
+
+    Args:
+        project_id: The project identifier.
+
+    Returns:
+        Loaded profile dict or default profile if no file exists.
+    """
+    topo_dir = _topology_dir(project_id)
+    profile_path = topo_dir / "memory-profile.json"
+
+    if not profile_path.exists():
+        return _default_memory_profile()
+
+    with open(profile_path, "r", encoding="utf-8") as f:
+        fcntl.flock(f.fileno(), fcntl.LOCK_SH)
+        try:
+            return json.load(f)
+        finally:
+            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+
+
+def save_patterns(project_id: str, patterns: list) -> None:
+    """Persist structural patterns to patterns.json using atomic write.
+
+    Uses the same tmp+rename+fcntl pattern as save_pending_proposals for crash safety.
+
+    Args:
+        project_id: The project identifier.
+        patterns: List of pattern dicts to persist.
+    """
+    topo_dir = _topology_dir(project_id)
+    patterns_path = topo_dir / "patterns.json"
+    tmp_path = topo_dir / "patterns.json.tmp"
+
+    with open(tmp_path, "w", encoding="utf-8") as f:
+        fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+        try:
+            json.dump(patterns, f, indent=2)
+            f.flush()
+        finally:
+            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+
+    tmp_path.rename(patterns_path)
+
+
+def load_patterns(project_id: str) -> list:
+    """Load structural patterns from patterns.json.
+
+    Returns an empty list if the file does not exist.
+
+    Args:
+        project_id: The project identifier.
+
+    Returns:
+        List of pattern dicts or empty list if no file exists.
+    """
+    topo_dir = _topology_dir(project_id)
+    patterns_path = topo_dir / "patterns.json"
+
+    if not patterns_path.exists():
+        return []
+
+    with open(patterns_path, "r", encoding="utf-8") as f:
+        fcntl.flock(f.fileno(), fcntl.LOCK_SH)
+        try:
+            return json.load(f)
+        finally:
+            fcntl.flock(f.fileno(), fcntl.LOCK_UN)

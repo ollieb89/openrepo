@@ -338,6 +338,11 @@ def get_topology_config() -> dict:
         Dict with:
         - proposal_confidence_warning_threshold: int (default 5)
         - rubric_weights: dict of 6 dimension -> float weights (sum to 1.0)
+        - auto_approve_l1: bool (default False)
+        - pushback_threshold: int (default 8)
+        - exploration_rate: float (default 0.20) — epsilon for greedy exploration in preference scoring
+        - decay_lambda: float (default 0.05) — exponential decay rate for correction weighting (~14-day half-life)
+        - pattern_extraction_threshold: int (default 5) — minimum corrections before LLM pattern extraction
     """
     try:
         from openclaw.project_config import load_and_validate_openclaw_config
@@ -362,6 +367,9 @@ def get_topology_config() -> dict:
         "rubric_weights": topology.get("rubric_weights", default_weights),
         "auto_approve_l1": topology.get("auto_approve_l1", False),
         "pushback_threshold": topology.get("pushback_threshold", 8),
+        "exploration_rate": topology.get("exploration_rate", 0.20),
+        "decay_lambda": topology.get("decay_lambda", 0.05),
+        "pattern_extraction_threshold": topology.get("pattern_extraction_threshold", 5),
     }
 
 
