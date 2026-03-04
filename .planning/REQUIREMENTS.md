@@ -1,87 +1,85 @@
-# Requirements: OpenClaw v2.0 Structural Intelligence
+# Requirements: OpenClaw Agent Orchestration
 
-**Defined:** 2026-03-03
+**Defined:** 2026-03-04
 **Core Value:** The system designs and refactors its own orchestration — proposing multi-agent structures, learning from human corrections, and improving structural reasoning over time.
-
-## v2.0 Requirements
-
-Requirements for structural intelligence milestone. Each maps to roadmap phases.
-
-### Topology Data Model
-
-- [x] **TOPO-01**: System represents swarm topology as an explicit graph object with nodes (roles) and edges (delegation/coordination relationships)
-- [x] **TOPO-02**: User can serialize a topology to JSON and deserialize it back without data loss
-- [x] **TOPO-03**: System tracks topology versions with timestamps and associates each version with a project
-- [x] **TOPO-04**: System can compute a structural diff between two topology versions showing added/removed/modified nodes and edges
-- [x] **TOPO-05**: System classifies each topology into an archetype (Lean/Balanced/Robust) based on role count, hierarchy depth, and coordination patterns
-- [x] **TOPO-06**: Topology data is stored in a separate file from workspace-state.json to avoid lock contention with L3 execution
-
-### Structure Proposal
-
-- [x] **PROP-01**: User can submit an outcome description and receive 2-3 topology proposals (Lean/Balanced/Robust archetypes)
-- [x] **PROP-02**: Each proposal includes: roles, hierarchy, delegation boundaries, coordination model, risk assessment, estimated complexity, and confidence level
-- [x] **PROP-03**: Each proposal is scored across a common rubric: complexity, coordination overhead, risk containment, time-to-first-output, cost estimate, preference fit, overall confidence
-- [x] **PROP-04**: Each proposal includes written justification explaining why this structure fits the given outcome
-- [x] **PROP-05**: System validates proposals against constraints (available agent types, resource limits, project config) before presenting to user
-- [x] **PROP-06**: Proposal confidence scores are comparative across candidates (not absolute) so user can see relative strengths
-
-### Correction System
-
-- [x] **CORR-01**: User can give textual feedback on a proposal and receive a re-proposal that addresses the feedback (soft correction)
-- [x] **CORR-02**: User can directly edit a proposed topology (add/remove/modify roles, change hierarchy) and the system executes the edited version (hard correction)
-- [x] **CORR-03**: System computes and stores the diff between proposed and approved topology after every correction
-- [x] **CORR-04**: On hard correction, system executes immediately then analyzes the diff asynchronously
-- [x] **CORR-05**: When system had high confidence in its original proposal and the edit contradicts it, system surfaces a non-blocking note explaining its reasoning
-- [x] **CORR-06**: System enforces a cycle limit (max 3 re-proposals per soft correction loop) to prevent infinite iteration
-- [x] **CORR-07**: User must explicitly approve a topology before it can be used for execution (approval gate)
-
-### Structural Memory
-
-- [x] **SMEM-01**: System stores all topology correction diffs with timestamps, project context, and correction type (soft/hard)
-- [x] **SMEM-02**: Structural memory is categorically isolated from L3 execution memory — topology data never appears in L3 SOUL injection
-- [x] **SMEM-03**: System extracts recurring patterns from accumulated corrections (e.g., "user flattens hierarchies for low-complexity tasks")
-- [x] **SMEM-04**: System builds a user structural preference profile from correction history that influences the "preference fit" rubric score
-- [x] **SMEM-05**: Preference profiling includes decay (older corrections weighted less) and exploration (epsilon-greedy to prevent archetype lock-in)
-- [x] **SMEM-06**: System can report how many corrections have been accumulated per project and whether preference profiling has reached minimum data threshold
-
-### Topology Observability
-
-- [x] **TOBS-01**: Dashboard displays the currently proposed topology as a visual graph (nodes = roles, edges = relationships)
-- [x] **TOBS-02**: Dashboard displays the approved topology alongside the proposed topology for comparison
-- [x] **TOBS-03**: Dashboard shows correction history for a project with structural diffs between versions
-- [x] **TOBS-04**: Dashboard shows a structural diff timeline — chronological view of how topology evolved across proposals and corrections
-- [x] **TOBS-05**: Dashboard shows confidence evolution — how proposal confidence scores changed across correction cycles
-- [x] **TOBS-06**: Dashboard shows the multi-proposal comparison view with rubric scores, key deltas, and archetype labels
 
 ## v2.1 Requirements
 
-Deferred to future release. Tracked but not in current roadmap.
+Requirements for v2.1 Programmatic Integration & Real-Time Streaming. Each maps to roadmap phases.
 
-### Runtime Adaptation
+### Tech Debt
 
-- **RADP-01**: System can detect mid-execution that topology needs adjustment and propose changes
-- **RADP-02**: System can auto-scale agent count based on task load during execution
-- **RADP-03**: System can dynamically spawn specialist roles when tension/bottlenecks are detected
-- **RADP-04**: System can shrink topology when task simplifies during execution
+- [ ] **DEBT-01**: All async test failures resolved (test_proposer.py, test_state_engine_memory.py pass without event loop errors)
+- [ ] **DEBT-02**: Single TopologyProposal class with graph field, rubric_score, to_dict/from_dict — proposer.py uses it directly
+- [ ] **DEBT-03**: Zero hardcoded user-specific paths (/home/ollie, /home/ob) in any tracked file — all resolved via OPENCLAW_ROOT or env vars
 
-### Self-Refactoring
+### Event Infrastructure
 
-- **SREF-01**: System can identify recurring subgraphs across projects and propose them as reusable topology templates
-- **SREF-02**: System can recommend that a pattern of work deserves its own permanent agent class
-- **SREF-03**: System can simulate alternative orchestration strategies and compare predicted outcomes
+- [ ] **EVNT-01**: Event bridge Unix socket server starts automatically during orchestration startup
+- [ ] **EVNT-02**: Event bus handlers forward all published events through Unix socket transport to connected clients
+- [ ] **EVNT-03**: L3 container output (stdout/stderr) streamed from pool.py through event bridge to dashboard SSE in real-time
+- [ ] **EVNT-04**: Dashboard SSE endpoint has heartbeat keepalive and automatic reconnect with buffered history (last 100 events per task)
+
+### Gateway Integration
+
+- [ ] **GATE-01**: Router dispatches all directives (including propose) exclusively through gateway HTTP API — no execFileSync fallback
+- [ ] **GATE-02**: Gateway health check runs at startup with fail-fast error if gateway unavailable (outside bootstrap mode)
+- [ ] **GATE-03**: Bootstrap mode flag (OPENCLAW_BOOTSTRAP=1 or --bootstrap) allows CLI commands (project init, monitor status) without running gateway
+
+### Agent Registry
+
+- [ ] **AREG-01**: Single AgentRegistry class merges openclaw.json agents.list with agents/*/agent/config.json — per-agent config is source of truth
+- [ ] **AREG-02**: Auto-discovery scans agents/*/ at startup, registers all found agents
+- [ ] **AREG-03**: Config drift detection flags mismatches between central and per-agent configs at startup with warnings
+
+### Dashboard Streaming
+
+- [ ] **DASH-01**: Terminal-style output panel renders live L3 output per active task
+- [ ] **DASH-02**: Click task on task board opens live output stream
+- [ ] **DASH-03**: Auto-scroll with pause-on-scroll-up, resume-on-scroll-to-bottom behavior
+
+### Observability
+
+- [ ] **OBSV-01**: Unified /api/metrics endpoint consolidates Python orchestration metrics and dashboard-computed metrics
+- [ ] **OBSV-02**: Pipeline timeline view shows L1 dispatch → L2 decomposition → L3 execution with timestamps and durations
+- [ ] **OBSV-03**: SOUL dynamic variables (active_task_count, pool_utilization, topology context) verified populated at spawn time
+
+### Docker
+
+- [ ] **DOCK-01**: Shared openclaw-base:bookworm-slim base image created and used by L3 Dockerfile
+
+### Integration Verification
+
+- [ ] **INTG-01**: End-to-end test: L1 dispatches via gateway → L2 decomposes → L3 spawns with populated SOUL → output streams to dashboard → events flow → metrics update
+
+## v2.2 Requirements (Deferred)
+
+### Multi-Agent Coordination
+
+- **CORD-01**: Structured handoff protocol with context summary, partial results, blocking reason
+- **CORD-02**: Shared task queue with multiple L3s claiming subtasks from coordinator
+- **CORD-03**: Collaborative memory namespace scoped per task (prefix convention in memU)
+- **CORD-04**: Pre-merge conflict detection with L2 arbitration and L1 escalation
+- **CORD-05**: Coordination dashboard view showing multi-agent task flow
+
+### Event Persistence
+
+- **EPER-01**: Event persistence to disk/DB for replay and compliance
+- **EPER-02**: Event replay API for debugging and audit
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Mid-flight topology mutation | Requires topology-as-data to be stable first; v2.1+ |
-| Auto-scaling during execution | Dependent on structural scoring being proven; v2.1+ |
-| Self-refactoring execution graphs | Research-grade complexity; v2.1+ |
-| Dynamic role spawning at runtime | Needs runtime topology mutation; v2.1+ |
-| Consumer-facing UI | Audience is AI-native teams, platform teams, researchers |
-| ACP protocol standardization | Deferred until structural intelligence is proven internally |
-| Generic graph visualization | Domain-specific topology viz only; no general-purpose graph tool |
-| Topology simulation/what-if | Requires scoring to be validated empirically first; v2.1+ |
+| Git submodule wiring | Deprioritized per user feedback — formalize later |
+| Mid-flight topology adaptation | Requires stable integration layer first; v2.2+ |
+| Auto-scaling | Dependent on structural scoring being proven; v2.2+ |
+| Self-refactoring execution graphs | Research-grade complexity; v2.2+ |
+| Dynamic role spawning | Needs runtime topology mutation; v2.2+ |
+| Consumer-facing UI | Audience is AI-native teams, not end users |
+| Protocol standardization (ACP) | Deferred until proven internally |
+| Prometheus /metrics endpoint | JSON-only for v2.1; Prometheus optional in v2.2 |
+| Windows/cross-platform support | Linux-only tooling; Unix sockets are appropriate |
 
 ## Traceability
 
@@ -89,45 +87,33 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TOPO-01 | Phase 61 | Complete |
-| TOPO-02 | Phase 61 | Complete |
-| TOPO-03 | Phase 61 | Complete |
-| TOPO-04 | Phase 61 | Complete |
-| TOPO-05 | Phase 61 | Complete |
-| TOPO-06 | Phase 61 | Complete |
-| PROP-01 | Phase 62 | Complete |
-| PROP-02 | Phase 62 | Complete |
-| PROP-03 | Phase 62 | Complete |
-| PROP-04 | Phase 62 | Complete |
-| PROP-05 | Phase 62 | Complete |
-| PROP-06 | Phase 62 | Complete |
-| CORR-01 | Phase 63 | Complete |
-| CORR-02 | Phase 63 | Complete |
-| CORR-03 | Phase 63 | Complete |
-| CORR-04 | Phase 63 | Complete |
-| CORR-05 | Phase 63 | Complete |
-| CORR-06 | Phase 63 | Complete |
-| CORR-07 | Phase 63 | Complete |
-| SMEM-01 | Phase 64 | Complete |
-| SMEM-02 | Phase 64 | Complete |
-| SMEM-03 | Phase 64 | Complete |
-| SMEM-04 | Phase 64 | Complete |
-| SMEM-05 | Phase 64 | Complete |
-| SMEM-06 | Phase 64 | Complete |
-| TOBS-01 | Phase 65 | Complete |
-| TOBS-02 | Phase 65 | Complete |
-| TOBS-03 | Phase 65 | Complete |
-| TOBS-04 | Phase 65 | Complete |
-| TOBS-05 | Phase 66 | Complete |
-| TOBS-06 | Phase 65 | Complete |
+| DEBT-01 | — | Pending |
+| DEBT-02 | — | Pending |
+| DEBT-03 | — | Pending |
+| EVNT-01 | — | Pending |
+| EVNT-02 | — | Pending |
+| EVNT-03 | — | Pending |
+| EVNT-04 | — | Pending |
+| GATE-01 | — | Pending |
+| GATE-02 | — | Pending |
+| GATE-03 | — | Pending |
+| AREG-01 | — | Pending |
+| AREG-02 | — | Pending |
+| AREG-03 | — | Pending |
+| DASH-01 | — | Pending |
+| DASH-02 | — | Pending |
+| DASH-03 | — | Pending |
+| OBSV-01 | — | Pending |
+| OBSV-02 | — | Pending |
+| OBSV-03 | — | Pending |
+| DOCK-01 | — | Pending |
+| INTG-01 | — | Pending |
 
 **Coverage:**
-- v2.0 requirements: 31 total
-- Mapped to phases: 31
-- Satisfied: 31
-- Pending: 0
-- Unmapped: 0
+- v2.1 requirements: 21 total
+- Mapped to phases: 0
+- Unmapped: 21
 
 ---
-*Requirements defined: 2026-03-03*
-*Last updated: 2026-03-03 — traceability complete, phases 61-65 assigned*
+*Requirements defined: 2026-03-04*
+*Last updated: 2026-03-04 after initial definition*
