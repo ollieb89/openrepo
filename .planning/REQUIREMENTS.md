@@ -9,9 +9,9 @@ Requirements for v2.1 Programmatic Integration & Real-Time Streaming. Each maps 
 
 ### Tech Debt
 
-- [ ] **DEBT-01**: All async test failures resolved (test_proposer.py, test_state_engine_memory.py pass without event loop errors)
-- [ ] **DEBT-02**: Single TopologyProposal class with graph field, rubric_score, to_dict/from_dict — proposer.py uses it directly
-- [ ] **DEBT-03**: Zero hardcoded user-specific paths (/home/ollie, /home/ob) in any tracked file — all resolved via OPENCLAW_ROOT or env vars
+- [x] **DEBT-01**: All async test failures resolved (test_proposer.py, test_state_engine_memory.py pass without event loop errors)
+- [x] **DEBT-02**: Single TopologyProposal class with graph field, rubric_score, to_dict/from_dict — proposer.py uses it directly
+- [ ] **DEBT-03**: Zero hardcoded user-specific paths (~/, ~/) in any tracked file — all resolved via OPENCLAW_ROOT or env vars
 
 ### Event Infrastructure
 
@@ -87,8 +87,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DEBT-01 | Phase 68 | Pending |
-| DEBT-02 | Phase 68 | Pending |
+| DEBT-01 | Phase 68, Plan 01 | Complete |
+| DEBT-02 | Phase 68, Plan 01 | Complete |
 | DEBT-03 | Phase 68 | Pending |
 | DOCK-01 | Phase 69 | Pending |
 | EVNT-01 | Phase 70 | Pending |

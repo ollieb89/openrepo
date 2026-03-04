@@ -2,7 +2,7 @@
   "id": "rivalsignal",
   "name": "RivalSignal",
   "agent_display_name": "RivalSignal_PM",
-  "workspace": "/home/ollie/Development/Projects/rivalsignal",
+  "workspace": "~/Development/Projects/rivalsignal",
   "tech_stack": {
     "frontend": "",
     "backend": "",

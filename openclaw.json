@@ -162,7 +162,7 @@
   "skills": {
     "load": {
       "extraDirs": [
-        "/home/ob/Development/Tools/openrepo/skills"
+        "./skills"
       ]
     }
   },

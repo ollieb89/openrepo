@@ -26,7 +26,7 @@ Ensure the root configuration establishes the network modes and the initial L2 n
       {
         "id": "PumplAI_PM",
         "role": "orchestrator",
-        "volumes": ["/home/ollie/Development/Projects/pumplai:/app/project"],
+        "volumes": ["$HOME/Development/Projects/pumplai:/app/project"],
         "env": {
           "NODE_VERSION": "22",
           "RUNTIME": "bun",
@@ -43,7 +43,7 @@ Ensure the root configuration establishes the network modes and the initial L2 n
 ```
 
 **Step 2: Verify Volume Permissions**
-Run: `ls -ld /home/ollie/Development/Projects/pumplai`
+Run: `ls -ld $HOME/Development/Projects/pumplai`
 Expected: Directory exists and is writable by UID 1000.
 
 **Step 3: Test Gateway Connectivity**

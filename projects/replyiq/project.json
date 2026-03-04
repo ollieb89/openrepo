@@ -2,7 +2,7 @@
   "id": "replyiq",
   "name": "ReplyIQ",
   "agent_display_name": "ReplyIQ_PM",
-  "workspace": "/home/ollie/Development/Projects/replyiq",
+  "workspace": "~/Development/Projects/replyiq",
   "tech_stack": {
     "frontend": "",
     "backend": "",

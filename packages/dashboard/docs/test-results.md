@@ -101,7 +101,7 @@ GET /api/health/filesystem
 
 Response (200 OK):
 {
-  "workspace_root": "/home/ollie/.openclaw",
+  "workspace_root": "~/.openclaw",
   "healthy": true,
   "checks": {
     "root": true,
@@ -119,7 +119,7 @@ Response (200 OK):
 
 Response (503 Service Unavailable):
 {
-  "workspace_root": "/home/ollie/.openclaw",
+  "workspace_root": "~/.openclaw",
   "healthy": false,
   "checks": {
     "root": false,
@@ -141,7 +141,7 @@ Response (200 OK):
 {
   "success": true,
   "message": "Workspace initialized successfully",
-  "workspace_root": "/home/ollie/.openclaw"
+  "workspace_root": "~/.openclaw"
 }
 
 Response (500 Error):

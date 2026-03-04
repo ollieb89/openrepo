@@ -2,7 +2,7 @@
   "id": "finai",
   "name": "FinAI",
   "agent_display_name": "FinAI_PM",
-  "workspace": "/home/ollie/Development/Projects/finai",
+  "workspace": "~/Development/Projects/finai",
   "tech_stack": {
     "frontend": "Nuxt 3, Vue 3, Nuxt UI, Drizzle ORM",
     "backend": "",

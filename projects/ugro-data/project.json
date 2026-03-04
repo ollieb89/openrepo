@@ -2,7 +2,7 @@
   "id": "ugro-data",
   "name": "Ugro Data",
   "agent_display_name": "UgroData_PM",
-  "workspace": "/home/ollie/Development/Tools/ugro_data",
+  "workspace": "~/Development/Tools/ugro_data",
   "tech_stack": {
     "frontend": "",
     "backend": "",

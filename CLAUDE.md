@@ -194,7 +194,7 @@ make dashboard   # http://localhost:6987
 ## Development Notes
 
 - Python package `openclaw` installed from `packages/orchestration/` — use `from openclaw.X import Y`
-- Dashboard uses `OPENCLAW_ROOT` env var (defaults to `/home/ollie/.openclaw`)
+- Dashboard uses `OPENCLAW_ROOT` env var (defaults to `~/.openclaw`)
 - L3 containers run as non-root (UID 1000) with volumes: workspace → `/workspace`, openclaw → `/openclaw` (read-only)
 - Per-project state is namespaced: containers (`openclaw-{project}-l3-{task}`), state files, snapshots, pool semaphores
 - SOUL templates use `string.Template.safe_substitute()` with `$variable` placeholders

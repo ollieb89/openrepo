@@ -2,7 +2,7 @@
   "id": "geriai",
   "name": "GerIAI",
   "agent_display_name": "GerIAI_PM",
-  "workspace": "/home/ollie/Development/Projects/geriai",
+  "workspace": "~/Development/Projects/geriai",
   "tech_stack": {
     "frontend": "",
     "backend": "",

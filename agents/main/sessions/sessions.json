@@ -194,8 +194,8 @@
         {
           "name": "gog",
           "description": "Google Workspace CLI for Gmail, Calendar, Drive, Contacts, Sheets, and Docs.",
-          "filePath": "/home/ollie/.openclaw/skills/gog/SKILL.md",
-          "baseDir": "/home/ollie/.openclaw/skills/gog",
+          "filePath": "~/.openclaw/skills/gog/SKILL.md",
+          "baseDir": "~/.openclaw/skills/gog",
           "source": "openclaw-managed",
           "disableModelInvocation": false
         },
@@ -226,8 +226,8 @@
         {
           "name": "notion",
           "description": "Notion API for creating and managing pages, databases, and blocks.",
-          "filePath": "/home/ollie/.openclaw/skills/notion/SKILL.md",
-          "baseDir": "/home/ollie/.openclaw/skills/notion",
+          "filePath": "~/.openclaw/skills/notion/SKILL.md",
+          "baseDir": "~/.openclaw/skills/notion",
           "source": "openclaw-managed",
           "disableModelInvocation": false
         },
@@ -282,168 +282,168 @@
         {
           "name": "brainstorming",
           "description": "You MUST use this before any creative work - creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements and design before implementation.",
-          "filePath": "/home/ollie/.openclaw/skills/brainstorming/SKILL.md",
-          "baseDir": "/home/ollie/.openclaw/skills/brainstorming",
+          "filePath": "~/.openclaw/skills/brainstorming/SKILL.md",
+          "baseDir": "~/.openclaw/skills/brainstorming",
           "source": "openclaw-managed",
           "disableModelInvocation": false
         },
         {
           "name": "dispatching-parallel-agents",
           "description": "Use when facing 2+ independent tasks that can be worked on without shared state or sequential dependencies",
-          "filePath": "/home/ollie/.openclaw/skills/dispatching-parallel-agents/SKILL.md",
-          "baseDir": "/home/ollie/.openclaw/skills/dispatching-parallel-agents",
+          "filePath": "~/.openclaw/skills/dispatching-parallel-agents/SKILL.md",
+          "baseDir": "~/.openclaw/skills/dispatching-parallel-agents",
           "source": "openclaw-managed",
           "disableModelInvocation": false
         },
         {
           "name": "executing-plans",
           "description": "Use when you have a written implementation plan to execute in a separate session with review checkpoints",
-          "filePath": "/home/ollie/.openclaw/skills/executing-plans/SKILL.md",
-          "baseDir": "/home/ollie/.openclaw/skills/executing-plans",
+          "filePath": "~/.openclaw/skills/executing-plans/SKILL.md",
+          "baseDir": "~/.openclaw/skills/executing-plans",
           "source": "openclaw-managed",
           "disableModelInvocation": false
         },
         {
           "name": "finishing-a-development-branch",
           "description": "Use when implementation is complete, all tests pass, and you need to decide how to integrate the work - guides completion of development work by presenting structured options for merge, PR, or cleanup",
-          "filePath": "/home/ollie/.openclaw/skills/finishing-a-development-branch/SKILL.md",
-          "baseDir": "/home/ollie/.openclaw/skills/finishing-a-development-branch",
+          "filePath": "~/.openclaw/skills/finishing-a-development-branch/SKILL.md",
+          "baseDir": "~/.openclaw/skills/finishing-a-development-branch",
           "source": "openclaw-managed",
           "disableModelInvocation": false
         },
         {
           "name": "frontend-design-ultimate",
           "description": "Create distinctive, production-grade static sites with React, Tailwind CSS, and shadcn/ui — no mockups needed. Generates bold, memorable designs from plain text requirements with anti-AI-slop aesthetics, mobile-first responsive patterns, and single-file bundling. Use when building landing pages, marketing sites, portfolios, dashboards, or any static web UI. Supports both Vite (pure static) and Next.js (Vercel deploy) workflows.",
-          "filePath": "/home/ollie/.openclaw/skills/frontend-design-ultimate/SKILL.md",
-          "baseDir": "/home/ollie/.openclaw/skills/frontend-design-ultimate",
+          "filePath": "~/.openclaw/skills/frontend-design-ultimate/SKILL.md",
+          "baseDir": "~/.openclaw/skills/frontend-design-ultimate",
           "source": "openclaw-managed",
           "disableModelInvocation": false
         },
         {
           "name": "notion-knowledge-capture",
           "description": "Transforms conversations and discussions into structured documentation pages in Notion. Captures insights, decisions, and knowledge from chat context, formats appropriately, and saves to wikis or databases with proper organization and linking for easy discovery.",
-          "filePath": "/home/ollie/.openclaw/skills/notion/notion-knowledge-capture/SKILL.md",
-          "baseDir": "/home/ollie/.openclaw/skills/notion/notion-knowledge-capture",
+          "filePath": "~/.openclaw/skills/notion/notion-knowledge-capture/SKILL.md",
+          "baseDir": "~/.openclaw/skills/notion/notion-knowledge-capture",
           "source": "openclaw-managed",
           "disableModelInvocation": false
         },
         {
           "name": "notion-meeting-intelligence",
           "description": "Prepares meeting materials by gathering context from Notion, enriching with Claude research, and creating both an internal pre-read and external agenda saved to Notion. Helps you arrive prepared with comprehensive background and structured meeting docs.",
-          "filePath": "/home/ollie/.openclaw/skills/notion/notion-meeting-intelligence/SKILL.md",
-          "baseDir": "/home/ollie/.openclaw/skills/notion/notion-meeting-intelligence",
+          "filePath": "~/.openclaw/skills/notion/notion-meeting-intelligence/SKILL.md",
+          "baseDir": "~/.openclaw/skills/notion/notion-meeting-intelligence",
           "source": "openclaw-managed",
           "disableModelInvocation": false
         },
         {
           "name": "notion-research-documentation",
           "description": "Searches across your Notion workspace, synthesizes findings from multiple pages, and creates comprehensive research documentation saved as new Notion pages. Turns scattered information into structured reports with proper citations and actionable insights.",
-          "filePath": "/home/ollie/.openclaw/skills/notion/notion-research-documentation/SKILL.md",
-          "baseDir": "/home/ollie/.openclaw/skills/notion/notion-research-documentation",
+          "filePath": "~/.openclaw/skills/notion/notion-research-documentation/SKILL.md",
+          "baseDir": "~/.openclaw/skills/notion/notion-research-documentation",
           "source": "openclaw-managed",
           "disableModelInvocation": false
         },
         {
           "name": "notion-spec-to-implementation",
           "description": "Turns product or tech specs into concrete Notion tasks that Claude code can implement. Breaks down spec pages into detailed implementation plans with clear tasks, acceptance criteria, and progress tracking to guide development from requirements to completion.",
-          "filePath": "/home/ollie/.openclaw/skills/notion/notion-spec-to-implementation/SKILL.md",
-          "baseDir": "/home/ollie/.openclaw/skills/notion/notion-spec-to-implementation",
+          "filePath": "~/.openclaw/skills/notion/notion-spec-to-implementation/SKILL.md",
+          "baseDir": "~/.openclaw/skills/notion/notion-spec-to-implementation",
           "source": "openclaw-managed",
           "disableModelInvocation": false
         },
         {
           "name": "openclaw-memory-system",
           "description": "Use when implementing, operating, or debugging OpenClaw task memory behavior (memU retrieval, SOUL/MEMORY context injection, and post-task memorization). Trigger for requests about where memory is injected, when learnings are stored, how agent-type scoping works (L2_PM/L3_CODE/L3_TEST), or where task execution is dispatched to the actual LLM runtime.",
-          "filePath": "/home/ollie/.openclaw/skills/openclaw-memory-system/SKILL.md",
-          "baseDir": "/home/ollie/.openclaw/skills/openclaw-memory-system",
+          "filePath": "~/.openclaw/skills/openclaw-memory-system/SKILL.md",
+          "baseDir": "~/.openclaw/skills/openclaw-memory-system",
           "source": "openclaw-managed",
           "disableModelInvocation": false
         },
         {
           "name": "receiving-code-review",
           "description": "Use when receiving code review feedback, before implementing suggestions, especially if feedback seems unclear or technically questionable - requires technical rigor and verification, not performative agreement or blind implementation",
-          "filePath": "/home/ollie/.openclaw/skills/receiving-code-review/SKILL.md",
-          "baseDir": "/home/ollie/.openclaw/skills/receiving-code-review",
+          "filePath": "~/.openclaw/skills/receiving-code-review/SKILL.md",
+          "baseDir": "~/.openclaw/skills/receiving-code-review",
           "source": "openclaw-managed",
           "disableModelInvocation": false
         },
         {
           "name": "requesting-code-review",
           "description": "Use when completing tasks, implementing major features, or before merging to verify work meets requirements",
-          "filePath": "/home/ollie/.openclaw/skills/requesting-code-review/SKILL.md",
-          "baseDir": "/home/ollie/.openclaw/skills/requesting-code-review",
+          "filePath": "~/.openclaw/skills/requesting-code-review/SKILL.md",
+          "baseDir": "~/.openclaw/skills/requesting-code-review",
           "source": "openclaw-managed",
           "disableModelInvocation": false
         },
         {
           "name": "self-improvement",
           "description": "Captures learnings, errors, and corrections to enable continuous improvement. Use when: (1) A command or operation fails unexpectedly, (2) User corrects Claude ('No, that's wrong...', 'Actually...'), (3) User requests a capability that doesn't exist, (4) An external API or tool fails, (5) Claude realizes its knowledge is outdated or incorrect, (6) A better approach is discovered for a recurring task. Also review learnings before major tasks.",
-          "filePath": "/home/ollie/.openclaw/skills/self-improving-agent/SKILL.md",
-          "baseDir": "/home/ollie/.openclaw/skills/self-improving-agent",
+          "filePath": "~/.openclaw/skills/self-improving-agent/SKILL.md",
+          "baseDir": "~/.openclaw/skills/self-improving-agent",
           "source": "openclaw-managed",
           "disableModelInvocation": false
         },
         {
           "name": "subagent-driven-development",
           "description": "Use when executing implementation plans with independent tasks in the current session",
-          "filePath": "/home/ollie/.openclaw/skills/subagent-driven-development/SKILL.md",
-          "baseDir": "/home/ollie/.openclaw/skills/subagent-driven-development",
+          "filePath": "~/.openclaw/skills/subagent-driven-development/SKILL.md",
+          "baseDir": "~/.openclaw/skills/subagent-driven-development",
           "source": "openclaw-managed",
           "disableModelInvocation": false
         },
         {
           "name": "systematic-debugging",
           "description": "Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes",
-          "filePath": "/home/ollie/.openclaw/skills/systematic-debugging/SKILL.md",
-          "baseDir": "/home/ollie/.openclaw/skills/systematic-debugging",
+          "filePath": "~/.openclaw/skills/systematic-debugging/SKILL.md",
+          "baseDir": "~/.openclaw/skills/systematic-debugging",
           "source": "openclaw-managed",
           "disableModelInvocation": false
         },
         {
           "name": "test-driven-development",
           "description": "Use when implementing any feature or bugfix, before writing implementation code",
-          "filePath": "/home/ollie/.openclaw/skills/test-driven-development/SKILL.md",
-          "baseDir": "/home/ollie/.openclaw/skills/test-driven-development",
+          "filePath": "~/.openclaw/skills/test-driven-development/SKILL.md",
+          "baseDir": "~/.openclaw/skills/test-driven-development",
           "source": "openclaw-managed",
           "disableModelInvocation": false
         },
         {
           "name": "using-git-worktrees",
           "description": "Use when starting feature work that needs isolation from current workspace or before executing implementation plans - creates isolated git worktrees with smart directory selection and safety verification",
-          "filePath": "/home/ollie/.openclaw/skills/using-git-worktrees/SKILL.md",
-          "baseDir": "/home/ollie/.openclaw/skills/using-git-worktrees",
+          "filePath": "~/.openclaw/skills/using-git-worktrees/SKILL.md",
+          "baseDir": "~/.openclaw/skills/using-git-worktrees",
           "source": "openclaw-managed",
           "disableModelInvocation": false
         },
         {
           "name": "using-superpowers",
           "description": "Use when starting any conversation - establishes how to find and use skills, requiring Skill tool invocation before ANY response including clarifying questions",
-          "filePath": "/home/ollie/.openclaw/skills/using-superpowers/SKILL.md",
-          "baseDir": "/home/ollie/.openclaw/skills/using-superpowers",
+          "filePath": "~/.openclaw/skills/using-superpowers/SKILL.md",
+          "baseDir": "~/.openclaw/skills/using-superpowers",
           "source": "openclaw-managed",
           "disableModelInvocation": false
         },
         {
           "name": "verification-before-completion",
           "description": "Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evidence before assertions always",
-          "filePath": "/home/ollie/.openclaw/skills/verification-before-completion/SKILL.md",
-          "baseDir": "/home/ollie/.openclaw/skills/verification-before-completion",
+          "filePath": "~/.openclaw/skills/verification-before-completion/SKILL.md",
+          "baseDir": "~/.openclaw/skills/verification-before-completion",
           "source": "openclaw-managed",
           "disableModelInvocation": false
         },
         {
           "name": "writing-plans",
           "description": "Use when you have a spec or requirements for a multi-step task, before touching code",
-          "filePath": "/home/ollie/.agents/skills/writing-plans/SKILL.md",
-          "baseDir": "/home/ollie/.agents/skills/writing-plans",
+          "filePath": "~/.agents/skills/writing-plans/SKILL.md",
+          "baseDir": "~/.agents/skills/writing-plans",
           "source": "agents-skills-personal",
           "disableModelInvocation": false
         },
         {
           "name": "find-skills",
           "description": "Helps users discover and install agent skills when they ask questions like \"how do I do X\", \"find a skill for X\", \"is there a skill that can...\", or express interest in extending capabilities. This skill should be used when the user is looking for functionality that might exist as an installable skill.",
-          "filePath": "/home/ollie/.agents/skills/find-skills/SKILL.md",
-          "baseDir": "/home/ollie/.agents/skills/find-skills",
+          "filePath": "~/.agents/skills/find-skills/SKILL.md",
+          "baseDir": "~/.agents/skills/find-skills",
           "source": "agents-skills-personal",
           "disableModelInvocation": false
         }
@@ -465,7 +465,7 @@
     },
     "lastTo": "telegram:1734128684",
     "chatType": "direct",
-    "sessionFile": "/home/ollie/.openclaw/agents/main/sessions/84e7f7c4-ada5-4073-986d-89d63e3a8465.jsonl",
+    "sessionFile": "~/.openclaw/agents/main/sessions/84e7f7c4-ada5-4073-986d-89d63e3a8465.jsonl",
     "authProfileOverride": "google-gemini-cli:buitelaarolivier@gmail.com",
     "authProfileOverrideSource": "auto",
     "authProfileOverrideCompactionCount": 0,
@@ -476,7 +476,7 @@
       "sessionKey": "agent:main:main",
       "provider": "anthropic",
       "model": "claude-opus-4-6",
-      "workspaceDir": "/home/ollie/.openclaw/workspace",
+      "workspaceDir": "~/.openclaw/workspace",
       "bootstrapMaxChars": 20000,
       "bootstrapTotalMaxChars": 150000,
       "sandbox": {
@@ -491,7 +491,7 @@
       "injectedWorkspaceFiles": [
         {
           "name": "AGENTS.md",
-          "path": "/home/ollie/.openclaw/workspace/AGENTS.md",
+          "path": "~/.openclaw/workspace/AGENTS.md",
           "missing": false,
           "rawChars": 7804,
           "injectedChars": 7804,
@@ -499,7 +499,7 @@
         },
         {
           "name": "SOUL.md",
-          "path": "/home/ollie/.openclaw/workspace/SOUL.md",
+          "path": "~/.openclaw/workspace/SOUL.md",
           "missing": false,
           "rawChars": 1664,
           "injectedChars": 1664,
@@ -507,7 +507,7 @@
         },
         {
           "name": "TOOLS.md",
-          "path": "/home/ollie/.openclaw/workspace/TOOLS.md",
+          "path": "~/.openclaw/workspace/TOOLS.md",
           "missing": false,
           "rawChars": 850,
           "injectedChars": 850,
@@ -515,7 +515,7 @@
         },
         {
           "name": "IDENTITY.md",
-          "path": "/home/ollie/.openclaw/workspace/IDENTITY.md",
+          "path": "~/.openclaw/workspace/IDENTITY.md",
           "missing": false,
           "rawChars": 633,
           "injectedChars": 633,
@@ -523,7 +523,7 @@
         },
         {
           "name": "USER.md",
-          "path": "/home/ollie/.openclaw/workspace/USER.md",
+          "path": "~/.openclaw/workspace/USER.md",
           "missing": false,
           "rawChars": 474,
           "injectedChars": 474,
@@ -531,7 +531,7 @@
         },
         {
           "name": "HEARTBEAT.md",
-          "path": "/home/ollie/.openclaw/workspace/HEARTBEAT.md",
+          "path": "~/.openclaw/workspace/HEARTBEAT.md",
           "missing": false,
           "rawChars": 167,
           "injectedChars": 167,
@@ -539,7 +539,7 @@
         },
         {
           "name": "BOOTSTRAP.md",
-          "path": "/home/ollie/.openclaw/workspace/BOOTSTRAP.md",
+          "path": "~/.openclaw/workspace/BOOTSTRAP.md",
           "missing": false,
           "rawChars": 1449,
           "injectedChars": 1449,

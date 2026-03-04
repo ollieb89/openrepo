@@ -1,10 +1,10 @@
 ---
 name: openclaw-review
-description: L2 diff review workflow in OpenClaw. Use when reviewing L3 work on a staging branch, capturing snapshots of L3 output, making merge or reject decisions, writing post-review memory, or setting up the review skill. Triggers for: "review L3 work", "review diff", "merge branch", "reject branch", "l3/task branch", "openclaw snapshot", "L2 review", "diff review", "code review L3", "awaiting review".
+description: "L2 diff review workflow in OpenClaw. Use when reviewing L3 work on a staging branch, capturing snapshots of L3 output, making merge or reject decisions, writing post-review memory, or setting up the review skill. Triggers for: \"review L3 work\", \"review diff\", \"merge branch\", \"reject branch\", \"l3/task branch\", \"openclaw snapshot\", \"L2 review\", \"diff review\", \"code review L3\", \"awaiting review\"."
 metadata:
   openclaw:
     emoji: "✅"
-    category: "orchestration"
+    category: "orchestration-core"
 ---
 
 # L2 Diff Review Workflow
@@ -37,7 +37,7 @@ from openclaw.snapshot import capture_snapshot
 snapshot = capture_snapshot(
     project_id="pumplai",
     task_id="task-abc123",
-    workspace_path="/home/ollie/Development/Projects/pumplai"
+    workspace_path="$HOME/Development/Projects/pumplai"
 )
 # snapshot.diff — full git diff
 # snapshot.files_changed — list of changed files

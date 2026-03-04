@@ -2,7 +2,7 @@
   "id": "geriapp",
   "name": "GeriApp",
   "agent_display_name": "GeriApp_PM",
-  "workspace": "/home/ollie/Development/Projects/geriapp",
+  "workspace": "~/Development/Projects/geriapp",
   "tech_stack": {
     "frontend": "",
     "backend": "",

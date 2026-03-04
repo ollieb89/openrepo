@@ -2,7 +2,7 @@
   "id": "viflo",
   "name": "Viflo",
   "agent_display_name": "Viflo_PM",
-  "workspace": "/home/ollie/Development/Tools/viflo",
+  "workspace": "~/Development/Tools/viflo",
   "tech_stack": {
     "frontend": "",
     "backend": "",

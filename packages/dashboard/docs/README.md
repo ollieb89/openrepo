@@ -8,8 +8,8 @@ This directory contains comprehensive quality assurance work addressing critical
 
 The dashboard was experiencing production crashes due to filesystem operations:
 
-1. **EACCES errors**: Permission denied when creating `/home/ollie/.openclaw/workspace/.openclaw`
-2. **ENOENT errors**: Directory not found for `/home/ollie/.openclaw/projects`
+1. **EACCES errors**: Permission denied when creating `~/.openclaw/workspace/.openclaw`
+2. **ENOENT errors**: Directory not found for `~/.openclaw/projects`
 3. **No defensive programming**: Direct filesystem calls with no validation
 
 **Impact**: Complete API failure with HTTP 500 errors
@@ -63,7 +63,7 @@ Production-grade filesystem operations with comprehensive error handling:
 **GET** - Check workspace health:
 ```json
 {
-  "workspace_root": "/home/ollie/.openclaw",
+  "workspace_root": "~/.openclaw",
   "healthy": true,
   "checks": {
     "root": true,
@@ -82,7 +82,7 @@ Production-grade filesystem operations with comprehensive error handling:
 {
   "success": true,
   "message": "Workspace initialized successfully",
-  "workspace_root": "/home/ollie/.openclaw"
+  "workspace_root": "~/.openclaw"
 }
 ```
 

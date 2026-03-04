@@ -33,7 +33,7 @@ remediation:
 | 1   | Ubuntu host has Docker 27+ and Nvidia Container Toolkit installed | ✓ VERIFIED | Docker 29.1.5 (native), Nvidia Toolkit 1.18.2, RTX 3070 Ti detected. |
 | 2   | `openclaw.json` contains required gateway and lane queue settings | ✓ VERIFIED | Gateway settings correct; maxConcurrent: 4, subagents.maxConcurrent: 8 added. |
 | 3   | OpenClaw Gateway is running and accessible on port 18789 | ✓ VERIFIED | Port 18789 is listening; health check returns 200 OK. |
-| 4   | PumplAI_PM agent cannot access files outside its defined workspace | ✓ VERIFIED | Container isolation test passed; cannot access /home/ollie, can access /app/project. |
+| 4   | PumplAI_PM agent cannot access files outside its defined workspace | ✓ VERIFIED | Container isolation test passed; cannot access ~/, can access /app/project. |
 
 **Score:** 4/4 truths verified
 
@@ -79,7 +79,7 @@ None detected.
 3. **Isolation Verification (SEC-01):**
    - Built `openclaw-sandbox:bookworm-slim` image
    - Tested container with `--security-opt=no-new-privileges` flag
-   - Confirmed container cannot access `/home/ollie`
+   - Confirmed container cannot access `~/`
    - Confirmed container CAN access mounted workspace `/app/project`
 
 4. **GPU Passthrough Remediation (UAT-1.4):**

@@ -1,10 +1,10 @@
 ---
 name: openclaw-spawn-l3
-description: L2→L3 container spawning in OpenClaw. Use when spawning Docker specialist containers, managing the per-project container pool, configuring L3 security isolation, injecting SOUL and memory context into containers, reviewing L3 diffs, merging or rejecting L3 work, or debugging container lifecycle issues. Triggers for: "spawn L3", "container pool", "L3 specialist", "Docker isolation", "SOUL injection", "task container", "cap_drop", "l3/task branch", "pool semaphore".
+description: "L2→L3 container spawning in OpenClaw. Use when spawning Docker specialist containers, managing the per-project container pool, configuring L3 security isolation, injecting SOUL and memory context into containers, reviewing L3 diffs, merging or rejecting L3 work, or debugging container lifecycle issues. Triggers for: \"spawn L3\", \"container pool\", \"L3 specialist\", \"Docker isolation\", \"SOUL injection\", \"task container\", \"cap_drop\", \"l3/task branch\", \"pool semaphore\"."
 metadata:
   openclaw:
     emoji: "🐳"
-    category: "orchestration"
+    category: "orchestration-core"
 ---
 
 # L2 → L3 Container Spawning
@@ -19,7 +19,7 @@ result = await spawn_l3_specialist(
     task_description="Implement the user authentication module",
     project_id="pumplai",
     agent_type="L3_CODE",       # L3_CODE | L3_TEST | L3_REVIEW
-    workspace_path="/home/ollie/Development/Projects/pumplai"
+    workspace_path="$HOME/Development/Projects/pumplai"
 )
 ```
 

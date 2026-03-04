@@ -1,4 +1,144 @@
 {
   "version": 1,
-  "jobs": []
+  "schema": {
+    "description": "OpenClaw Cron Job Configuration Schema",
+    "job_definition": {
+      "id": "unique job identifier (string, required)",
+      "name": "human-readable job name (string, required)",
+      "enabled": "whether job is active (boolean, default: true)",
+      "command": "command to execute (string, required)",
+      "args": "command arguments (array of strings, default: [])",
+      "schedule": {
+        "cron": "standard 5-field cron expression (string, required)",
+        "timezone": "timezone for scheduling (string, default: UTC)",
+        "skip_if_running": "prevent concurrent runs (boolean, default: true)",
+        "idempotent": "use should-run check (boolean, default: true)",
+        "interval_check": "idempotency interval: once/hourly/daily (string, default: daily)"
+      },
+      "timeout": "max execution time in seconds, 0=no limit (integer, default: 0)",
+      "working_dir": "working directory for command (string, optional)",
+      "environment": "environment variables (object, default: {})",
+      "notifications": {
+        "enabled": "enable notifications (boolean, default: true)",
+        "on_success": "notify on success (boolean, default: false)",
+        "on_failure": "notify on failure (boolean, default: true)",
+        "channels": "notification channels (array, default: [\"log\"])",
+        "webhook_url": "webhook URL for notifications (string, optional)"
+      },
+      "log_output": "log command output (boolean, default: true)",
+      "description": "job description (string, default: \"\")",
+      "tags": "job categorization tags (array of strings, default: [])"
+    }
+  },
+  "updated_at": "2026-03-02T21:32:24.405457",
+  "jobs": [
+    {
+      "id": "cleanup-logs",
+      "name": "Log Cleanup",
+      "enabled": true,
+      "command": "find",
+      "args": [
+        "./logs",
+        "-name",
+        "*.log",
+        "-mtime",
+        "+30",
+        "-delete"
+      ],
+      "schedule": {
+        "cron": "0 2 * * 0",
+        "timezone": "UTC",
+        "skip_if_running": true,
+        "idempotent": true,
+        "interval_check": "once"
+      },
+      "timeout": 3600,
+      "working_dir": null,
+      "environment": {},
+      "notifications": {
+        "enabled": true,
+        "on_success": false,
+        "on_failure": true,
+        "channels": [
+          "log"
+        ],
+        "webhook_url": null
+      },
+      "log_output": true,
+      "description": "Clean up log files older than 30 days",
+      "tags": [
+        "maintenance"
+      ]
+    },
+    {
+      "id": "health-check",
+      "name": "System Health Check",
+      "enabled": true,
+      "command": "python3",
+      "args": [
+        "./cron/healthcheck.py",
+        "--fail-on-alerts"
+      ],
+      "schedule": {
+        "cron": "*/30 * * * *",
+        "timezone": "UTC",
+        "skip_if_running": true,
+        "idempotent": false,
+        "interval_check": "hourly"
+      },
+      "timeout": 60,
+      "working_dir": null,
+      "environment": {},
+      "notifications": {
+        "enabled": true,
+        "on_success": false,
+        "on_failure": true,
+        "channels": [
+          "log"
+        ],
+        "webhook_url": null
+      },
+      "log_output": true,
+      "description": "Run health checks every 30 minutes",
+      "tags": [
+        "monitoring"
+      ]
+    },
+    {
+      "id": "backup-state",
+      "name": "State Backup",
+      "enabled": false,
+      "command": "tar",
+      "args": [
+        "-czf",
+        "/backup/openclaw-state-$(date +%Y%m%d).tar.gz",
+        "./workspace/.openclaw"
+      ],
+      "schedule": {
+        "cron": "0 3 * * *",
+        "timezone": "UTC",
+        "skip_if_running": true,
+        "idempotent": true,
+        "interval_check": "daily"
+      },
+      "timeout": 1800,
+      "working_dir": ".",
+      "environment": {},
+      "notifications": {
+        "enabled": true,
+        "on_success": true,
+        "on_failure": true,
+        "channels": [
+          "log"
+        ],
+        "webhook_url": null
+      },
+      "log_output": true,
+      "description": "Daily backup of workspace state",
+      "tags": [
+        "backup",
+        "maintenance"
+      ]
+    }
+  ]
 }

@@ -12,36 +12,105 @@
   "project_registry": {
     "pumplai": {
       "pm_agent": "pumplai_pm",
-      "domains": ["fullstack", "frontend", "backend", "web"],
-      "stack_hints": ["next.js", "react", "tailwind", "fastapi", "postgresql", "typescript", "python"],
-      "workspace": "/home/ollie/.openclaw/workspace"
+      "domains": [
+        "fullstack",
+        "frontend",
+        "backend",
+        "web"
+      ],
+      "stack_hints": [
+        "next.js",
+        "react",
+        "tailwind",
+        "fastapi",
+        "postgresql",
+        "typescript",
+        "python"
+      ],
+      "workspace": "~/.openclaw/workspace"
     },
     "pai": {
       "pm_agent": "pai_pm",
-      "domains": ["fullstack", "frontend", "backend", "web"],
-      "stack_hints": ["next.js", "react", "tailwind", "fastapi", "postgresql", "typescript", "python"],
-      "workspace": "/home/ollie/.openclaw/workspace"
+      "domains": [
+        "fullstack",
+        "frontend",
+        "backend",
+        "web"
+      ],
+      "stack_hints": [
+        "next.js",
+        "react",
+        "tailwind",
+        "fastapi",
+        "postgresql",
+        "typescript",
+        "python"
+      ],
+      "workspace": "~/.openclaw/workspace"
     },
     "openrepo": {
       "pm_agent": "openrepo_pm",
-      "domains": ["fullstack", "frontend", "backend", "web"],
-      "stack_hints": ["next.js", "react", "tailwind", "fastapi", "postgresql", "typescript", "python"],
-      "workspace": "/home/ollie/Development/Tools/openrepo"
+      "domains": [
+        "fullstack",
+        "frontend",
+        "backend",
+        "web"
+      ],
+      "stack_hints": [
+        "next.js",
+        "react",
+        "tailwind",
+        "fastapi",
+        "postgresql",
+        "typescript",
+        "python"
+      ],
+      "workspace": "~/Development/Tools/openrepo"
     },
     "gdata": {
       "pm_agent": "gdata_pm",
-      "domains": ["fullstack", "frontend", "backend", "web"],
-      "stack_hints": ["vue.js", "react", "tailwind", "fastapi", "postgresql", "typescript", "python"],
-      "workspace": "/home/ollie/.openclaw/workspace"
+      "domains": [
+        "fullstack",
+        "frontend",
+        "backend",
+        "web"
+      ],
+      "stack_hints": [
+        "vue.js",
+        "react",
+        "tailwind",
+        "fastapi",
+        "postgresql",
+        "typescript",
+        "python"
+      ],
+      "workspace": "~/.openclaw/workspace"
     },
     "docs_site": {
       "pm_agent": "docs_pm",
-      "domains": ["documentation", "content", "static-site"],
-      "stack_hints": ["markdown", "mdx", "docusaurus", "astro", "vitepress", "content"],
-      "workspace": "/home/ollie/.openclaw/workspace/docs"
+      "domains": [
+        "documentation",
+        "content",
+        "static-site"
+      ],
+      "stack_hints": [
+        "markdown",
+        "mdx",
+        "docusaurus",
+        "astro",
+        "vitepress",
+        "content"
+      ],
+      "workspace": "~/.openclaw/workspace/docs"
     }
   },
-  "generic_skills": ["research", "analysis", "documentation", "planning", "investigation"],
+  "generic_skills": [
+    "research",
+    "analysis",
+    "documentation",
+    "planning",
+    "investigation"
+  ],
   "skill_registry": {
     "swarm_query": {
       "name": "Swarm Intelligence Query",

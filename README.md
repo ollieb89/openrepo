@@ -277,9 +277,9 @@ Output:
 ```
 ID              NAME            WORKSPACE                                ACTIVE
 --------------------------------------------------------------------------------
-pumplai         PumplAI         /home/ollie/Development/Projects/pumplai *
-smartai         SmartAI         /home/ollie/Development/Projects/smartai
-replyiq         ReplyIQ         /home/ollie/Development/Projects/replyiq
+pumplai         PumplAI         ~/Development/Projects/pumplai *
+smartai         SmartAI         ~/Development/Projects/smartai
+replyiq         ReplyIQ         ~/Development/Projects/replyiq
 ```
 
 ### Switch the active project
@@ -308,7 +308,7 @@ Each project has a `projects/<id>/project.json` manifest:
   "id": "pumplai",
   "name": "PumplAI",
   "agent_display_name": "PumplAI_PM",
-  "workspace": "/home/ollie/Development/Projects/pumplai",
+  "workspace": "~/Development/Projects/pumplai",
   "tech_stack": {
     "frontend": "Next.js 16, React 19, Tailwind v4",
     "backend": "Python 3.12, FastAPI",

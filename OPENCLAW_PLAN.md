@@ -70,7 +70,7 @@ A git submodule formalizes this relationship, pins to a specific commit, and let
 #### 1.1 — Prepare the workspace
 
 ```bash
-cd /home/ob/Development/Tools/openrepo
+cd /path/to/openrepo  # replace with your actual repo path
 
 # Stash any uncommitted changes
 git stash
@@ -652,17 +652,19 @@ Week 2
    Use an absolute path so it works regardless of cwd.
 
 ### Phase 3 (Memory)
-- [ ] `make memory-health` reports service status
-- [ ] Memory injection works in L3 SOUL context
+- [x] `make memory-health` reports service status
+- [x] Memory injection works in L3 SOUL context
 
 ### Phase 4 (Dashboard)
 - [x] `make dev-services` starts memU + OCCC dashboard
 - [x] Cross-link in OCCC sidebar: "Agent Runtime" → openclaw gateway (:18789)
+- [x] OCCC dashboard link logged at gateway startup (`/occc` proxy + direct :6987)
+- [x] `/occc` proxy route in openclaw gateway → forwards to OCCC on :6987
 
 ### Phase 5 (Docker)
-- [ ] L3 image builds from openclaw sandbox base
-- [ ] Existing L3 tasks pass with the new image
-- [ ] Single `make docker-all` builds the full image chain
+- [x] L3 image builds from openclaw sandbox base
+- [x] Existing L3 tasks pass with the new image
+- [x] Single `make docker-all` builds the full image chain
 
 ---
 

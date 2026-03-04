@@ -2,7 +2,7 @@
   "id": "smartai",
   "name": "SmartAI",
   "agent_display_name": "SmartAI_PM",
-  "workspace": "/home/ollie/Development/Projects/smartai",
+  "workspace": "~/Development/Projects/smartai",
   "tech_stack": {
     "frontend": "Nuxt 3, Vue 3, Tailwind CSS, Drizzle ORM",
     "backend": "",

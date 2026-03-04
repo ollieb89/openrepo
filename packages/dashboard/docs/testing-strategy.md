@@ -3,8 +3,8 @@
 ## Executive Summary
 
 **Critical Issues Identified:**
-1. **EACCES (Permission Denied)**: Attempting to create `/home/ollie/.openclaw/workspace/.openclaw` without proper permissions
-2. **ENOENT (No Such File)**: Missing directory `/home/ollie/.openclaw/projects` causes API failures
+1. **EACCES (Permission Denied)**: Attempting to create `~/.openclaw/workspace/.openclaw` without proper permissions
+2. **ENOENT (No Such File)**: Missing directory `~/.openclaw/projects` causes API failures
 3. **Missing Directory Validation**: No graceful handling of missing parent directories before operations
 
 **Impact**: High - Complete API failure causing 500 errors in production
@@ -81,12 +81,12 @@ if (!fs.existsSync(dbDir)) {
 ✅ **Edge Cases to Test:**
 
 1. **Missing Root Directory**
-   - `/home/ollie/.openclaw` doesn't exist
+   - `~/.openclaw` doesn't exist
    - Expected: Create with proper permissions
    - Current: ENOENT error
 
 2. **Missing Intermediate Directories**
-   - `/home/ollie/.openclaw` exists but `/workspace` doesn't
+   - `~/.openclaw` exists but `/workspace` doesn't
    - Expected: Create missing intermediates
    - Current: Depends on recursive flag
 
@@ -124,8 +124,8 @@ if (!fs.existsSync(dbDir)) {
 
 ❌ **Current Problems:**
 ```typescript
-// openclaw.ts:8 - Falls back to hardcoded path
-const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || '/home/ollie/.openclaw';
+// openclaw.ts:8 - Falls back to portable default using os.homedir()
+const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || path.join(os.homedir(), '.openclaw');
 ```
 
 ✅ **Edge Cases to Test:**
@@ -133,7 +133,7 @@ const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || '/home/ollie/.openclaw';
 1. **Missing OPENCLAW_ROOT**
    - Env var not set
    - Expected: Use sensible default
-   - Current: Hardcoded `/home/ollie`
+   - Current: Uses `os.homedir()` portable fallback
 
 2. **Invalid OPENCLAW_ROOT Path**
    - Env var = `/nonexistent/path`
@@ -434,7 +434,7 @@ logger.error('Filesystem operation failed', {
 ```typescript
 // GET /api/health/filesystem
 {
-  "workspace_root": "/home/ollie/.openclaw",
+  "workspace_root": "~/.openclaw",
   "exists": true,
   "writable": true,
   "directories": {

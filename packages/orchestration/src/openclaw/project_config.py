@@ -101,10 +101,7 @@ def get_active_project_id() -> str:
 
     project_id = config.get("active_project")
     if not project_id:
-        raise ValueError(
-            "No active project set. Add '\"active_project\": \"<id>\"' to openclaw.json "
-            "or set OPENCLAW_PROJECT env var."
-        )
+        return ""
     return project_id
 
 
@@ -153,9 +150,10 @@ def get_source_directories() -> list:
 
 
 def get_workspace_path(project_id: Optional[str] = None) -> str:
-    """Get the workspace path for a project."""
+    """Get the workspace path for a project, expanding ~ and env vars."""
     config = load_project_config(project_id)
-    return config["workspace"]
+    raw = config["workspace"]
+    return os.path.expandvars(os.path.expanduser(raw))
 
 
 def get_tech_stack(project_id: Optional[str] = None) -> Dict[str, str]:

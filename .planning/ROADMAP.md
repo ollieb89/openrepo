@@ -62,11 +62,11 @@
 **Success Criteria** (what must be TRUE):
   1. `uv run pytest packages/orchestration/tests/` completes with zero failures including test_proposer.py and test_state_engine_memory.py
   2. A single TopologyProposal class exists in proposal_models.py with graph field, rubric_score, and to_dict/from_dict — proposer.py imports and uses it directly
-  3. Running `grep -r "/home/ollie\|/home/ob" .` on tracked files returns no results
+  3. Running `grep -r "~/\|~/" .` on tracked files returns no results
   4. All runtime configs and SOUL templates reference OPENCLAW_ROOT or environment variables rather than absolute user paths
 **Plans:** 2 plans
 Plans:
-- [ ] 68-01-PLAN.md — Consolidate TopologyProposal and fix test failures (DEBT-01, DEBT-02)
+- [x] 68-01-PLAN.md — Consolidate TopologyProposal and fix test failures (DEBT-01, DEBT-02) [COMPLETE: 694 tests pass]
 - [ ] 68-02-PLAN.md — Remove hardcoded user paths from all tracked files (DEBT-03)
 
 ### Phase 69: Docker Base Image
@@ -192,4 +192,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-02-17*
-*Last updated: 2026-03-04 — Phase 68 planned (2 plans)*
+*Last updated: 2026-03-04 — Phase 68 Plan 01 complete (DEBT-01, DEBT-02 resolved, 694 tests pass)*

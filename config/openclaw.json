@@ -5,8 +5,8 @@
   },
   "active_project": "pumplai",
   "source_directories": [
-    "/home/ollie/Development/Projects",
-    "/home/ollie/Development/Tools"
+    "~/Development/Projects",
+    "~/Development/Tools"
   ],
   "agents": {
     "defaults": {

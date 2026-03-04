@@ -98,8 +98,8 @@ POST /api/health/filesystem
 ### Original Errors
 
 ```
-Error: EACCES: permission denied, mkdir '/home/ollie/.openclaw/workspace/.openclaw'
-Error: ENOENT: no such file or directory, scandir '/home/ollie/.openclaw/projects'
+Error: EACCES: permission denied, mkdir '~/.openclaw/workspace/.openclaw'
+Error: ENOENT: no such file or directory, scandir '~/.openclaw/projects'
 ```
 
 **Root Cause**: Direct filesystem calls with no validation

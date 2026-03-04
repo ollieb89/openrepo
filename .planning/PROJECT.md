@@ -67,7 +67,7 @@ The system designs and refactors its own orchestration — proposing multi-agent
 - Per-agent config.json files are richer than openclaw.json entries — registry consolidation needed
 - Pre-existing test failures: async event loop issues in test_proposer.py, nested loop conflicts in test_state_engine_memory.py
 - Dual TopologyProposal classes (proposer.py vs proposal_models.py) with incompatible field names (graph vs topology)
-- Hardcoded /home/ollie and /home/ob paths in 15+ files including active runtime configs
+- Hardcoded ~/ and ~/ paths in 15+ files including active runtime configs
 
 ## Constraints
 

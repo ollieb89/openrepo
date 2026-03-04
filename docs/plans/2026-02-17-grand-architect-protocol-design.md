@@ -25,7 +25,7 @@ The "Grand Architect" protocol is a strictly separated, three-tiered swarm topol
 *   **Host OS:** Ubuntu 24.04 LTS.
 *   **Runtime:** Node.js 22.x (LTS) enforced globally.
 *   **Package Manager:** Bun (default for frontend/scaffolding).
-*   **Workspace:** Unified `/home/ollie/Development` mapped via Docker volumes.
+*   **Workspace:** Unified `$HOME/Development` mapped via Docker volumes.
 
 ### Master Configuration (`openclaw.json`)
 ```json
@@ -38,7 +38,7 @@ The "Grand Architect" protocol is a strictly separated, three-tiered swarm topol
     "sandbox": {
       "mode": "docker",
       "image": "openclaw/worker-node22-cuda12.8:latest",
-      "volumes": ["/home/ollie/Development:/app/workspace"]
+      "volumes": ["$HOME/Development:/app/workspace"]
     }
   },
   "agents": {

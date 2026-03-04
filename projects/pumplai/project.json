@@ -2,7 +2,7 @@
   "id": "pumplai",
   "name": "PumplAI",
   "agent_display_name": "PumplAI_PM",
-  "workspace": "/home/ollie/Development/Projects/pumplai",
+  "workspace": "~/Development/Projects/pumplai",
   "tech_stack": {
     "frontend": "Next.js 16, React 19, Tailwind v4, NextAuth.js v5",
     "backend": "Python 3.12, FastAPI",
@@ -15,6 +15,10 @@
   "l3_overrides": {
     "mem_limit": "4g",
     "cpu_quota": 100000,
-    "runtimes": ["claude-code", "codex", "gemini-cli"]
+    "runtimes": [
+      "claude-code",
+      "codex",
+      "gemini-cli"
+    ]
   }
 }

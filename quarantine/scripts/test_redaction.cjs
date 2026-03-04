@@ -18,7 +18,7 @@ const IMPLEMENTED_SECRETS = [
   { name: 'API_KEY_HEADER', input: 'x-api-key: my-secret-api-key-9999' },
   { name: 'EMAIL', input: 'test@example.com' },
   { name: 'GENERIC_SECRET', input: 'PASSWORD=mysecretpassword123' },
-  { name: 'HOST_PATH', input: '/home/ollie/.ssh/id_rsa' },
+  { name: 'HOST_PATH', input: '/home/user/.ssh/id_rsa' },
   { name: 'IP_ADDRESS', input: '192.168.1.100' },
   { name: 'CONTAINER_ID', input: '968134ac3afe' },
 ];
