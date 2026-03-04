@@ -33,6 +33,7 @@ from spawn import (
     spawn_l3_specialist,
 )
 from openclaw.state_engine import JarvisState
+
 from openclaw.config import (
     get_state_path,
     get_snapshot_dir,
@@ -41,7 +42,13 @@ from openclaw.config import (
     DEFAULT_POOL_OVERFLOW_POLICY,
     DEFAULT_POOL_QUEUE_TIMEOUT_S,
     DEFAULT_POOL_RECOVERY_POLICY,
+    get_gateway_config,
+    gateway_healthy,
 )
+from openclaw.sandbox_adapter import SandboxAdapter
+from openclaw.gateway_client import GatewayClient
+from openclaw.agent_registry import AgentRegistry
+
 from openclaw.project_config import get_active_project_id, get_workspace_path, get_pool_config, get_memu_config
 from openclaw.config import get_autonomy_config
 from openclaw.logging import get_logger
@@ -401,21 +408,55 @@ class L3ContainerPool:
         # Track spawn request time for total duration calculation
         spawn_requested_at: float = time.time()
 
+
         try:
-            # Spawn container (sync operation in executor) — thread project_id explicitly
+            # Check if gateway healthy and sandbox adapter enabled
+            use_sandbox = False
+            try:
+                import openclaw.project_config
+                openclaw_json = openclaw.project_config.load_and_validate_openclaw_config()
+                use_sandbox = openclaw_json.get("use_sandbox_adapter", False)
+            except Exception:
+                pass
+            
+            # Spawn container
             loop = asyncio.get_event_loop()
-            container = await loop.run_in_executor(
-                None,
-                lambda: spawn_l3_specialist(
+            
+            is_gateway_healthy = await gateway_healthy()
+            if use_sandbox and is_gateway_healthy:
+                logger.info("Spawning via Sandbox Adapter", extra={"task_id": task_id})
+                adapter = SandboxAdapter(GatewayClient.from_config(), AgentRegistry(self.project_root))
+                
+                res = await adapter.spawn_l3(
                     task_id=task_id,
                     skill_hint=skill_hint,
-                    task_description=task_description,
-                    workspace_path=workspace_path,
-                    requires_gpu=requires_gpu,
-                    cli_runtime=cli_runtime,
                     project_id=self.project_id,
-                ),
-            )
+                    directive=task_description,
+                )
+                
+                # Mock container object for compatibility with monitor_container for now
+                class MockContainer:
+                    name = f"openclaw-{self.project_id}-l3-{task_id}"
+                    id = res["run_id"]
+                    status = "running"
+                    def reload(self):
+                        pass
+                container = MockContainer()
+                
+            else:
+                container = await loop.run_in_executor(
+                    None,
+                    lambda: spawn_l3_specialist(
+                        task_id=task_id,
+                        skill_hint=skill_hint,
+                        task_description=task_description,
+                        workspace_path=workspace_path,
+                        requires_gpu=requires_gpu,
+                        cli_runtime=cli_runtime,
+                        project_id=self.project_id,
+                    ),
+                )
+
 
             self.active_containers[task_id] = container
             logger.info("Container spawned", extra={"task_id": task_id, "container_name": container.name})
@@ -654,6 +695,7 @@ class L3ContainerPool:
         # Stream logs in real-time
         async def stream_logs():
             try:
+                from openclaw.event_bus import emit
                 loop = asyncio.get_event_loop()
                 # Get log stream from container (this is sync, run in executor)
                 log_stream = await loop.run_in_executor(
@@ -664,6 +706,18 @@ class L3ContainerPool:
                 async for log_line in log_stream:
                     decoded = log_line.decode("utf-8", errors="replace").strip()
                     logger.debug("L3 output", extra={"task_id": task_id, "output": decoded})
+                    try:
+                        emit({
+                            "event_type": "task.output",
+                            "project_id": self.project_id,
+                            "task_id": task_id,
+                            "payload": {
+                                "line": decoded,
+                                "stream": "stdout",
+                            },
+                        })
+                    except Exception:
+                        pass  # fire-and-forget — never crash log streaming on event errors
             except Exception as e:
                 logger.debug("Log streaming ended", extra={"task_id": task_id, "error": str(e)})
 
