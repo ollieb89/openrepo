@@ -1,7 +1,8 @@
 # Phase 61: Topology Foundation - Context
 
 **Gathered:** 2026-03-03
-**Status:** Ready for planning
+**Updated:** 2026-03-04
+**Status:** Ready for planning (post-implementation sync)
 
 <domain>
 ## Phase Boundary
@@ -13,73 +14,110 @@ Represent, serialize, version, diff, and classify swarm topologies as explicit d
 <decisions>
 ## Implementation Decisions
 
-### Graph Model Scope
-- Rich edge types: delegation, coordination, review gate, information flow, escalation. Each edge is typed with semantics.
-- Topology is a true graph (DAG), not a tree. Peer-to-peer edges (coordination) exist alongside vertical edges (delegation).
-- Medium-weight nodes: role name, expected capability, resource constraints (mem/cpu), intent description (what this role does), risk level (what happens if it fails), estimated load.
-- Aggregate metrics (complexity, coordination overhead, cost) computed on demand by rubric — NOT cached on the topology object.
-- Topology carries a `proposal_id` field linking back to its proposal context. Structure is clean; context is traceable via reference.
+### Graph Model (Locked — built in Phase 62-01)
+- `@dataclass` models (not Pydantic) — consistent with `AgentSpec` pattern
+- `TopologyNode`: id, role (str), level (int 1-3), intent (str), risk_level (str), optional resource_constraints (dict), optional estimated_load (float)
+- `TopologyEdge`: from_role, to_role, edge_type (EdgeType enum). Five edge types: DELEGATION, COORDINATION, REVIEW_GATE, INFORMATION_FLOW, ESCALATION
+- `TopologyGraph`: nodes (list), edges (list), project_id, proposal_id (optional), version (int), created_at (ISO timestamp), metadata (dict)
+- `EdgeType` serializes as lowercase string value (e.g., `"delegation"`) not enum name — human-readable JSON
+- Aggregate metrics (complexity, coordination overhead, cost) computed on demand by rubric — NOT cached on the topology object
+- Full `to_dict()`/`from_dict()` and `to_json()`/`from_json()` serialization with zero data loss on round-trip
 
-### Archetype Classification
-- Pattern-matching classifier, not hard thresholds. Classifies by structural shape.
-- Lean: Linear chain or flat delegation. Minimal coordination edges. No review gates. Fast, direct.
-- Balanced: Tree with explicit coordination edges. Has review or escalation edges. Moderate role specialization.
-- Robust: DAG with multiple coordination paths. Review gates, fallback roles, redundancy. Safety over speed.
-- Primary archetype + trait annotations (e.g., "Balanced with review-heavy coordination").
-- Edge cases: assign nearest archetype with explanation of why it was classified that way and what's atypical. Always classify, always explain.
+### Archetype Classification (Locked — built in Phase 62-02)
+- Pattern-matching classifier using feature extraction, not hard thresholds
+- **Robust**: Requires `review_gate` AND (`escalation` edges OR multiple coordination paths). Confidence 0.6–0.9 based on feature count
+- **Lean**: No coordination/review edges AND (linear chain OR flat delegation). Confidence 0.8–0.9
+- **Balanced**: Explicit catch-all fallback — has coordination or review gates but doesn't meet Robust threshold. Confidence 0.6–0.8. Classification is always exhaustive
+- `ArchetypeResult`: archetype string, confidence float (0.0–1.0), explanation (always non-empty), traits list
+- Trait annotations: "linear-chain", "flat-delegation", "review-heavy", "fallback-roles", "redundant-paths", "coordination-linked", "review-gated"
+- Edge cases: assign nearest archetype with explanation of why and what's atypical. Always classify, always explain
 
-### Version & Diff Format
-- Two-file storage: `topology/current.json` (latest approved version) + `topology/changelog.json` (array of diff entries).
-- Diff entries have layered structure: immutable structural delta (nodes/edges added/removed/modified) + mutable annotation field (for structural memory to enrich later with pattern tags, preference signals).
-- Diff metadata: correction type (soft/hard/initial), timestamp, version number. Structural memory enriches annotations in Phase 64.
-- Retention: decay-aligned — keep all entries, no pruning. The 14-day preference decay in Phase 64 handles relevance naturally.
+### Diff Engine (Locked — built in Phase 62-02)
+- Edges matched by endpoint pair `(from_role, to_role)` — changing edge_type on the same pair is a modification, not add+remove
+- `TopologyDiff` dataclass: added/removed/modified nodes and edges as structured dicts
+- Tracks modified node fields (level, intent, risk_level, resource_constraints, estimated_load)
+- Human-readable `format_diff()` for terminal output
+- `annotations` dict field designed for Phase 64 structural memory enrichment
+
+### Rubric Scoring (Locked — built in Phase 62-03)
+- 7-dimension `RubricScore`: complexity, coordination_overhead, risk_containment, time_to_first_output, cost_estimate, preference_fit, overall_confidence (all integer 0–10)
+- Dimension weights (sum to 1.0): risk_containment 0.20, time_to_first_output 0.20, preference_fit 0.20, complexity 0.15, coordination_overhead 0.15, cost_estimate 0.10
+- `key_differentiators`: dimensions with ≥3 score spread across proposals
+- Phase 64 integration: preference_fit dynamically scored via archetype affinity profiles. Explore mode (20% epsilon-greedy) defaults preference_fit to neutral 5
+
+### Version & Diff Storage (Locked — built across Phases 62-64)
+- Five-file storage under `workspace/.openclaw/{project_id}/topology/`:
+  - `current.json` — Latest approved topology snapshot (atomic write with .bak backup)
+  - `changelog.json` — Append-only diff entries (with .lock file for consistency)
+  - `pending-proposals.json` — Proposal data awaiting approval (deleted after approval)
+  - `memory-profile.json` — Phase 64 correction history profile (with defaults)
+  - `patterns.json` — Phase 64 extracted structural patterns
+- Changelog entries: timestamp (ISO 8601), correction_type ("soft"|"hard"|"initial"), diff_dict, annotations (mutable, enriched by Phase 64)
+- Retention: decay-aligned — keep all entries, no pruning. 14-day preference decay in Phase 64 handles relevance
 
 ### Relationship to AgentSpec
-- Topology is an independent data model — NOT an extension of AgentSpec. Clean separation of design-time (topology) and runtime (AgentSpec).
-- At spawn time, a mapper converts topology nodes to AgentSpec instances. Topology is the blueprint; AgentSpec is the execution config.
-- Topology metadata (intent, risk, coordination partners) that AgentSpec doesn't carry gets injected into SOUL templates. Agents are structurally self-aware at runtime.
-- AgentSpec stays unchanged — no new fields added to the runtime model.
-- Dual validation gates: constraint linter validates at proposal time (Phase 62), mapper validates again before spawn. Direct edits bypass the proposal linter, so the mapper catches what they introduce.
+- Topology is an independent data model — NOT an extension of AgentSpec. Clean separation of design-time (topology) and runtime (AgentSpec)
+- At spawn time, a mapper converts topology nodes to AgentSpec instances. Topology is the blueprint; AgentSpec is the execution config
+- Topology metadata (intent, risk, coordination partners) injected into SOUL templates via `_build_augmented_soul()`. Agents are structurally self-aware at runtime
+- AgentSpec stays unchanged — no new fields added to the runtime model
+- Dual validation: constraint linter at proposal time (Phase 62), mapper validates again before spawn
 
-### Claude's Discretion
-- Exact Pydantic model field names and types
-- JSON serialization format details
-- Diff algorithm implementation (deepdiff or custom)
-- File locking strategy for topology directory (can follow state_engine.py fcntl pattern)
-- Test structure and coverage approach
+### Claude's Discretion (Resolved)
+- ~~Exact Pydantic model field names and types~~ → Locked: @dataclass with fields documented above
+- ~~JSON serialization format details~~ → Locked: to_dict/from_dict pattern with EdgeType as lowercase string
+- ~~Diff algorithm implementation~~ → Locked: custom diff matching edges by endpoint pair
+- ~~File locking strategy~~ → Locked: fcntl.flock pattern from state_engine.py with .tmp atomic rename and .bak recovery
+- ~~Test structure~~ → Locked: test_topology_models.py, test_topology_diff.py, test_topology_classifier.py
 
 </decisions>
 
 <specifics>
 ## Specific Ideas
 
-- Topology should feel like a DAG you can inspect, not a config blob — inspectable, navigable, meaningful.
-- The archetype classifier should give reasoning, not just labels — "Classified as Robust because DAG structure with 3 review gates; atypical because no fallback roles."
-- Changelog annotations are explicitly designed to be enriched by Phase 64 structural memory — build the annotation field extensibly.
+- Topology should feel like a DAG you can inspect, not a config blob — inspectable, navigable, meaningful
+- The archetype classifier gives reasoning, not just labels — "Classified as Robust because DAG structure with 3 review gates; atypical because no fallback roles"
+- Changelog annotations are explicitly designed to be enriched by Phase 64 structural memory — the annotation field is extensible
 
 </specifics>
 
 <code_context>
-## Existing Code Insights
+## Existing Code — Topology Package
 
-### Reusable Assets
-- `AgentSpec` dataclass (agent_registry.py): Canonical agent definition with hierarchy fields (reports_to, subordinates, level, role). The mapper will produce these.
-- `AgentRegistry.get_hierarchy()` / `get_subordinates()`: Existing hierarchy walking — topology graph operations will be the richer version of these.
-- State engine fcntl.flock pattern (state_engine.py): Proven file locking for concurrent access. Topology files should follow the same discipline.
-- `CATEGORY_SECTION_MAP` in spawn.py: Memory category routing. Phase 64 will need a `structural_topology` exclusion here.
-- `EventDomain` / `EventType` enums (events/protocol.py): Will need `TOPOLOGY` domain and topology-specific event types.
+### Module Inventory (`packages/orchestration/src/openclaw/topology/`)
+| Module | Role |
+|--------|------|
+| `models.py` | Core data models: TopologyNode, TopologyEdge, TopologyGraph, EdgeType |
+| `diff.py` | TopologyDiff dataclass, topology_diff() comparator, format_diff() renderer |
+| `classifier.py` | ArchetypeClassifier with pattern matching, ArchetypeResult, feature extraction |
+| `storage.py` | File I/O with fcntl locking, atomic writes, .bak recovery. Manages all 5 topology files |
+| `proposal_models.py` | RubricScore, TopologyProposal, ProposalSet dataclasses |
+| `proposer.py` | LLM-driven proposal generation, build_proposals(), ask_clarifications() |
+| `rubric.py` | RubricScorer class, score_proposal() wrapper, weighted dimension scoring |
+| `linter.py` | ConstraintLinter: AgentRegistry + pool limit validation, auto-constrain strategy |
+| `correction.py` | CorrectionSession: soft re-proposal + hard draft edit cycles |
+| `approval.py` | approve_topology(), compute_pushback_note(), check_approval_gate() |
+| `renderer.py` | ASCII DAG, comparative matrix, diff summary, justifications, confidence warnings |
+| `llm_client.py` | Provider-configurable LLM calls (Anthropic/OpenAI/Gemini) |
+| `memory.py` | Phase 64: MemoryProfiler (decay-weighted affinity), PatternExtractor (LLM pattern mining) |
+| `__init__.py` | Public API exports |
 
-### Established Patterns
-- Pydantic/dataclass models for data objects (AgentSpec, JarvisState)
-- JSON file storage with fcntl locking and .bak backup recovery
-- Project-scoped state files under `workspace/.openclaw/{project_id}/`
-- mtime-based caching for read-heavy state files
+### Tests (`packages/orchestration/tests/`)
+- `test_topology_models.py` — Serialization round-trips, EdgeType values, optional fields
+- `test_topology_diff.py` — Node/edge addition/removal/modification, summary generation
+- `test_topology_classifier.py` — Archetype classification, pattern matching, confidence ranges
 
-### Integration Points
-- Topology files stored at `workspace/.openclaw/{project_id}/topology/` — parallel to existing state file location
-- Mapper output feeds into `spawn_l3_specialist()` via AgentSpec instances
-- SOUL injection path: `_build_augmented_soul()` in spawn.py can receive topology context as additional variables
-- Event bus: topology events emitted through existing `EventBus` infrastructure
+### Cross-Cutting Integration Points
+- **SOUL injection**: `_build_augmented_soul()` in `spawn.py` receives topology context as template variables
+- **Event bus**: `EventDomain.TOPOLOGY` with topology-specific event types in `events/protocol.py`
+- **Approval gate**: `check_approval_gate()` guards downstream operations requiring approved topology
+- **Memory isolation**: `category="structural_topology"` exclusion in `CATEGORY_SECTION_MAP` prevents L3 SOUL contamination
+- **Autonomy hooks**: Approval gate integrated into autonomy framework execution path
+
+### Established Patterns (Followed)
+- `@dataclass` models consistent with AgentSpec, JarvisState
+- JSON file storage with fcntl.flock() locking and .bak backup recovery
+- Project-scoped state under `workspace/.openclaw/{project_id}/topology/`
+- .tmp + atomic rename for crash safety
 
 </code_context>
 
@@ -93,4 +131,4 @@ None — discussion stayed within phase scope.
 ---
 
 *Phase: 61-topology-foundation*
-*Context gathered: 2026-03-03*
+*Context gathered: 2026-03-03, updated: 2026-03-04*
