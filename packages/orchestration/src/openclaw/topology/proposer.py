@@ -16,7 +16,6 @@ import asyncio
 import json
 import logging
 import sys
-from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
 import jsonschema
@@ -24,30 +23,10 @@ import jsonschema
 from openclaw.agent_registry import AgentRegistry
 from openclaw.topology.llm_client import call_llm, strip_markdown_fences
 from openclaw.topology.models import EdgeType, TopologyEdge, TopologyGraph, TopologyNode
+from openclaw.topology.proposal_models import TopologyProposal
 from openclaw.topology.storage import load_changelog
 
 logger = logging.getLogger(__name__)
-
-
-# ---------------------------------------------------------------------------
-# TopologyProposal dataclass
-# ---------------------------------------------------------------------------
-
-@dataclass
-class TopologyProposal:
-    """A single topology proposal for one archetype (lean/balanced/robust).
-
-    Holds the structural graph plus qualitative fields extracted from the
-    LLM's JSON output.
-    """
-
-    archetype: str              # "lean", "balanced", or "robust"
-    graph: TopologyGraph        # Nodes + edges as a TopologyGraph
-    justification: str          # Why this structure fits the given outcome
-    delegation_boundaries: str  # Free-text description of delegation scope
-    coordination_model: str     # Coordination approach (e.g. "sequential", "parallel")
-    risk_assessment: str        # Risk commentary from the LLM
-    assumptions: List[str] = field(default_factory=list)  # Defaults applied in non-interactive mode
 
 
 # ---------------------------------------------------------------------------
@@ -96,7 +75,16 @@ PROPOSAL_JSON_SCHEMA: Dict = {
                         "properties": {
                             "from_role": {"type": "string"},
                             "to_role": {"type": "string"},
-                            "edge_type": {"type": "string"},
+                            "edge_type": {
+                                "type": "string",
+                                "enum": [
+                                    "delegation",
+                                    "coordination",
+                                    "review_gate",
+                                    "information_flow",
+                                    "escalation",
+                                ],
+                            },
                         },
                     },
                 },
@@ -118,8 +106,12 @@ PROPOSAL_SYSTEM_PROMPT = (
     "You are an expert at designing multi-agent swarm topologies.\n"
     "Given an outcome description, generate exactly 3 topology proposals:\n"
     "one Lean (minimal roles, fast), one Balanced (moderate structure), one Robust (safe, redundant).\n\n"
-    "Available agent roles: {available_roles}\n"
-    "Project constraint: max {max_concurrent} concurrent L3 agents\n\n"
+    "STRICT CONSTRAINTS:\n"
+    "- You MUST only use role IDs from this exact list: {available_roles}\n"
+    "  Do NOT invent variants, suffixes, or task-specific role names.\n"
+    "- Valid edge_type values are EXACTLY: delegation, coordination, review_gate, information_flow, escalation\n"
+    "  Do NOT use other relationship terms like 'orchestrates', 'oversees', or 'informs'.\n"
+    "- Project constraint: max {max_concurrent} concurrent L3 agents\n\n"
     "{rejection_context}"
     "Return ONLY valid JSON matching this schema: {json_schema}\n"
     "Do not include markdown fences or explanation outside the JSON."

@@ -61,7 +61,7 @@ def _make_rubric_score(overall: int = 7) -> RubricScore:
 def _make_proposal(archetype: str = "lean", overall: int = 7) -> TopologyProposal:
     return TopologyProposal(
         archetype=archetype,
-        topology=_simple_graph(),
+        graph=_simple_graph(),
         delegation_boundaries="PM to worker",
         coordination_model="direct",
         risk_assessment="low",

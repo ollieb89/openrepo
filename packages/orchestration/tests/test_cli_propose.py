@@ -150,29 +150,35 @@ class TestCliErrorHandling:
 
 class TestToPmProposals:
     def test_converts_proposer_proposals_to_pm_format(self):
-        """_to_pm_proposals maps .graph -> .topology correctly."""
+        """_to_pm_proposals returns unified TopologyProposal objects with .graph field.
+
+        Since proposer.build_proposals() now returns canonical proposal_models.TopologyProposal
+        objects directly, _to_pm_proposals is a pass-through that returns the same objects.
+        """
         from openclaw.cli.propose import _to_pm_proposals
         from openclaw.topology.models import TopologyGraph, TopologyNode
+        from openclaw.topology.proposal_models import TopologyProposal
 
-        # Create a mock proposer proposal
+        # Create a real TopologyProposal (as build_proposals() now returns)
         mock_graph = TopologyGraph(
             project_id="test",
             nodes=[TopologyNode(id="pm", level=2, intent="test", risk_level="low")],
             edges=[],
         )
-        mock_proposer_proposal = MagicMock()
-        mock_proposer_proposal.archetype = "lean"
-        mock_proposer_proposal.graph = mock_graph
-        mock_proposer_proposal.delegation_boundaries = "L2 only"
-        mock_proposer_proposal.coordination_model = "sequential"
-        mock_proposer_proposal.risk_assessment = "low"
-        mock_proposer_proposal.justification = "simple"
+        proposal = TopologyProposal(
+            archetype="lean",
+            graph=mock_graph,
+            delegation_boundaries="L2 only",
+            coordination_model="sequential",
+            risk_assessment="low",
+            justification="simple",
+        )
 
-        result = _to_pm_proposals([mock_proposer_proposal])
+        result = _to_pm_proposals([proposal])
 
         assert len(result) == 1
         assert result[0].archetype == "lean"
-        assert result[0].topology is mock_graph
+        assert result[0].graph is mock_graph
         assert result[0].delegation_boundaries == "L2 only"
         assert result[0].rubric_score is None  # Not scored yet
 
@@ -205,7 +211,7 @@ def _make_proposal_set(archetype="lean"):
     )
     proposal = TopologyProposal(
         archetype=archetype,
-        topology=graph,
+        graph=graph,
         delegation_boundaries="L2 only",
         coordination_model="sequential",
         risk_assessment="low",
@@ -228,7 +234,7 @@ def _make_main_patches(interactive=True, input_side_effect=None):
     # Mock proposer proposals (proposer format uses .graph not .topology)
     mock_proposer_prop = MagicMock()
     mock_proposer_prop.archetype = "lean"
-    mock_proposer_prop.graph = proposal_set.proposals[0].topology
+    mock_proposer_prop.graph = proposal_set.proposals[0].graph
     mock_proposer_prop.delegation_boundaries = "L2 only"
     mock_proposer_prop.coordination_model = "sequential"
     mock_proposer_prop.risk_assessment = "low"
@@ -467,7 +473,7 @@ class TestInteractiveSessionLoop:
         )
         proposal = TopologyProposal(
             archetype="lean",
-            topology=graph,
+            graph=graph,
             delegation_boundaries="L2 only",
             coordination_model="sequential",
             risk_assessment="low",
@@ -544,7 +550,7 @@ class TestInteractiveSessionLoop:
             overall_confidence=7,
         )
         proposal = TopologyProposal(
-            archetype="lean", topology=graph,
+            archetype="lean", graph=graph,
             delegation_boundaries="L2 only", coordination_model="sequential",
             risk_assessment="low", justification="Simple.", rubric_score=score,
         )

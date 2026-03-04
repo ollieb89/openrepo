@@ -69,7 +69,7 @@ def render_diff_summary(
     Returns:
         Multi-line string with diff summary for terminal display.
     """
-    diff = topology_diff(old_proposal.topology, new_proposal.topology)
+    diff = topology_diff(old_proposal.graph, new_proposal.graph)
 
     # Node/edge change counts
     added_n = len(diff.added_nodes)
@@ -458,7 +458,7 @@ def render_full_output(proposal_set: ProposalSet, threshold: int) -> str:
         sections.append("TOPOLOGY DIAGRAMS")
         for p in proposals:
             sections.append(f"\n  {p.archetype.upper()}:")
-            dag = render_dag(p.topology)
+            dag = render_dag(p.graph)
             indented = "\n".join("    " + line for line in dag.splitlines())
             sections.append(indented)
         sections.append("")

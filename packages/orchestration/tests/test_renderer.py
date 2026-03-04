@@ -67,7 +67,7 @@ def _make_proposal(archetype: str, topology: TopologyGraph, confidence: int = 5)
     )
     return TopologyProposal(
         archetype=archetype,
-        topology=topology,
+        graph=topology,
         delegation_boundaries=f"{archetype} boundaries",
         coordination_model="sequential",
         risk_assessment="low risk",

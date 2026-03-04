@@ -76,31 +76,20 @@ def _is_interactive() -> bool:
 
 
 # ---------------------------------------------------------------------------
-# Conversion: proposer.TopologyProposal -> proposal_models.TopologyProposal
+# Conversion: identity pass-through (proposer now returns unified TopologyProposal)
 # ---------------------------------------------------------------------------
 
 def _to_pm_proposals(proposer_proposals: list) -> list:
-    """Convert proposer.TopologyProposal objects to proposal_models.TopologyProposal.
+    """Return proposals as-is — proposer now returns proposal_models.TopologyProposal directly.
 
-    proposer.TopologyProposal uses `.graph` (TopologyGraph), while
-    proposal_models.TopologyProposal uses `.topology`. The conversion maps
-    the graph field and pulls over all qualitative fields.
+    Kept for API compatibility with existing tests and callers.
+    proposer.build_proposals() returns the canonical TopologyProposal from
+    proposal_models with .graph field — no conversion needed.
 
     Returns:
-        List of proposal_models.TopologyProposal objects.
+        The same list of TopologyProposal objects.
     """
-    pm_proposals = []
-    for pp in proposer_proposals:
-        pm = TopologyProposal(
-            archetype=pp.archetype,
-            topology=pp.graph,
-            delegation_boundaries=pp.delegation_boundaries,
-            coordination_model=pp.coordination_model,
-            risk_assessment=pp.risk_assessment,
-            justification=pp.justification,
-        )
-        pm_proposals.append(pm)
-    return pm_proposals
+    return list(proposer_proposals)
 
 
 # ---------------------------------------------------------------------------
@@ -234,7 +223,7 @@ def _run_session(
                 if original and original.rubric_score:
                     pushback = compute_pushback_note(
                         original.rubric_score,
-                        selected.topology,
+                        selected.graph,
                         weights,
                         pushback_threshold,
                     )
@@ -248,7 +237,7 @@ def _run_session(
 
             entry = approve_topology(
                 session.project_id,
-                selected.topology,
+                selected.graph,
                 correction_type,
                 pushback,
                 rubric_scores=rubric_scores,
@@ -298,10 +287,9 @@ def _run_session(
 
                 # Show diff summary between exported proposal and imported result
                 # Build a temporary proposal wrapping the imported graph for diff
-                from openclaw.topology.proposal_models import TopologyProposal as _TP
-                imported_proposal = _TP(
+                imported_proposal = TopologyProposal(
                     archetype=selected.archetype,
-                    topology=graph,
+                    graph=graph,
                     delegation_boundaries=selected.delegation_boundaries,
                     coordination_model=selected.coordination_model,
                     risk_assessment=selected.risk_assessment,
@@ -741,7 +729,7 @@ def main() -> int:
     explore = random.random() < topo_config.get("exploration_rate", 0.20)
     for p in proposals:
         p.rubric_score = score_proposal(
-            p.topology, weights,
+            p.graph, weights,
             project_id=project_id, archetype=p.archetype, explore=explore,
         )
 
@@ -755,7 +743,7 @@ def main() -> int:
     # --- Verify archetype classification ---
     classifier = ArchetypeClassifier()
     for p in proposals:
-        result = classifier.classify(p.topology)
+        result = classifier.classify(p.graph)
         if result.archetype != p.archetype:
             print(
                 f"{Colors.YELLOW}Note: {p.archetype} proposal classified as"

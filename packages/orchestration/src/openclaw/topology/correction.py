@@ -130,7 +130,7 @@ def apply_soft_correction(
         clarifications=augmented_clarifications,
     )
 
-    # Build proposer.TopologyProposal objects (have .graph, not .topology)
+    # Build TopologyProposal objects (unified class with .graph field)
     proposer_proposals = build_proposals(raw, session.project_id)
 
     # Lint each proposal with ConstraintLinter
@@ -144,7 +144,7 @@ def apply_soft_correction(
             assumptions_from_raw = arch_data.get("assumptions", [])
 
     for prop in proposer_proposals:
-        # Build linter-compatible proposal dict from proposer's TopologyProposal
+        # Build linter-compatible proposal dict
         lint_proposal_dict = {
             "roles": [
                 {
@@ -169,17 +169,9 @@ def apply_soft_correction(
         # Score the proposal
         rubric = score_proposal(prop.graph, weights)
 
-        # Convert to proposal_models.TopologyProposal
-        pm_proposal = TopologyProposal(
-            archetype=prop.archetype,
-            topology=prop.graph,
-            delegation_boundaries=prop.delegation_boundaries,
-            coordination_model=prop.coordination_model,
-            risk_assessment=prop.risk_assessment,
-            justification=prop.justification,
-            rubric_score=rubric,
-        )
-        pm_proposals.append(pm_proposal)
+        # Attach score to the unified TopologyProposal
+        prop.rubric_score = rubric
+        pm_proposals.append(prop)
 
     # Build new ProposalSet
     new_set = ProposalSet(
@@ -245,7 +237,7 @@ def export_draft(proposal: TopologyProposal, project_id: str) -> Path:
     draft_path = topo_dir / "proposal-draft.json"
 
     # Build the topology dict
-    data = proposal.topology.to_dict()
+    data = proposal.graph.to_dict()
 
     # Add human-readable comment annotations
     data["__comment__nodes"] = (

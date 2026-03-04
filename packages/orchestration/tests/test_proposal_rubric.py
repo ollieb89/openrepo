@@ -77,7 +77,7 @@ class TestProposalModels:
         from openclaw.topology.proposal_models import TopologyProposal, RubricScore
         proposal = TopologyProposal(
             archetype="lean",
-            topology=_lean_graph(),
+            graph=_lean_graph(),
             delegation_boundaries="L2 delegates to L3 only",
             coordination_model="direct",
             risk_assessment="low risk",
@@ -96,7 +96,7 @@ class TestProposalModels:
         )
         proposal = TopologyProposal(
             archetype="lean",
-            topology=_lean_graph(),
+            graph=_lean_graph(),
             delegation_boundaries="L2 delegates to L3",
             coordination_model="none",
             risk_assessment="low",
@@ -111,7 +111,7 @@ class TestProposalModels:
         from openclaw.topology.proposal_models import TopologyProposal, ProposalSet
         proposals = [
             TopologyProposal(
-                archetype="lean", topology=_lean_graph(),
+                archetype="lean", graph=_lean_graph(),
                 delegation_boundaries="", coordination_model="",
                 risk_assessment="", justification="",
             )
@@ -129,7 +129,7 @@ class TestProposalModels:
         from openclaw.topology.proposal_models import TopologyProposal
         proposal = TopologyProposal(
             archetype="balanced",
-            topology=_balanced_graph(),
+            graph=_balanced_graph(),
             delegation_boundaries="PM delegates to workers",
             coordination_model="coordination-linked",
             risk_assessment="medium",
@@ -137,7 +137,7 @@ class TestProposalModels:
         )
         data = proposal.to_dict()
         assert data["archetype"] == "balanced"
-        assert "topology" in data
+        assert "graph" in data
         # from_dict round-trip
         proposal2 = TopologyProposal.from_dict(data)
         assert proposal2.archetype == "balanced"
@@ -149,7 +149,7 @@ class TestProposalModels:
         ps = ProposalSet(
             proposals=[
                 TopologyProposal(
-                    archetype="lean", topology=_lean_graph(),
+                    archetype="lean", graph=_lean_graph(),
                     delegation_boundaries="x", coordination_model="y",
                     risk_assessment="z", justification="q",
                 )

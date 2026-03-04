@@ -76,46 +76,52 @@ class TopologyProposal:
 
     Carries all information needed for the user to evaluate the proposal:
     structural graph, delegation boundaries, coordination model, risk
-    assessment, justification, and optional rubric score.
+    assessment, justification, assumptions, and optional rubric score.
 
     archetype: "lean", "balanced", or "robust"
-    topology: The full TopologyGraph representing this option
+    graph: The full TopologyGraph representing this option
     delegation_boundaries: Human-readable description of role boundaries
     coordination_model: How agents coordinate (e.g. "direct", "via-pm")
     risk_assessment: Qualitative risk description
     justification: Why this topology fits the task
+    assumptions: Shared assumptions applied when generating this proposal
     rubric_score: Optional quantitative scoring (set by RubricScorer)
     """
 
     archetype: str
-    topology: TopologyGraph
+    graph: TopologyGraph
     delegation_boundaries: str
     coordination_model: str
     risk_assessment: str
     justification: str
+    assumptions: List[str] = field(default_factory=list)
     rubric_score: Optional[RubricScore] = None
 
     def to_dict(self) -> dict:
         return {
             "archetype": self.archetype,
-            "topology": self.topology.to_dict(),
+            "graph": self.graph.to_dict(),
             "delegation_boundaries": self.delegation_boundaries,
             "coordination_model": self.coordination_model,
             "risk_assessment": self.risk_assessment,
             "justification": self.justification,
+            "assumptions": self.assumptions,
             "rubric_score": self.rubric_score.to_dict() if self.rubric_score else None,
         }
 
     @classmethod
     def from_dict(cls, data: dict) -> "TopologyProposal":
         rubric_data = data.get("rubric_score")
+        # Accept both "graph" (new) and "topology" (legacy) keys for backward compat
+        graph_data = data.get("graph") or data.get("topology")
         return cls(
             archetype=data["archetype"],
-            topology=TopologyGraph.from_dict(data["topology"]),
+            graph=TopologyGraph.from_dict(graph_data),
             delegation_boundaries=data["delegation_boundaries"],
             coordination_model=data["coordination_model"],
             risk_assessment=data["risk_assessment"],
             justification=data["justification"],
+            assumptions=data.get("assumptions", []),
             rubric_score=RubricScore.from_dict(rubric_data) if rubric_data else None,
         )
 
