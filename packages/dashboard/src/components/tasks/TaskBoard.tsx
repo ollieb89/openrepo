@@ -1,16 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import type { Task, TaskStatus } from '@/lib/types';
+import type { TaskStatus } from '@/lib/types';
 import { useTasks } from '@/lib/hooks/useTasks';
 import { useProject } from '@/context/ProjectContext';
 import TaskCard from './TaskCard';
-import ActivityLog from './ActivityLog';
+import TaskTerminalPanel from './TaskTerminalPanel';
 import StatusBadge from '@/components/common/StatusBadge';
 import Card from '@/components/common/Card';
-import { AutonomyPanel } from '@/components/autonomy/AutonomyPanel';
-import { EscalationContextPanel } from '@/components/autonomy/EscalationContextPanel';
-import { CourseCorrectionHistory } from '@/components/autonomy/CourseCorrectionHistory';
 import type { TaskWithAutonomy } from '@/lib/types/autonomy';
 
 const STATUS_COLUMNS: { status: TaskStatus; label: string }[] = [
@@ -83,70 +80,11 @@ export default function TaskBoard() {
         })}
       </div>
 
-      {/* Detail Panel */}
       {selectedTask && (
-        <div className="w-80 flex-shrink-0 border-l border-gray-200 dark:border-gray-700 pl-4">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Task Detail</h3>
-            <button
-              onClick={() => setSelectedTask(null)}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          <div className="space-y-3">
-            <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Task ID</p>
-              <p className="text-sm font-mono text-gray-900 dark:text-white">{selectedTask.id}</p>
-            </div>
-            <div className="flex gap-2">
-              <StatusBadge status={selectedTask.status as TaskStatus} />
-              {selectedTask.skill_hint && (
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
-                  {selectedTask.skill_hint}
-                </span>
-              )}
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Created</p>
-              <p className="text-sm text-gray-900 dark:text-white">
-                {new Date(selectedTask.created_at * 1000).toLocaleString()}
-              </p>
-            </div>
-            {Object.keys(selectedTask.metadata || {}).length > 0 && (
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Metadata</p>
-                <div className="text-xs font-mono bg-gray-50 dark:bg-gray-900 rounded p-2 space-y-0.5">
-                  {Object.entries(selectedTask.metadata || {}).map(([k, v]) => (
-                    <div key={k}>
-                      <span className="text-gray-500">{k}:</span>{' '}
-                      <span className="text-gray-900 dark:text-gray-300">{String(v)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {selectedTask.autonomy && (
-              <AutonomyPanel autonomy={selectedTask.autonomy} />
-            )}
-            {selectedTask.autonomy?.escalation && (
-              <EscalationContextPanel task={selectedTask} />
-            )}
-            <CourseCorrectionHistory taskId={selectedTask.id} />
-          </div>
-
-          <div className="mt-4">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Activity Log</p>
-            <div className="max-h-96 overflow-y-auto -mx-1">
-              <ActivityLog entries={selectedTask.activity_log} />
-            </div>
-          </div>
-        </div>
+        <TaskTerminalPanel
+          task={selectedTask}
+          onClose={() => setSelectedTask(null)}
+        />
       )}
     </div>
   );
