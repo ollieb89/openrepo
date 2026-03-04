@@ -1,9 +1,10 @@
 import Database from 'better-sqlite3';
 import path from 'path';
+import os from 'os';
 import fs from 'fs';
 
 const GET_DB_PATH = () => {
-  const root = process.env.OPENCLAW_ROOT || '/home/ollie/.openclaw';
+  const root = process.env.OPENCLAW_ROOT || path.join(os.homedir(), '.openclaw');
   return path.join(root, 'workspace', '.openclaw', 'nexus-sync.db');
 };
 

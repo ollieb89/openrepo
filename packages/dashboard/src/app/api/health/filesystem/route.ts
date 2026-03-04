@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server';
 import { getWorkspaceHealth, initializeWorkspace } from '@/lib/filesystem-utils';
 import { withAuth } from '@/lib/auth-middleware';
 import path from 'path';
+import os from 'os';
 import fs from 'fs/promises';
 
-const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || '/home/ollie/.openclaw';
+const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || path.join(os.homedir(), '.openclaw');
 
 async function getHandler() {
   try {

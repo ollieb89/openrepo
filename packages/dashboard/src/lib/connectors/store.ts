@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
+import os from 'os';
 import type { ConnectorCheckpoint, ConnectorState, SyncProgressSnapshot } from '@/lib/types/connectors';
 
 interface ConnectorRuntimeStore {
@@ -8,7 +9,7 @@ interface ConnectorRuntimeStore {
   progress: Record<string, SyncProgressSnapshot>;
 }
 
-const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || '/home/ollie/.openclaw';
+const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || path.join(os.homedir(), '.openclaw');
 const DEFAULT_STORE_PATH = path.join(
   OPENCLAW_ROOT,
   'workspace',

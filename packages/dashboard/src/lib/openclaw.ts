@@ -1,11 +1,12 @@
 import fs from 'fs/promises';
 import path from 'path';
+import os from 'os';
 import type { Project, Task, Agent } from './types';
 import type { TaskWithAutonomy } from './types/autonomy';
 import { minimizePersistenceRecord } from './privacy/minimization';
 import type { PersistedMetadataInput, PersistedMetadataRecord } from './types/privacy';
 
-const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || '/home/ollie/.openclaw';
+const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || path.join(os.homedir(), '.openclaw');
 
 export async function readOpenClawConfig(): Promise<Record<string, unknown>> {
   const raw = await fs.readFile(path.join(OPENCLAW_ROOT, 'openclaw.json'), 'utf-8');

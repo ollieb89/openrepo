@@ -3,8 +3,9 @@ import { getActiveProjectId } from '@/lib/openclaw';
 import { withAuth } from '@/lib/auth-middleware';
 import { spawnSync } from 'child_process';
 import path from 'path';
+import os from 'os';
 
-const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || '/home/ollie/.openclaw';
+const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || path.join(os.homedir(), '.openclaw');
 
 async function handler(
   request: NextRequest,

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
+import os from 'os';
 import { getActiveProjectId } from '@/lib/openclaw';
 import { withAuth } from '@/lib/auth-middleware';
 import type { TopologyApiResponse, TopologyGraph, ProposalSet } from '@/lib/types/topology';
 
-const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || '/home/ollie/.openclaw';
+const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || path.join(os.homedir(), '.openclaw');
 
 async function handler(request: NextRequest): Promise<NextResponse> {
   try {

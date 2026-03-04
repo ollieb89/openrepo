@@ -9,7 +9,6 @@ Also adds the docker/memory path for scan_engine imports.
 import sys
 from pathlib import Path
 
-# Project root: /home/ollie/.openclaw
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 
 # Allow imports from skills/spawn/ (e.g., `from spawn import ...`, `from pool import ...`)

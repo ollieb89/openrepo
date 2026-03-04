@@ -1,11 +1,12 @@
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import { redactSensitiveData } from '../redaction';
 import type { SyncRecord } from './engine';
 import type { Decision } from '../types/decisions';
 
 const GET_RECORDS_ROOT = () => {
-  const root = process.env.OPENCLAW_ROOT || '/home/ollie/.openclaw';
+  const root = process.env.OPENCLAW_ROOT || path.join(os.homedir(), '.openclaw');
   return path.join(root, 'workspace', '.openclaw', 'records');
 };
 

@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { loadDecisions } from '@/lib/sync/storage';
 import { withAuth } from '@/lib/auth-middleware';
 import path from 'path';
+import os from 'os';
 import fs from 'fs';
 
 const GET_RECORDS_ROOT = () => {
-  const root = process.env.OPENCLAW_ROOT || '/home/ollie/.openclaw';
+  const root = process.env.OPENCLAW_ROOT || path.join(os.homedir(), '.openclaw');
   return path.join(root, 'workspace', '.openclaw', 'records', 'decisions');
 };
 
