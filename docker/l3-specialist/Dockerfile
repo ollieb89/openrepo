@@ -1,23 +1,23 @@
-FROM debian:bookworm-slim
+ARG BASE_IMAGE=openclaw-base:bookworm-slim
+FROM ${BASE_IMAGE}
 
-# Install essentials for code/test tasks
-RUN apt-get update && apt-get install -y \
-    git \
-    python3 \
+# Switch to root for package installation (sandbox base runs as non-root)
+USER root
+
+# Install L3-specific dependencies not in the sandbox base
+RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
-    curl \
-    jq \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies required by the openclaw package (volume-mounted at runtime)
 RUN pip3 install --no-cache-dir --break-system-packages \
     jsonschema>=4.26.0
 
-# Create non-root user (UID 1000 to match host)
-RUN useradd -m -u 1000 -s /bin/bash l3worker
-
-# Copy orchestration package (will be mounted as volume in practice)
-# This is a placeholder - the actual orchestration package is mounted at runtime
+# Create L3 worker user (UID 1000 to match host volume permissions).
+# The sandbox base already creates a 'sandbox' user at UID 1000, so we
+# rename it to 'l3worker' for L3 identity consistency.
+RUN usermod -l l3worker -d /home/l3worker -m sandbox \
+    && groupmod -n l3worker sandbox
 
 # Set working directory
 WORKDIR /workspace
@@ -29,6 +29,7 @@ RUN chmod +x /entrypoint.sh
 # Labels for tracking
 LABEL openclaw.tier="l3"
 LABEL openclaw.component="specialist"
+LABEL openclaw.base="openclaw-base:bookworm-slim"
 
 # Health check — verifies container entrypoint has completed initialization.
 # Sentinel file /tmp/openclaw-healthy is written by entrypoint.sh after startup.
