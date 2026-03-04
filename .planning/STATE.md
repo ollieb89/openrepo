@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Structural Intelligence
 status: executing
-stopped_at: Completed 65-topology-observability-03-PLAN.md
-last_updated: "2026-03-04T11:00:05.080Z"
-last_activity: 2026-03-03 — Phase 62 Plan 03 complete (proposal models, rubric scorer, constraint linter)
+stopped_at: Completed 01-protocol-foundations-01-PLAN.md
+last_updated: "2026-03-04T12:57:00.000Z"
+last_activity: 2026-03-04 — Phase 01 Plan 01 complete (native ACP WebSocket endpoint, ServerAcpTranslator, E2E tests)
 progress:
   total_phases: 5
   completed_phases: 4
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-03)
 
 **Core value:** The system designs and refactors its own orchestration
-**Current focus:** v2.0 Structural Intelligence — Phase 62: Structure Proposal Engine
+**Current focus:** Phase 01: Protocol Foundations — ACP native WebSocket endpoint
 
 ## Current Position
 
-Phase: 62 of 65 (Structure Proposal Engine)
-Plan: 3 of ? in current phase
+Phase: 01-protocol-foundations
+Plan: 1 of ? in current phase
 Status: Executing
-Last activity: 2026-03-03 — Phase 62 Plan 03 complete (proposal models, rubric scorer, constraint linter)
+Last activity: 2026-03-04 — Phase 01 Plan 01 complete (native ACP WebSocket endpoint, ServerAcpTranslator, E2E tests)
 
-Progress: [█░░░░░░░░░] 5% (v2.0 — 1/? plans complete)
+Progress: [█░░░░░░░░░] 5% (phase 01 — 1/? plans complete)
 
 ## Performance Metrics
 
@@ -59,6 +59,7 @@ Progress: [█░░░░░░░░░] 5% (v2.0 — 1/? plans complete)
 | Phase 65-topology-observability P02 | 5min | 2 tasks | 9 files |
 | Phase 65-topology-observability PP03 | 4min | 2 tasks | 6 files |
 | Phase 65-topology-observability P03 | 30min | 3 tasks | 6 files |
+| Phase 01-protocol-foundations P01 | 15min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -101,6 +102,9 @@ Progress: [█░░░░░░░░░] 5% (v2.0 — 1/? plans complete)
 - [Phase 65-02]: TopologyNodeData/TopologyEdgeData exported from topology-utils.ts to avoid circular imports; edge diff key uses 'from_role->to_role' string format
 - [Phase 65-topology-observability]: Time-travel v1: shows diff highlights on current topology (not full historical reconstruction) — clearly indicated by amber banner; full reconstruction deferred
 - [Phase 65-topology-observability]: Time-travel v1 simplification approved: diff highlights on current topology (not full historical reconstruction) — amber banner indicates selected correction; explicitly reviewed and accepted at checkpoint
+- [Phase 01-01]: ACP endpoint uses separate acpWss instance — clean routing via ACP_WS_PATH="/v1/acp" constant in attachGatewayUpgradeHandler
+- [Phase 01-01]: context.broadcast patched in-place (not replaced) — existing Gateway WS clients unaffected; ACP translators intercept broadcast events via wrap
+- [Phase 01-01]: E2E tests named *.e2e.test.ts in test/e2e/ — matches vitest.e2e.config.ts include pattern
 
 ### Pending Todos
 
@@ -112,6 +116,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-04T10:50:01.325Z
-Stopped at: Completed 65-topology-observability-03-PLAN.md
+Last session: 2026-03-04T12:57:00.000Z
+Stopped at: Completed 01-protocol-foundations-01-PLAN.md
 Resume file: None
