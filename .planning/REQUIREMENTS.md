@@ -46,7 +46,7 @@ Requirements for v2.1 Programmatic Integration & Real-Time Streaming. Each maps 
 
 ### Docker
 
-- [ ] **DOCK-01**: Shared openclaw-base:bookworm-slim base image created and used by L3 Dockerfile
+- [x] **DOCK-01**: Shared openclaw-base:bookworm-slim base image created and used by L3 Dockerfile
 
 ### Integration Verification
 
@@ -90,7 +90,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DEBT-01 | Phase 68, Plan 01 | Complete |
 | DEBT-02 | Phase 68, Plan 01 | Complete |
 | DEBT-03 | Phase 68 | Complete |
-| DOCK-01 | Phase 69 | Pending |
+| DOCK-01 | Phase 69 | Complete |
 | EVNT-01 | Phase 70 | Pending |
 | EVNT-02 | Phase 70 | Pending |
 | EVNT-03 | Phase 71 | Pending |

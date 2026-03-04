@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Programmatic Integration & Real-Time Streaming
 status: executing
-stopped_at: Phase 69 context gathered
-last_updated: "2026-03-04T18:52:35.963Z"
+stopped_at: Completed 69-docker-base-image/69-01-PLAN.md
+last_updated: "2026-03-04T19:58:11.100Z"
 last_activity: 2026-03-04 — Phase 68 Plan 01 complete, 694 tests pass
 progress:
   total_phases: 10
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  completed_phases: 1
+  total_plans: 1
+  completed_plans: 1
   percent: 5
 ---
 
@@ -60,6 +60,7 @@ v2.1 decisions:
 - [Phase 68-tech-debt-resolution]: Use os.homedir() + path.join() for portable OPENCLAW_ROOT fallback in TypeScript
 - [Phase 68-tech-debt-resolution]: project.json workspace paths use ~/... tilde notation, expanded by os.path.expanduser() in project_config.get_workspace_path()
 - [Phase 68-tech-debt-resolution]: openclaw.json skills.load.extraDirs uses relative ./skills path (not absolute)
+- [Phase 69-docker-base-image]: openclaw-base:bookworm-slim is canonical base image for all OpenClaw containers; docker-l3 depends on docker-base (not docker-sandbox-base); no CMD in base image, consumers define their own entrypoint
 
 ### Pending Todos
 
@@ -73,6 +74,6 @@ None. Previously blocking issues resolved in Phase 68 Plan 01:
 
 ## Session Continuity
 
-Last session: 2026-03-04T18:52:35.949Z
-Stopped at: Phase 69 context gathered
-Resume file: .planning/phases/69-docker-base-image/69-CONTEXT.md
+Last session: 2026-03-04T19:58:11.096Z
+Stopped at: Completed 69-docker-base-image/69-01-PLAN.md
+Resume file: None

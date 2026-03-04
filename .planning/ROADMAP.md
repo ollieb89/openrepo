@@ -43,7 +43,7 @@
 ## Phases
 
 - [x] **Phase 68: Tech Debt Resolution** - Resolve test failures, consolidate TopologyProposal, remove hardcoded paths (completed 2026-03-04)
-- [ ] **Phase 69: Docker Base Image** - Create shared openclaw-base image and rebase L3 Dockerfile
+- [x] **Phase 69: Docker Base Image** - Create shared openclaw-base image and rebase L3 Dockerfile (completed 2026-03-04)
 - [ ] **Phase 70: Event Bridge Activation** - Start Unix socket server, wire event bus to transport
 - [ ] **Phase 71: L3 Output Streaming** - Stream Docker container output through event bridge to dashboard SSE
 - [ ] **Phase 72: Gateway-Only Dispatch** - Remove execFileSync fallback, add bootstrap mode, gateway health check at startup
@@ -198,7 +198,7 @@ Plans:
 | 54-60 | v1.6 | 14/14 | Complete | 2026-02-26 |
 | 61-67 | v2.0 | 17/17 | Complete | 2026-03-04 |
 | 68. Tech Debt Resolution | 2/2 | Complete    | 2026-03-04 | - |
-| 69. Docker Base Image | v2.1 | 0/TBD | Not started | - |
+| 69. Docker Base Image | 1/1 | Complete   | 2026-03-04 | - |
 | 70. Event Bridge Activation | v2.1 | 0/TBD | Not started | - |
 | 71. L3 Output Streaming | v2.1 | 0/TBD | Not started | - |
 | 72. Gateway-Only Dispatch | v2.1 | 0/TBD | Not started | - |
