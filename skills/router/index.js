@@ -1,4 +1,3 @@
-const { execFileSync } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -91,28 +90,35 @@ async function dispatchDirective(targetId, directive) {
     }
   }
 
-  // Detect 'propose' directives — route to openclaw-propose CLI directly
+  // Detect 'propose' directives — route through gateway HTTP API
   // This handles both __propose__ sentinel target and directives containing "propose"
   const proposeMatch = directive.match(/\bpropose\b/i);
   if (proposeMatch || targetId === '__propose__') {
-    console.log(`[Router] Routing to openclaw-propose engine`);
+    console.log(`[Router] Routing to openclaw-propose engine via gateway`);
     try {
-      const args = ['--json'];
       // Extract the outcome from the directive (everything after "propose")
       const outcomeMatch = directive.match(/\bpropose\b\s+(.+)/i);
-      if (outcomeMatch) {
-        args.unshift(outcomeMatch[1]);
-      } else if (targetId !== '__propose__') {
-        // directive is the outcome itself (no "propose" keyword in outcome position)
-        args.unshift(directive);
-      }
-      const output = execFileSync('openclaw-propose', args, {
-        encoding: 'utf8',
-        timeout: 300000,
+      const outcomeMessage = outcomeMatch ? outcomeMatch[1] : directive;
+      const response = await fetch(`${gatewayUrl}/api/agent/__propose__/message`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ message: outcomeMessage }),
+        signal: AbortSignal.timeout(300_000), // 5 min
       });
-      return JSON.parse(output);
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new DispatchError('__propose__', error.message || response.statusText);
+      }
+      return await response.json();
     } catch (err) {
-      console.error('[Router] openclaw-propose failed:', err.message);
+      if (err instanceof DispatchError) throw err;
+      console.error('[Router] Gateway propose dispatch failed:', err.message);
+      if (err.name === 'TypeError' || err.message.includes('fetch failed') || err.message.includes('ECONNREFUSED')) {
+        throw new DispatchError('__propose__', `Gateway unreachable at localhost:${gatewayPort}. Start it with: openclaw gateway start`);
+      }
       throw new DispatchError('__propose__', err.message);
     }
   }
@@ -137,27 +143,14 @@ async function dispatchDirective(targetId, directive) {
     console.log(`Directive successfully routed to ${targetId} via Gateway. Run ID: ${result.runId || result.run_id}`);
     return result;
   } catch (error) {
-    console.log(`[Router] Gateway dispatch failed (${error.message}), falling back to execFileSync...`);
-    
-    // Fallback path
-    try {
-      const output = execFileSync('openclaw', [
-        'agent', '--agent', targetId, '--message', directive, '--json'
-      ], { encoding: 'utf8', timeout: 300000 });
-      const result = JSON.parse(output);
-      
-      if (result.status === 'ok') {
-        console.log(`Directive successfully routed to ${targetId} via CLI. Run ID: ${result.runId || result.run_id}`);
-        return result;
-      } else {
-        throw new Error(`Agent returned status: ${result.status}`);
-      }
-    } catch (fallbackError) {
-      console.error('Failed to dispatch directive via fallback:', fallbackError.message);
-      if (fallbackError.stdout) console.error('STDOUT:', fallbackError.stdout);
-      if (fallbackError.stderr) console.error('STDERR:', fallbackError.stderr);
-      throw fallbackError;
+    console.log(`[Router] Gateway dispatch failed: ${error.message}`);
+    if (error instanceof DispatchError) {
+      throw error;
     }
+    if (error.name === 'TypeError' || error.message.includes('fetch failed') || error.message.includes('ECONNREFUSED')) {
+      throw new DispatchError(targetId, `Gateway unreachable at localhost:${gatewayPort}. Start it with: openclaw gateway start`);
+    }
+    throw error;
   }
 }
 
