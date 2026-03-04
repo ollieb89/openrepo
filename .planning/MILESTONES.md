@@ -1,5 +1,22 @@
 # Milestones
 
+## v2.0 Structural Intelligence (Shipped: 2026-03-04)
+
+**Phases:** 61-67 | **Plans:** 17 executed | **Timeline:** 15 days (2026-02-17 → 2026-03-04)
+**Requirements:** 31/31 satisfied | **Tests:** 457+ passing | **Files changed:** 123 | **Lines:** +24,289 / -592
+
+**Key accomplishments:**
+- Topology as Data — swarm structures as explicit graph objects with JSON serialization, versioning, diffing, and archetype classification (Lean/Balanced/Robust)
+- Structure Proposal Engine — LLM-powered multi-candidate proposals with 7-dimension rubric scoring, constraint linting, and comparative confidence display
+- Dual Correction System — soft feedback (re-proposal with cycle limit) + hard direct edit (execute immediately, diff-analyze async) with approval gate enforcement
+- Structural Memory — correction diffs stored with decay-weighted preference profiling, epsilon-greedy exploration, LLM pattern extraction, and categorical L3 isolation
+- Topology Observability — dashboard React Flow DAG visualization, dual-panel comparison, correction timeline, confidence evolution chart, proposal comparison view
+- Integration Hardening — rubric scores wired through approval to ConfidenceChart, public API exports completed, broken imports fixed
+
+**Git range:** `feat(62-01)` → `feat(67-01)` | **LOC:** ~24K (Python + TypeScript)
+
+---
+
 ## v1.0 Grand Architect Protocol Foundation (Shipped: 2026-02-23)
 
 **Phases:** 1-10 | **Plans:** 25 executed (1 skipped) | **Timeline:** 7 days (2026-02-17 → 2026-02-23)

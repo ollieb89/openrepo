@@ -2,162 +2,52 @@
 
 ## Milestones
 
-- ✅ **v1.0 Grand Architect Protocol Foundation** - Phases 1-10 (shipped 2026-02-23)
-- ✅ **v1.1 Project Agnostic** - Phases 11-18 (shipped 2026-02-23)
-- ✅ **v1.2 Orchestration Hardening** - Phases 19-25 (shipped 2026-02-24)
-- ✅ **v1.3 Agent Memory** - Phases 26-38 (shipped 2026-02-24)
-- ✅ **v1.4 Operational Maturity** - Phases 39-44 (shipped 2026-02-25)
-- ✅ **v1.5 Config Consolidation** - Phases 45-53 (shipped 2026-02-25)
-- ✅ **v1.6 Agent Autonomy** - Phases 54-60 (shipped 2026-02-26)
-- 🚧 **v2.0 Structural Intelligence** - Phases 61-67 (in progress)
+- ✅ **v1.0 Grand Architect Protocol Foundation** — Phases 1-10 (shipped 2026-02-23)
+- ✅ **v1.1 Project Agnostic** — Phases 11-18 (shipped 2026-02-23)
+- ✅ **v1.2 Orchestration Hardening** — Phases 19-25 (shipped 2026-02-24)
+- ✅ **v1.3 Agent Memory** — Phases 26-38 (shipped 2026-02-24)
+- ✅ **v1.4 Operational Maturity** — Phases 39-44 (shipped 2026-02-25)
+- ✅ **v1.5 Config Consolidation** — Phases 45-53 (shipped 2026-02-25)
+- ✅ **v1.6 Agent Autonomy** — Phases 54-60 (shipped 2026-02-26)
+- ✅ **v2.0 Structural Intelligence** — Phases 61-67 (shipped 2026-03-04)
 
 ---
 
 <details>
-<summary>✅ v1.0–v1.6 (Phases 1-60) - SHIPPED</summary>
+<summary>✅ v1.0–v1.6 (Phases 1-60) — SHIPPED</summary>
 
 60 phases shipped across 6 milestones. See MILESTONES.md for full retrospective.
 
 </details>
 
+<details>
+<summary>✅ v2.0 Structural Intelligence (Phases 61-67) — SHIPPED 2026-03-04</summary>
+
+- [x] Phase 61: Topology Foundation (2/2 plans) — completed 2026-03-04
+- [x] Phase 62: Structure Proposal Engine (5/5 plans) — completed 2026-03-03
+- [x] Phase 63: Correction System and Approval Gate (3/3 plans) — completed 2026-03-03
+- [x] Phase 64: Structural Memory (2/2 plans) — completed 2026-03-04
+- [x] Phase 65: Topology Observability (3/3 plans) — completed 2026-03-04
+- [x] Phase 66: Wire Rubric Scores to Confidence Chart (1/1 plan) — completed 2026-03-04
+- [x] Phase 67: Integration Cleanup (1/1 plan) — completed 2026-03-04
+
+</details>
+
 ---
-
-### 🚧 v2.0 Structural Intelligence (In Progress)
-
-**Milestone Goal:** OpenClaw proposes its own orchestration structure — pre-execution structural intelligence with inspectable reasoning and learning from corrections.
-
-## Phases
-
-- [x] **Phase 61: Topology Foundation** - Topology data model, serialization, diff engine, and isolated file storage (completed 2026-03-04)
-- [x] **Phase 62: Structure Proposal Engine** - Multi-candidate proposals (Lean/Balanced/Robust) with rubric scoring and constraint linting (completed 2026-03-03)
-- [x] **Phase 63: Correction System and Approval Gate** - Soft re-proposal, hard direct edit, async diff analysis, and execution gate (completed 2026-03-03)
-- [x] **Phase 64: Structural Memory** - Correction storage, preference profiling, isolation from L3 SOUL injection (completed 2026-03-04)
-- [x] **Phase 65: Topology Observability** - Dashboard topology graph, proposal comparison, correction history, confidence timeline (completed 2026-03-04)
-- [x] **Phase 66: Wire Rubric Scores to Confidence Chart** - Close audit gap: pipe rubric scores through approve_topology() to ConfidenceChart annotations (completed 2026-03-04)
-- [x] **Phase 67: Integration Cleanup** - Fix incomplete __all__ exports and broken route_directive import (gap closure from audit) (completed 2026-03-04)
-
-## Phase Details
-
-### Phase 61: Topology Foundation
-**Goal**: The system can represent, serialize, version, diff, and classify swarm topologies as explicit data objects stored in their own isolated files
-**Depends on**: Phase 60 (v1.6 Autonomy)
-**Requirements**: TOPO-01, TOPO-02, TOPO-03, TOPO-04, TOPO-05, TOPO-06
-**Success Criteria** (what must be TRUE):
-  1. User can inspect a topology as a structured JSON object showing agent nodes, delegation edges, archetype classification, and role count
-  2. A topology round-trips through serialize/deserialize (JSON → dataclass → JSON) with zero data loss, verified by equality check
-  3. System generates a human-readable structural diff between any two topology versions showing exactly which nodes and edges were added, removed, or modified
-  4. System classifies a topology as Lean, Balanced, or Robust based on role count, hierarchy depth, and coordination pattern — consistently for the same topology
-  5. Topology data files live under a dedicated `topology/` directory and are never read or written by L3 container flock operations
-**Plans**: 2 plans
-Plans:
-- [ ] 61-01-PLAN.md — Verify data model, serialization, versioning, and file isolation (TOPO-01, TOPO-02, TOPO-03, TOPO-06)
-- [ ] 61-02-PLAN.md — Verify diff engine and archetype classifier (TOPO-04, TOPO-05)
-
-### Phase 62: Structure Proposal Engine
-**Goal**: Given an outcome description, the system generates 2-3 scored, justified topology proposals across Lean/Balanced/Robust archetypes using constraint-validated LLM output
-**Depends on**: Phase 61
-**Requirements**: PROP-01, PROP-02, PROP-03, PROP-04, PROP-05, PROP-06
-**Success Criteria** (what must be TRUE):
-  1. User submits an outcome description and receives exactly 2-3 topology proposals, one per archetype, each with named roles, hierarchy, and delegation boundaries
-  2. Each proposal displays a rubric score across all 7 dimensions (complexity, coordination overhead, risk containment, time-to-first-output, cost estimate, preference fit, overall confidence) with a written justification
-  3. Proposals that include roles not in the skill registry, or pool sizes exceeding project `max_concurrent`, are rejected by the constraint linter before they reach the user
-  4. Proposal confidence scores are shown comparatively so the user can see which candidate scores higher on each dimension relative to the others
-  5. Topology confidence threshold is configured under `topology.proposal_confidence_warning_threshold` — a separate key from the autonomy framework's `autonomy.confidence_threshold`
-**Plans**: 5 plans
-- [x] 62-01-PLAN.md — Topology data model, serialization, and file storage (Phase 61 prerequisite) (completed 2026-03-04)
-- [x] 62-02-PLAN.md — Topology diff engine and archetype classifier (Phase 61 prerequisite) (completed 2026-03-03)
-- [x] 62-03-PLAN.md — Proposal data models, rubric scoring, and constraint linter (completed 2026-03-03)
-- [x] 62-04-PLAN.md — LLM proposal generation pipeline with hybrid input (completed 2026-03-03)
-- [x] 62-05-PLAN.md — CLI entry point, ASCII renderer, and config integration (completed 2026-03-03)
-
-### Phase 63: Correction System and Approval Gate
-**Goal**: Users can correct proposals through textual feedback or direct edits, with the system enforcing an approval gate before execution and learning from every correction event
-**Depends on**: Phase 62
-**Requirements**: CORR-01, CORR-02, CORR-03, CORR-04, CORR-05, CORR-06, CORR-07
-**Success Criteria** (what must be TRUE):
-  1. User can type feedback on a proposal and receive a revised proposal that visibly addresses the feedback, with a maximum of 3 re-proposals per feedback loop before the system surfaces the trade-off and stops cycling
-  2. User can directly edit a proposed topology (roles, hierarchy) and the edited version executes immediately without waiting for async diff analysis to complete
-  3. After any correction, the system stores a diff record showing the structural delta between the proposed and approved topology, timestamped and typed as soft or hard
-  4. When the system had high confidence in a proposal that the user overrode, the system surfaces a non-blocking informational note explaining its original reasoning — this note never blocks execution
-  5. No L3 container spawn occurs until the user has explicitly approved a topology version
-**Plans**: 3 plans
-Plans:
-- [ ] 63-01-PLAN.md — Correction models, approval logic, storage extensions, and tests
-- [ ] 63-02-PLAN.md — Interactive CLI session loop and openclaw-approve resume command
-- [ ] 63-03-PLAN.md — L1 router approval gate and config extensions
-
-### Phase 64: Structural Memory
-**Goal**: The system accumulates correction history, extracts structural preferences, and uses them to improve future proposals — while keeping topology data completely isolated from L3 agent SOUL context
-**Depends on**: Phase 63
-**Requirements**: SMEM-01, SMEM-02, SMEM-03, SMEM-04, SMEM-05, SMEM-06
-**Success Criteria** (what must be TRUE):
-  1. After a correction, the system stores the diff record with timestamp, project id, correction type (soft/hard), and project context — retrievable by project
-  2. Running a test L3 spawn after structural data has been written to memU shows zero topology, archetype, or rubric content in the L3 SOUL context (`/run/openclaw/soul.md`)
-  3. User can query per-project correction count and see whether the preference profile has reached the minimum data threshold for active influence
-  4. After sufficient corrections accumulate, the system surfaces an extracted pattern (e.g., "user flattens hierarchies for low-complexity tasks") visible in the structural memory report
-  5. Preference profiling applies decay (older corrections weighted less) and epsilon-greedy exploration (20% random archetype ordering) so the system does not lock into early archetype preferences
-**Plans**: 2 plans
-Plans:
-- [ ] 64-01-PLAN.md — Config extension, storage functions, MemoryProfiler, and PatternExtractor
-- [ ] 64-02-PLAN.md — L3 isolation, dynamic preference_fit scoring, approval recompute, CLI memory report
-
-### Phase 65: Topology Observability
-**Goal**: The dashboard surfaces proposed and approved topologies as interactive graphs, shows correction history with structural diffs, and displays confidence and proposal evolution over time
-**Depends on**: Phase 64 (Phase 63 for API route development)
-**Requirements**: TOBS-01, TOBS-02, TOBS-03, TOBS-04, TOBS-05, TOBS-06
-**Success Criteria** (what must be TRUE):
-  1. Dashboard topology page renders the currently proposed topology as an interactive DAG with nodes labeled by role and edges labeled by relationship type
-  2. Proposed and approved topologies appear side-by-side so the user can see what was suggested versus what was approved
-  3. Correction history panel lists all corrections for a project with the structural diff (added/removed/modified nodes and edges) for each correction event
-  4. Structural diff timeline shows how topology evolved chronologically across all proposals and corrections for a project in a single scrollable view
-  5. Confidence evolution chart shows how each archetype's overall confidence score changed across correction cycles for a project
-  6. Multi-proposal comparison view displays all 3 archetype candidates with their rubric scores, key differentiators, and archetype labels simultaneously
-**Plans**: 3 plans
-Plans:
-- [ ] 65-01-PLAN.md — TypeScript types, API routes, SWR hooks, sidebar nav, dependency install
-- [ ] 65-02-PLAN.md — React Flow graph visualization, dual panel, rubric bar, proposal comparison
-- [ ] 65-03-PLAN.md — Correction timeline, confidence chart, topology page assembly, visual verification
-
-### Phase 66: Wire Rubric Scores to Confidence Chart
-**Goal**: The confidence evolution chart renders actual rubric score data points from approved topology changelog entries
-**Depends on**: Phase 65, Phase 63
-**Requirements**: TOBS-05
-**Gap Closure**: Closes gaps from v2.0 audit — TOBS-05 partial, approve_topology() → ConfidenceChart integration, Confidence Evolution flow
-**Success Criteria** (what must be TRUE):
-  1. `approve_topology()` accepts optional rubric scores and writes them to `annotations['rubric_scores']` in changelog entries
-  2. CLI callers (`propose.py`, `approve.py`) pass per-archetype rubric scores at approval time
-  3. ConfidenceChart renders non-zero data points when changelog entries contain rubric_scores annotations
-**Plans**: 1 plan
-Plans:
-- [ ] 66-01-PLAN.md — Add rubric_scores to approve_topology() and wire all CLI call sites
-
-### Phase 67: Integration Cleanup
-**Goal**: Fix two low-severity integration gaps found by milestone audit — complete public API exports and remove broken import
-**Depends on**: Phase 66
-**Requirements**: PROP-02, PROP-03, CORR-02, CORR-07 (integration hardening)
-**Gap Closure**: Closes INT-01 and INT-02 from v2.0 audit
-**Success Criteria** (what must be TRUE):
-  1. `from openclaw.topology import score_proposal, render_diff_summary` works without falling back to submodule imports
-  2. `import agents.main.skills.route_directive` succeeds without ImportError
-**Plans**: 1 plan
-Plans:
-- [ ] 67-01-PLAN.md — Fix __all__ exports in topology/__init__.py and broken route_directive imports
 
 ## Progress
 
-**Execution Order:**
-Phases execute in numeric order: 61 → 62 → 63 → 64 → 65 → 66
-
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 61. Topology Foundation | 2/2 | Complete    | 2026-03-04 | - |
-| 62. Structure Proposal Engine | 5/5 | Complete    | 2026-03-03 | - |
-| 63. Correction System and Approval Gate | 3/3 | Complete    | 2026-03-03 | - |
-| 64. Structural Memory | 2/2 | Complete    | 2026-03-04 | - |
-| 65. Topology Observability | 3/3 | Complete    | 2026-03-04 | - |
-| 66. Wire Rubric Scores to Confidence Chart | 1/1 | Complete    | 2026-03-04 | - |
-| 67. Integration Cleanup | 1/1 | Complete    | 2026-03-04 | - |
+| 1-10 | v1.0 | 25/25 | Complete | 2026-02-23 |
+| 11-18 | v1.1 | 17/17 | Complete | 2026-02-23 |
+| 19-25 | v1.2 | 14/14 | Complete | 2026-02-24 |
+| 26-38 | v1.3 | 19/19 | Complete | 2026-02-24 |
+| 39-44 | v1.4 | 16/16 | Complete | 2026-02-25 |
+| 45-53 | v1.5 | 22/22 | Complete | 2026-02-25 |
+| 54-60 | v1.6 | 14/14 | Complete | 2026-02-26 |
+| 61-67 | v2.0 | 17/17 | Complete | 2026-03-04 |
 
 ---
-*Roadmap created: 2026-03-03*
-*v2.0 phases added: 2026-03-03 — phases 61-65 covering 31 requirements*
+*Roadmap created: 2026-02-17*
+*Last updated: 2026-03-04 — v2.0 Structural Intelligence shipped*

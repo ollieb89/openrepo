@@ -2,35 +2,11 @@
 
 ## What This Is
 
-A cognitive infrastructure layer for autonomous multi-agent systems. OpenClaw manages not just agent execution, but the organizational structure of agent swarms — proposing, scoring, and evolving the topology of how agents collaborate. Built on a battle-tested 3-tier hierarchy (v1.0-v1.6) with Docker isolation, memory, autonomy, and observability.
+A cognitive infrastructure layer for autonomous multi-agent systems. OpenClaw manages not just agent execution, but the organizational structure of agent swarms — proposing, scoring, and evolving the topology of how agents collaborate. Built on a battle-tested 3-tier hierarchy (v1.0-v1.6) with Docker isolation, memory, autonomy, and observability. v2.0 added pre-execution structural intelligence: the system now designs its own orchestration before executing it.
 
 ## Core Value
 
 The system designs and refactors its own orchestration — proposing multi-agent structures, learning from human corrections, and improving structural reasoning over time.
-
-## Current Milestone: v2.0 Structural Intelligence
-
-**Goal:** OpenClaw proposes its own orchestration structure — pre-execution structural intelligence with inspectable reasoning and learning from corrections.
-
-**Target features:**
-- Topology as Data — swarm structures as explicit, serializable, versionable, diffable graph objects
-- Structure Proposal Engine — multi-proposal (Lean/Balanced/Robust archetypes) with scored rubric and justification
-- Dual Correction System — soft feedback (re-propose) + hard direct edit (execute, diff-analyze asynchronously)
-- Structural Memory — topology diffs, correction rationales, pattern extraction, preference profiling
-- Topology Observability — proposed/approved structures, correction history, structural diff timeline, confidence evolution
-
-**Architectural decisions:**
-- Multi-proposal by default (2-3 scored candidates, not single-best)
-- Fixed archetypes: Lean (minimal roles, fast), Balanced (explicit coordination), Robust (specialized, safe)
-- Common scoring rubric: complexity, coordination overhead, risk containment, time-to-first-output, cost estimate, preference fit, overall confidence
-- Correction as training: feedback updates heuristics, direct edits analyzed as diffs, both feed structural memory
-- Post-edit behavior: execute immediately, analyze diff asynchronously, surface non-blocking notes when high-confidence original contradicts edit
-
-**Explicitly NOT in scope (v2.1+):**
-- Mid-flight topology adaptation
-- Auto-scaling during execution
-- Self-refactoring execution graphs
-- Dynamic role spawning at runtime
 
 ## Requirements
 
@@ -43,14 +19,15 @@ The system designs and refactors its own orchestration — proposing multi-agent
 - v1.4: Graceful shutdown, pool recovery, memory health monitoring, L1 SOUL suggestions, delta-cursor retrieval
 - v1.5: Config consolidation, schema validation, migration CLI, env var precedence, Docker health checks, Notion sync
 - v1.6: Autonomy framework, self-directed decomposition, confidence-based escalation, context-aware tools, progress self-monitoring
+- ✓ Topology as data model — v2.0 (graph objects with JSON serialization, versioning, diffing, archetype classification)
+- ✓ Structure proposal engine — v2.0 (LLM-powered multi-candidate proposals with 7-dimension rubric scoring, constraint linting)
+- ✓ Dual correction system — v2.0 (soft feedback + hard direct edit with approval gate enforcement)
+- ✓ Structural memory — v2.0 (decay-weighted preference profiling, epsilon-greedy exploration, LLM pattern extraction, L3 isolation)
+- ✓ Topology observability — v2.0 (React Flow DAG, dual-panel comparison, correction timeline, confidence evolution chart)
 
 ### Active
 
-- [ ] Topology as data model
-- [ ] Structure proposal engine
-- [ ] Dual correction system
-- [ ] Structural memory
-- [ ] Topology observability
+(None — next milestone not yet defined. Use `/gsd:new-milestone` to begin.)
 
 ### Out of Scope
 
@@ -63,10 +40,10 @@ The system designs and refactors its own orchestration — proposing multi-agent
 
 ## Context
 
-- 60 phases shipped across 6 milestones (v1.0-v1.6)
-- ~340K LOC across Python + TypeScript
-- Existing infrastructure: Gateway, Docker containers, memU memory, autonomy framework, dashboard
-- The system currently executes structure designed by humans; this milestone makes it propose structure
+- 67 phases shipped across 8 milestones (v1.0-v2.0)
+- ~365K LOC across Python + TypeScript
+- Existing infrastructure: Gateway, Docker containers, memU memory, autonomy framework, topology engine, dashboard
+- The system now proposes its own orchestration structure before execution, learning from human corrections
 - Target users: AI-native product teams, internal platform teams, multi-agent researchers
 
 ## Constraints
@@ -80,11 +57,14 @@ The system designs and refactors its own orchestration — proposing multi-agent
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Multi-proposal over single-best | Exposes reasoning surface, enables splice corrections, richer learning signal | -- Pending |
-| Three fixed archetypes (Lean/Balanced/Robust) | Keeps proposals interpretable, avoids minor variations | -- Pending |
-| Common scoring rubric (7 dimensions) | Enables comparative confidence, structured observability, diffable preferences | -- Pending |
-| Execute-then-analyze on direct edit | Respects user authority, non-blocking, learns asynchronously | -- Pending |
-| Pre-execution only (no mid-flight) | Scopes milestone cleanly; adaptation is v2.1+ | -- Pending |
+| Multi-proposal over single-best | Exposes reasoning surface, enables splice corrections, richer learning signal | ✓ Good — users compare archetypes effectively |
+| Three fixed archetypes (Lean/Balanced/Robust) | Keeps proposals interpretable, avoids minor variations | ✓ Good — clear differentiation in practice |
+| Common scoring rubric (7 dimensions) | Enables comparative confidence, structured observability, diffable preferences | ✓ Good — rubric scores flow to dashboard charts |
+| Execute-then-analyze on direct edit | Respects user authority, non-blocking, learns asynchronously | ✓ Good — no latency on hard corrections |
+| Pre-execution only (no mid-flight) | Scopes milestone cleanly; adaptation is v2.1+ | ✓ Good — clean boundary, deferred complexity |
+| Topology data in separate files | Avoids fcntl contention with L3 workspace-state.json | ✓ Good — no lock conflicts observed |
+| Dual TopologyProposal classes | Separate proposer vs presentation concerns; bridged by conversion shim | ⚠️ Revisit — tech debt, consolidate in future |
+| Dataclasses over Pydantic | Consistent with AgentSpec pattern in existing codebase | ✓ Good — lightweight, no dependency added |
 
 ---
-*Last updated: 2026-03-03 after v2.0 milestone initialization*
+*Last updated: 2026-03-04 after v2.0 milestone*
