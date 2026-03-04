@@ -502,6 +502,11 @@ def main() -> int:
         description="OpenClaw Project Manager",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
+    parser.add_argument(
+        "--bootstrap",
+        action="store_true",
+        help="Run without gateway (setup/diagnostic mode). Sets OPENCLAW_BOOTSTRAP=1.",
+    )
 
     subparsers = parser.add_subparsers(dest="command", help="Subcommand to run")
 
@@ -568,6 +573,11 @@ def main() -> int:
     )
 
     args = parser.parse_args()
+
+    # Apply bootstrap flag before any command dispatch
+    if args.bootstrap:
+        import os as _os
+        _os.environ["OPENCLAW_BOOTSTRAP"] = "1"
 
     if not args.command:
         parser.print_help()

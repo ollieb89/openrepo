@@ -155,6 +155,7 @@ OPENCLAW_JSON_SCHEMA: dict = {
             },
         },
         "plugins": {"type": "object"},
+        "skills":  {"type": "object"},
         "topology": {
             "type": "object",
             "properties": {
@@ -404,3 +405,45 @@ async def gateway_healthy(base_url: str = "http://localhost:18789") -> bool:
             return r.status_code == 200
     except httpx.HTTPError:
         return False
+
+
+def is_bootstrap_mode() -> bool:
+    """Return True if running in bootstrap mode (no gateway required).
+
+    Bootstrap mode is activated via OPENCLAW_BOOTSTRAP=1 env var.
+    CLI --bootstrap flag is handled by argparse and sets this env var.
+    """
+    return os.environ.get("OPENCLAW_BOOTSTRAP", "0") == "1"
+
+
+async def _ensure_gateway_async() -> None:
+    """Check gateway health and exit if unavailable (non-bootstrap)."""
+    if is_bootstrap_mode():
+        import logging
+        logging.getLogger("openclaw.config").info("Running in bootstrap mode (no gateway)")
+        return
+
+    gw = get_gateway_config()
+    base_url = f"http://localhost:{gw.get('port', 18789)}"
+    healthy = await gateway_healthy(base_url)
+    if not healthy:
+        import sys
+        print(
+            f"FATAL: Gateway not responding at {base_url}. "
+            "Start it with: openclaw gateway start",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+
+def ensure_gateway() -> None:
+    """Synchronous wrapper for gateway health check at CLI startup.
+
+    Call this at the top of long-running CLI commands (monitor tail,
+    tail --events) that require a gateway. Setup commands (project init,
+    project list, monitor status) skip this check.
+
+    In bootstrap mode (OPENCLAW_BOOTSTRAP=1), the check is skipped entirely.
+    """
+    import asyncio
+    asyncio.run(_ensure_gateway_async())

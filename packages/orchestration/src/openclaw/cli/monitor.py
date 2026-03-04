@@ -27,6 +27,8 @@ from openclaw.config import (
     POLL_INTERVAL,
     POLL_INTERVAL_ACTIVE,
     POLL_INTERVAL_IDLE,
+    ensure_gateway,
+    is_bootstrap_mode,
     get_project_root,
     get_state_path,
 )
@@ -826,6 +828,11 @@ def main():
         description='OpenClaw L3 Monitor - Real-time visibility into L3 specialist activity',
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
+    parser.add_argument(
+        '--bootstrap',
+        action='store_true',
+        help='Run without gateway (setup/diagnostic mode). Sets OPENCLAW_BOOTSTRAP=1.',
+    )
 
     subparsers = parser.add_subparsers(dest='command', help='Command to run')
 
@@ -899,6 +906,11 @@ def main():
 
     args = parser.parse_args()
 
+    # Apply bootstrap flag before any command dispatch
+    if args.bootstrap:
+        import os as _os
+        _os.environ["OPENCLAW_BOOTSTRAP"] = "1"
+
     if not args.command:
         parser.print_help()
         sys.exit(1)
@@ -909,11 +921,16 @@ def main():
 
     # Dispatch to appropriate function
     if args.command == 'tail':
-        tail_state(
-            state_file_path=state_file,
-            interval=args.interval,
-            project_filter=args.project,
-        )
+        if getattr(args, 'events', False):
+            # Event streaming requires the gateway bridge — check health at startup
+            ensure_gateway()
+            run_tail_events(project_id=args.project)
+        else:
+            tail_state(
+                state_file_path=state_file,
+                interval=args.interval,
+                project_filter=args.project,
+            )
     elif args.command == 'status':
         show_status(
             state_file_path=state_file,
