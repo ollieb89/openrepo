@@ -117,9 +117,9 @@ Plans:
   2. `grep -r "execFileSync" skills/router/` returns no results
   3. Running `openclaw monitor status` with `OPENCLAW_BOOTSTRAP=1` succeeds even when the gateway process is not running
   4. Starting the orchestration layer without bootstrap mode and without a gateway running produces a fatal startup error with a human-readable message
-**Plans**: 1 plan
+**Plans:** 1 plan
 Plans:
-- [ ] 69-01-PLAN.md — Create openclaw-base image and rebase L3 Dockerfile (DOCK-01)
+- [ ] 72-01-PLAN.md — Remove execFileSync fallback, add bootstrap mode and gateway health check (GATE-01, GATE-02, GATE-03)
 
 ### Phase 73: Unified Agent Registry
 **Goal**: Agent configuration has one source of truth — per-agent config.json files — with auto-discovery at startup and drift warnings when central config diverges
@@ -202,7 +202,7 @@ Plans:
 | 69. Docker Base Image | 1/1 | Complete    | 2026-03-04 | - |
 | 70. Event Bridge Activation | v2.1 | Complete    | 2026-03-04 | 2026-03-04 |
 | 71. L3 Output Streaming | 2/2 | Complete    | 2026-03-04 | - |
-| 72. Gateway-Only Dispatch | v2.1 | 0/TBD | Not started | - |
+| 72. Gateway-Only Dispatch | v2.1 | 0/1 | Planned | - |
 | 73. Unified Agent Registry | v2.1 | 0/TBD | Not started | - |
 | 74. Dashboard Streaming UI | v2.1 | 0/TBD | Not started | - |
 | 75. Unified Observability | v2.1 | 0/TBD | Not started | - |
@@ -211,4 +211,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-02-17*
-*Last updated: 2026-03-04 — Phase 71 planned (2 plans, EVNT-03/EVNT-04)*
+*Last updated: 2026-03-04 — Phase 72 planned (1 plan, GATE-01/GATE-02/GATE-03)*
