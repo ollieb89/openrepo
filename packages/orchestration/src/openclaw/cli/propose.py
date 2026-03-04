@@ -13,16 +13,23 @@ When running interactively (TTY), enters a correction session loop:
   approve N -> approve the selected topology (saves to storage)
   quit      -> save pending proposals and exit
 
+Subcommands:
+  memory          -> show structural memory report for active project
+  memory --detail -> show full archetype affinity and pattern breakdown
+
 Usage:
     openclaw-propose "build a chat app"
     openclaw-propose --json "deploy ML pipeline"
     openclaw-propose --fresh --project myproj "refactor auth service"
     openclaw-propose --edit "build something"
+    openclaw-propose memory
+    openclaw-propose memory --detail
     echo "build a chat app" | openclaw-propose
 """
 
 import argparse
 import json
+import random
 import sys
 from typing import Optional
 
@@ -357,11 +364,113 @@ def _run_session(
 
 
 # ---------------------------------------------------------------------------
+# Memory report subcommand
+# ---------------------------------------------------------------------------
+
+def _run_memory_report(args: list) -> int:
+    """Run the structural memory report for the active project.
+
+    Usage:
+        openclaw-propose memory [--project ID] [--detail]
+
+    Shows correction count, threshold status, archetype affinity, and top patterns.
+    Use --detail for full archetype affinity and pattern confidence breakdown.
+
+    Returns:
+        0 on success, 1 on error.
+    """
+    detail = "--detail" in args
+
+    # Parse --project if present
+    project_id = None
+    for i, arg in enumerate(args):
+        if arg == "--project" and i + 1 < len(args):
+            project_id = args[i + 1]
+            break
+
+    if not project_id:
+        project_id = get_active_project_id()
+    if not project_id:
+        print(
+            f"{Colors.RED}Error: No project ID. Use --project or set active_project{Colors.RESET}",
+            file=sys.stderr,
+        )
+        return 1
+
+    from openclaw.topology.memory import MemoryProfiler, PatternExtractor
+    from openclaw.config import get_topology_config
+
+    topo_config = get_topology_config()
+    profiler = MemoryProfiler(
+        project_id,
+        decay_lambda=topo_config["decay_lambda"],
+        exploration_rate=topo_config["exploration_rate"],
+        min_threshold=topo_config["pattern_extraction_threshold"],
+    )
+    report = profiler.get_report(detail=detail)
+
+    # Compact output
+    print(f"\n{Colors.BOLD}Structural Memory: {project_id}{Colors.RESET}")
+    print(
+        f"  Corrections: {report['correction_count']} total"
+        f" ({report.get('soft_correction_count', 0)} soft,"
+        f" {report.get('hard_correction_count', 0)} hard)"
+    )
+    status = report.get("threshold_status", "below_threshold")
+    status_color = Colors.GREEN if status == "active" else Colors.YELLOW
+    print(f"  Profile: {status_color}{status}{Colors.RESET}")
+
+    # Archetype affinity (only shown when profile is active)
+    affinities = report.get("archetype_affinity", {})
+    if affinities and status == "active":
+        print(f"\n  {Colors.BOLD}Archetype Affinity:{Colors.RESET}")
+        for arch in ("lean", "balanced", "robust"):
+            val = affinities.get(arch, 5.0)
+            bar = "#" * round(val)
+            print(f"    {arch:>10}: {val:4.1f} {bar}")
+
+    # Top patterns
+    patterns = report.get("top_patterns", report.get("patterns", []))
+    if patterns:
+        print(f"\n  {Colors.BOLD}Top Patterns:{Colors.RESET}")
+        for p in patterns[:3]:
+            conf = p.get("confidence", 0)
+            print(f"    - {p.get('pattern', '?')} (confidence: {conf:.2f})")
+    elif status == "below_threshold":
+        threshold = topo_config.get("pattern_extraction_threshold", 5)
+        remaining = threshold - report["correction_count"]
+        print(
+            f"\n  {Colors.YELLOW}Not enough data yet."
+            f" {remaining} more correction(s) needed for pattern extraction.{Colors.RESET}"
+        )
+
+    # Detail mode: full breakdown
+    if detail and status == "active":
+        all_patterns = report.get("all_patterns", patterns)
+        if all_patterns:
+            print(f"\n  {Colors.BOLD}Full Pattern List:{Colors.RESET}")
+            for p in all_patterns:
+                print(f"    - {p.get('pattern', '?')}")
+                print(
+                    f"      confidence: {p.get('confidence', 0):.2f}"
+                    f"  bias: {p.get('archetype_bias', 'none')}"
+                    f"  sources: {len(p.get('source_correction_ids', []))}"
+                )
+
+    print()
+    return 0
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
 def main() -> int:
     """CLI entrypoint for the OpenClaw Structure Proposal Engine."""
+    # Quick subcommand detection — memory report bypasses proposal generation
+    if len(sys.argv) > 1 and sys.argv[1] == "memory":
+        return _run_memory_report(sys.argv[2:])
+
     parser = argparse.ArgumentParser(
         description="OpenClaw Structure Proposal Engine — generates scored topology proposals"
     )
@@ -496,8 +605,13 @@ def main() -> int:
     proposals = _to_pm_proposals(proposer_proposals)
 
     # --- Score each proposal ---
+    # Draw a single epsilon-greedy explore flag at session level (not per proposal)
+    explore = random.random() < topo_config.get("exploration_rate", 0.20)
     for p in proposals:
-        p.rubric_score = score_proposal(p.topology, weights)
+        p.rubric_score = score_proposal(
+            p.topology, weights,
+            project_id=project_id, archetype=p.archetype, explore=explore,
+        )
 
     # --- Find key differentiators ---
     scores = [p.rubric_score for p in proposals if p.rubric_score]

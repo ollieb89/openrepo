@@ -91,6 +91,15 @@ def approve_topology(
     if pushback_note:
         annotations["pushback_note"] = pushback_note
 
+    # Enrich annotations with approved archetype (Phase 64)
+    # Used by MemoryProfiler.compute_profile() to build affinity scores
+    try:
+        from openclaw.topology.classifier import ArchetypeClassifier
+        result = ArchetypeClassifier().classify(approved_graph)
+        annotations["approved_archetype"] = result.archetype
+    except Exception:
+        pass  # Non-critical enrichment
+
     entry = {
         "timestamp": timestamp,
         "correction_type": correction_type,
@@ -106,6 +115,21 @@ def approve_topology(
 
     # Clean up pending proposals (approval completed)
     delete_pending_proposals(project_id)
+
+    # Recompute structural memory profile (Phase 64 — keeps preference_fit current)
+    try:
+        from openclaw.topology.memory import MemoryProfiler
+        from openclaw.config import get_topology_config
+        topo_config = get_topology_config()
+        profiler = MemoryProfiler(
+            project_id,
+            decay_lambda=topo_config["decay_lambda"],
+            exploration_rate=topo_config["exploration_rate"],
+            min_threshold=topo_config["pattern_extraction_threshold"],
+        )
+        profiler.compute_profile()
+    except Exception as exc:
+        logger.warning("Memory profile recompute failed (non-blocking): %s", exc)
 
     logger.info(
         "Topology approved for project=%s (correction_type=%s)",

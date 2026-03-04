@@ -49,7 +49,14 @@ class RubricScorer:
     full dict to override; missing keys fall back to DEFAULT_WEIGHTS.
     """
 
-    def score_proposal(self, topology: TopologyGraph, weights: dict) -> RubricScore:
+    def score_proposal(
+        self,
+        topology: TopologyGraph,
+        weights: dict,
+        project_id: str = None,
+        archetype: str = None,
+        explore: bool = None,
+    ) -> RubricScore:
         """
         Score a topology graph.
 
@@ -57,6 +64,10 @@ class RubricScorer:
             topology: The TopologyGraph to score.
             weights: Dict of dimension -> float weights. Empty dict uses DEFAULT_WEIGHTS.
                      Missing keys fall back to DEFAULT_WEIGHTS.
+            project_id: Optional project ID for dynamic preference_fit computation (Phase 64).
+            archetype: Optional archetype name for dynamic preference_fit lookup.
+            explore: Optional epsilon-greedy flag. When True, preference_fit is neutral (5).
+                     Determined by caller at session level (not per-call).
 
         Returns:
             RubricScore with all 7 fields populated (key_differentiators is []).
@@ -97,8 +108,23 @@ class RubricScorer:
         # cost_estimate: fewer nodes = higher score (proxy for token/resource cost)
         cost_estimate = _clamp(10 - node_count * 2)
 
-        # preference_fit: always 5 pre-Phase 64
-        preference_fit = 5
+        # preference_fit: dynamic when project_id and archetype are provided (Phase 64)
+        # Falls back to neutral 5 when context is insufficient (backward compatible)
+        if project_id and archetype:
+            from openclaw.topology.memory import MemoryProfiler
+            from openclaw.config import get_topology_config
+            topo_config = get_topology_config()
+            profiler = MemoryProfiler(
+                project_id,
+                decay_lambda=topo_config["decay_lambda"],
+                exploration_rate=topo_config["exploration_rate"],
+                min_threshold=topo_config["pattern_extraction_threshold"],
+            )
+            preference_fit = profiler.get_preference_fit(
+                archetype, explore=(explore if explore is not None else False)
+            )
+        else:
+            preference_fit = 5  # Neutral when no context available
 
         # overall_confidence: weighted average of all 6 dimensions
         dim_scores = {
@@ -157,7 +183,13 @@ class RubricScorer:
         return max_depth
 
 
-def score_proposal(topology: TopologyGraph, weights: dict) -> RubricScore:
+def score_proposal(
+    topology: TopologyGraph,
+    weights: dict,
+    project_id: str = None,
+    archetype: str = None,
+    explore: bool = None,
+) -> RubricScore:
     """Standalone wrapper around RubricScorer.score_proposal().
 
     Convenience function for use in CLI and other non-class contexts.
@@ -165,11 +197,16 @@ def score_proposal(topology: TopologyGraph, weights: dict) -> RubricScore:
     Args:
         topology: The TopologyGraph to score.
         weights: Dict of dimension -> float weights. Empty dict uses DEFAULT_WEIGHTS.
+        project_id: Optional project ID for dynamic preference_fit (Phase 64).
+        archetype: Optional archetype name for preference_fit lookup.
+        explore: Optional epsilon-greedy flag passed through to MemoryProfiler.
 
     Returns:
         RubricScore with all 7 fields populated.
     """
-    return RubricScorer().score_proposal(topology, weights)
+    return RubricScorer().score_proposal(
+        topology, weights, project_id=project_id, archetype=archetype, explore=explore
+    )
 
 
 def find_key_differentiators(scores: List[RubricScore]) -> List[str]:
