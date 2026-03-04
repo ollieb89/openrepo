@@ -110,12 +110,12 @@ None — plan executed exactly as written.
 ## Self-Check: PASSED
 
 Files confirmed present:
-- `/home/ollie/.openclaw/workspace/occc/src/app/api/memory/health-scan/route.ts` — FOUND
-- `/home/ollie/.openclaw/workspace/occc/src/app/api/memory/[id]/route.ts` — FOUND (contains PUT)
-- `/home/ollie/.openclaw/workspace/occc/src/components/memory/HealthTab.tsx` — FOUND
-- `/home/ollie/.openclaw/workspace/occc/src/components/memory/MemoryPanel.tsx` — FOUND (contains healthFlags)
-- `/home/ollie/.openclaw/workspace/occc/src/components/memory/MemoryRow.tsx` — FOUND (contains flag_type)
-- `/home/ollie/.openclaw/workspace/occc/src/components/memory/MemoryTable.tsx` — FOUND
+- `~/.openclaw/workspace/occc/src/app/api/memory/health-scan/route.ts` — FOUND
+- `~/.openclaw/workspace/occc/src/app/api/memory/[id]/route.ts` — FOUND (contains PUT)
+- `~/.openclaw/workspace/occc/src/components/memory/HealthTab.tsx` — FOUND
+- `~/.openclaw/workspace/occc/src/components/memory/MemoryPanel.tsx` — FOUND (contains healthFlags)
+- `~/.openclaw/workspace/occc/src/components/memory/MemoryRow.tsx` — FOUND (contains flag_type)
+- `~/.openclaw/workspace/occc/src/components/memory/MemoryTable.tsx` — FOUND
 
 Commits confirmed present:
 - `77954d9` — FOUND

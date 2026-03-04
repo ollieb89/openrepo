@@ -288,7 +288,7 @@ if (parsed.agents) {
 
 ### DSH-02: Corrected `onmessage` handler in `useSwarmState.ts`
 
-Current broken handler (lines 56-68 in `/home/ollie/.openclaw/workspace/occc/src/hooks/useSwarmState.ts`):
+Current broken handler (lines 56-68 in `~/.openclaw/workspace/occc/src/hooks/useSwarmState.ts`):
 ```typescript
 eventSource.onmessage = (event) => {
   if (!isMountedRef.current) return;
@@ -388,20 +388,20 @@ All other requirement statuses in the table should also be updated from "Pending
 
 ```bash
 # DSH-02: Verify SSE push path
-cd /home/ollie/.openclaw/workspace/occc && bun run dev &
+cd ~/.openclaw/workspace/occc && bun run dev &
 sleep 3
 curl -N http://localhost:6987/api/swarm/stream
 # Expected: first line is "data: {"agents":[...],"metrics":{...},...}"
 # NOT just ": keepalive"
 
 # HIE-02: Verify L2 config exists and is valid JSON
-cat /home/ollie/.openclaw/agents/pumplai_pm/agent/config.json | python3 -m json.tool
+cat ~/.openclaw/agents/pumplai_pm/agent/config.json | python3 -m json.tool
 # Expected: pretty-printed JSON with level:2, reports_to, delegates_to, skill_registry
 
 # COM-02: Verify status updated in both files
-grep -n "COM-02" /home/ollie/.openclaw/.planning/REQUIREMENTS.md
+grep -n "COM-02" ~/.openclaw/.planning/REQUIREMENTS.md
 # Expected: line with "Satisfied" and deviation annotation
-grep "requirements:" /home/ollie/.openclaw/.planning/v1.0-MILESTONE-AUDIT.md | head -2
+grep "requirements:" ~/.openclaw/.planning/v1.0-MILESTONE-AUDIT.md | head -2
 # Expected: 16/16
 ```
 
@@ -445,13 +445,13 @@ This phase involves no third-party library choices. All patterns are internal to
 
 ### Primary (HIGH confidence)
 
-- `/home/ollie/.openclaw/workspace/occc/src/hooks/useSwarmState.ts` — Read directly. Current broken pattern identified at line 61 (`if (data.updated)`). Full hook structure understood.
-- `/home/ollie/.openclaw/workspace/occc/src/app/api/swarm/stream/route.ts` — Read directly. Server emits `getSwarmState()` result as `data: ${JSON.stringify(initialState)}` — payload has `agents`, `metrics`, `state`, `lastUpdated`.
-- `/home/ollie/.openclaw/workspace/occc/src/app/api/swarm/route.ts` — Read directly. `getSwarmState()` return type confirmed as `{agents: AgentNode[], metrics: SwarmMetrics, state: JarvisState, lastUpdated: string}`.
-- `/home/ollie/.openclaw/agents/clawdia_prime/agent/config.json` — Read directly. L1 schema reference.
-- `/home/ollie/.openclaw/agents/l3_specialist/config.json` — Read directly. L3 schema reference.
-- `/home/ollie/.openclaw/.planning/v1.0-MILESTONE-AUDIT.md` — Read directly. Exact gap descriptions and evidence.
-- `/home/ollie/.openclaw/.planning/phases/07-phase4-verification/07-03-SUMMARY.md` — Read directly. Confirms server-side SSE fix was applied in Phase 7.
+- `~/.openclaw/workspace/occc/src/hooks/useSwarmState.ts` — Read directly. Current broken pattern identified at line 61 (`if (data.updated)`). Full hook structure understood.
+- `~/.openclaw/workspace/occc/src/app/api/swarm/stream/route.ts` — Read directly. Server emits `getSwarmState()` result as `data: ${JSON.stringify(initialState)}` — payload has `agents`, `metrics`, `state`, `lastUpdated`.
+- `~/.openclaw/workspace/occc/src/app/api/swarm/route.ts` — Read directly. `getSwarmState()` return type confirmed as `{agents: AgentNode[], metrics: SwarmMetrics, state: JarvisState, lastUpdated: string}`.
+- `~/.openclaw/agents/clawdia_prime/agent/config.json` — Read directly. L1 schema reference.
+- `~/.openclaw/agents/l3_specialist/config.json` — Read directly. L3 schema reference.
+- `~/.openclaw/.planning/v1.0-MILESTONE-AUDIT.md` — Read directly. Exact gap descriptions and evidence.
+- `~/.openclaw/.planning/phases/07-phase4-verification/07-03-SUMMARY.md` — Read directly. Confirms server-side SSE fix was applied in Phase 7.
 
 ### Secondary (MEDIUM confidence)
 

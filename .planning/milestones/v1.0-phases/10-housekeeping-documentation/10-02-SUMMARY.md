@@ -23,7 +23,7 @@
 **Commit:** `0802a09` — `fix(10): correct pumplai_pm workspace path in SOUL.md`
 
 - Modified `agents/pumplai_pm/agent/SOUL.md` (line 6)
-- Changed: `/home/ollie/Development/Projects/pumplai` → `/home/ollie/.openclaw/workspace`
+- Changed: `~/Development/Projects/pumplai` → `~/.openclaw/workspace`
 - Audited other agent configs for stale paths — all clean
 
 ### Task 3: Add snapshot.py exports to orchestration/__init__.py

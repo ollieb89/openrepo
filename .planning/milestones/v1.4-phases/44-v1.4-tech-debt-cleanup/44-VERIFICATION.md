@@ -69,7 +69,7 @@ No TODO/FIXME/placeholder/empty-return anti-patterns detected in the four modifi
 
 #### 1. Makefile guard — bun not started
 
-**Test:** Open a fresh terminal, `cd /home/ollie/.openclaw`, run `unset OPENCLAW_ROOT && make dashboard`
+**Test:** Open a fresh terminal, `cd ~/.openclaw`, run `unset OPENCLAW_ROOT && make dashboard`
 **Expected:** ERROR message printed, make exits non-zero, bun dev server does NOT start (no port 6987 activity)
 **Why human:** The automated check confirmed the ERROR text and non-zero exit, but cannot confirm bun was never invoked since the exit happens before the bun line. Human observation confirms the full guard behaviour.
 
@@ -96,7 +96,7 @@ Makefile:25  cd packages/dashboard && bun install && bun run dev
 Live test (unset OPENCLAW_ROOT):
 ```
 ERROR: OPENCLAW_ROOT is not set. The dashboard requires this to locate suggest.py and soul-suggestions.json.
-  Run: export OPENCLAW_ROOT=/home/ollie/.openclaw
+  Run: export OPENCLAW_ROOT=~/.openclaw
 make: *** [Makefile:20: dashboard] Error 1
 ```
 

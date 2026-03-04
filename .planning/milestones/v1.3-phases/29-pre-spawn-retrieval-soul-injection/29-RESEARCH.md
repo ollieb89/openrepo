@@ -590,11 +590,11 @@ else:
 
 ### Primary (HIGH confidence)
 
-- `/home/ollie/.openclaw/skills/spawn_specialist/spawn.py` — full spawn_l3_specialist() function, volumes dict, environment dict, container_config structure
-- `/home/ollie/.openclaw/orchestration/memory_client.py` — retrieve() payload format, where clause, TIMEOUT_RETRIEVE constant, response shape handling
-- `/home/ollie/.openclaw/orchestration/soul_renderer.py` — render_soul() return type (str), L2-specific variable substitution, output format
-- `/home/ollie/.openclaw/agents/l3_specialist/agent/SOUL.md` — actual L3 SOUL content (no `$` template variables, can be read directly)
-- `/home/ollie/.openclaw/agents/_templates/soul-default.md` — L2 SOUL template (confirmed: L2-specific, wrong target for L3 injection)
+- `~/.openclaw/skills/spawn_specialist/spawn.py` — full spawn_l3_specialist() function, volumes dict, environment dict, container_config structure
+- `~/.openclaw/orchestration/memory_client.py` — retrieve() payload format, where clause, TIMEOUT_RETRIEVE constant, response shape handling
+- `~/.openclaw/orchestration/soul_renderer.py` — render_soul() return type (str), L2-specific variable substitution, output format
+- `~/.openclaw/agents/l3_specialist/agent/SOUL.md` — actual L3 SOUL content (no `$` template variables, can be read directly)
+- `~/.openclaw/agents/_templates/soul-default.md` — L2 SOUL template (confirmed: L2-specific, wrong target for L3 injection)
 - Python 3 stdlib docs — `tempfile.NamedTemporaryFile(delete=False)` lifecycle
 - httpx docs — `httpx.Client` (sync) POST usage, Timeout configuration
 

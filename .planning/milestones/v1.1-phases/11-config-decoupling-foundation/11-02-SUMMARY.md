@@ -53,7 +53,7 @@ All 14 hardcoded path/branch locations updated across 7 files.
 ## Verification
 
 ```bash
-cd /home/ollie/.openclaw && python3 -c "
+cd ~/.openclaw && python3 -c "
 import re
 
 # snapshot.py

@@ -75,7 +75,7 @@ Each task was committed atomically:
 
 ## Files Created/Modified
 
-- `/home/ollie/.openclaw/orchestration/monitor.py` - Added session-scoped js_instances dict, lazy/evict logic, module logger, one-shot comments
+- `~/.openclaw/orchestration/monitor.py` - Added session-scoped js_instances dict, lazy/evict logic, module logger, one-shot comments
 
 ## Decisions Made
 

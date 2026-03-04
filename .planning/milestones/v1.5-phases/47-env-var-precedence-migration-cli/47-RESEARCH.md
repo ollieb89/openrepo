@@ -320,7 +320,7 @@ def cmd_migrate(args) -> int:
 
 ### Pitfall 5: OPENCLAW_ROOT Auto-Create Side Effect
 
-**What goes wrong:** `_find_project_root()` with auto-create will silently create a directory if `OPENCLAW_ROOT` is set to a typo path (e.g., `/home/ollie/.openclaaw`). The directory is created; subsequent operations still fail because it's empty.
+**What goes wrong:** `_find_project_root()` with auto-create will silently create a directory if `OPENCLAW_ROOT` is set to a typo path (e.g., `~/.openclaaw`). The directory is created; subsequent operations still fail because it's empty.
 
 **Why it happens:** Auto-create is unconditional when env var is set.
 

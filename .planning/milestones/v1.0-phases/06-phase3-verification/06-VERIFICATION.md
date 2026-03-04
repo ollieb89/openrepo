@@ -45,11 +45,11 @@ gaps: []
 - Docker: 29.1.5 (native)
 - Python: 3.x with docker SDK >=7.1.0
 - Image: openclaw-l3-specialist:latest (569MB)
-- Workspace: /home/ollie/.openclaw/workspace
+- Workspace: ~/.openclaw/workspace
 
 **Test Execution:**
 ```bash
-cd /home/ollie/.openclaw
+cd ~/.openclaw
 python3 scripts/verify_phase3.py
 ```
 
@@ -57,7 +57,7 @@ python3 scripts/verify_phase3.py
 ```
 Phase 3 Verification
 Validates HIE-03, HIE-04, COM-03, COM-04
-[INFO] Project root: /home/ollie/.openclaw
+[INFO] Project root: ~/.openclaw
 [PASS] Docker SDK available and daemon responsive
 
 1) HIE-03: L3 Container Spawning
@@ -89,7 +89,7 @@ Validates HIE-03, HIE-04, COM-03, COM-04
 
 4) COM-04: Semantic Snapshots
 -----------------------------
-[PASS] COM-04: Snapshots directory exists: /home/ollie/.openclaw/workspace/.openclaw/snapshots
+[PASS] COM-04: Snapshots directory exists: ~/.openclaw/workspace/.openclaw/snapshots
 [PASS] COM-04: Snapshots directory is writable and readable
 [PASS] COM-04: capture_semantic_snapshot function is importable
 

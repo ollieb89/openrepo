@@ -12,7 +12,7 @@
 ### Locked Decisions
 
 - Category value semantics: controlled set of known values (`review_decision`, `task_outcome`) — NOT free-form strings
-- Type: defined as `Literal` type or `Enum` in `MemorizeRequest`, co-located with the Pydantic model in `/home/ollie/.openclaw/docker/memory/memory_service/models.py`
+- Type: defined as `Literal` type or `Enum` in `MemorizeRequest`, co-located with the Pydantic model in `~/.openclaw/docker/memory/memory_service/models.py`
 - Unknown category values are rejected by Pydantic validation (strict contract, catches bugs early)
 - `category` is optional on `MemorizeRequest` — defaults to `None` when omitted, backwards compatible
 - Narrow fix: just add the `category` field to `MemorizeRequest`, don't change the extra fields policy or audit other fields
@@ -54,7 +54,7 @@ None — discussion stayed within phase scope
 
 Phase 37 is a pure plumbing fix, not a new capability. Every component of the category flow already exists; the gaps are specific and narrow:
 
-1. **`MemorizeRequest` in the FastAPI wrapper does not declare a `category` field.** The model at `/home/ollie/.openclaw/docker/memory/memory_service/models.py` has `resource_url`, `modality`, and `user` only. When `snapshot.py` posts `{"resource_url": ..., "category": "review_decision", ...}`, Pydantic silently discards `category` (Pydantic v2 default: `extra="ignore"`). The field never reaches `service.memorize()`.
+1. **`MemorizeRequest` in the FastAPI wrapper does not declare a `category` field.** The model at `~/.openclaw/docker/memory/memory_service/models.py` has `resource_url`, `modality`, and `user` only. When `snapshot.py` posts `{"resource_url": ..., "category": "review_decision", ...}`, Pydantic silently discards `category` (Pydantic v2 default: `extra="ignore"`). The field never reaches `service.memorize()`.
 
 2. **`MemoryClient.memorize()` does not pass `category` in the payload.** `orchestration/memory_client.py` builds a payload with `resource_url`, `modality`, and `user`, but no `category`. The async client path (used by L3 tooling) would also miss the field.
 
@@ -126,7 +126,7 @@ MemoryClient.memorize(content, category="review_decision")
 **When to use:** Adding optional fields with controlled values
 
 ```python
-# Source: /home/ollie/.openclaw/docker/memory/memory_service/models.py (to be modified)
+# Source: ~/.openclaw/docker/memory/memory_service/models.py (to be modified)
 from typing import Literal, Optional
 from pydantic import BaseModel
 
@@ -149,7 +149,7 @@ class MemorizeRequest(BaseModel):
 **Investigation result:** The cleanest approach is to pass `category` inside the `user` dict from the router. The router already builds `request.user` as a dict; adding `"category": request.category` (when not None) keeps it within the existing flow without modifying memu-py internals.
 
 ```python
-# Source: /home/ollie/.openclaw/docker/memory/memory_service/routers/memorize.py (to be modified)
+# Source: ~/.openclaw/docker/memory/memory_service/routers/memorize.py (to be modified)
 async def _run_memorize(service, request: MemorizeRequest) -> None:
     user_dict = request.user or {}
     if request.category is not None:
@@ -167,7 +167,7 @@ async def _run_memorize(service, request: MemorizeRequest) -> None:
 **What:** Add `category: Optional[str] = None` parameter, include in payload when set
 
 ```python
-# Source: /home/ollie/.openclaw/orchestration/memory_client.py (to be modified)
+# Source: ~/.openclaw/orchestration/memory_client.py (to be modified)
 async def memorize(
     self,
     content: str,
@@ -192,7 +192,7 @@ async def memorize(
 **Current state:** The formatter has two sections: "Past Work Context" and "Past Review Outcomes". With the new `task_outcome` category and its own section heading, a third branch is needed.
 
 ```python
-# Source: /home/ollie/.openclaw/skills/spawn_specialist/spawn.py (to be modified)
+# Source: ~/.openclaw/skills/spawn_specialist/spawn.py (to be modified)
 CATEGORY_SECTION_MAP = {
     "review_decision": "Past Review Outcomes",
     "task_outcome": "Task Outcomes",
@@ -268,23 +268,23 @@ else:
 ### Full gap map — files to touch
 
 ```
-File 1: /home/ollie/.openclaw/docker/memory/memory_service/models.py
+File 1: ~/.openclaw/docker/memory/memory_service/models.py
   Gap: MemorizeRequest has no category field
   Fix: Add category: Optional[Literal["review_decision", "task_outcome"]] = None
 
-File 2: /home/ollie/.openclaw/docker/memory/memory_service/routers/memorize.py
+File 2: ~/.openclaw/docker/memory/memory_service/routers/memorize.py
   Gap: _run_memorize() calls service.memorize() without category
   Fix: Inject category into user dict before calling service.memorize()
 
-File 3: /home/ollie/.openclaw/orchestration/memory_client.py
+File 3: ~/.openclaw/orchestration/memory_client.py
   Gap: memorize() builds payload without category; category param exists but unused
   Fix: Include category in payload when not None (change default from "general" to None)
 
-File 4: /home/ollie/.openclaw/skills/spawn_specialist/spawn.py
+File 4: ~/.openclaw/skills/spawn_specialist/spawn.py
   Gap: _format_memory_context() has no "Task Outcomes" section; ordering is work-first
   Fix: Add CATEGORY_SECTION_MAP; add task_outcome section; reorder to review→task→work
 
-File 5 (MEM-01): /home/ollie/.openclaw/skills/spawn_specialist/spawn.py (different location)
+File 5 (MEM-01): ~/.openclaw/skills/spawn_specialist/spawn.py (different location)
   Gap: L3 task outcomes are never memorized — MEM-01 is unchecked in REQUIREMENTS.md
   Fix: Add fire-and-forget memorization call after successful container exit in pool.py
   Note: MEM-01 is partially in scope (Phase 38 handles the other part). Research supports
@@ -293,7 +293,7 @@ File 5 (MEM-01): /home/ollie/.openclaw/skills/spawn_specialist/spawn.py (differe
 
 ### MemorizeRequest after fix
 ```python
-# /home/ollie/.openclaw/docker/memory/memory_service/models.py
+# ~/.openclaw/docker/memory/memory_service/models.py
 from __future__ import annotations
 from typing import Any, Literal, Optional
 from pydantic import BaseModel
@@ -309,7 +309,7 @@ class MemorizeRequest(BaseModel):
 
 ### Router injection after fix
 ```python
-# /home/ollie/.openclaw/docker/memory/memory_service/routers/memorize.py
+# ~/.openclaw/docker/memory/memory_service/routers/memorize.py
 async def _run_memorize(service, request: MemorizeRequest) -> None:
     try:
         user_dict = dict(request.user) if request.user else {}
@@ -327,7 +327,7 @@ async def _run_memorize(service, request: MemorizeRequest) -> None:
 
 ### MemoryClient after fix
 ```python
-# /home/ollie/.openclaw/orchestration/memory_client.py
+# ~/.openclaw/orchestration/memory_client.py
 async def memorize(
     self,
     content: str,
@@ -348,7 +348,7 @@ async def memorize(
 
 ### _format_memory_context() routing after fix
 ```python
-# /home/ollie/.openclaw/skills/spawn_specialist/spawn.py
+# ~/.openclaw/skills/spawn_specialist/spawn.py
 CATEGORY_SECTION_MAP = {
     "review_decision": "Past Review Outcomes",
     "task_outcome": "Task Outcomes",
@@ -407,21 +407,21 @@ def _format_memory_context(memories: list) -> str:
 
 > `workflow.nyquist_validation` not present in `.planning/config.json` (config only has `workflow.research: true`). Treating as false — Validation Architecture section omitted per instructions.
 
-*(Config at `/home/ollie/.openclaw/.planning/config.json` does not contain `nyquist_validation: true`)*
+*(Config at `~/.openclaw/.planning/config.json` does not contain `nyquist_validation: true`)*
 
 ---
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- Direct codebase inspection — `/home/ollie/.openclaw/docker/memory/memory_service/models.py` — confirmed `MemorizeRequest` has no `category` field
-- Direct codebase inspection — `/home/ollie/.openclaw/docker/memory/memory_service/routers/memorize.py` — confirmed router drops `category` by calling `service.memorize(resource_url=..., modality=..., user=...)` only
-- Direct codebase inspection — `/home/ollie/.openclaw/orchestration/memory_client.py` lines 168-214 — confirmed `category` parameter exists but is commented "currently unused in payload"
-- Direct codebase inspection — `/home/ollie/.openclaw/skills/spawn_specialist/spawn.py` lines 201-259 — confirmed `_format_memory_context()` dual-check logic is already implemented and correct
-- Direct codebase inspection — `/home/ollie/.openclaw/orchestration/snapshot.py` lines 73-82 — confirmed `category` is already in the raw httpx POST payload but gets dropped
-- Direct codebase inspection — `/home/ollie/.openclaw/workspace/memory/src/memu/database/models.py` line 121 — confirmed `ConfigDict(extra="allow")` in `merge_scope_model()`
-- Direct codebase inspection — `/home/ollie/.openclaw/workspace/memory/src/memu/app/memorize.py` lines 65-71 — confirmed memu-py `MemorizeMixin.memorize()` signature: `(self, *, resource_url, modality, user)` — no `category` param
-- Direct codebase inspection — `/home/ollie/.openclaw/tests/` — confirmed pytest infrastructure exists with `pytest.ini`, respx for async mocking, and existing test files for all affected modules
+- Direct codebase inspection — `~/.openclaw/docker/memory/memory_service/models.py` — confirmed `MemorizeRequest` has no `category` field
+- Direct codebase inspection — `~/.openclaw/docker/memory/memory_service/routers/memorize.py` — confirmed router drops `category` by calling `service.memorize(resource_url=..., modality=..., user=...)` only
+- Direct codebase inspection — `~/.openclaw/orchestration/memory_client.py` lines 168-214 — confirmed `category` parameter exists but is commented "currently unused in payload"
+- Direct codebase inspection — `~/.openclaw/skills/spawn_specialist/spawn.py` lines 201-259 — confirmed `_format_memory_context()` dual-check logic is already implemented and correct
+- Direct codebase inspection — `~/.openclaw/orchestration/snapshot.py` lines 73-82 — confirmed `category` is already in the raw httpx POST payload but gets dropped
+- Direct codebase inspection — `~/.openclaw/workspace/memory/src/memu/database/models.py` line 121 — confirmed `ConfigDict(extra="allow")` in `merge_scope_model()`
+- Direct codebase inspection — `~/.openclaw/workspace/memory/src/memu/app/memorize.py` lines 65-71 — confirmed memu-py `MemorizeMixin.memorize()` signature: `(self, *, resource_url, modality, user)` — no `category` param
+- Direct codebase inspection — `~/.openclaw/tests/` — confirmed pytest infrastructure exists with `pytest.ini`, respx for async mocking, and existing test files for all affected modules
 
 ### Secondary (MEDIUM confidence)
 - Inferred from `extra="allow"` + user dict merge pattern in `merge_scope_model()` that category will survive the round-trip — not verified by running the code, but the mechanism is clear from the source.

@@ -93,10 +93,10 @@ RESULT: All stages PASSED
 
 ```bash
 # Initialize workspace (safe to run anytime)
-cd /home/ollie/.openclaw && python3 orchestration/init.py
+cd ~/.openclaw && python3 orchestration/init.py
 
 # Verify snapshot system
-cd /home/ollie/.openclaw && python3 scripts/verify_snapshots.py
+cd ~/.openclaw && python3 scripts/verify_snapshots.py
 ```
 
 ## Next Steps

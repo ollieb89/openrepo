@@ -313,10 +313,10 @@ None — the fix is fully specified. Both the gap and the solution are unambiguo
 
 ### Primary (HIGH confidence)
 
-- Direct code inspection of `/home/ollie/.openclaw/orchestration/snapshot.py` — `_memorize_review_decision()` payload dict (lines 74-81)
-- Direct code inspection of `/home/ollie/.openclaw/skills/spawn_specialist/spawn.py` — `_format_memory_context()` routing logic (lines 230-259)
-- Direct code inspection of `/home/ollie/.openclaw/tests/test_l2_review_memorization.py` — thread interception test pattern (lines 333-366)
-- Direct code inspection of `/home/ollie/.openclaw/tests/test_spawn_memory.py` — all 38 tests including section-split tests
+- Direct code inspection of `~/.openclaw/orchestration/snapshot.py` — `_memorize_review_decision()` payload dict (lines 74-81)
+- Direct code inspection of `~/.openclaw/skills/spawn_specialist/spawn.py` — `_format_memory_context()` routing logic (lines 230-259)
+- Direct code inspection of `~/.openclaw/tests/test_l2_review_memorization.py` — thread interception test pattern (lines 333-366)
+- Direct code inspection of `~/.openclaw/tests/test_spawn_memory.py` — all 38 tests including section-split tests
 
 ### Secondary (MEDIUM confidence)
 

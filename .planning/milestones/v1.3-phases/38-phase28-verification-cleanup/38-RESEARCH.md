@@ -190,7 +190,7 @@ Lines 75-76 (delete both comment lines, leave the `if` block untouched):
 
 Post-removal verification command:
 ```bash
-bash -n /home/ollie/.openclaw/docker/l3-specialist/entrypoint.sh && echo "syntax OK"
+bash -n ~/.openclaw/docker/l3-specialist/entrypoint.sh && echo "syntax OK"
 ```
 
 ### Phase 28 VERIFICATION.md Frontmatter
@@ -209,7 +209,7 @@ human_verification: []
 ### Test Run Evidence for VERIFICATION.md
 
 ```bash
-cd /home/ollie/.openclaw && python3 -m pytest tests/test_pool_memorization.py -v
+cd ~/.openclaw && python3 -m pytest tests/test_pool_memorization.py -v
 # Result: 5 passed in 0.07s
 ```
 
@@ -250,12 +250,12 @@ Test list (from confirmed run):
 
 ### Primary (HIGH confidence)
 
-- `/home/ollie/.openclaw/orchestration/memory_client.py` — direct inspection confirmed MEMU_SERVICE_URL at lines 10, 29; no other production callers
-- `/home/ollie/.openclaw/docker/l3-specialist/entrypoint.sh` — direct inspection confirmed stale comment at lines 75-76
-- `/home/ollie/.openclaw/tests/test_pool_memorization.py` — 5 tests confirmed; live test run confirmed all pass (0.07s)
-- `/home/ollie/.openclaw/.planning/phases/28-l3-auto-memorization/28-02-PLAN.md` — source of truth for must_haves.truths (5 items) and requirements [MEM-01, MEM-03]
-- `/home/ollie/.openclaw/.planning/phases/28-l3-auto-memorization/28-01-SUMMARY.md` and `28-02-SUMMARY.md` — what was actually built; confirms no VERIFICATION.md created at Phase 28 time
-- `/home/ollie/.openclaw/.planning/phases/33-integration-gap-closure/33-VERIFICATION.md` — reference implementation for VERIFICATION.md format; confirmed MEM-01 and MEM-03 as pre-existing implementations
+- `~/.openclaw/orchestration/memory_client.py` — direct inspection confirmed MEMU_SERVICE_URL at lines 10, 29; no other production callers
+- `~/.openclaw/docker/l3-specialist/entrypoint.sh` — direct inspection confirmed stale comment at lines 75-76
+- `~/.openclaw/tests/test_pool_memorization.py` — 5 tests confirmed; live test run confirmed all pass (0.07s)
+- `~/.openclaw/.planning/phases/28-l3-auto-memorization/28-02-PLAN.md` — source of truth for must_haves.truths (5 items) and requirements [MEM-01, MEM-03]
+- `~/.openclaw/.planning/phases/28-l3-auto-memorization/28-01-SUMMARY.md` and `28-02-SUMMARY.md` — what was actually built; confirms no VERIFICATION.md created at Phase 28 time
+- `~/.openclaw/.planning/phases/33-integration-gap-closure/33-VERIFICATION.md` — reference implementation for VERIFICATION.md format; confirmed MEM-01 and MEM-03 as pre-existing implementations
 - `grep -rn "MEMU_SERVICE_URL"` — confirmed no external callers; only `memory_client.py` references the constant
 
 ### Secondary (MEDIUM confidence)

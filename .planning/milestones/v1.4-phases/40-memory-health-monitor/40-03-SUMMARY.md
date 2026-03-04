@@ -83,10 +83,10 @@ completed: 2026-02-24
 
 ## Files Created/Modified
 
-- `/home/ollie/.openclaw/workspace/occc/src/components/memory/ConflictPanel.tsx` - Slide-in conflict resolution panel with LCS word-diff, edit/delete/dismiss actions, auto-advance
-- `/home/ollie/.openclaw/workspace/occc/src/components/memory/SettingsPanel.tsx` - Settings panel with 5 health threshold controls, exports HealthSettings interface
-- `/home/ollie/.openclaw/workspace/occc/src/components/memory/MemoryPanel.tsx` - Integrated ConflictPanel and SettingsPanel with state management, real API handlers
-- `/home/ollie/.openclaw/workspace/occc/src/components/memory/HealthTab.tsx` - Added optional onArchiveMemory prop, Archive button for stale flags
+- `~/.openclaw/workspace/occc/src/components/memory/ConflictPanel.tsx` - Slide-in conflict resolution panel with LCS word-diff, edit/delete/dismiss actions, auto-advance
+- `~/.openclaw/workspace/occc/src/components/memory/SettingsPanel.tsx` - Settings panel with 5 health threshold controls, exports HealthSettings interface
+- `~/.openclaw/workspace/occc/src/components/memory/MemoryPanel.tsx` - Integrated ConflictPanel and SettingsPanel with state management, real API handlers
+- `~/.openclaw/workspace/occc/src/components/memory/HealthTab.tsx` - Added optional onArchiveMemory prop, Archive button for stale flags
 
 ## Decisions Made
 

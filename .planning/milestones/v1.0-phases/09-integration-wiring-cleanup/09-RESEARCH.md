@@ -381,7 +381,7 @@ Verified patterns from direct codebase inspection:
     "name": "PumpLAI Project Manager",
     "level": 2,
     "reports_to": "clawdia_prime",
-    "workspace": "/home/ollie/Development/Projects/pumplai",
+    "workspace": "~/Development/Projects/pumplai",
     "sandbox": { "mode": "all" }
   },
   {
@@ -389,7 +389,7 @@ Verified patterns from direct codebase inspection:
     "name": "Frontend Architect",
     "level": 2,
     "reports_to": "clawdia_prime",
-    "workspace": "/home/ollie/Development/Projects/pumplai",
+    "workspace": "~/Development/Projects/pumplai",
     "sandbox": { "mode": "off" }
   },
   {
@@ -397,7 +397,7 @@ Verified patterns from direct codebase inspection:
     "name": "ML Pipeline Worker",
     "level": 3,
     "reports_to": "pumplai_pm",
-    "workspace": "/home/ollie/Development/Projects/pumplai",
+    "workspace": "~/Development/Projects/pumplai",
     "sandbox": { "mode": "off" }
   },
   {
@@ -405,7 +405,7 @@ Verified patterns from direct codebase inspection:
     "name": "L3 Specialist Executor",
     "level": 3,
     "reports_to": "pumplai_pm",
-    "workspace": "/home/ollie/Development/Projects/pumplai",
+    "workspace": "~/Development/Projects/pumplai",
     "sandbox": { "mode": "all" }
   }
 ]
@@ -503,13 +503,13 @@ Each fix gets its own commit per the locked decision.
 ## Sources
 
 ### Primary (HIGH confidence)
-- Direct codebase inspection — `/home/ollie/.openclaw/openclaw.json` (confirmed: no level/reports_to in agents.list)
-- Direct codebase inspection — `/home/ollie/.openclaw/workspace/occc/src/lib/metrics.ts` (confirmed: buildAgentHierarchy reads agent.level with fallback 1, agent.reports_to passed through)
-- Direct codebase inspection — `/home/ollie/.openclaw/workspace/occc/src/lib/docker.ts` (confirmed: listSwarmContainers uses openclaw.managed=true filter + name fallback)
-- Direct codebase inspection — `/home/ollie/.openclaw/skills/spawn_specialist/spawn.py` (confirmed: labels dict has openclaw.tier/task_id/spawned_by/skill, missing openclaw.managed)
-- Direct codebase inspection — `/home/ollie/.openclaw/agents/pumplai_pm/agent/config.json` (confirmed: skill_registry.review.skill_path = "skills/review_skill"; directory does not exist)
-- Direct codebase inspection — `/home/ollie/.openclaw/.planning/v1.0-MILESTONE-AUDIT.md` (confirmed: INT-01, INT-02, INT-03 descriptions and evidence)
-- Direct codebase inspection — `/home/ollie/.openclaw/agents/l3_specialist/config.json` (confirmed: level:3, reports_to:"pumplai_pm" already present in per-agent config)
+- Direct codebase inspection — `~/.openclaw/openclaw.json` (confirmed: no level/reports_to in agents.list)
+- Direct codebase inspection — `~/.openclaw/workspace/occc/src/lib/metrics.ts` (confirmed: buildAgentHierarchy reads agent.level with fallback 1, agent.reports_to passed through)
+- Direct codebase inspection — `~/.openclaw/workspace/occc/src/lib/docker.ts` (confirmed: listSwarmContainers uses openclaw.managed=true filter + name fallback)
+- Direct codebase inspection — `~/.openclaw/skills/spawn_specialist/spawn.py` (confirmed: labels dict has openclaw.tier/task_id/spawned_by/skill, missing openclaw.managed)
+- Direct codebase inspection — `~/.openclaw/agents/pumplai_pm/agent/config.json` (confirmed: skill_registry.review.skill_path = "skills/review_skill"; directory does not exist)
+- Direct codebase inspection — `~/.openclaw/.planning/v1.0-MILESTONE-AUDIT.md` (confirmed: INT-01, INT-02, INT-03 descriptions and evidence)
+- Direct codebase inspection — `~/.openclaw/agents/l3_specialist/config.json` (confirmed: level:3, reports_to:"pumplai_pm" already present in per-agent config)
 
 ### Secondary (MEDIUM confidence)
 - CONTEXT.md locked decisions — user has confirmed all INT item resolution strategies

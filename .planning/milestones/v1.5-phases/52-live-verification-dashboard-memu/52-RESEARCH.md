@@ -210,7 +210,7 @@ POST /api/suggestions?project={id}
 ### Pitfall 1: Testing Against Stale memU Image
 **What goes wrong:** `POST /api/memory/health-scan` returns 404 or 405 because the running container lacks the endpoint.
 **Why it happens:** The `openclaw-memory` container was built 2026-02-24T06:51:38Z — before `memories.py` router was updated to add health-scan, PUT, and health-flags routes.
-**How to avoid:** Rebuild image as Wave 0 task: `cd /home/ollie/.openclaw/docker/memory && docker compose build && docker compose up -d`
+**How to avoid:** Rebuild image as Wave 0 task: `cd ~/.openclaw/docker/memory && docker compose build && docker compose up -d`
 **Warning signs:** `curl http://localhost:18791/openapi.json` shows only 5 routes (should be 7+ after rebuild)
 
 ### Pitfall 2: No Test Memories — Health Scan Returns Empty
@@ -228,7 +228,7 @@ POST /api/suggestions?project={id}
 ### Pitfall 4: suggest.py Produces No Suggestions
 **What goes wrong:** `POST /api/suggestions` succeeds but returns `{suggestions: []}` — nothing to accept (Tests 7–9 can't proceed).
 **Why it happens:** `suggest.py` requires `MIN_CLUSTER_SIZE=3` memories with the same keyword. Both corpus sources (workspace-state.json and memU) are empty.
-**How to avoid:** Write synthetic activity log entries into `workspace/.openclaw/{project}/workspace-state.json` with repeated failure keywords. Do this with direct JSON manipulation (the state file path for pumplai is `/home/ollie/Development/Projects/pumplai/.openclaw/pumplai/workspace-state.json` per `get_state_path()`, but this path may not exist — fall back to `get_project_root()/workspace/.openclaw/pumplai/` which resolves via OPENCLAW_ROOT).
+**How to avoid:** Write synthetic activity log entries into `workspace/.openclaw/{project}/workspace-state.json` with repeated failure keywords. Do this with direct JSON manipulation (the state file path for pumplai is `~/Development/Projects/pumplai/.openclaw/pumplai/workspace-state.json` per `get_state_path()`, but this path may not exist — fall back to `get_project_root()/workspace/.openclaw/pumplai/` which resolves via OPENCLAW_ROOT).
 **Warning signs:** `python3 suggest.py --project pumplai --dry-run` prints 0 suggestions found.
 
 ### Pitfall 5: Re-scan Not Triggered After Memory Edit (Test 4)
@@ -245,7 +245,7 @@ POST /api/suggestions?project={id}
 
 ### Pitfall 7: soul-suggestions.json Path Mismatch
 **What goes wrong:** `GET /api/suggestions?project=pumplai` returns EMPTY_STATE even after `suggest.py` runs.
-**Why it happens:** `suggest.py` uses `get_project_root() / "workspace" / ".openclaw" / project_id / "soul-suggestions.json"`. The API route uses `OPENCLAW_ROOT + "/workspace/.openclaw/{projectId}/soul-suggestions.json"`. Both resolve to the same path when `OPENCLAW_ROOT` is set, but the workspace path for pumplai is at `/home/ollie/Development/Projects/pumplai/.openclaw/pumplai/` via `get_state_path()`.
+**Why it happens:** `suggest.py` uses `get_project_root() / "workspace" / ".openclaw" / project_id / "soul-suggestions.json"`. The API route uses `OPENCLAW_ROOT + "/workspace/.openclaw/{projectId}/soul-suggestions.json"`. Both resolve to the same path when `OPENCLAW_ROOT` is set, but the workspace path for pumplai is at `~/Development/Projects/pumplai/.openclaw/pumplai/` via `get_state_path()`.
 **How to avoid:** Run `suggest.py --dry-run` first and confirm it writes to the path the API reads. Also confirm `OPENCLAW_ROOT` is exported when starting the dashboard.
 **Warning signs:** `suggest.py` prints "Saved N suggestion(s)" but `GET /api/suggestions?project=pumplai` still returns `{suggestions:[]}`.
 
@@ -342,7 +342,7 @@ with open(state_path, "w") as f:
 
 ### Rebuild memU Image
 ```bash
-cd /home/ollie/.openclaw/docker/memory
+cd ~/.openclaw/docker/memory
 docker compose build --no-cache  # or just 'docker compose build' if faster
 docker compose up -d
 sleep 5  # Wait for startup
@@ -353,7 +353,7 @@ curl http://localhost:18791/openapi.json | python3 -c "import json,sys; [print(k
 
 ### Start Dashboard
 ```bash
-export OPENCLAW_ROOT=/home/ollie/.openclaw
+export OPENCLAW_ROOT=~/.openclaw
 make dashboard  # or: cd packages/dashboard && bun install && bun run dev
 # Verify: curl http://localhost:6987/api/projects
 ```
@@ -379,7 +379,7 @@ make dashboard  # or: cd packages/dashboard && bun install && bun run dev
 ## Open Questions
 
 1. **Where does workspace-state.json for pumplai actually live?**
-   - What we know: `get_state_path('pumplai')` resolves based on `OPENCLAW_ROOT` and project workspace. For pumplai, workspace is `/home/ollie/Development/Projects/pumplai`. The state file should be at `/home/ollie/Development/Projects/pumplai/.openclaw/pumplai/workspace-state.json`.
+   - What we know: `get_state_path('pumplai')` resolves based on `OPENCLAW_ROOT` and project workspace. For pumplai, workspace is `~/Development/Projects/pumplai`. The state file should be at `~/Development/Projects/pumplai/.openclaw/pumplai/workspace-state.json`.
    - What's unclear: File does not exist at that path currently (verified). `suggest.py` gracefully returns [] on missing state file.
    - Recommendation: Create the state file with synthetic activity entries rather than relying on existing data.
 
@@ -401,7 +401,7 @@ The plan should include this explicit pre-flight before any test:
 
 ```bash
 # 1. Rebuild memU image
-cd /home/ollie/.openclaw/docker/memory
+cd ~/.openclaw/docker/memory
 docker compose build && docker compose up -d
 sleep 10
 
@@ -410,8 +410,8 @@ curl http://localhost:18791/health
 curl http://localhost:18791/openapi.json | python3 -c "import json,sys; paths=json.load(sys.stdin)['paths']; assert '/memories/health-scan' in paths, 'FAIL: health-scan missing'; print('PASS: health-scan endpoint present')"
 
 # 3. Start dashboard
-export OPENCLAW_ROOT=/home/ollie/.openclaw
-cd /home/ollie/.openclaw && make dashboard &
+export OPENCLAW_ROOT=~/.openclaw
+cd ~/.openclaw && make dashboard &
 sleep 5
 curl http://localhost:6987/ | head -1  # Should return HTML
 
@@ -437,13 +437,13 @@ echo "Memories for pumplai: $TOTAL (expect ≥ 1)"
 ## Sources
 
 ### Primary (HIGH confidence)
-- Direct file inspection: `/home/ollie/.openclaw/packages/dashboard/src/components/memory/MemoryPanel.tsx` — health settings state management, scan flow
-- Direct file inspection: `/home/ollie/.openclaw/packages/dashboard/src/components/memory/SettingsPanel.tsx` — settings panel behavior (no localStorage)
-- Direct file inspection: `/home/ollie/.openclaw/packages/dashboard/src/components/layout/Sidebar.tsx` — badge polling logic
-- Direct file inspection: `/home/ollie/.openclaw/docker/memory/memory_service/routers/memories.py` — memU router with health-scan, PUT endpoints
-- Direct file inspection: `/home/ollie/.openclaw/docker/memory/memory_service/service.py` — `run_health_scan()` implementation
-- Direct file inspection: `/home/ollie/.openclaw/packages/dashboard/src/app/api/suggestions/[id]/action/route.ts` — accept flow, soul-override.md append, soul_renderer.py invocation
-- Direct file inspection: `/home/ollie/.openclaw/packages/orchestration/src/openclaw/cli/suggest.py` — full extraction pipeline
+- Direct file inspection: `~/.openclaw/packages/dashboard/src/components/memory/MemoryPanel.tsx` — health settings state management, scan flow
+- Direct file inspection: `~/.openclaw/packages/dashboard/src/components/memory/SettingsPanel.tsx` — settings panel behavior (no localStorage)
+- Direct file inspection: `~/.openclaw/packages/dashboard/src/components/layout/Sidebar.tsx` — badge polling logic
+- Direct file inspection: `~/.openclaw/docker/memory/memory_service/routers/memories.py` — memU router with health-scan, PUT endpoints
+- Direct file inspection: `~/.openclaw/docker/memory/memory_service/service.py` — `run_health_scan()` implementation
+- Direct file inspection: `~/.openclaw/packages/dashboard/src/app/api/suggestions/[id]/action/route.ts` — accept flow, soul-override.md append, soul_renderer.py invocation
+- Direct file inspection: `~/.openclaw/packages/orchestration/src/openclaw/cli/suggest.py` — full extraction pipeline
 - Live service probe: `curl http://localhost:18791/openapi.json` — confirmed 5 routes (missing health-scan, PUT, health-flags)
 - Live service probe: `curl http://localhost:18791/memories?user_id=pumplai` — confirmed 0 memories
 - `docker inspect openclaw-memory --format "{{.Created}}"` — confirmed build date 2026-02-24T06:51:38Z

@@ -128,7 +128,7 @@ scripts/
 }
 ```
 
-**Source:** Adapted from `/home/ollie/.openclaw/agents/l3_specialist/config.json`
+**Source:** Adapted from `~/.openclaw/agents/l3_specialist/config.json`
 
 ### Pattern 2: Idempotent Directory Initialization
 
@@ -226,12 +226,12 @@ def test_l1_to_l2_delegation():
     """
     try:
         # Load L1 config to get router_skill path
-        config_path = Path('/home/ollie/.openclaw/agents/clawdia_prime/agent/config.json')
+        config_path = Path('~/.openclaw/agents/clawdia_prime/agent/config.json')
         with open(config_path) as f:
             config = json.load(f)
 
         router_skill_path = config['skill_registry']['router_skill']['skill_path']
-        skill_dir = Path('/home/ollie/.openclaw') / router_skill_path
+        skill_dir = Path('~/.openclaw') / router_skill_path
 
         # Execute router_skill with test directive
         result = subprocess.run(
@@ -323,7 +323,7 @@ def create_l1_config():
 
     Follows L3 config pattern with L1-specific settings.
     """
-    config_path = Path('/home/ollie/.openclaw/agents/clawdia_prime/agent/config.json')
+    config_path = Path('~/.openclaw/agents/clawdia_prime/agent/config.json')
 
     config = {
         "id": "clawdia_prime",
@@ -354,7 +354,7 @@ def create_l1_config():
     return config_path
 ```
 
-**Source:** Adapted from `/home/ollie/.openclaw/agents/l3_specialist/config.json`
+**Source:** Adapted from `~/.openclaw/agents/l3_specialist/config.json`
 
 ### Idempotent Snapshots Directory Initialization
 
@@ -368,7 +368,7 @@ def ensure_snapshots_directory(workspace_path: str) -> Path:
     Idempotent - safe to call multiple times.
 
     Args:
-        workspace_path: Path to workspace root (e.g., /home/ollie/.openclaw/workspace)
+        workspace_path: Path to workspace root (e.g., ~/.openclaw/workspace)
 
     Returns:
         Path to snapshots directory
@@ -404,7 +404,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-PROJECT_ROOT = Path('/home/ollie/.openclaw')
+PROJECT_ROOT = Path('~/.openclaw')
 
 def test_l1_config_exists():
     """Test 1: Verify L1 config.json exists and contains router_skill."""
@@ -575,14 +575,14 @@ Leave empty. The semantic snapshot system captures diffs from staging branches, 
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/home/ollie/.openclaw/agents/l3_specialist/config.json` - L3 config pattern
-- `/home/ollie/.openclaw/skills/router_skill/index.js` - Router skill implementation
-- `/home/ollie/.openclaw/skills/router_skill/skill.json` - Skill metadata
-- `/home/ollie/.openclaw/orchestration/snapshot.py` - Snapshot system with directory creation
-- `/home/ollie/.openclaw/orchestration/config.py` - SNAPSHOT_DIR constant
-- `/home/ollie/.openclaw/openclaw.json` - Gateway configuration
-- `/home/ollie/.openclaw/.planning/phases/02-core-orchestration/02-VERIFICATION.md` - Phase 2 verification (router_skill tested)
-- `/home/ollie/.openclaw/.planning/v1.0-MILESTONE-AUDIT.md` - Gap identification (COM-01, COM-04)
+- `~/.openclaw/agents/l3_specialist/config.json` - L3 config pattern
+- `~/.openclaw/skills/router_skill/index.js` - Router skill implementation
+- `~/.openclaw/skills/router_skill/skill.json` - Skill metadata
+- `~/.openclaw/orchestration/snapshot.py` - Snapshot system with directory creation
+- `~/.openclaw/orchestration/config.py` - SNAPSHOT_DIR constant
+- `~/.openclaw/openclaw.json` - Gateway configuration
+- `~/.openclaw/.planning/phases/02-core-orchestration/02-VERIFICATION.md` - Phase 2 verification (router_skill tested)
+- `~/.openclaw/.planning/v1.0-MILESTONE-AUDIT.md` - Gap identification (COM-01, COM-04)
 
 ### Secondary (MEDIUM confidence)
 - Python pathlib documentation - Path.mkdir() idempotency pattern

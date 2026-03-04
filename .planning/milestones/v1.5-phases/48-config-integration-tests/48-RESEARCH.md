@@ -338,7 +338,7 @@ def valid_openclaw_config():
 **How to avoid:** Add `integration` to `[tool.pytest.ini_options] markers` in root `pyproject.toml`, or add `--strict-marks` only if you want it to error. Current pyproject.toml has no `markers` list — add it.
 
 ```toml
-# In /home/ollie/.openclaw/pyproject.toml
+# In ~/.openclaw/pyproject.toml
 [tool.pytest.ini_options]
 testpaths = ["packages/orchestration/tests"]
 asyncio_mode = "auto"
@@ -575,7 +575,7 @@ DEFAULT_POOL_RECOVERY_POLICY = "mark_failed"
 | Property | Value |
 |----------|-------|
 | Framework | pytest 9.0.2 |
-| Config file | `/home/ollie/.openclaw/pyproject.toml` — `[tool.pytest.ini_options]` |
+| Config file | `~/.openclaw/pyproject.toml` — `[tool.pytest.ini_options]` |
 | Quick run command | `uv run pytest packages/orchestration/tests/test_config_integration.py -v` |
 | Full suite command | `uv run pytest packages/orchestration/tests/ -v` |
 | Estimated runtime | ~4-5 seconds (214 existing pass in 3.12s; new file adds ~15 tests) |
@@ -605,7 +605,7 @@ DEFAULT_POOL_RECOVERY_POLICY = "mark_failed"
 ### Wave 0 Gaps (must be created before implementation)
 - [ ] `packages/orchestration/tests/test_config_integration.py` — the entire CONF-07 test file (does not exist yet)
 - [ ] Add `valid_openclaw_config` fixture to `packages/orchestration/tests/conftest.py`
-- [ ] Add `integration` marker to `[tool.pytest.ini_options]` in `/home/ollie/.openclaw/pyproject.toml`
+- [ ] Add `integration` marker to `[tool.pytest.ini_options]` in `~/.openclaw/pyproject.toml`
 
 ---
 
@@ -626,12 +626,12 @@ DEFAULT_POOL_RECOVERY_POLICY = "mark_failed"
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/home/ollie/.openclaw/packages/orchestration/src/openclaw/config.py` — verified: `get_state_path()`, `get_snapshot_dir()`, `get_project_root()`, `get_active_project_env()`, `LOG_LEVEL`, `ACTIVITY_LOG_MAX_ENTRIES`, `DEFAULT_POOL_*` constants, `OPENCLAW_JSON_SCHEMA`, `PROJECT_JSON_SCHEMA`
-- `/home/ollie/.openclaw/packages/orchestration/src/openclaw/config_validator.py` — verified: `validate_openclaw_config()`, `validate_project_config_schema()`, `ConfigValidationError`
-- `/home/ollie/.openclaw/packages/orchestration/src/openclaw/project_config.py` — verified: `get_pool_config()`, `load_project_config()`, `load_and_validate_openclaw_config()`, `_emit_validation_results()` (calls sys.exit)
-- `/home/ollie/.openclaw/packages/orchestration/tests/conftest.py` — verified: structure, existing sys.path additions
-- `/home/ollie/.openclaw/packages/orchestration/tests/test_config_validator.py` — verified: existing tests, patterns for monkeypatch + tmp_path + importlib.reload
-- `/home/ollie/.openclaw/pyproject.toml` — verified: pytest config, testpaths, asyncio_mode
+- `~/.openclaw/packages/orchestration/src/openclaw/config.py` — verified: `get_state_path()`, `get_snapshot_dir()`, `get_project_root()`, `get_active_project_env()`, `LOG_LEVEL`, `ACTIVITY_LOG_MAX_ENTRIES`, `DEFAULT_POOL_*` constants, `OPENCLAW_JSON_SCHEMA`, `PROJECT_JSON_SCHEMA`
+- `~/.openclaw/packages/orchestration/src/openclaw/config_validator.py` — verified: `validate_openclaw_config()`, `validate_project_config_schema()`, `ConfigValidationError`
+- `~/.openclaw/packages/orchestration/src/openclaw/project_config.py` — verified: `get_pool_config()`, `load_project_config()`, `load_and_validate_openclaw_config()`, `_emit_validation_results()` (calls sys.exit)
+- `~/.openclaw/packages/orchestration/tests/conftest.py` — verified: structure, existing sys.path additions
+- `~/.openclaw/packages/orchestration/tests/test_config_validator.py` — verified: existing tests, patterns for monkeypatch + tmp_path + importlib.reload
+- `~/.openclaw/pyproject.toml` — verified: pytest config, testpaths, asyncio_mode
 - `uv run pytest packages/orchestration/tests/ -v --tb=no -q` — confirmed 214 passing, 3.12s runtime, pytest 9.0.2
 
 ### Secondary (MEDIUM confidence)

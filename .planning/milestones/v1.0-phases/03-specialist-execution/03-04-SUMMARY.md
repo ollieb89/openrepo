@@ -20,7 +20,7 @@ Added L3 specialist to the agents list with correct hierarchy configuration:
 {
   "id": "l3_specialist",
   "name": "L3 Specialist Executor",
-  "workspace": "/home/ollie/Development/Projects/pumplai",
+  "workspace": "~/Development/Projects/pumplai",
   "sandbox": {
     "mode": "all"
   },
@@ -88,14 +88,14 @@ The following verification steps must be run manually to confirm the complete L3
 
 **1. Build L3 Container Image**
 ```bash
-docker build -t openclaw-l3-specialist:latest /home/ollie/.openclaw/docker/l3-specialist/
+docker build -t openclaw-l3-specialist:latest ~/.openclaw/docker/l3-specialist/
 ```
 Expected: Image builds successfully
 
 **2. Verify State Engine**
 ```bash
 python3 -c "
-import sys; sys.path.insert(0, '/home/ollie/.openclaw')
+import sys; sys.path.insert(0, '~/.openclaw')
 from orchestration.state_engine import JarvisState
 from orchestration.config import STATE_FILE
 
@@ -110,20 +110,20 @@ print('✓ State engine: create/update/read works with locking')
 
 **3. Verify CLI Monitor**
 ```bash
-python3 /home/ollie/.openclaw/orchestration/monitor.py status
+python3 ~/.openclaw/orchestration/monitor.py status
 ```
 
 **4. Verify Container Spawning (Dry Run)**
 ```bash
 python3 -c "
-import sys; sys.path.insert(0, '/home/ollie/.openclaw')
+import sys; sys.path.insert(0, '~/.openclaw')
 from skills.spawn_specialist.spawn import spawn_l3_specialist
 
 container = spawn_l3_specialist(
     task_id='dry-run-001',
     skill_hint='code',
     task_description='Test container spawning',
-    workspace_path='/home/ollie/.openclaw/workspace',
+    workspace_path='~/.openclaw/workspace',
     requires_gpu=False,
     cli_runtime='echo'
 )
@@ -137,7 +137,7 @@ print('✓ Container removed')
 ```bash
 python3 -c "
 import json
-with open('/home/ollie/.openclaw/openclaw.json') as f:
+with open('~/.openclaw/openclaw.json') as f:
     config = json.load(f)
 agents = [a['id'] for a in config['agents']['list']]
 assert 'l3_specialist' in agents
@@ -157,11 +157,11 @@ Expected: `no-new-privileges`, `ALL`, `4294967296` (4GB)
 **7. Verify Snapshot System**
 ```bash
 python3 -c "
-import sys; sys.path.insert(0, '/home/ollie/.openclaw')
+import sys; sys.path.insert(0, '~/.openclaw')
 from orchestration.snapshot import create_staging_branch
 from pathlib import Path
 
-workspace = '/home/ollie/Development/Projects/pumplai'
+workspace = '~/Development/Projects/pumplai'
 if Path(workspace).exists() and (Path(workspace) / '.git').exists():
     branch = create_staging_branch('verify-snapshot-001', workspace)
     print(f'✓ Staging branch created: {branch}')

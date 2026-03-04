@@ -34,7 +34,7 @@ All 17 autonomy tests pass, including the 8 new tests for deviation detection an
 ```text
 ==================================== test session starts ====================================
 platform linux -- Python 3.14.3, pytest-9.0.2, pluggy-1.6.0
-rootdir: /home/ollie/.openclaw
+rootdir: ~/.openclaw
 configfile: pyproject.toml
 plugins: asyncio-1.3.0, anyio-4.12.1, respx-0.12.1
 asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_scope=None, asyncio_default_fixture_scope=function

@@ -35,7 +35,7 @@ The Dockerfile now uses `npm ci` / `npm run build` during image build to avoid r
 1. **Type checking**: `npx tsc --noEmit` — **PASSED**
 2. **Production build**: `npm run build` — **PASSED**
 3. **Standalone output**: `.next/standalone/server.js` — **EXISTS**
-4. **Container smoke test**: `docker run` starts successfully and `GET /api/swarm` returns live JSON when mounting `/home/ollie/.openclaw` and setting `STATE_FILE=/app/data/workspace/.openclaw/workspace-state.json`.
+4. **Container smoke test**: `docker run` starts successfully and `GET /api/swarm` returns live JSON when mounting `~/.openclaw` and setting `STATE_FILE=/app/data/workspace/.openclaw/workspace-state.json`.
 
 ## Human Verification Checklist
 
@@ -54,8 +54,8 @@ The Dockerfile now uses `npm ci` / `npm run build` during image build to avoid r
 # Run the dashboard container with required volumes
 docker run -d \
   -p 6987:6987 \
-  -v /home/ollie/.openclaw/workspace/.openclaw/workspace-state.json:/app/data/workspace-state.json:ro \
-  -v /home/ollie/.openclaw/openclaw.json:/app/data/openclaw.json:ro \
+  -v ~/.openclaw/workspace/.openclaw/workspace-state.json:/app/data/workspace-state.json:ro \
+  -v ~/.openclaw/openclaw.json:/app/data/openclaw.json:ro \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -e STATE_FILE=/app/data/workspace-state.json \
   -e OPENCLAW_CONFIG=/app/data/openclaw.json \

@@ -534,39 +534,39 @@ This function already handles: missing directory (returns 0/0), partial deletion
 | Property | Value |
 |----------|-------|
 | Framework | pytest (stdlib, no pytest.ini asyncio mode needed for these tests) |
-| Config file | `/home/ollie/.openclaw/tests/pytest.ini` (asyncio_mode = auto) |
-| Quick run command | `python3 -m pytest /home/ollie/.openclaw/tests/test_delta_snapshots.py -x -q` |
-| Full suite command | `python3 -m pytest /home/ollie/.openclaw/tests/ -x -q` |
+| Config file | `~/.openclaw/tests/pytest.ini` (asyncio_mode = auto) |
+| Quick run command | `python3 -m pytest ~/.openclaw/tests/test_delta_snapshots.py -x -q` |
+| Full suite command | `python3 -m pytest ~/.openclaw/tests/ -x -q` |
 | Estimated runtime | ~5 seconds (all tests are unit/mock-based, no Docker, no network) |
 
 ### Phase Requirements → Test Map
 
 | Req ID | Behavior | Test Type | Automated Command | File Exists? |
 |--------|----------|-----------|-------------------|-------------|
-| PERF-05 | `get_memory_cursor()` returns None when key absent; returns ISO string when set | unit | `python3 -m pytest /home/ollie/.openclaw/tests/test_delta_snapshots.py::test_get_memory_cursor_absent -x` | ❌ Wave 0 gap |
-| PERF-05 | `update_memory_cursor()` writes under `metadata.memory_cursors[project_id]` | unit | `python3 -m pytest /home/ollie/.openclaw/tests/test_delta_snapshots.py::test_update_memory_cursor_writes -x` | ❌ Wave 0 gap |
-| PERF-05 | Corrupt cursor value returns None (graceful) | unit | `python3 -m pytest /home/ollie/.openclaw/tests/test_delta_snapshots.py::test_get_memory_cursor_corrupt -x` | ❌ Wave 0 gap |
-| PERF-06 | `_retrieve_memories_sync` sends `created_after` in payload when provided | unit | `python3 -m pytest /home/ollie/.openclaw/tests/test_delta_snapshots.py::test_retrieve_sends_created_after -x` | ❌ Wave 0 gap |
-| PERF-06 | Cursor not updated when fetch returns ok=False (network error) | unit | `python3 -m pytest /home/ollie/.openclaw/tests/test_delta_snapshots.py::test_cursor_not_updated_on_fetch_failure -x` | ❌ Wave 0 gap |
-| PERF-06 | Cursor updated after successful fetch (even empty list) | unit | `python3 -m pytest /home/ollie/.openclaw/tests/test_delta_snapshots.py::test_cursor_updated_after_success -x` | ❌ Wave 0 gap |
-| PERF-07 | `_filter_after` returns only items newer than cutoff | unit | `python3 -m pytest /home/ollie/.openclaw/tests/test_delta_snapshots.py::test_filter_after_timestamp -x` | ❌ Wave 0 gap |
-| PERF-07 | `_filter_after` passes through items with None/missing created_at | unit | `python3 -m pytest /home/ollie/.openclaw/tests/test_delta_snapshots.py::test_filter_after_missing_created_at -x` | ❌ Wave 0 gap |
-| PERF-07 | `_filter_after` handles unix float and ISO string created_at | unit | `python3 -m pytest /home/ollie/.openclaw/tests/test_delta_snapshots.py::test_filter_after_unix_float -x` | ❌ Wave 0 gap |
-| PERF-07 | Unparseable `created_after` skips filter (returns all items) | unit | `python3 -m pytest /home/ollie/.openclaw/tests/test_delta_snapshots.py::test_filter_after_bad_cursor_passthrough -x` | ❌ Wave 0 gap |
-| PERF-08 | `capture_semantic_snapshot` calls `cleanup_old_snapshots` when `max_snapshots` set | unit | `python3 -m pytest /home/ollie/.openclaw/tests/test_delta_snapshots.py::test_prune_called_when_configured -x` | ❌ Wave 0 gap |
-| PERF-08 | No pruning when `max_snapshots` absent from l3_overrides | unit | `python3 -m pytest /home/ollie/.openclaw/tests/test_delta_snapshots.py::test_prune_not_called_when_unconfigured -x` | ❌ Wave 0 gap |
-| PERF-08 | Prune failure is logged but does not raise | unit | `python3 -m pytest /home/ollie/.openclaw/tests/test_delta_snapshots.py::test_prune_failure_nonfatal -x` | ❌ Wave 0 gap |
+| PERF-05 | `get_memory_cursor()` returns None when key absent; returns ISO string when set | unit | `python3 -m pytest ~/.openclaw/tests/test_delta_snapshots.py::test_get_memory_cursor_absent -x` | ❌ Wave 0 gap |
+| PERF-05 | `update_memory_cursor()` writes under `metadata.memory_cursors[project_id]` | unit | `python3 -m pytest ~/.openclaw/tests/test_delta_snapshots.py::test_update_memory_cursor_writes -x` | ❌ Wave 0 gap |
+| PERF-05 | Corrupt cursor value returns None (graceful) | unit | `python3 -m pytest ~/.openclaw/tests/test_delta_snapshots.py::test_get_memory_cursor_corrupt -x` | ❌ Wave 0 gap |
+| PERF-06 | `_retrieve_memories_sync` sends `created_after` in payload when provided | unit | `python3 -m pytest ~/.openclaw/tests/test_delta_snapshots.py::test_retrieve_sends_created_after -x` | ❌ Wave 0 gap |
+| PERF-06 | Cursor not updated when fetch returns ok=False (network error) | unit | `python3 -m pytest ~/.openclaw/tests/test_delta_snapshots.py::test_cursor_not_updated_on_fetch_failure -x` | ❌ Wave 0 gap |
+| PERF-06 | Cursor updated after successful fetch (even empty list) | unit | `python3 -m pytest ~/.openclaw/tests/test_delta_snapshots.py::test_cursor_updated_after_success -x` | ❌ Wave 0 gap |
+| PERF-07 | `_filter_after` returns only items newer than cutoff | unit | `python3 -m pytest ~/.openclaw/tests/test_delta_snapshots.py::test_filter_after_timestamp -x` | ❌ Wave 0 gap |
+| PERF-07 | `_filter_after` passes through items with None/missing created_at | unit | `python3 -m pytest ~/.openclaw/tests/test_delta_snapshots.py::test_filter_after_missing_created_at -x` | ❌ Wave 0 gap |
+| PERF-07 | `_filter_after` handles unix float and ISO string created_at | unit | `python3 -m pytest ~/.openclaw/tests/test_delta_snapshots.py::test_filter_after_unix_float -x` | ❌ Wave 0 gap |
+| PERF-07 | Unparseable `created_after` skips filter (returns all items) | unit | `python3 -m pytest ~/.openclaw/tests/test_delta_snapshots.py::test_filter_after_bad_cursor_passthrough -x` | ❌ Wave 0 gap |
+| PERF-08 | `capture_semantic_snapshot` calls `cleanup_old_snapshots` when `max_snapshots` set | unit | `python3 -m pytest ~/.openclaw/tests/test_delta_snapshots.py::test_prune_called_when_configured -x` | ❌ Wave 0 gap |
+| PERF-08 | No pruning when `max_snapshots` absent from l3_overrides | unit | `python3 -m pytest ~/.openclaw/tests/test_delta_snapshots.py::test_prune_not_called_when_unconfigured -x` | ❌ Wave 0 gap |
+| PERF-08 | Prune failure is logged but does not raise | unit | `python3 -m pytest ~/.openclaw/tests/test_delta_snapshots.py::test_prune_failure_nonfatal -x` | ❌ Wave 0 gap |
 
 ### Nyquist Sampling Rate
 
-- **Minimum sample interval:** After every committed task → run: `python3 -m pytest /home/ollie/.openclaw/tests/test_delta_snapshots.py -x -q`
+- **Minimum sample interval:** After every committed task → run: `python3 -m pytest ~/.openclaw/tests/test_delta_snapshots.py -x -q`
 - **Full suite trigger:** Before merging final task of any plan wave
-- **Phase-complete gate:** Full suite green (`python3 -m pytest /home/ollie/.openclaw/tests/ -x -q`) before `/gsd:verify-work` runs
+- **Phase-complete gate:** Full suite green (`python3 -m pytest ~/.openclaw/tests/ -x -q`) before `/gsd:verify-work` runs
 - **Estimated feedback latency per task:** ~5 seconds
 
 ### Wave 0 Gaps (must be created before implementation)
 
-- [ ] `/home/ollie/.openclaw/tests/test_delta_snapshots.py` — covers PERF-05, PERF-06, PERF-07, PERF-08 (13 test functions listed above)
+- [ ] `~/.openclaw/tests/test_delta_snapshots.py` — covers PERF-05, PERF-06, PERF-07, PERF-08 (13 test functions listed above)
 
 Existing test infrastructure covers the framework (pytest.ini exists, stdlib-only mocking pattern established in test_spawn_memory.py and test_health_scan.py). Only the new test file is missing.
 

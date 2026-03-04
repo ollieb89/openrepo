@@ -81,10 +81,10 @@ None — plan executed exactly as written.
 ## Self-Check: PASSED
 
 Files created/modified:
-- FOUND: /home/ollie/.openclaw/docker/memory/memory_service/models.py
-- FOUND: /home/ollie/.openclaw/docker/memory/memory_service/routers/memorize.py
-- FOUND: /home/ollie/.openclaw/orchestration/memory_client.py
-- FOUND: /home/ollie/.openclaw/tests/test_memory_client.py
+- FOUND: ~/.openclaw/docker/memory/memory_service/models.py
+- FOUND: ~/.openclaw/docker/memory/memory_service/routers/memorize.py
+- FOUND: ~/.openclaw/orchestration/memory_client.py
+- FOUND: ~/.openclaw/tests/test_memory_client.py
 
 Commits:
 - FOUND: ed791d9

@@ -75,7 +75,7 @@
 - Mitigation: add minimal unit tests for `openclaw` loaders, redaction, docker parser, and route handler integration tests.
 
 - **[Medium] Host-coupled operational dependencies without readiness gating.**
-- Evidence: `src/lib/openclaw.ts:5` hard default path `/home/ollie/.openclaw`; `src/lib/docker.ts:13` default docker socket path.
+- Evidence: `src/lib/openclaw.ts:5` hard default path `~/.openclaw`; `src/lib/docker.ts:13` default docker socket path.
 - Impact: environment drift causes runtime failures outside a narrow host setup.
 - Mitigation: validate required env/config at startup and expose a health/readiness endpoint.
 

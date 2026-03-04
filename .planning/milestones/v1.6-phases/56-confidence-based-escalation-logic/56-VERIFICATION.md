@@ -21,7 +21,7 @@ All 391 tests in the OpenClaw orchestration package, including the newly written
 ```text
 ==================================== test session starts ====================================
 platform linux -- Python 3.14.3, pytest-9.0.2, pluggy-1.6.0
-rootdir: /home/ollie/.openclaw
+rootdir: ~/.openclaw
 configfile: pyproject.toml
 plugins: asyncio-1.3.0, anyio-4.12.1, respx-0.22.0
 asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function

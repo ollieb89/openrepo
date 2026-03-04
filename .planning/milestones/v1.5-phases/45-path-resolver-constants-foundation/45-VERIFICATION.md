@@ -40,7 +40,7 @@ gaps:
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | config.py exports `get_state_path(project_id)` returning correct workspace state file path | VERIFIED | `config.py:59-76` — OPENCLAW_STATE_FILE env var first, then `<root>/workspace/.openclaw/<project_id>/workspace-state.json`. Runtime confirmed: returns `/home/ollie/.openclaw/workspace/.openclaw/pumplai/workspace-state.json` |
+| 1 | config.py exports `get_state_path(project_id)` returning correct workspace state file path | VERIFIED | `config.py:59-76` — OPENCLAW_STATE_FILE env var first, then `<root>/workspace/.openclaw/<project_id>/workspace-state.json`. Runtime confirmed: returns `~/.openclaw/workspace/.openclaw/pumplai/workspace-state.json` |
 | 2 | config.py exports `get_snapshot_dir(project_id)` returning correct snapshot directory path | VERIFIED | `config.py:79-91` — derives `<root>/workspace/.openclaw/<project_id>/snapshots`. Runtime confirmed correct path |
 | 3 | config.py exports `get_project_root()` resolving OPENCLAW_ROOT env var first, falling back to `~/.openclaw` | VERIFIED | `config.py:31-56` — `_find_project_root()` checks `os.environ.get("OPENCLAW_ROOT")` then `Path.home() / ".openclaw"`. Never uses `Path(__file__).parent` |
 | 4 | config.py contains all pool defaults, memory budget cap, and existing lock/poll/cache constants — no other module defines these values | VERIFIED | All pool defaults, memory budget cap, lock/poll/cache constants are in config.py. monitor.py fallback and pool.py __init__ now use imported constants |

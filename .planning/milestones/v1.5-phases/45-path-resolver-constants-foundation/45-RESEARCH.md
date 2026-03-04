@@ -62,7 +62,7 @@ None — discussion stayed within phase scope
 
 Phase 45 is a pure internal refactoring with no new user-facing capabilities. Its value is correctness: the existing codebase has a latent path divergence bug and duplicate constant definitions that create maintenance risk and can cause runtime failures if `OPENCLAW_ROOT` is not set.
 
-The path divergence is confirmed by codebase investigation. Three callers currently resolve the project root independently: `spawn.py` uses `Path(__file__).parent.parent.parent` (resolves to `/home/ollie/.openclaw` — correct), `project_config.py` uses `Path(__file__).parent.parent` (resolves to `packages/orchestration/src` — wrong without env var), and `monitor.py` uses `Path(__file__).parent.parent` (resolves to `packages/orchestration/src/openclaw` — wrong without env var). The system works in production only because `OPENCLAW_ROOT` env var is set at runtime, which masks the bug in `project_config.py` and `monitor.py`. Without that env var (e.g., tests, direct CLI invocations) the wrong root is silently used.
+The path divergence is confirmed by codebase investigation. Three callers currently resolve the project root independently: `spawn.py` uses `Path(__file__).parent.parent.parent` (resolves to `~/.openclaw` — correct), `project_config.py` uses `Path(__file__).parent.parent` (resolves to `packages/orchestration/src` — wrong without env var), and `monitor.py` uses `Path(__file__).parent.parent` (resolves to `packages/orchestration/src/openclaw` — wrong without env var). The system works in production only because `OPENCLAW_ROOT` env var is set at runtime, which masks the bug in `project_config.py` and `monitor.py`. Without that env var (e.g., tests, direct CLI invocations) the wrong root is silently used.
 
 The constant duplication is equally concrete: `_POOL_CONFIG_DEFAULTS` dict is defined identically in both `project_config.py` and `pool.py`; `MEMORY_CONTEXT_BUDGET = 2000` is hardcoded in `spawn.py` with a comment; `config.py` already has `LOCK_TIMEOUT`, `POLL_INTERVAL`, `CACHE_TTL_SECONDS`, `LOG_LEVEL`, and `ACTIVITY_LOG_MAX_ENTRIES` — but is missing pool defaults and the memory budget cap.
 
@@ -323,7 +323,7 @@ After the move, `spawn.py` imports `get_state_path` from `openclaw.config`. No r
 
 **What goes wrong:** Without `OPENCLAW_ROOT` set, `project_config._find_project_root()` returns `packages/orchestration/src` (not the project root). `get_state_path()` currently lives in `project_config.py` and calls `_find_project_root()`, so it returns `packages/orchestration/src/workspace/.openclaw/<id>/workspace-state.json` — a path that does not exist on disk.
 
-**Why it doesn't crash in production:** `OPENCLAW_ROOT=/home/ollie/.openclaw` is set in the shell environment before running any openclaw commands (required by Makefile — `make dashboard` errors if not set).
+**Why it doesn't crash in production:** `OPENCLAW_ROOT=~/.openclaw` is set in the shell environment before running any openclaw commands (required by Makefile — `make dashboard` errors if not set).
 
 **How to avoid:** New `_find_project_root()` in `config.py` must use `Path.home() / ".openclaw"` as fallback, NOT `Path(__file__).parent.*`. Verify with a unit test that checks the fallback without env var set.
 
@@ -331,7 +331,7 @@ After the move, `spawn.py` imports `get_state_path` from `openclaw.config`. No r
 
 ### Pitfall 2: Container Path vs Host Path in spawn.py
 
-**What goes wrong:** `get_state_path(project_id)` returns the **host** path (`/home/ollie/.openclaw/workspace/.openclaw/<id>/workspace-state.json`). The container needs the **container-internal** path (`/workspace/.openclaw/<id>/workspace-state.json`). If spawn.py naively injects `get_state_path(project_id)` as `OPENCLAW_STATE_FILE` without translation, the container gets a host path it cannot reach.
+**What goes wrong:** `get_state_path(project_id)` returns the **host** path (`~/.openclaw/workspace/.openclaw/<id>/workspace-state.json`). The container needs the **container-internal** path (`/workspace/.openclaw/<id>/workspace-state.json`). If spawn.py naively injects `get_state_path(project_id)` as `OPENCLAW_STATE_FILE` without translation, the container gets a host path it cannot reach.
 
 **Why it happens:** The mount creates an alias: host `~/workspace/.openclaw` → container `/workspace/.openclaw`. The mapping is implicit in the volumes dict.
 
@@ -535,13 +535,13 @@ from openclaw.config import (
 
 ### Primary (HIGH confidence)
 - Direct codebase inspection — all findings verified by reading actual source files
-  - `/home/ollie/.openclaw/packages/orchestration/src/openclaw/config.py` — current constants
-  - `/home/ollie/.openclaw/packages/orchestration/src/openclaw/project_config.py` — divergent resolver + duplicated pool defaults
-  - `/home/ollie/.openclaw/skills/spawn/spawn.py` — divergent resolver (lines 131, 433) + MEMORY_CONTEXT_BUDGET
-  - `/home/ollie/.openclaw/packages/orchestration/src/openclaw/cli/monitor.py` — divergent resolver (line 65)
-  - `/home/ollie/.openclaw/docker/l3-specialist/entrypoint.sh` — container-side OPENCLAW_STATE_FILE usage
-  - `/home/ollie/.openclaw/packages/orchestration/tests/test_spawn_memory.py` — import of MEMORY_CONTEXT_BUDGET (line 25)
-  - `/home/ollie/.openclaw/packages/orchestration/tests/conftest.py` — test infrastructure
+  - `~/.openclaw/packages/orchestration/src/openclaw/config.py` — current constants
+  - `~/.openclaw/packages/orchestration/src/openclaw/project_config.py` — divergent resolver + duplicated pool defaults
+  - `~/.openclaw/skills/spawn/spawn.py` — divergent resolver (lines 131, 433) + MEMORY_CONTEXT_BUDGET
+  - `~/.openclaw/packages/orchestration/src/openclaw/cli/monitor.py` — divergent resolver (line 65)
+  - `~/.openclaw/docker/l3-specialist/entrypoint.sh` — container-side OPENCLAW_STATE_FILE usage
+  - `~/.openclaw/packages/orchestration/tests/test_spawn_memory.py` — import of MEMORY_CONTEXT_BUDGET (line 25)
+  - `~/.openclaw/packages/orchestration/tests/conftest.py` — test infrastructure
 - Runtime verification via `python3 -c` path resolution checks
 
 ### Secondary (MEDIUM confidence)

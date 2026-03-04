@@ -146,7 +146,7 @@ def spawn_l3_specialist(task_id, skill_hint, workspace_path, requires_gpu=False)
         # Full workspace mount (read/write)
         'volumes': {
             workspace_path: {'bind': '/workspace', 'mode': 'rw'},
-            '/home/ollie/.openclaw/workspace/.openclaw': {
+            '~/.openclaw/workspace/.openclaw': {
                 'bind': '/workspace/.openclaw',
                 'mode': 'rw'
             }
@@ -371,7 +371,7 @@ class L3ContainerPool:
             # Spawn container
             container = spawn_l3_specialist(
                 task_id, skill_hint,
-                '/home/ollie/Development/Projects/pumplai',
+                '~/Development/Projects/pumplai',
                 requires_gpu
             )
 
@@ -389,7 +389,7 @@ class L3ContainerPool:
                     # Retry
                     container = spawn_l3_specialist(
                         task_id, f"{skill_hint} (retry)",
-                        '/home/ollie/Development/Projects/pumplai',
+                        '~/Development/Projects/pumplai',
                         requires_gpu
                     )
                     result = await self.monitor_container(container, task_id, retry_count=1)

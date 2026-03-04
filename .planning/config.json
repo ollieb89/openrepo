@@ -1,16 +1,16 @@
 {
+  "project_name": "openclaw-orchestration",
   "workflow": {
-    "research": true
+    "research": false,
+    "_auto_chain_active": false
   },
   "preferences": {
-    "tech_stack": [
-      "OpenClaw",
-      "Next.js",
-      "Bun",
-      "Docker",
-      "Gemini"
+    "agent_stack": [
+      "typescript",
+      "python"
     ],
-    "testing_framework": "Playwright",
-    "deployment": "Docker Compose"
+    "testing_framework": "vitest",
+    "protocol": "hybrid-acp",
+    "isolation_level": "container-per-agent"
   }
 }

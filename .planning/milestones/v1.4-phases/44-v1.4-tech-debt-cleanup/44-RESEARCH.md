@@ -73,7 +73,7 @@ The guard form (exit 1) is stronger and prevents silent failures on fresh deploy
 
 ### Pattern 3: TypeScript Literal Newline Fix
 
-**What:** The file `/home/ollie/.openclaw/packages/dashboard/src/components/sync/SummaryStream.tsx` has a literal newline at line 44 inside a string literal:
+**What:** The file `~/.openclaw/packages/dashboard/src/components/sync/SummaryStream.tsx` has a literal newline at line 44 inside a string literal:
 
 ```
 Line 43: "          buffer += decoder.decode(value, { stream: true });"
@@ -175,12 +175,12 @@ After (correct):
           const lines = buffer.split('\n');
 ```
 
-Source: Direct file inspection at `/home/ollie/.openclaw/packages/dashboard/src/components/sync/SummaryStream.tsx` lines 44-45.
+Source: Direct file inspection at `~/.openclaw/packages/dashboard/src/components/sync/SummaryStream.tsx` lines 44-45.
 
 ### Test verification run
 
 ```bash
-cd /home/ollie/.openclaw/packages/orchestration
+cd ~/.openclaw/packages/orchestration
 uv run pytest tests/test_l2_review_memorization.py tests/test_pool_memorization.py -v -W all
 # Expected: 17 passed, 0 warnings
 ```
@@ -196,8 +196,8 @@ Source: Direct test run in this session — 17 passed, 0 warnings confirmed.
 **Status:** Actionable — 2 files need editing.
 
 **Files to edit:**
-1. `/home/ollie/.openclaw/Makefile` — `dashboard` target needs env guard + comment
-2. `/home/ollie/.openclaw/README.md` — Dashboard section needs:
+1. `~/.openclaw/Makefile` — `dashboard` target needs env guard + comment
+2. `~/.openclaw/README.md` — Dashboard section needs:
    - `OPENCLAW_ROOT` export requirement documented
    - Stale `workspace/occc` path corrected to `packages/dashboard`
 
@@ -207,7 +207,7 @@ Source: Direct test run in this session — 17 passed, 0 warnings confirmed.
 
 **Status:** Actionable — 1 file, 1 line edit.
 
-**File:** `/home/ollie/.openclaw/packages/dashboard/src/components/sync/SummaryStream.tsx`
+**File:** `~/.openclaw/packages/dashboard/src/components/sync/SummaryStream.tsx`
 
 **Nature of bug:** Literal newline character embedded in string literal at line 44. TypeScript parser sees an unterminated string on line 44 and errors. The component is a streaming markdown renderer — it is used for summarization features, not the core orchestration flow. Pre-existing since before v1.4.
 
@@ -243,12 +243,12 @@ Source: Direct test run in this session — 17 passed, 0 warnings confirmed.
 ## Sources
 
 ### Primary (HIGH confidence)
-- Direct file inspection: `/home/ollie/.openclaw/packages/dashboard/src/components/sync/SummaryStream.tsx` — line 44 literal newline confirmed via `node -e` character-level inspection
+- Direct file inspection: `~/.openclaw/packages/dashboard/src/components/sync/SummaryStream.tsx` — line 44 literal newline confirmed via `node -e` character-level inspection
 - Direct test run: `uv run pytest tests/test_l2_review_memorization.py tests/test_pool_memorization.py -v -W all` — 17 passed, 0 warnings
 - Direct grep: `grep -rn "orchestration\." packages/orchestration/tests/` — zero `orchestration.*` patch targets found
-- `/home/ollie/.openclaw/.planning/v1.4-MILESTONE-AUDIT.md` — canonical source for all three tech debt items
-- `/home/ollie/.openclaw/Makefile` — current dashboard target, no env guard present
-- `/home/ollie/.openclaw/README.md` — stale `workspace/occc` path at line ~469, no OPENCLAW_ROOT requirement documented
+- `~/.openclaw/.planning/v1.4-MILESTONE-AUDIT.md` — canonical source for all three tech debt items
+- `~/.openclaw/Makefile` — current dashboard target, no env guard present
+- `~/.openclaw/README.md` — stale `workspace/occc` path at line ~469, no OPENCLAW_ROOT requirement documented
 
 ### Secondary (MEDIUM confidence)
 - Node.js `child_process.execFile` documentation: env inheritance is standard behavior — child inherits parent env when no `env:` option provided (well-documented Node.js behavior, consistent with POSIX fork/exec semantics)

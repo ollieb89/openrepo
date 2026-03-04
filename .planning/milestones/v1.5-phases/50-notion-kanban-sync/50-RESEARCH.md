@@ -738,19 +738,19 @@ All tests use `respx` (already in dev deps) to mock httpx calls to the Notion AP
 
 ### Primary (HIGH confidence)
 
-- `/home/ollie/.openclaw/skills/notion/SKILL.md` — Notion API 2025-09-03 reference, property formats, endpoint patterns, data_source_id vs database_id distinction
-- `/home/ollie/.openclaw/packages/orchestration/src/openclaw/state_engine.py` — hook site analysis, memory trigger pattern, project_id resolution
-- `/home/ollie/.openclaw/skills/spawn/pool.py` — container lifecycle hook sites, runtime tracking variables
-- `/home/ollie/.openclaw/packages/orchestration/src/openclaw/cli/project.py` — project_registered and project_removed hook sites
-- `/home/ollie/.openclaw/packages/orchestration/src/openclaw/config.py` — constants pattern, project root resolution
-- `/home/ollie/.openclaw/.planning/phases/50-notion-kanban-sync/SPEC.md` — authoritative schema, event mappings, dedupe model, ownership rules
-- `/home/ollie/.openclaw/.planning/phases/50-notion-kanban-sync/50-CONTEXT.md` — locked decisions, user constraints
+- `~/.openclaw/skills/notion/SKILL.md` — Notion API 2025-09-03 reference, property formats, endpoint patterns, data_source_id vs database_id distinction
+- `~/.openclaw/packages/orchestration/src/openclaw/state_engine.py` — hook site analysis, memory trigger pattern, project_id resolution
+- `~/.openclaw/skills/spawn/pool.py` — container lifecycle hook sites, runtime tracking variables
+- `~/.openclaw/packages/orchestration/src/openclaw/cli/project.py` — project_registered and project_removed hook sites
+- `~/.openclaw/packages/orchestration/src/openclaw/config.py` — constants pattern, project root resolution
+- `~/.openclaw/.planning/phases/50-notion-kanban-sync/SPEC.md` — authoritative schema, event mappings, dedupe model, ownership rules
+- `~/.openclaw/.planning/phases/50-notion-kanban-sync/50-CONTEXT.md` — locked decisions, user constraints
 
 ### Secondary (MEDIUM confidence)
 
-- `/home/ollie/.openclaw/skills/review/review.py` + `skill.json` — existing Python skill structure pattern
-- `/home/ollie/.openclaw/skills/spawn/spawn.py` — `_retrieve_memories_sync` as fire-and-forget threading pattern reference
-- `/home/ollie/.openclaw/packages/orchestration/tests/conftest.py` — test infrastructure, sys.path pattern for skills
+- `~/.openclaw/skills/review/review.py` + `skill.json` — existing Python skill structure pattern
+- `~/.openclaw/skills/spawn/spawn.py` — `_retrieve_memories_sync` as fire-and-forget threading pattern reference
+- `~/.openclaw/packages/orchestration/tests/conftest.py` — test infrastructure, sys.path pattern for skills
 
 ---
 

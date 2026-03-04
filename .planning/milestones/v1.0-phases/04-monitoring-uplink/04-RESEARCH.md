@@ -757,8 +757,8 @@ function useAgentStateMonitor() {
 - Context7 `/vercel/next.js/v16.1.5` - SSE streaming, route handlers, App Router patterns
 - Context7 `/vercel/swr-site` - Auto-refresh configuration, polling intervals, revalidation
 - Context7 `/websites/tailwindcss` - Responsive grid system, dark mode, breakpoint patterns
-- Existing codebase `/home/ollie/.openclaw/workspace/occc/` - Next.js 16.1.5 + Tailwind 4 configuration verified
-- Existing codebase `/home/ollie/.openclaw/orchestration/state_engine.py` - Jarvis Protocol schema, locking mechanism
+- Existing codebase `~/.openclaw/workspace/occc/` - Next.js 16.1.5 + Tailwind 4 configuration verified
+- Existing codebase `~/.openclaw/orchestration/state_engine.py` - Jarvis Protocol schema, locking mechanism
 
 ### Secondary (MEDIUM confidence)
 - [Dozzle - Real-time Docker log viewer](https://github.com/amir20/dozzle) - Open-source reference for Docker log streaming UI patterns

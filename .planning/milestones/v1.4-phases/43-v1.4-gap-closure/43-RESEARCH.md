@@ -110,7 +110,7 @@ packages/orchestration/tests/
 
 ```typescript
 // Source: CONTEXT.md locked decision
-const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || '/home/ollie/.openclaw';
+const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || '~/.openclaw';
 const ORCHESTRATION_ROOT = path.join(OPENCLAW_ROOT, 'packages', 'orchestration', 'src', 'openclaw');
 // Then:
 const orchestrationPath = path.join(ORCHESTRATION_ROOT, 'cli', 'suggest.py');  // route.ts
@@ -333,7 +333,7 @@ if (!existsSync(path.join(ORCHESTRATION_ROOT, 'cli', 'suggest.py'))) {
 | Property | Value |
 |----------|-------|
 | Framework | pytest 9.0.2 + pytest-asyncio 1.3.0 |
-| Config file | `/home/ollie/.openclaw/pyproject.toml` (`[tool.pytest.ini_options]`) |
+| Config file | `~/.openclaw/pyproject.toml` (`[tool.pytest.ini_options]`) |
 | Quick run command | `uv run pytest packages/orchestration/tests/test_pool_shutdown.py -v` |
 | Full suite command | `uv run pytest packages/orchestration/tests/ -v` |
 | Estimated runtime | ~3 seconds |

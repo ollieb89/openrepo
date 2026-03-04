@@ -396,13 +396,13 @@ logger.info("Spawning L3 container", extra={
 - Python stdlib `logging` module documentation — `Formatter`, `Handler`, `Logger`, `LogRecord` APIs
 - Python stdlib `json` module — `json.dumps(ensure_ascii=False, default=str)` for safe serialization
 - Python stdlib `datetime` module — `datetime.fromtimestamp(ts, tz=timezone.utc).isoformat(timespec='microseconds')` for ISO 8601 UTC
-- `/home/ollie/.openclaw/orchestration/logging.py` — Implemented module (verified 2026-02-24)
-- `/home/ollie/.openclaw/.planning/phases/19-structured-logging/19-VERIFICATION.md` — Verification report (passed 9/9 must-haves)
+- `~/.openclaw/orchestration/logging.py` — Implemented module (verified 2026-02-24)
+- `~/.openclaw/.planning/phases/19-structured-logging/19-VERIFICATION.md` — Verification report (passed 9/9 must-haves)
 
 ### Secondary (MEDIUM confidence)
 
-- `/home/ollie/.openclaw/.planning/phases/19-structured-logging/19-CONTEXT.md` — User decisions gathered 2026-02-24
-- `/home/ollie/.openclaw/.planning/STATE.md` — Accumulated decisions from Phase 19 execution
+- `~/.openclaw/.planning/phases/19-structured-logging/19-CONTEXT.md` — User decisions gathered 2026-02-24
+- `~/.openclaw/.planning/STATE.md` — Accumulated decisions from Phase 19 execution
 
 ### Tertiary (LOW confidence)
 

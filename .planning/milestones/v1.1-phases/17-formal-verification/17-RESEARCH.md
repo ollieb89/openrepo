@@ -195,7 +195,7 @@ def get_state_path(project_id: Optional[str] = None) -> Path:
     if not manifest_path.exists():
         raise ProjectNotFoundError(...)
     return root / "workspace" / ".openclaw" / project_id / "workspace-state.json"
-    # Example: /home/ollie/.openclaw/workspace/.openclaw/pumplai/workspace-state.json
+    # Example: ~/.openclaw/workspace/.openclaw/pumplai/workspace-state.json
 
 # orchestration/state_engine.py:72-75
 def _ensure_state_file(self) -> None:
@@ -396,18 +396,18 @@ Phase 17 IS:
 
 All findings from direct codebase inspection:
 
-- `/home/ollie/.openclaw/orchestration/project_config.py` — `get_state_path()` at line 100, `get_snapshot_dir()` at line 123
-- `/home/ollie/.openclaw/orchestration/snapshot.py` — `capture_semantic_snapshot()` at line 171, `cleanup_old_snapshots()` at line 461, `create_staging_branch()` at line 74, `_detect_default_branch()` at line 20
-- `/home/ollie/.openclaw/orchestration/soul_renderer.py` — `build_variables()` at line 81, `render_soul()` at line 118, `merge_sections()` at line 48, override detection at line 145
-- `/home/ollie/.openclaw/agents/_templates/soul-default.md` — `$project_name` at line 4, `$tech_stack_*` at lines 10-12
-- `/home/ollie/.openclaw/projects/pumplai/soul-override.md` — override sections HIERARCHY and BEHAVIORAL PROTOCOLS
-- `/home/ollie/.openclaw/skills/spawn_specialist/spawn.py` — `load_l3_config()` at line 47, `get_agent_mapping()` call at line 50
-- `/home/ollie/.openclaw/orchestration/state_engine.py` — `_ensure_state_file()` at line 72
-- `/home/ollie/.openclaw/scripts/verify_phase16.py` — all 4 checks PASS (run confirmed: exit 0)
-- `/home/ollie/.openclaw/scripts/verify_soul_golden.py` — all checks PASS (run confirmed: exit 0)
-- `/home/ollie/.openclaw/.planning/v1.1-MILESTONE-AUDIT.md` — verification gap identification
-- `/home/ollie/.openclaw/.planning/phases/16-integration-fixes/16-VERIFICATION.md` — VERIFICATION.md format template
-- `/home/ollie/.openclaw/.planning/REQUIREMENTS.md` — requirement definitions and traceability
+- `~/.openclaw/orchestration/project_config.py` — `get_state_path()` at line 100, `get_snapshot_dir()` at line 123
+- `~/.openclaw/orchestration/snapshot.py` — `capture_semantic_snapshot()` at line 171, `cleanup_old_snapshots()` at line 461, `create_staging_branch()` at line 74, `_detect_default_branch()` at line 20
+- `~/.openclaw/orchestration/soul_renderer.py` — `build_variables()` at line 81, `render_soul()` at line 118, `merge_sections()` at line 48, override detection at line 145
+- `~/.openclaw/agents/_templates/soul-default.md` — `$project_name` at line 4, `$tech_stack_*` at lines 10-12
+- `~/.openclaw/projects/pumplai/soul-override.md` — override sections HIERARCHY and BEHAVIORAL PROTOCOLS
+- `~/.openclaw/skills/spawn_specialist/spawn.py` — `load_l3_config()` at line 47, `get_agent_mapping()` call at line 50
+- `~/.openclaw/orchestration/state_engine.py` — `_ensure_state_file()` at line 72
+- `~/.openclaw/scripts/verify_phase16.py` — all 4 checks PASS (run confirmed: exit 0)
+- `~/.openclaw/scripts/verify_soul_golden.py` — all checks PASS (run confirmed: exit 0)
+- `~/.openclaw/.planning/v1.1-MILESTONE-AUDIT.md` — verification gap identification
+- `~/.openclaw/.planning/phases/16-integration-fixes/16-VERIFICATION.md` — VERIFICATION.md format template
+- `~/.openclaw/.planning/REQUIREMENTS.md` — requirement definitions and traceability
 
 ---
 

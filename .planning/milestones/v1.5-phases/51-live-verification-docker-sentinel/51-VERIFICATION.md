@@ -6,11 +6,11 @@
 
 ## Pre-flight
 
-- [x] OPENCLAW_ROOT set: /home/ollie/.openclaw
+- [x] OPENCLAW_ROOT set: ~/.openclaw
 - [x] L3 image built: openclaw-l3-specialist:latest
 - [x] memU health: {"status":"ok","service":"openclaw-memory","memu_initialized":true}
 - [x] Stale test containers cleaned
-- [x] State directory created: /home/ollie/.openclaw/workspace/.openclaw/pumplai/
+- [x] State directory created: ~/.openclaw/workspace/.openclaw/pumplai/
 
 ## Test 1: docker stop → exit 143 + interrupted
 
@@ -44,12 +44,12 @@
 
 ## Test 3: Makefile guard
 
-**Command:** `(unset OPENCLAW_ROOT; make -C /home/ollie/.openclaw dashboard) 2>&1`
+**Command:** `(unset OPENCLAW_ROOT; make -C ~/.openclaw dashboard) 2>&1`
 **Expected output:** Contains "ERROR: OPENCLAW_ROOT is not set"
 **Actual output:**
 ```
 ERROR: OPENCLAW_ROOT is not set. The dashboard requires this to locate suggest.py and soul-suggestions.json.
-  Run: export OPENCLAW_ROOT=/home/ollie/.openclaw
+  Run: export OPENCLAW_ROOT=~/.openclaw
 make: *** [Makefile:20: dashboard] Error 1
 ```
 **bun started by test?:** NO (bun was already running from a prior session; the guard correctly prevented starting a new instance)

@@ -198,7 +198,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { NextResponse } from 'next/server';
 
-const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || '/home/ollie/.openclaw';
+const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || '~/.openclaw';
 const PROJECTS_DIR = path.join(OPENCLAW_ROOT, 'projects');
 
 export interface ProjectInfo {
@@ -341,11 +341,11 @@ const handleProjectSwitch = (projectId: string) => {
 
 ### Pitfall 4: `OPENCLAW_ROOT` Path Assumption
 
-**What goes wrong:** The existing route hardcodes `/home/ollie/.openclaw`. In Docker deployment, the workspace is mounted at a different path. Adding more hardcoded paths for `projects/` directory will compound this.
+**What goes wrong:** The existing route hardcodes `~/.openclaw`. In Docker deployment, the workspace is mounted at a different path. Adding more hardcoded paths for `projects/` directory will compound this.
 
 **Why it happens:** Existing code uses `DEFAULT_STATE_FILE` constants with hardcoded paths as fallbacks.
 
-**How to avoid:** Add `OPENCLAW_ROOT` env var support in the new `src/lib/projects.ts` helper. When constructing paths, use `process.env.OPENCLAW_ROOT || '/home/ollie/.openclaw'` as the base. The Docker deployment already sets `STATE_FILE` via env var; extend this pattern.
+**How to avoid:** Add `OPENCLAW_ROOT` env var support in the new `src/lib/projects.ts` helper. When constructing paths, use `process.env.OPENCLAW_ROOT || '~/.openclaw'` as the base. The Docker deployment already sets `STATE_FILE` via env var; extend this pattern.
 
 **Warning signs:** `/api/projects` returns empty list or 500 in Docker; works locally.
 
@@ -367,7 +367,7 @@ const handleProjectSwitch = (projectId: string) => {
 
 ```typescript
 // src/lib/projects.ts
-const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || '/home/ollie/.openclaw';
+const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || '~/.openclaw';
 
 export function resolveStateFilePath(projectId: string): string {
   // Mirrors Python get_state_path() convention:
@@ -527,7 +527,7 @@ These facts from the current codebase directly affect task design:
 
 ### Primary (HIGH confidence)
 
-- Codebase inspection (`/home/ollie/.openclaw/workspace/occc/src/**`) — existing API route structure, SWR usage, SSE implementation, component props
+- Codebase inspection (`~/.openclaw/workspace/occc/src/**`) — existing API route structure, SWR usage, SSE implementation, component props
 - `orchestration/project_config.py` — Python `get_state_path()` convention used to derive TypeScript equivalent
 - `projects/pumplai/project.json`, `projects/geriai/project.json` — actual project data structure
 - `openclaw.json` — agent list and active_project field

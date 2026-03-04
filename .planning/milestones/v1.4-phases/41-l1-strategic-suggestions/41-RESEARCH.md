@@ -253,7 +253,7 @@ import { NextRequest } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
 
-const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || '/home/ollie/.openclaw';
+const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || '~/.openclaw';
 const MAX_DIFF_LINES = 100;  // ADV-06 constraint
 const FORBIDDEN_PATTERNS = [
   /cap_drop/i,
@@ -495,7 +495,7 @@ import { NextRequest } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
 
-const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || '/home/ollie/.openclaw';
+const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || '~/.openclaw';
 
 function suggestionsPath(projectId: string): string {
   return path.join(OPENCLAW_ROOT, 'workspace', '.openclaw', projectId, 'soul-suggestions.json');
@@ -579,18 +579,18 @@ export async function GET(request: NextRequest) {
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/home/ollie/.openclaw/orchestration/soul_renderer.py` — `render_soul()`, `write_soul()`, `parse_sections()`, `merge_sections()` — authoritative SOUL rendering logic
-- `/home/ollie/.openclaw/orchestration/memory_client.py` — `MemoryClient.retrieve()`, `memorize()` API contract
-- `/home/ollie/.openclaw/orchestration/project_config.py` — `get_state_path()`, `_find_project_root()`, `get_memu_config()`, `_POOL_CONFIG_DEFAULTS` pattern
-- `/home/ollie/.openclaw/orchestration/state_engine.py` — activity log schema: `{timestamp, status, entry}` per task
-- `/home/ollie/.openclaw/docker/memory/memory_service/scan_engine.py` — pure-stdlib module pattern for testable extraction logic
-- `/home/ollie/.openclaw/workspace/occc/src/app/api/memory/[id]/route.ts` — PUT validation + proxy pattern
-- `/home/ollie/.openclaw/workspace/occc/src/app/api/memory/health-scan/route.ts` — run-button API route pattern
-- `/home/ollie/.openclaw/workspace/occc/src/components/layout/Sidebar.tsx` — nav item structure; badge requires extending current `navItems` array
-- `/home/ollie/.openclaw/workspace/occc/src/lib/openclaw.ts` — `OPENCLAW_ROOT` env var, `readOpenClawConfig()`, per-project state path construction
-- `/home/ollie/.openclaw/.planning/phases/41-l1-strategic-suggestions/41-CONTEXT.md` — locked decisions and discretion areas
-- `/home/ollie/.openclaw/.planning/REQUIREMENTS.md` — ADV-01 through ADV-06 definitions
-- `/home/ollie/.openclaw/.planning/STATE.md` — "Build approval gate before suggestion pipeline" directive; Phase 41 Blocker note about sparse rejection corpus
+- `~/.openclaw/orchestration/soul_renderer.py` — `render_soul()`, `write_soul()`, `parse_sections()`, `merge_sections()` — authoritative SOUL rendering logic
+- `~/.openclaw/orchestration/memory_client.py` — `MemoryClient.retrieve()`, `memorize()` API contract
+- `~/.openclaw/orchestration/project_config.py` — `get_state_path()`, `_find_project_root()`, `get_memu_config()`, `_POOL_CONFIG_DEFAULTS` pattern
+- `~/.openclaw/orchestration/state_engine.py` — activity log schema: `{timestamp, status, entry}` per task
+- `~/.openclaw/docker/memory/memory_service/scan_engine.py` — pure-stdlib module pattern for testable extraction logic
+- `~/.openclaw/workspace/occc/src/app/api/memory/[id]/route.ts` — PUT validation + proxy pattern
+- `~/.openclaw/workspace/occc/src/app/api/memory/health-scan/route.ts` — run-button API route pattern
+- `~/.openclaw/workspace/occc/src/components/layout/Sidebar.tsx` — nav item structure; badge requires extending current `navItems` array
+- `~/.openclaw/workspace/occc/src/lib/openclaw.ts` — `OPENCLAW_ROOT` env var, `readOpenClawConfig()`, per-project state path construction
+- `~/.openclaw/.planning/phases/41-l1-strategic-suggestions/41-CONTEXT.md` — locked decisions and discretion areas
+- `~/.openclaw/.planning/REQUIREMENTS.md` — ADV-01 through ADV-06 definitions
+- `~/.openclaw/.planning/STATE.md` — "Build approval gate before suggestion pipeline" directive; Phase 41 Blocker note about sparse rejection corpus
 
 ### Secondary (MEDIUM confidence)
 - `skills/router_skill/index.js` — `execFileSync` with array args pattern (referenced for subprocess injection prevention in API route)

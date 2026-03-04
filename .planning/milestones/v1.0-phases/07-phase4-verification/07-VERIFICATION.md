@@ -93,7 +93,7 @@ The following items were verified by code inspection and static analysis. Runtim
 
 #### 2. State-Change Triggered Update
 
-**Test:** With stream open, run `touch /home/ollie/.openclaw/workspace/.openclaw/workspace-state.json`
+**Test:** With stream open, run `touch ~/.openclaw/workspace/.openclaw/workspace-state.json`
 **Expected:** Another `data:` event appears in curl output within 1-2 seconds
 **Why human:** Depends on filesystem mtime precision and runtime poll cycle alignment
 
@@ -137,7 +137,7 @@ watchInterval = setInterval(async () => {
 
 Import at line 2 confirmed:
 ```
-/home/ollie/.openclaw/workspace/occc/src/app/api/swarm/stream/route.ts:2:import { getSwarmState } from '@/app/api/swarm/route';
+~/.openclaw/workspace/occc/src/app/api/swarm/stream/route.ts:2:import { getSwarmState } from '@/app/api/swarm/route';
 ```
 
 ### Gap 2 Closed: SEC-02 Missing Patterns

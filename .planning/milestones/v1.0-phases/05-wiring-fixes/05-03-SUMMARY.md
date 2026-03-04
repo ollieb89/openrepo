@@ -41,7 +41,7 @@ Created a single integration verification script that validates all Phase 5 succ
 
 Command:
 ```bash
-cd /home/ollie/.openclaw && python3 scripts/verify_phase5_integration.py
+cd ~/.openclaw && python3 scripts/verify_phase5_integration.py
 ```
 
 Result:

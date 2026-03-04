@@ -329,10 +329,10 @@ class ConfigValidationError(Exception):
 
 ### Error message format
 ```
-project.json (/home/ollie/.openclaw/projects/pumplai/project.json):
+project.json (~/.openclaw/projects/pumplai/project.json):
   missing required field "workspace". Add a workspace path pointing to your project directory.
 
-openclaw.json (/home/ollie/.openclaw/openclaw.json):
+openclaw.json (~/.openclaw/openclaw.json):
   agent "pumplai_pm" reports_to "nonexistent_agent" which does not exist.
   Check the agent ID spelling or add the missing agent.
 ```

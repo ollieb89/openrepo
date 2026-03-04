@@ -50,7 +50,7 @@ python3 orchestration/migrate_state.py --project pumplai
 ## Verification
 
 ```bash
-cd /home/ollie/.openclaw && python3 -c "
+cd ~/.openclaw && python3 -c "
 import ast
 # Verify valid Python
 with open('orchestration/migrate_state.py') as f:

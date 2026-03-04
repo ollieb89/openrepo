@@ -619,13 +619,13 @@ This means:
 
 ### Primary (HIGH confidence)
 
-- `/home/ollie/.openclaw/orchestration/snapshot.py` — `l2_merge_staging()` and `l2_reject_staging()` full implementations; three verdict paths identified (success, conflict-abort, GitOperationError); no existing callers
-- `/home/ollie/.openclaw/skills/spawn_specialist/spawn.py` — `_retrieve_memories_sync()` (sync httpx.Client pattern), `_format_memory_context()` (forward-compatible `category == "l2_review"` stub), `_build_augmented_soul()` (two-section SOUL structure)
-- `/home/ollie/.openclaw/skills/spawn_specialist/pool.py` — `_memorize_snapshot_fire_and_forget()` (asyncio.create_task pattern; confirmed correct for async context only)
-- `/home/ollie/.openclaw/orchestration/memory_client.py` — `AgentType.L2_PM = "l2_pm"`, `MemoryClient.memorize()` payload shape, sentinel degradation pattern
-- `/home/ollie/.openclaw/orchestration/project_config.py` — `get_memu_config()` (already exists; returns memu_api_url + enabled)
-- `/home/ollie/.openclaw/orchestration/__init__.py` — confirmed export of `l2_merge_staging`, `l2_reject_staging`; exhaustive caller search confirms no active callers
-- `/home/ollie/.openclaw/tests/pytest.ini` — `asyncio_mode = auto`; test framework confirmed
+- `~/.openclaw/orchestration/snapshot.py` — `l2_merge_staging()` and `l2_reject_staging()` full implementations; three verdict paths identified (success, conflict-abort, GitOperationError); no existing callers
+- `~/.openclaw/skills/spawn_specialist/spawn.py` — `_retrieve_memories_sync()` (sync httpx.Client pattern), `_format_memory_context()` (forward-compatible `category == "l2_review"` stub), `_build_augmented_soul()` (two-section SOUL structure)
+- `~/.openclaw/skills/spawn_specialist/pool.py` — `_memorize_snapshot_fire_and_forget()` (asyncio.create_task pattern; confirmed correct for async context only)
+- `~/.openclaw/orchestration/memory_client.py` — `AgentType.L2_PM = "l2_pm"`, `MemoryClient.memorize()` payload shape, sentinel degradation pattern
+- `~/.openclaw/orchestration/project_config.py` — `get_memu_config()` (already exists; returns memu_api_url + enabled)
+- `~/.openclaw/orchestration/__init__.py` — confirmed export of `l2_merge_staging`, `l2_reject_staging`; exhaustive caller search confirms no active callers
+- `~/.openclaw/tests/pytest.ini` — `asyncio_mode = auto`; test framework confirmed
 - Python 3 stdlib docs — `threading.Thread(daemon=True)` pattern for fire-and-forget from sync context
 
 ### Secondary (MEDIUM confidence)

@@ -315,7 +315,7 @@ if not project_id:
   "id": "myproject",
   "name": "My Project",
   "agent_display_name": "MyProject_PM",
-  "workspace": "/home/ollie/.openclaw/workspace/myproject",
+  "workspace": "~/.openclaw/workspace/myproject",
   "tech_stack": {
     "frontend": "",
     "backend": "",
@@ -415,8 +415,8 @@ def _build_default_project_json(project_id: str, name: str, workspace: str) -> d
 ```
 ID              NAME            WORKSPACE                               ACTIVE
 ──────────────────────────────────────────────────────────────────────────────
-pumplai         PumplAI         /home/ollie/Development/Projects/pum…  *
-geriai          GerIAI          /home/ollie/Development/Projects/ger…
+pumplai         PumplAI         ~/Development/Projects/pum…  *
+geriai          GerIAI          ~/Development/Projects/ger…
 badproject      (corrupt)       —
 ```
 Column widths: ID=15, NAME=15, WORKSPACE=40 (truncated), ACTIVE=6. Use the existing `Colors` class for ANSI.
@@ -457,12 +457,12 @@ Column widths: ID=15, NAME=15, WORKSPACE=40 (truncated), ACTIVE=6. Use the exist
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/home/ollie/.openclaw/orchestration/monitor.py` — argparse subcommand pattern, Colors class, `_discover_projects()` implementation
-- `/home/ollie/.openclaw/orchestration/project_config.py` — `_find_project_root()`, `get_active_project_id()`, `load_project_config()`, `get_state_path()`, project ID validation
-- `/home/ollie/.openclaw/orchestration/soul_renderer.py` — `write_soul()`, `build_variables()`, skip_if_exists behavior
-- `/home/ollie/.openclaw/skills/spawn_specialist/spawn.py` — container naming pattern (`openclaw-{project_id}-l3-{task_id}`), label `openclaw.project`, `_validate_project_id()`
-- `/home/ollie/.openclaw/projects/pumplai/project.json` and `geriai/project.json` — canonical project.json schema
-- `/home/ollie/.openclaw/openclaw.json` — `active_project` field structure confirmed, `agents.list` structure verified
+- `~/.openclaw/orchestration/monitor.py` — argparse subcommand pattern, Colors class, `_discover_projects()` implementation
+- `~/.openclaw/orchestration/project_config.py` — `_find_project_root()`, `get_active_project_id()`, `load_project_config()`, `get_state_path()`, project ID validation
+- `~/.openclaw/orchestration/soul_renderer.py` — `write_soul()`, `build_variables()`, skip_if_exists behavior
+- `~/.openclaw/skills/spawn_specialist/spawn.py` — container naming pattern (`openclaw-{project_id}-l3-{task_id}`), label `openclaw.project`, `_validate_project_id()`
+- `~/.openclaw/projects/pumplai/project.json` and `geriai/project.json` — canonical project.json schema
+- `~/.openclaw/openclaw.json` — `active_project` field structure confirmed, `agents.list` structure verified
 - Live Docker test: `client.containers.list(filters={"label": "openclaw.project=pumplai"})` returned empty list — SDK works, filter syntax confirmed
 
 ### Secondary (MEDIUM confidence)

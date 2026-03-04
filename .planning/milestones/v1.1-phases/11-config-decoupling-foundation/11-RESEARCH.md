@@ -582,12 +582,12 @@ def get_active_project_id() -> str:
 ## Sources
 
 ### Primary (HIGH confidence)
-- Direct codebase inspection of `/home/ollie/.openclaw/orchestration/` — all Python modules read in full
-- Direct inspection of `/home/ollie/.openclaw/skills/spawn_specialist/spawn.py` and `pool.py`
-- Direct inspection of `/home/ollie/.openclaw/docker/l3-specialist/entrypoint.sh`
-- Direct inspection of `/home/ollie/.openclaw/workspace/.openclaw/workspace-state.json` — live state data
-- Direct inspection of `/home/ollie/.openclaw/projects/pumplai/project.json`
-- Direct inspection of `/home/ollie/.openclaw/openclaw.json`
+- Direct codebase inspection of `~/.openclaw/orchestration/` — all Python modules read in full
+- Direct inspection of `~/.openclaw/skills/spawn_specialist/spawn.py` and `pool.py`
+- Direct inspection of `~/.openclaw/docker/l3-specialist/entrypoint.sh`
+- Direct inspection of `~/.openclaw/workspace/.openclaw/workspace-state.json` — live state data
+- Direct inspection of `~/.openclaw/projects/pumplai/project.json`
+- Direct inspection of `~/.openclaw/openclaw.json`
 
 ### Secondary (MEDIUM confidence)
 - None required — all findings are from direct code inspection

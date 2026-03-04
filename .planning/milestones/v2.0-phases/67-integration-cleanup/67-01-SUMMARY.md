@@ -116,7 +116,7 @@ _Note: TDD tasks have two commits — test (RED) then feat (GREEN)_
 - **Issue:** Test file used `parents[4]` for repo root but the actual depth is `parents[3]`
 - **Fix:** Changed `parents[4]` to `parents[3]` in two sys.path.insert() calls in test_route_directive_importable.py
 - **Files modified:** packages/orchestration/tests/test_route_directive_importable.py
-- **Verification:** Import path resolves to `/home/ob/Development/Tools/openrepo` (confirmed)
+- **Verification:** Import path resolves to `~/Development/Tools/openrepo` (confirmed)
 - **Committed in:** b04628f (Task 2 commit)
 
 ---

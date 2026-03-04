@@ -53,7 +53,7 @@ Phase 27 builds a thin Python wrapper (`orchestration/memory_client.py`) around 
 
 The implementation is pure Python (no new external dependencies beyond `httpx`) and follows the established patterns in the orchestration layer: asyncio, structured JSON logging via `get_logger()`, and sentinel-value degradation (no exceptions propagate). The async context manager pattern (`async with MemoryClient(...) as client:`) ensures the httpx connection pool is always released cleanly, even in fire-and-forget contexts.
 
-The test suite will be the first in the `/home/ollie/.openclaw/` orchestration layer — no existing test infrastructure exists. Tests use `respx` to mock httpx calls at the transport layer, enabling true isolation: no live memU service required.
+The test suite will be the first in the `~/.openclaw/` orchestration layer — no existing test infrastructure exists. Tests use `respx` to mock httpx calls at the transport layer, enabling true isolation: no live memU service required.
 
 **Primary recommendation:** Implement `MemoryClient` as an `httpx.AsyncClient` wrapper with constructor-enforced scoping, `@dataclass(frozen=True)` return types, and `respx` for test isolation.
 
@@ -83,7 +83,7 @@ The test suite will be the first in the `/home/ollie/.openclaw/` orchestration l
 ### Supporting (test only)
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
-| pytest | latest | Test runner | Standard; no pytest.ini exists yet in /home/ollie/.openclaw — must create |
+| pytest | latest | Test runner | Standard; no pytest.ini exists yet in ~/.openclaw — must create |
 | pytest-asyncio | latest | Async test support for coroutines | Required for `async def test_*` functions with the AsyncClient |
 | respx | latest | Mock httpx at transport level | Best-in-class httpx mock; supports `@respx.mock` decorator and context manager; route-based matching; response side effects |
 
@@ -414,8 +414,8 @@ async with MemoryClient(MEMU_SERVICE_URL, project_id, AgentType.L3_CODE) as clie
    - Recommendation: In Wave 0 or first task, add a quick introspection step: POST to `/retrieve` with a test payload against the live stack (localhost:18791) and inspect the response body before finalizing `RetrieveResult` field names. Fall back to `items: List[dict]` if the shape is a nested list without a top-level key.
 
 2. **pytest.ini location and asyncio_mode**
-   - What we know: No tests/ directory and no pytest.ini exists anywhere in /home/ollie/.openclaw.
-   - What's unclear: Whether to put pytest.ini at the project root (`/home/ollie/.openclaw/pytest.ini`) or inside `tests/`.
+   - What we know: No tests/ directory and no pytest.ini exists anywhere in ~/.openclaw.
+   - What's unclear: Whether to put pytest.ini at the project root (`~/.openclaw/pytest.ini`) or inside `tests/`.
    - Recommendation: Create `tests/` directory and `tests/pytest.ini` with `asyncio_mode = auto`. Keeps test config colocated with tests.
 
 ---
@@ -425,10 +425,10 @@ async with MemoryClient(MEMU_SERVICE_URL, project_id, AgentType.L3_CODE) as clie
 ### Primary (HIGH confidence)
 - `/encode/httpx` (Context7) — AsyncClient lifecycle, timeout configuration, exception hierarchy
 - `/lundberg/respx` (Context7) — Mock transport, route-based matching, pytest integration
-- `/home/ollie/.openclaw/docker/memory/memory_service/routers/` — Live Phase 26 API surface (memorize, retrieve, health, memories endpoint implementations)
-- `/home/ollie/.openclaw/docker/memory/memory_service/models.py` — Exact request/response Pydantic schemas
-- `/home/ollie/.openclaw/orchestration/logging.py` — `get_logger()` pattern for structured logging
-- `/home/ollie/.openclaw/skills/spawn_specialist/pool.py` — asyncio patterns and project_id threading conventions
+- `~/.openclaw/docker/memory/memory_service/routers/` — Live Phase 26 API surface (memorize, retrieve, health, memories endpoint implementations)
+- `~/.openclaw/docker/memory/memory_service/models.py` — Exact request/response Pydantic schemas
+- `~/.openclaw/orchestration/logging.py` — `get_logger()` pattern for structured logging
+- `~/.openclaw/skills/spawn_specialist/pool.py` — asyncio patterns and project_id threading conventions
 
 ### Secondary (MEDIUM confidence)
 - Phase 26 VERIFICATION.md — Confirmed live API behavior: `/health` returns `{"status":"ok","service":"openclaw-memory","memu_initialized":true}`, `/memorize` returns 202, `/retrieve` returns 500 with placeholder key (expected)

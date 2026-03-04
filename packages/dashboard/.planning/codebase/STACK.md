@@ -43,7 +43,7 @@
 - Data access layer is concentrated in `src/lib/openclaw.ts` and `src/lib/docker.ts`.
 
 ## Environment and Local Dependencies
-- `OPENCLAW_ROOT` env var controls OpenClaw filesystem root (default `/home/ollie/.openclaw`) in `src/lib/openclaw.ts`.
+- `OPENCLAW_ROOT` env var controls OpenClaw filesystem root (default `~/.openclaw`) in `src/lib/openclaw.ts`.
 - `DOCKER_SOCKET` env var controls Docker socket path (default `/var/run/docker.sock`) in `src/lib/docker.ts`.
 - App expects OpenClaw state files such as ``/workspace/.openclaw/<project>/workspace-state.json`` and project configs under ``/projects/<id>/project.json``.
 - App expects Docker daemon/socket availability for container listing and log streaming features.

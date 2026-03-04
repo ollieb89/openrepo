@@ -135,7 +135,7 @@ All 6 requirements mapped, all claimed by at least one plan. No orphaned require
 
 | File | Line | Pattern | Severity | Impact |
 |------|------|---------|----------|--------|
-| `src/app/api/topology/route.ts` | 8 | `OPENCLAW_ROOT = process.env.OPENCLAW_ROOT \|\| '/home/ollie/.openclaw'` | Info | Hardcoded path fallback matches the project's existing pattern (same in `metrics/route.ts`). Portable via env var override. Not a blocker. |
+| `src/app/api/topology/route.ts` | 8 | `OPENCLAW_ROOT = process.env.OPENCLAW_ROOT \|\| '~/.openclaw'` | Info | Hardcoded path fallback matches the project's existing pattern (same in `metrics/route.ts`). Portable via env var override. Not a blocker. |
 | `src/app/api/topology/changelog/route.ts` | 8 | Same hardcoded fallback | Info | Same as above — consistent with codebase pattern. |
 
 No blocker or warning anti-patterns found. The `return null` and `return []` occurrences are all legitimate guard clauses, not stubs. No `TODO`/`FIXME`/`PLACEHOLDER` comments in production code.
@@ -200,7 +200,7 @@ No blocker or warning anti-patterns found. The `return null` and `return []` occ
 | `tests/topology/confidence.test.ts` | 8 | PASS (real assertions) |
 | **Total topology** | **39** | **ALL PASS** |
 
-Pre-existing failures in `tests/connectors/` (5 tests) are unrelated to this phase — they fail due to filesystem permission errors at `/home/ollie/.openclaw/`.
+Pre-existing failures in `tests/connectors/` (5 tests) are unrelated to this phase — they fail due to filesystem permission errors at `~/.openclaw/`.
 
 TypeScript compilation: **CLEAN** (`npx tsc --noEmit` exits with no errors).
 

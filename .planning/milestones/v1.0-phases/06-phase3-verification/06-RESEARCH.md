@@ -134,7 +134,7 @@ container = spawn_l3_specialist(
     task_id='phase6-verify-001',
     skill_hint='code',
     task_description='Phase 6 isolation verification',
-    workspace_path='/home/ollie/.openclaw/workspace',
+    workspace_path='~/.openclaw/workspace',
     requires_gpu=False,
     cli_runtime='echo'   # Use 'echo' so container exits fast without a real CLI
 )
@@ -244,7 +244,7 @@ container = spawn_l3_specialist(
     task_id='phase6-isolation-test',
     skill_hint='code',
     task_description='isolation flag verification',
-    workspace_path='/home/ollie/.openclaw/workspace',
+    workspace_path='~/.openclaw/workspace',
     requires_gpu=False,
     cli_runtime='echo'
 )
@@ -265,7 +265,7 @@ finally:
 ### State Engine Create/Update/Read
 ```python
 # Source: orchestration/state_engine.py + 03-01-SUMMARY.md
-import sys; sys.path.insert(0, '/home/ollie/.openclaw')
+import sys; sys.path.insert(0, '~/.openclaw')
 from orchestration.state_engine import JarvisState
 from orchestration.config import STATE_FILE
 
@@ -302,7 +302,7 @@ print('[PASS] COM-04: Snapshot directory writable, capture path functional')
 # Run as subprocess to capture output as evidence
 import subprocess
 result = subprocess.run(
-    ['python3', '/home/ollie/.openclaw/orchestration/monitor.py', 'status'],
+    ['python3', '~/.openclaw/orchestration/monitor.py', 'status'],
     capture_output=True, text=True
 )
 assert result.returncode == 0
@@ -352,13 +352,13 @@ print(result.stdout)  # Capture for VERIFICATION.md evidence
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/home/ollie/.openclaw/skills/spawn_specialist/spawn.py` — `spawn_l3_specialist()` implementation, security flags, exact API
-- `/home/ollie/.openclaw/orchestration/state_engine.py` — JarvisState class, locking strategy
-- `/home/ollie/.openclaw/orchestration/snapshot.py` — Snapshot capture functions
-- `/home/ollie/.openclaw/orchestration/monitor.py` — CLI monitor implementation
-- `/home/ollie/.openclaw/.planning/phases/03-specialist-execution/03-02-SUMMARY.md` — Confirmed spawn.py security flags
-- `/home/ollie/.openclaw/.planning/phases/05-wiring-fixes/05-02-SUMMARY.md` — Phase 5 snapshot initialization confirmed
-- `/home/ollie/.openclaw/.planning/phases/05-wiring-fixes/05-03-SUMMARY.md` — Phase 5 integration COMPLETE
+- `~/.openclaw/skills/spawn_specialist/spawn.py` — `spawn_l3_specialist()` implementation, security flags, exact API
+- `~/.openclaw/orchestration/state_engine.py` — JarvisState class, locking strategy
+- `~/.openclaw/orchestration/snapshot.py` — Snapshot capture functions
+- `~/.openclaw/orchestration/monitor.py` — CLI monitor implementation
+- `~/.openclaw/.planning/phases/03-specialist-execution/03-02-SUMMARY.md` — Confirmed spawn.py security flags
+- `~/.openclaw/.planning/phases/05-wiring-fixes/05-02-SUMMARY.md` — Phase 5 snapshot initialization confirmed
+- `~/.openclaw/.planning/phases/05-wiring-fixes/05-03-SUMMARY.md` — Phase 5 integration COMPLETE
 - Live: `python3 orchestration/monitor.py status` — ran successfully in this session
 - Live: `python3 scripts/verify_phase5_integration.py` — output: PHASE 5 COMPLETE, all PASS
 - Live: `docker images openclaw-l3-specialist` — image exists, 569MB
@@ -366,8 +366,8 @@ print(result.stdout)  # Capture for VERIFICATION.md evidence
 - Live: `workspace/.openclaw/snapshots/` — directory exists and is writable
 
 ### Secondary (MEDIUM confidence)
-- `/home/ollie/.openclaw/.planning/v1.0-MILESTONE-AUDIT.md` — Audit that identified Phase 3 verification gap
-- `/home/ollie/.openclaw/.planning/phases/03-specialist-execution/03-04-SUMMARY.md` — 7-step human verification blueprint
+- `~/.openclaw/.planning/v1.0-MILESTONE-AUDIT.md` — Audit that identified Phase 3 verification gap
+- `~/.openclaw/.planning/phases/03-specialist-execution/03-04-SUMMARY.md` — 7-step human verification blueprint
 
 ---
 

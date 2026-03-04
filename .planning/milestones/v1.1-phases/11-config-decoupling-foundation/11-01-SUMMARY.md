@@ -27,7 +27,7 @@
 ## Verification
 
 ```bash
-cd /home/ollie/.openclaw && python3 -c "
+cd ~/.openclaw && python3 -c "
 from orchestration.project_config import get_state_path, get_snapshot_dir, ProjectNotFoundError
 from orchestration.snapshot import _detect_default_branch
 from pathlib import Path
@@ -42,7 +42,7 @@ except ProjectNotFoundError:
     pass
 
 # CFG-06: branch detection
-branch = _detect_default_branch(Path('/home/ollie/.openclaw/workspace'))
+branch = _detect_default_branch(Path('~/.openclaw/workspace'))
 assert isinstance(branch, str) and branch
 
 print('Phase 11-01 complete: all assertions passed')

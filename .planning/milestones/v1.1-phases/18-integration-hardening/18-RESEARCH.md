@@ -253,7 +253,7 @@ submodule imports (e.g., `from orchestration.config import X`).
   "id": "pumplai",
   "name": "PumplAI",
   "agent_display_name": "PumplAI_PM",
-  "workspace": "/home/ollie/Development/Projects/pumplai",
+  "workspace": "~/Development/Projects/pumplai",
   ...
 }
 ```
@@ -265,7 +265,7 @@ submodule imports (e.g., `from orchestration.config import X`).
   "id": "geriai",
   "name": "GerIAI",
   "agent_display_name": "GerIAI_PM",
-  "workspace": "/home/ollie/Development/Projects/geriai",
+  "workspace": "~/Development/Projects/geriai",
   "tech_stack": {
     "frontend": "",
     "backend": "",
@@ -495,7 +495,7 @@ def initialize_workspace(project_root: Optional[Path] = None) -> Dict[str, Any]:
   "id": "geriai",
   "name": "GerIAI",
   "agent_display_name": "GerIAI_PM",
-  "workspace": "/home/ollie/Development/Projects/geriai",
+  "workspace": "~/Development/Projects/geriai",
   "tech_stack": {
     "frontend": "",
     "backend": "",
@@ -546,14 +546,14 @@ All 4 tasks touch different files with no shared write targets.
 
 ### Primary (HIGH confidence)
 
-- Direct source inspection: `/home/ollie/.openclaw/docker/l3-specialist/entrypoint.sh` — confirmed hardcoded `main` on line 39
-- Direct source inspection: `/home/ollie/.openclaw/orchestration/__init__.py` — confirmed `get_state_path`, `get_snapshot_dir`, `ProjectNotFoundError` absent from imports and `__all__`
-- Direct source inspection: `/home/ollie/.openclaw/orchestration/init.py` — confirmed `initialize_workspace()` does not call `write_soul()`
-- Direct source inspection: `/home/ollie/.openclaw/projects/geriai/project.json` — confirmed `"id": "pumplai"` (copy-paste error)
-- Direct source inspection: `/home/ollie/.openclaw/orchestration/soul_renderer.py` — confirmed `write_soul()` API, output path derivation logic
-- Direct source inspection: `/home/ollie/.openclaw/orchestration/snapshot.py` — confirmed `_detect_default_branch()` signature and resolution order
-- Direct source inspection: `/home/ollie/.openclaw/skills/spawn_specialist/spawn.py` — confirmed `environment` dict structure, confirmed `DEFAULT_BRANCH` is absent
-- Audit document: `/home/ollie/.openclaw/.planning/v1.1-MILESTONE-AUDIT.md` — primary source for gap identification and fix specifications
+- Direct source inspection: `~/.openclaw/docker/l3-specialist/entrypoint.sh` — confirmed hardcoded `main` on line 39
+- Direct source inspection: `~/.openclaw/orchestration/__init__.py` — confirmed `get_state_path`, `get_snapshot_dir`, `ProjectNotFoundError` absent from imports and `__all__`
+- Direct source inspection: `~/.openclaw/orchestration/init.py` — confirmed `initialize_workspace()` does not call `write_soul()`
+- Direct source inspection: `~/.openclaw/projects/geriai/project.json` — confirmed `"id": "pumplai"` (copy-paste error)
+- Direct source inspection: `~/.openclaw/orchestration/soul_renderer.py` — confirmed `write_soul()` API, output path derivation logic
+- Direct source inspection: `~/.openclaw/orchestration/snapshot.py` — confirmed `_detect_default_branch()` signature and resolution order
+- Direct source inspection: `~/.openclaw/skills/spawn_specialist/spawn.py` — confirmed `environment` dict structure, confirmed `DEFAULT_BRANCH` is absent
+- Audit document: `~/.openclaw/.planning/v1.1-MILESTONE-AUDIT.md` — primary source for gap identification and fix specifications
 
 ### No External Research Required
 

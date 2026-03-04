@@ -527,15 +527,15 @@ Run command: `uv run pytest tests/ -v -k "health"` for new tests.
 
 ### Primary (HIGH confidence)
 
-- `/home/ollie/.openclaw/docker/memory/memory_service/routers/memories.py` — existing GET/DELETE patterns
-- `/home/ollie/.openclaw/docker/memory/memory_service/models.py` — existing Pydantic models
-- `/home/ollie/.openclaw/workspace/memory/src/memu/app/crud.py` — `update_memory_item()` signature and behavior
-- `/home/ollie/.openclaw/workspace/memory/src/memu/database/postgres/repositories/memory_item_repo.py` — `vector_search_items()`, `update_item()`, `list_items()` — all verified by reading source
-- `/home/ollie/.openclaw/workspace/memory/src/memu/database/inmemory/vector.py` — `cosine_topk()` available for conflict scan
-- `/home/ollie/.openclaw/workspace/memory/src/memu/database/models.py` — `MemoryItem.extra` JSONB field confirmed
-- `/home/ollie/.openclaw/workspace/occc/src/components/memory/MemoryPanel.tsx` — existing component state patterns
-- `/home/ollie/.openclaw/workspace/occc/src/components/memory/MemoryRow.tsx` — badge rendering pattern
-- `/home/ollie/.openclaw/workspace/occc/src/app/api/memory/[id]/route.ts` — existing DELETE proxy pattern
+- `~/.openclaw/docker/memory/memory_service/routers/memories.py` — existing GET/DELETE patterns
+- `~/.openclaw/docker/memory/memory_service/models.py` — existing Pydantic models
+- `~/.openclaw/workspace/memory/src/memu/app/crud.py` — `update_memory_item()` signature and behavior
+- `~/.openclaw/workspace/memory/src/memu/database/postgres/repositories/memory_item_repo.py` — `vector_search_items()`, `update_item()`, `list_items()` — all verified by reading source
+- `~/.openclaw/workspace/memory/src/memu/database/inmemory/vector.py` — `cosine_topk()` available for conflict scan
+- `~/.openclaw/workspace/memory/src/memu/database/models.py` — `MemoryItem.extra` JSONB field confirmed
+- `~/.openclaw/workspace/occc/src/components/memory/MemoryPanel.tsx` — existing component state patterns
+- `~/.openclaw/workspace/occc/src/components/memory/MemoryRow.tsx` — badge rendering pattern
+- `~/.openclaw/workspace/occc/src/app/api/memory/[id]/route.ts` — existing DELETE proxy pattern
 - `.planning/REQUIREMENTS.md` — QUAL-01..06 requirements
 - `.planning/phases/40-memory-health-monitor/40-CONTEXT.md` — locked user decisions
 

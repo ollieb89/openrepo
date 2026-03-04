@@ -234,11 +234,11 @@ def render_soul(project_id: str) -> str:
 
 ### Pitfall 1: workspace path mismatch breaks golden baseline
 
-**What goes wrong:** The `agents/pumplai_pm/agent/SOUL.md` golden file contains `/home/ollie/.openclaw/workspace` (the OpenClaw runtime workspace), but `projects/pumplai/project.json` has `workspace: /home/ollie/Development/Projects/pumplai` (the PumplAI application codebase). These are two different paths. If you try to source `$workspace` from `project.json`, the rendered HIERARCHY section won't match the golden baseline.
+**What goes wrong:** The `agents/pumplai_pm/agent/SOUL.md` golden file contains `~/.openclaw/workspace` (the OpenClaw runtime workspace), but `projects/pumplai/project.json` has `workspace: ~/Development/Projects/pumplai` (the PumplAI application codebase). These are two different paths. If you try to source `$workspace` from `project.json`, the rendered HIERARCHY section won't match the golden baseline.
 
 **Why it happens:** The SOUL.md `workspace` line describes the L2 agent's operational workspace (where it reads/writes OpenClaw state), not the application codebase being developed.
 
-**How to avoid:** The HIERARCHY section for PumplAI must come from `soul-override.md` which contains the literal `/home/ollie/.openclaw/workspace` path (or a `$openclaw_workspace` variable mapped to the OpenClaw root workspace). The default template's HIERARCHY section can use `$workspace` mapped to the OpenClaw runtime workspace directory, not the project's application workspace.
+**How to avoid:** The HIERARCHY section for PumplAI must come from `soul-override.md` which contains the literal `~/.openclaw/workspace` path (or a `$openclaw_workspace` variable mapped to the OpenClaw root workspace). The default template's HIERARCHY section can use `$workspace` mapped to the OpenClaw runtime workspace directory, not the project's application workspace.
 
 **Warning signs:** Golden baseline diff is non-empty only in the HIERARCHY section's Scope line.
 
@@ -418,10 +418,10 @@ def render_soul(project_id: str) -> str:
 ## HIERARCHY
 - **Superior:** Reports to **ClawdiaPrime (L1)**. All major project decisions must align with L1 strategic plans.
 - **Subordinates:** Supervises **nextjs_pm** and **python_backend_worker** (L3 Workers).
-- **Scope:** Primary authority over the `/home/ollie/.openclaw/workspace` workspace.
+- **Scope:** Primary authority over the `~/.openclaw/workspace` workspace.
 ```
 
-**Note:** This override replaces only the HIERARCHY section. CORE GOVERNANCE and BEHAVIORAL PROTOCOLS come from the default template with variable substitution applied. The specific workspace path `/home/ollie/.openclaw/workspace` is hardcoded in the override (not sourced from `project.json.workspace`) because the two paths differ — see Pitfall 1.
+**Note:** This override replaces only the HIERARCHY section. CORE GOVERNANCE and BEHAVIORAL PROTOCOLS come from the default template with variable substitution applied. The specific workspace path `~/.openclaw/workspace` is hardcoded in the override (not sourced from `project.json.workspace`) because the two paths differ — see Pitfall 1.
 
 Alternatively, the override can use `$workspace` if the renderer maps `$workspace` to `_find_project_root() / "workspace"`, making it portable across machines.
 
@@ -486,10 +486,10 @@ else:
 
 ### Primary (HIGH confidence)
 - Python stdlib `string` module — `string.Template`, `safe_substitute()`, `$$` escape, identifier regex `[_a-z][_a-z0-9]*` (case-insensitive) verified by live testing in this session
-- `/home/ollie/.openclaw/agents/pumplai_pm/agent/SOUL.md` — golden baseline content verified by reading file
-- `/home/ollie/.openclaw/projects/pumplai/project.json` — variable source verified: tech_stack.frontend, tech_stack.backend, tech_stack.infra confirmed
-- `/home/ollie/.openclaw/.planning/STATE.md` — locked technology decision: `string.Template.safe_substitute()` confirmed
-- `/home/ollie/.openclaw/.planning/phases/12-soul-templating/12-CONTEXT.md` — all locked decisions and override mechanics
+- `~/.openclaw/agents/pumplai_pm/agent/SOUL.md` — golden baseline content verified by reading file
+- `~/.openclaw/projects/pumplai/project.json` — variable source verified: tech_stack.frontend, tech_stack.backend, tech_stack.infra confirmed
+- `~/.openclaw/.planning/STATE.md` — locked technology decision: `string.Template.safe_substitute()` confirmed
+- `~/.openclaw/.planning/phases/12-soul-templating/12-CONTEXT.md` — all locked decisions and override mechanics
 
 ### Secondary (MEDIUM confidence)
 - Live prototype testing in this research session: section parser, variable substitution, golden baseline reconstruction all validated in Python 3 interpreter

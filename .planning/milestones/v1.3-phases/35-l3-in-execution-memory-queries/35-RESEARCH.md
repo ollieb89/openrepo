@@ -385,14 +385,14 @@ Nyquist validation is not configured in `.planning/config.json` (no `workflow.ny
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/home/ollie/.openclaw/docker/memory/memory_service/routers/retrieve.py` — exact POST /retrieve endpoint signature and response handling
-- `/home/ollie/.openclaw/docker/memory/memory_service/models.py` — `RetrieveRequest` Pydantic model confirming payload shape
-- `/home/ollie/.openclaw/orchestration/memory_client.py` — confirmed retrieve payload: `{"queries": [{"role":"user","content":"..."}], "where": {"user_id": "..."}}`; confirmed both list and dict response shapes handled
-- `/home/ollie/.openclaw/skills/spawn_specialist/spawn.py` — confirmed `MEMU_API_URL`, `OPENCLAW_PROJECT`, `SKILL_HINT` env vars injected at spawn; confirmed `openclaw-net` network; confirmed `curl` + `jq` in Dockerfile
-- `/home/ollie/.openclaw/docker/l3-specialist/Dockerfile` — confirmed `curl` and `jq` installed in base image
-- `/home/ollie/.openclaw/docker/l3-specialist/entrypoint.sh` — confirmed SOUL injection pattern and env var availability
-- `/home/ollie/.openclaw/agents/l3_specialist/agent/SOUL.md` — read current SOUL content; confirmed section placement strategy (append at end)
-- `/home/ollie/.openclaw/tests/test_spawn_memory.py` — existing test patterns (mock httpx.Client, MagicMock setup) that this phase's tests should follow for consistency
+- `~/.openclaw/docker/memory/memory_service/routers/retrieve.py` — exact POST /retrieve endpoint signature and response handling
+- `~/.openclaw/docker/memory/memory_service/models.py` — `RetrieveRequest` Pydantic model confirming payload shape
+- `~/.openclaw/orchestration/memory_client.py` — confirmed retrieve payload: `{"queries": [{"role":"user","content":"..."}], "where": {"user_id": "..."}}`; confirmed both list and dict response shapes handled
+- `~/.openclaw/skills/spawn_specialist/spawn.py` — confirmed `MEMU_API_URL`, `OPENCLAW_PROJECT`, `SKILL_HINT` env vars injected at spawn; confirmed `openclaw-net` network; confirmed `curl` + `jq` in Dockerfile
+- `~/.openclaw/docker/l3-specialist/Dockerfile` — confirmed `curl` and `jq` installed in base image
+- `~/.openclaw/docker/l3-specialist/entrypoint.sh` — confirmed SOUL injection pattern and env var availability
+- `~/.openclaw/agents/l3_specialist/agent/SOUL.md` — read current SOUL content; confirmed section placement strategy (append at end)
+- `~/.openclaw/tests/test_spawn_memory.py` — existing test patterns (mock httpx.Client, MagicMock setup) that this phase's tests should follow for consistency
 
 ### Secondary (MEDIUM confidence)
 - Python stdlib `http.server.BaseHTTPRequestHandler` — confirmed available in Python 3.x; commonly used for mock servers in tests

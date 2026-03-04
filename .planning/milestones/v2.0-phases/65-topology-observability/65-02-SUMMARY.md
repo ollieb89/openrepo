@@ -132,7 +132,7 @@ None — TypeScript generics issue was caught immediately during verification an
 - All 6 topology visualization components are complete and TypeScript-clean
 - Unit tests for transform (4), diff (7), and proposals (4) all pass
 - Components are ready to be wired into the topology page from plan 65-01 (`TopologyPanel.tsx` already imports structure; plan 65-03 may add the page integration)
-- Pre-existing connector test failures (4 tests, `/home/ollie/.openclaw/` permission error) are out of scope and pre-date this work
+- Pre-existing connector test failures (4 tests, `~/.openclaw/` permission error) are out of scope and pre-date this work
 
 ---
 *Phase: 65-topology-observability*

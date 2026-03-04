@@ -78,7 +78,7 @@ completed: 2026-02-24
 
 ## Decisions Made
 
-- Used `sys.path.insert(0, "/home/ollie/.openclaw/docker/memory/memory_service")` to import `_filter_after` from `routers.retrieve` — matches the plan's recommended import strategy
+- Used `sys.path.insert(0, "~/.openclaw/docker/memory/memory_service")` to import `_filter_after` from `routers.retrieve` — matches the plan's recommended import strategy
 - PERF-08 tests patch four symbols in `orchestration.snapshot`: `load_project_config`, `cleanup_old_snapshots`, `subprocess.run`, `get_snapshot_dir` — all four are needed because `capture_semantic_snapshot` calls all of them during the snapshot write path
 - PERF-06 tests assert `isinstance(result, tuple)` before unpacking to `(items, ok)` — gives clear failure message when function still returns bare list
 

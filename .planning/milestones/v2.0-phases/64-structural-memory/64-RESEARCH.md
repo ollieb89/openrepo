@@ -503,9 +503,9 @@ def _get_preference_fit(
 
 ### Primary (HIGH confidence)
 
-- Direct code inspection: `/home/ob/Development/Tools/openrepo/packages/orchestration/src/openclaw/topology/` — full module read including storage.py, rubric.py, diff.py, correction.py, approval.py, proposal_models.py, llm_client.py
-- Direct code inspection: `/home/ob/Development/Tools/openrepo/skills/spawn/spawn.py` — CATEGORY_SECTION_MAP, `_format_memory_context()`, `_build_augmented_soul()` (lines 217-300)
-- Direct code inspection: `/home/ob/Development/Tools/openrepo/packages/orchestration/tests/test_spawn_memory.py` — established test patterns for spawn isolation
+- Direct code inspection: `~/Development/Tools/openrepo/packages/orchestration/src/openclaw/topology/` — full module read including storage.py, rubric.py, diff.py, correction.py, approval.py, proposal_models.py, llm_client.py
+- Direct code inspection: `~/Development/Tools/openrepo/skills/spawn/spawn.py` — CATEGORY_SECTION_MAP, `_format_memory_context()`, `_build_augmented_soul()` (lines 217-300)
+- Direct code inspection: `~/Development/Tools/openrepo/packages/orchestration/tests/test_spawn_memory.py` — established test patterns for spawn isolation
 - Project context: `.planning/phases/64-structural-memory/64-CONTEXT.md` — all locked decisions verified
 
 ### Secondary (MEDIUM confidence)

@@ -384,13 +384,13 @@ threshold = float(cfg.get("conflict_threshold", MEMORY_CONFLICT_THRESHOLD))
 ### Primary (HIGH confidence)
 - Docker official docs: https://docs.docker.com/reference/dockerfile/#healthcheck — HEALTHCHECK syntax, start_period, retries, shell vs exec form
 - Docker SDK Python docs: https://docker-py.readthedocs.io/en/stable/containers.html — `containers.list(filters=...)` usage
-- `/home/ollie/.openclaw/docker/l3-specialist/Dockerfile` — current Dockerfile; no HEALTHCHECK instruction present
-- `/home/ollie/.openclaw/docker/l3-specialist/entrypoint.sh` — startup sequence; sentinel write point identified
-- `/home/ollie/.openclaw/packages/orchestration/src/openclaw/config.py` — existing constants pattern, schema definitions
-- `/home/ollie/.openclaw/packages/orchestration/src/openclaw/cli/monitor.py` — `tail_state()` loop structure, `time.sleep(interval)` location
-- `/home/ollie/.openclaw/packages/orchestration/src/openclaw/project_config.py` — `get_memu_config()` pattern
-- `/home/ollie/.openclaw/config/openclaw.json` — `memory` key exists with `memu_api_url`; schema permits arbitrary object fields
-- `/home/ollie/.openclaw/docker/memory/memory_service/models.py` — `HealthScanRequest.similarity_min/max` defaults (0.75, 0.97); `QUAL-07` threshold is separate from health scan thresholds
+- `~/.openclaw/docker/l3-specialist/Dockerfile` — current Dockerfile; no HEALTHCHECK instruction present
+- `~/.openclaw/docker/l3-specialist/entrypoint.sh` — startup sequence; sentinel write point identified
+- `~/.openclaw/packages/orchestration/src/openclaw/config.py` — existing constants pattern, schema definitions
+- `~/.openclaw/packages/orchestration/src/openclaw/cli/monitor.py` — `tail_state()` loop structure, `time.sleep(interval)` location
+- `~/.openclaw/packages/orchestration/src/openclaw/project_config.py` — `get_memu_config()` pattern
+- `~/.openclaw/config/openclaw.json` — `memory` key exists with `memu_api_url`; schema permits arbitrary object fields
+- `~/.openclaw/docker/memory/memory_service/models.py` — `HealthScanRequest.similarity_min/max` defaults (0.75, 0.97); `QUAL-07` threshold is separate from health scan thresholds
 
 ### Secondary (MEDIUM confidence)
 - OpenAI embedding similarity ranges: community benchmarks for `text-embedding-3-small` place near-duplicates at 0.90+ and related content at 0.70-0.85 — supports 0.85 default choice

@@ -149,7 +149,7 @@ The Phase 7 script should follow the same structure with sections: DSH-01, DSH-0
 
 ```bash
 # Start the dev server (bun not available, use npm)
-cd /home/ollie/.openclaw/workspace/occc
+cd ~/.openclaw/workspace/occc
 npm run dev &  # starts on port 6987
 
 # Wait for readiness
@@ -290,10 +290,10 @@ The actual `workspace/.openclaw/workspace-state.json` on disk contains:
 Current `redaction.ts` covers: AWS keys, OpenAI/Anthropic/Google keys, GitHub/Slack tokens, auth headers, email addresses, generic env-style secrets (PASSWORD=..., SECRET=...).
 
 **Missing categories:**
-- Host filesystem paths (e.g., `/home/ollie/.ssh/id_rsa`, `/root/.aws/credentials`)
+- Host filesystem paths (e.g., `~/.ssh/id_rsa`, `/root/.aws/credentials`)
 - IP addresses (e.g., `192.168.1.100`, `10.0.0.1`)
 - Container IDs (e.g., `968134ac3afe`, full 64-char SHA256 IDs)
-- Usernames in path context (e.g., `/home/ollie/`)
+- Usernames in path context (e.g., `~/`)
 
 **Severity:** Major — SEC-02 is explicitly described as a hard requirement in CONTEXT.md. Missing categories constitute a gap, not a complete failure (redaction logic exists).
 
@@ -476,7 +476,7 @@ SYNTHETIC_SECRETS = [
 
 # Test MISSING from CONTEXT.md (expected FAIL — document as gap)
 MISSING_CATEGORIES = [
-    ("/home/ollie/.ssh/id_rsa", "HOST_PATH"),
+    ("~/.ssh/id_rsa", "HOST_PATH"),
     ("192.168.1.100", "IP_ADDRESS"),
     ("968134ac3afe", "CONTAINER_ID"),
 ]
@@ -540,11 +540,11 @@ Note: `workflow.nyquist_validation` is not present in `.planning/config.json`. T
 ## Sources
 
 ### Primary (HIGH confidence)
-- Direct codebase inspection: `/home/ollie/.openclaw/workspace/occc/src/` — all source files read and analyzed
-- Direct data inspection: `/home/ollie/.openclaw/workspace/.openclaw/workspace-state.json` — schema mismatch confirmed
-- Direct config inspection: `/home/ollie/.openclaw/openclaw.json` — agent level data confirmed null
-- Phase 6 VERIFICATION.md pattern: `/home/ollie/.openclaw/.planning/phases/06-phase3-verification/06-VERIFICATION.md`
-- Phase 6 verify script pattern: `/home/ollie/.openclaw/scripts/verify_phase3.py`
+- Direct codebase inspection: `~/.openclaw/workspace/occc/src/` — all source files read and analyzed
+- Direct data inspection: `~/.openclaw/workspace/.openclaw/workspace-state.json` — schema mismatch confirmed
+- Direct config inspection: `~/.openclaw/openclaw.json` — agent level data confirmed null
+- Phase 6 VERIFICATION.md pattern: `~/.openclaw/.planning/phases/06-phase3-verification/06-VERIFICATION.md`
+- Phase 6 verify script pattern: `~/.openclaw/scripts/verify_phase3.py`
 - Runtime check: `npm` 11.9.0 available, `node` 25.6.1 available, `bun` NOT in PATH
 
 ### Secondary (MEDIUM confidence)

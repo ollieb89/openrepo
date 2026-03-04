@@ -101,7 +101,7 @@ gaps: []
 7. `## Remediation Summary` (if applicable)
 8. `## Phase Completion` summary paragraph
 
-Reference files: `/home/ollie/.openclaw/.planning/phases/01-environment-substrate/01-VERIFICATION.md` and `/home/ollie/.openclaw/.planning/phases/06-phase3-verification/06-VERIFICATION.md`.
+Reference files: `~/.openclaw/.planning/phases/01-environment-substrate/01-VERIFICATION.md` and `~/.openclaw/.planning/phases/06-phase3-verification/06-VERIFICATION.md`.
 
 ### Retroactive Evidence Sourcing
 
@@ -179,7 +179,7 @@ __all__ = ['JarvisState', 'STATE_FILE', 'LOCK_TIMEOUT', 'POLL_INTERVAL', 'SNAPSH
 
 **Why it happens:** The audit item says "pumplai_pm workspace path" — natural assumption is config.json.
 
-**How to avoid:** The actual stale path is in `agents/pumplai_pm/agent/SOUL.md` line 6: `"Scope: Primary authority over the /home/ollie/Development/Projects/pumplai workspace."` The correct path should be the openclaw workspace: `/home/ollie/.openclaw/workspace`.
+**How to avoid:** The actual stale path is in `agents/pumplai_pm/agent/SOUL.md` line 6: `"Scope: Primary authority over the ~/Development/Projects/pumplai workspace."` The correct path should be the openclaw workspace: `~/.openclaw/workspace`.
 
 **The config.json** has no workspace path field — it uses `skill_path` references (relative paths to skills) and `identity_ref`. Those are correct.
 
@@ -206,7 +206,7 @@ __all__ = ['JarvisState', 'STATE_FILE', 'LOCK_TIMEOUT', 'POLL_INTERVAL', 'SNAPSH
 ### Current orchestration/__init__.py (confirmed by code inspection)
 
 ```python
-# Source: /home/ollie/.openclaw/orchestration/__init__.py (line 1-5)
+# Source: ~/.openclaw/orchestration/__init__.py (line 1-5)
 from .state_engine import JarvisState
 from .config import STATE_FILE, LOCK_TIMEOUT, POLL_INTERVAL, SNAPSHOT_DIR
 from .init import initialize_workspace, verify_workspace
@@ -242,7 +242,7 @@ __all__ = [
 ### redactWithReport() removal scope (confirmed by code inspection)
 
 ```typescript
-// Source: /home/ollie/.openclaw/workspace/occc/src/lib/redaction.ts
+// Source: ~/.openclaw/workspace/occc/src/lib/redaction.ts
 // Lines to REMOVE:
 // - Interface RedactionResult (lines 19-22) — only consumed by redactWithReport
 // - Function redactWithReport (lines 147-167) — unused export
@@ -265,13 +265,13 @@ grep -rn "redactWithReport\|RedactionResult" workspace/occc/src/
 
 ```markdown
 # Current (stale — references pumplai project, not openclaw workspace)
-- **Scope:** Primary authority over the `/home/ollie/Development/Projects/pumplai` workspace.
+- **Scope:** Primary authority over the `~/Development/Projects/pumplai` workspace.
 
 # Corrected (openclaw workspace)
-- **Scope:** Primary authority over the `/home/ollie/.openclaw/workspace` workspace.
+- **Scope:** Primary authority over the `~/.openclaw/workspace` workspace.
 ```
 
-File: `/home/ollie/.openclaw/agents/pumplai_pm/agent/SOUL.md` line 6.
+File: `~/.openclaw/agents/pumplai_pm/agent/SOUL.md` line 6.
 
 ### Phase 5 retroactive verification evidence anchors
 
@@ -337,15 +337,15 @@ Requirements covered by Phase 8: DSH-02 (SSE push path), HIE-02 (L2 config), COM
 
 ### Item 4: pumplai_pm workspace path fix
 
-**Location confirmed:** `agents/pumplai_pm/agent/SOUL.md` line 6 — `Scope:` references `/home/ollie/Development/Projects/pumplai`.
+**Location confirmed:** `agents/pumplai_pm/agent/SOUL.md` line 6 — `Scope:` references `~/Development/Projects/pumplai`.
 
-**Correct value:** `/home/ollie/.openclaw/workspace` — this is where openclaw's actual workspace lives.
+**Correct value:** `~/.openclaw/workspace` — this is where openclaw's actual workspace lives.
 
 **Agent config audit sweep results:**
 - `clawdia_prime/agent/config.json`: No path references; gateway endpoint is a URL (not filesystem path). Clean.
 - `pumplai_pm/agent/config.json`: No filesystem paths; skill_paths are relative. Clean.
 - `l3_specialist/config.json`: No filesystem paths. Clean.
-- `pumplai_pm/agent/SOUL.md`: **STALE** — `/home/ollie/Development/Projects/pumplai` should be `/home/ollie/.openclaw/workspace`
+- `pumplai_pm/agent/SOUL.md`: **STALE** — `~/Development/Projects/pumplai` should be `~/.openclaw/workspace`
 - Other agent identity/soul files reference hierarchy relationships, not filesystem paths. No other stale paths found.
 
 **Trivial finding:** `pumplai_pm/agent/IDENTITY.md` line 3 says "Specialization: PumplAI Ecosystem (Next.js 16 / FastAPI)" and line 12 says "Project Context: Maintain deep knowledge of the PumplAI codebase." This is intentional domain description, not a stale path. Do not change.
@@ -398,15 +398,15 @@ Requirements covered by Phase 8: DSH-02 (SSE push path), HIE-02 (L2 config), COM
 
 ### Primary (HIGH confidence)
 
-- `/home/ollie/.openclaw/orchestration/__init__.py` — Current export state verified by direct file inspection
-- `/home/ollie/.openclaw/orchestration/snapshot.py` — All public symbols catalogued by file inspection
-- `/home/ollie/.openclaw/workspace/occc/src/lib/redaction.ts` — `redactWithReport` location and `RedactionResult` interface confirmed
-- `/home/ollie/.openclaw/agents/pumplai_pm/agent/SOUL.md` — Stale path confirmed at line 6
-- `/home/ollie/.openclaw/.planning/v1.0-MILESTONE-AUDIT.md` — Tech debt items and evidence source confirmed
-- `/home/ollie/.openclaw/.planning/phases/05-wiring-fixes/05-01-SUMMARY.md` — Phase 5 plan 1 verification output
-- `/home/ollie/.openclaw/.planning/phases/05-wiring-fixes/05-02-SUMMARY.md` — Phase 5 plan 2 verification output
-- `/home/ollie/.openclaw/.planning/phases/05-wiring-fixes/05-03-SUMMARY.md` — Phase 5 plan 3 verification output
-- `/home/ollie/.openclaw/.planning/phases/08-final-gap-closure/08-01-SUMMARY.md` — Phase 8 verification output
+- `~/.openclaw/orchestration/__init__.py` — Current export state verified by direct file inspection
+- `~/.openclaw/orchestration/snapshot.py` — All public symbols catalogued by file inspection
+- `~/.openclaw/workspace/occc/src/lib/redaction.ts` — `redactWithReport` location and `RedactionResult` interface confirmed
+- `~/.openclaw/agents/pumplai_pm/agent/SOUL.md` — Stale path confirmed at line 6
+- `~/.openclaw/.planning/v1.0-MILESTONE-AUDIT.md` — Tech debt items and evidence source confirmed
+- `~/.openclaw/.planning/phases/05-wiring-fixes/05-01-SUMMARY.md` — Phase 5 plan 1 verification output
+- `~/.openclaw/.planning/phases/05-wiring-fixes/05-02-SUMMARY.md` — Phase 5 plan 2 verification output
+- `~/.openclaw/.planning/phases/05-wiring-fixes/05-03-SUMMARY.md` — Phase 5 plan 3 verification output
+- `~/.openclaw/.planning/phases/08-final-gap-closure/08-01-SUMMARY.md` — Phase 8 verification output
 - All existing VERIFICATION.md files — Format template reference
 
 ### Secondary (MEDIUM confidence)

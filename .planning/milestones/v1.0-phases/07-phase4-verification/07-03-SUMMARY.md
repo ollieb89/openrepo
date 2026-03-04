@@ -71,8 +71,8 @@ completed: 2026-02-23
 1. **Task 1: Export getSwarmState and fix SSE stream to emit real data** — on disk (workspace is gitlink, no internal repo)
 
 Note: The workspace directory is tracked as a git submodule gitlink (mode 160000) in the main repo, but has no internal `.git` directory. Source code changes exist on disk at:
-- `/home/ollie/.openclaw/workspace/occc/src/app/api/swarm/route.ts`
-- `/home/ollie/.openclaw/workspace/occc/src/app/api/swarm/stream/route.ts`
+- `~/.openclaw/workspace/occc/src/app/api/swarm/route.ts`
+- `~/.openclaw/workspace/occc/src/app/api/swarm/stream/route.ts`
 
 **Plan metadata:** committed separately in main repo
 

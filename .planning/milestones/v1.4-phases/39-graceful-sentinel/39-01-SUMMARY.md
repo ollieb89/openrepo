@@ -80,8 +80,8 @@ None — plan executed exactly as written.
 
 ## Self-Check: PASSED
 
-- `/home/ollie/.openclaw/docker/l3-specialist/entrypoint.sh` — FOUND, contains trap
-- `/home/ollie/.openclaw/skills/spawn_specialist/spawn.py` — FOUND, contains stop_timeout
-- `/home/ollie/.openclaw/tests/test_entrypoint_shutdown.py` — FOUND, 7 tests all pass
+- `~/.openclaw/docker/l3-specialist/entrypoint.sh` — FOUND, contains trap
+- `~/.openclaw/skills/spawn_specialist/spawn.py` — FOUND, contains stop_timeout
+- `~/.openclaw/tests/test_entrypoint_shutdown.py` — FOUND, 7 tests all pass
 - Commit f797a1f — FOUND
 - Commit 7e2dbfb — FOUND

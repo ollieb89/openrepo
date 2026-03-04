@@ -72,9 +72,9 @@ Each task was committed atomically:
 
 ## Files Created/Modified
 
-- `/home/ollie/.openclaw/orchestration/snapshot.py` - Added `"category": "review_decision"` to the payload dict in `_memorize_review_decision()` (one line)
-- `/home/ollie/.openclaw/tests/test_l2_review_memorization.py` - Added `test_memorize_review_decision_sends_category_field` verifying payload field presence and top-level placement
-- `/home/ollie/.openclaw/tests/test_spawn_memory.py` - Added `test_review_decision_category_routes_to_review_section` and `test_item_without_category_routes_to_work_context`
+- `~/.openclaw/orchestration/snapshot.py` - Added `"category": "review_decision"` to the payload dict in `_memorize_review_decision()` (one line)
+- `~/.openclaw/tests/test_l2_review_memorization.py` - Added `test_memorize_review_decision_sends_category_field` verifying payload field presence and top-level placement
+- `~/.openclaw/tests/test_spawn_memory.py` - Added `test_review_decision_category_routes_to_review_section` and `test_item_without_category_routes_to_work_context`
 
 ## Decisions Made
 

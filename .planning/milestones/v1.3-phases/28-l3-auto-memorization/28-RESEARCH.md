@@ -422,12 +422,12 @@ async def _memorize_snapshot_fire_and_forget(
 ### Primary (HIGH confidence)
 
 - Python 3 asyncio docs (stdlib) — asyncio.create_task(), task exception handling, running event loop requirements
-- `/home/ollie/.openclaw/orchestration/memory_client.py` — MemoryClient API, AgentType enum, memorize() signature, sentinel patterns
-- `/home/ollie/.openclaw/skills/spawn_specialist/pool.py` — _attempt_task() call site, success branch, spawn_and_monitor() finally block structure
-- `/home/ollie/.openclaw/skills/spawn_specialist/spawn.py` — environment dict structure in spawn_l3_specialist()
-- `/home/ollie/.openclaw/orchestration/snapshot.py` — capture_semantic_snapshot() return value, snapshot file path, get_snapshot_dir() usage
-- `/home/ollie/.openclaw/orchestration/project_config.py` — get_pool_config() pattern to follow for get_memu_config()
-- `/home/ollie/.openclaw/.planning/phases/27-memory-client-scoping/27-01-SUMMARY.md` — decisions, import patterns, next-phase guidance
+- `~/.openclaw/orchestration/memory_client.py` — MemoryClient API, AgentType enum, memorize() signature, sentinel patterns
+- `~/.openclaw/skills/spawn_specialist/pool.py` — _attempt_task() call site, success branch, spawn_and_monitor() finally block structure
+- `~/.openclaw/skills/spawn_specialist/spawn.py` — environment dict structure in spawn_l3_specialist()
+- `~/.openclaw/orchestration/snapshot.py` — capture_semantic_snapshot() return value, snapshot file path, get_snapshot_dir() usage
+- `~/.openclaw/orchestration/project_config.py` — get_pool_config() pattern to follow for get_memu_config()
+- `~/.openclaw/.planning/phases/27-memory-client-scoping/27-01-SUMMARY.md` — decisions, import patterns, next-phase guidance
 
 ### Secondary (MEDIUM confidence)
 

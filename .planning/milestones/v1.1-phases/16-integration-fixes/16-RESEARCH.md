@@ -578,15 +578,15 @@ from orchestration.config import POLL_INTERVAL
 
 Direct code inspection of the OpenClaw repository — all findings are based on reading the actual source files:
 
-- `/home/ollie/.openclaw/orchestration/snapshot.py` — full read, lines 20-523
-- `/home/ollie/.openclaw/orchestration/soul_renderer.py` — full read, `build_variables()` at line 82
-- `/home/ollie/.openclaw/orchestration/config.py` — full read (24 lines)
-- `/home/ollie/.openclaw/orchestration/monitor.py` — full read, import at lines 22-30
-- `/home/ollie/.openclaw/orchestration/project_config.py` — full read, `get_snapshot_dir()` at line 123
-- `/home/ollie/.openclaw/agents/_templates/soul-default.md` — full read (18 lines)
-- `/home/ollie/.openclaw/scripts/verify_soul_golden.py` — full read (verification pattern)
-- `/home/ollie/.openclaw/.planning/v1.1-MILESTONE-AUDIT.md` — integration issues enumerated
-- `/home/ollie/.openclaw/.planning/phases/16-integration-fixes/16-CONTEXT.md` — locked decisions
+- `~/.openclaw/orchestration/snapshot.py` — full read, lines 20-523
+- `~/.openclaw/orchestration/soul_renderer.py` — full read, `build_variables()` at line 82
+- `~/.openclaw/orchestration/config.py` — full read (24 lines)
+- `~/.openclaw/orchestration/monitor.py` — full read, import at lines 22-30
+- `~/.openclaw/orchestration/project_config.py` — full read, `get_snapshot_dir()` at line 123
+- `~/.openclaw/agents/_templates/soul-default.md` — full read (18 lines)
+- `~/.openclaw/scripts/verify_soul_golden.py` — full read (verification pattern)
+- `~/.openclaw/.planning/v1.1-MILESTONE-AUDIT.md` — integration issues enumerated
+- `~/.openclaw/.planning/phases/16-integration-fixes/16-CONTEXT.md` — locked decisions
 
 ### Secondary (MEDIUM confidence)
 

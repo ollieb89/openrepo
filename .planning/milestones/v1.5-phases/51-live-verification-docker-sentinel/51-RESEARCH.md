@@ -91,15 +91,15 @@ trap '_trap_sigterm' TERM
 ```
 
 **State file path inside container:** `/workspace/.openclaw/<project_id>/workspace-state.json`
-**Host-side path:** `/home/ollie/.openclaw/workspace/.openclaw/<project_id>/workspace-state.json`
+**Host-side path:** `~/.openclaw/workspace/.openclaw/<project_id>/workspace-state.json`
 (Volume mount in spawn.py: `str(project_root / "workspace" / ".openclaw")` → `/workspace/.openclaw`)
 
 **Spawn command (for test harness):**
 ```bash
-cd /home/ollie/.openclaw
-export OPENCLAW_ROOT=/home/ollie/.openclaw
+cd ~/.openclaw
+export OPENCLAW_ROOT=~/.openclaw
 uv run python3 skills/spawn/spawn.py test-sigterm-01 code "sleep 60" \
-  --workspace /home/ollie/Development/Projects/pumplai \
+  --workspace ~/Development/Projects/pumplai \
   --project pumplai \
   --runtime bash
 ```
@@ -114,7 +114,7 @@ However: the CLI runtime (`claude-code`, `gemini-cli`) must be available in the 
 docker inspect openclaw-pumplai-l3-test-sigterm-01 --format '{{.State.ExitCode}}'
 # Expected: 143
 
-STATE_FILE=/home/ollie/.openclaw/workspace/.openclaw/pumplai/workspace-state.json
+STATE_FILE=~/.openclaw/workspace/.openclaw/pumplai/workspace-state.json
 python3 -c "
 import json
 with open('$STATE_FILE') as f:
@@ -203,7 +203,7 @@ dashboard: ## Start dashboard dev server (port 6987) — OPENCLAW_ROOT must be e
 
 **Verification commands:**
 ```bash
-cd /home/ollie/.openclaw
+cd ~/.openclaw
 unset OPENCLAW_ROOT
 make dashboard 2>&1 | head -5
 # Expected output line: "ERROR: OPENCLAW_ROOT is not set..."
@@ -237,7 +237,7 @@ curl -sf http://localhost:18791/health || echo "FAIL: memU not reachable — run
 docker ps -a --filter "name=openclaw-pumplai-l3-test-" --format "{{.Names}}" | head
 
 # 5. Monitor status (informational)
-cd /home/ollie/.openclaw && uv run openclaw-monitor status 2>/dev/null || echo "(monitor status unavailable)"
+cd ~/.openclaw && uv run openclaw-monitor status 2>/dev/null || echo "(monitor status unavailable)"
 ```
 
 ## Don't Hand-Roll
@@ -273,9 +273,9 @@ docker run -d --name openclaw-pumplai-l3-test-1 \
   -e OPENCLAW_PROJECT=pumplai \
   -e DEFAULT_BRANCH=main \
   -e OPENCLAW_STATE_FILE=/workspace/.openclaw/pumplai/workspace-state.json \
-  -v /home/ollie/Development/Projects/pumplai:/workspace:rw \
-  -v /home/ollie/.openclaw/workspace/.openclaw:/workspace/.openclaw:rw \
-  -v /home/ollie/.openclaw/packages/orchestration/src/openclaw:/openclaw:ro \
+  -v ~/Development/Projects/pumplai:/workspace:rw \
+  -v ~/.openclaw/workspace/.openclaw:/workspace/.openclaw:rw \
+  -v ~/.openclaw/packages/orchestration/src/openclaw:/openclaw:ro \
   --security-opt no-new-privileges \
   --cap-drop ALL \
   openclaw-l3-specialist:latest
@@ -288,11 +288,11 @@ This way `bash sleep 60` will not be a valid bash call pattern, but the dry-run 
 
 **What goes wrong:** The state file path `/workspace/.openclaw/pumplai/workspace-state.json` may not exist on the host if no container has run for this project before. The entrypoint's `update_state()` calls JarvisState which calls `_ensure_state_file()` to create it, but the directory must exist first.
 
-**Why it happens:** The volume mount `workspace/.openclaw` exists at `/home/ollie/.openclaw/workspace/.openclaw/` but the `pumplai` subdirectory may not exist.
+**Why it happens:** The volume mount `workspace/.openclaw` exists at `~/.openclaw/workspace/.openclaw/` but the `pumplai` subdirectory may not exist.
 
 **How to avoid:** Pre-flight step creates the directory:
 ```bash
-mkdir -p /home/ollie/.openclaw/workspace/.openclaw/pumplai
+mkdir -p ~/.openclaw/workspace/.openclaw/pumplai
 ```
 
 ### Pitfall 3: SIGTERM timing race in Test 1
@@ -321,14 +321,14 @@ mkdir -p /home/ollie/.openclaw/workspace/.openclaw/pumplai
 
 ### Pitfall 6: Pool state file path mismatch
 
-**What goes wrong:** `get_state_path("pumplai")` without OPENCLAW_STATE_FILE env set resolves to `/home/ollie/.openclaw/workspace/.openclaw/pumplai/workspace-state.json`. The container writes to `/workspace/.openclaw/pumplai/workspace-state.json` (via the mount). Both are the same host path — but only if OPENCLAW_ROOT resolves to `/home/ollie/.openclaw`.
+**What goes wrong:** `get_state_path("pumplai")` without OPENCLAW_STATE_FILE env set resolves to `~/.openclaw/workspace/.openclaw/pumplai/workspace-state.json`. The container writes to `/workspace/.openclaw/pumplai/workspace-state.json` (via the mount). Both are the same host path — but only if OPENCLAW_ROOT resolves to `~/.openclaw`.
 
-**How to avoid:** Ensure `OPENCLAW_ROOT=/home/ollie/.openclaw` is set when running the test scripts. Confirm path identity before Test 1 via:
+**How to avoid:** Ensure `OPENCLAW_ROOT=~/.openclaw` is set when running the test scripts. Confirm path identity before Test 1 via:
 ```bash
 python3 -c "
 import sys, os
-os.environ['OPENCLAW_ROOT']='/home/ollie/.openclaw'
-sys.path.insert(0, '/home/ollie/.openclaw/packages/orchestration/src')
+os.environ['OPENCLAW_ROOT']='~/.openclaw'
+sys.path.insert(0, '~/.openclaw/packages/orchestration/src')
 from openclaw.config import get_state_path
 print(get_state_path('pumplai'))
 "
@@ -355,9 +355,9 @@ docker run -d \
   -e OPENCLAW_PROJECT=pumplai \
   -e DEFAULT_BRANCH=main \
   -e OPENCLAW_STATE_FILE=/workspace/.openclaw/pumplai/workspace-state.json \
-  -v /home/ollie/Development/Projects/pumplai:/workspace:rw \
-  -v /home/ollie/.openclaw/workspace/.openclaw:/workspace/.openclaw:rw \
-  -v /home/ollie/.openclaw/packages/orchestration/src/openclaw:/openclaw:ro \
+  -v ~/Development/Projects/pumplai:/workspace:rw \
+  -v ~/.openclaw/workspace/.openclaw:/workspace/.openclaw:rw \
+  -v ~/.openclaw/packages/orchestration/src/openclaw:/openclaw:ro \
   openclaw-l3-specialist:latest
 
 # Wait for container to initialize (sentinel written after git config + branch checkout)
@@ -373,7 +373,7 @@ docker inspect openclaw-pumplai-l3-test-1 --format '{{.State.ExitCode}}'
 # Verify interrupted state
 python3 -c "
 import json
-with open('/home/ollie/.openclaw/workspace/.openclaw/pumplai/workspace-state.json') as f:
+with open('~/.openclaw/workspace/.openclaw/pumplai/workspace-state.json') as f:
     s = json.load(f)
 task = s['tasks'].get('test-sigterm-01', {})
 print('status:', task.get('status'))
@@ -395,8 +395,8 @@ import asyncio
 import signal
 import os
 import sys
-sys.path.insert(0, '/home/ollie/.openclaw/packages/orchestration/src')
-os.environ['OPENCLAW_ROOT'] = '/home/ollie/.openclaw'
+sys.path.insert(0, '~/.openclaw/packages/orchestration/src')
+os.environ['OPENCLAW_ROOT'] = '~/.openclaw'
 
 from skills.spawn.pool import L3ContainerPool, register_shutdown_handler, drain_pending_memorize_tasks
 
@@ -448,7 +448,7 @@ curl -s -X POST http://localhost:18791/retrieve \
 ### Test 3: Makefile guard
 
 ```bash
-cd /home/ollie/.openclaw
+cd ~/.openclaw
 
 # Capture current value to restore after test
 _saved_root="${OPENCLAW_ROOT:-}"
@@ -525,7 +525,7 @@ Recommended format (simple, fills during execution):
 **Environment:** pumplai project, memU live, L3 image fresh build
 
 ## Pre-flight
-- [ ] OPENCLAW_ROOT set: /home/ollie/.openclaw
+- [ ] OPENCLAW_ROOT set: ~/.openclaw
 - [ ] L3 image present: openclaw-l3-specialist:latest
 - [ ] memU health: {"status":"ok"}
 - [ ] No stale test containers
@@ -569,8 +569,8 @@ Recommended format (simple, fills during execution):
 
 2. **Pool.py test script import paths**
    - What we know: pool.py imports from `openclaw.config`, `openclaw.state_engine`, etc. via `sys.path` manipulation
-   - What's unclear: Whether running from `/home/ollie/.openclaw` with `sys.path.insert` is sufficient or if `uv run` is needed
-   - Recommendation: Use `cd /home/ollie/.openclaw && uv run python3 <test_script.py>` to ensure all imports resolve correctly
+   - What's unclear: Whether running from `~/.openclaw` with `sys.path.insert` is sufficient or if `uv run` is needed
+   - Recommendation: Use `cd ~/.openclaw && uv run python3 <test_script.py>` to ensure all imports resolve correctly
 
 3. **Repeatability of Test 2**
    - What we know: CONTEXT requires the test be repeatable

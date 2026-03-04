@@ -101,7 +101,7 @@ The data model is fully understood from reading the topology Python modules. `cu
 
 **Installation:**
 ```bash
-cd /home/ob/Development/Tools/openrepo/packages/dashboard
+cd ~/Development/Tools/openrepo/packages/dashboard
 pnpm add @xyflow/react @dagrejs/dagre
 ```
 
@@ -147,7 +147,7 @@ import { withAuth } from '@/lib/auth-middleware';
 import fs from 'fs/promises';
 import path from 'path';
 
-const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || '/home/ollie/.openclaw';
+const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || '~/.openclaw';
 
 function topologyDir(projectId: string) {
   return path.join(OPENCLAW_ROOT, 'workspace', '.openclaw', projectId, 'topology');
@@ -387,8 +387,8 @@ export function ConfidenceChart({ data, thresholdIdx }: Props) {
 **Warning signs:** Chart renders with no data points; `Cannot read properties of undefined` errors in console
 
 ### Pitfall 5: `OPENCLAW_ROOT` Path in API Routes
-**What goes wrong:** API routes fail in production because they use hardcoded `/home/ollie/.openclaw`
-**Why it happens:** `openclaw.ts` has `const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || '/home/ollie/.openclaw'` — this is a known project quirk
+**What goes wrong:** API routes fail in production because they use hardcoded `~/.openclaw`
+**Why it happens:** `openclaw.ts` has `const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || '~/.openclaw'` — this is a known project quirk
 **How to avoid:** Import `OPENCLAW_ROOT` from `@/lib/openclaw` or use the same pattern — don't hardcode in new routes
 **Warning signs:** 404 errors or "file not found" in topology API when running under a different user
 
@@ -571,8 +571,8 @@ export const EDGE_STYLE: Record<string, { stroke: string; strokeDasharray?: stri
 | TOBS-06 | Multi-proposal comparison data shape (3 archetypes with rubric scores) | unit | `cd packages/dashboard && pnpm test -- tests/topology/proposals.test.ts` | Wave 0 |
 
 ### Sampling Rate
-- **Per task commit:** `cd /home/ob/Development/Tools/openrepo/packages/dashboard && pnpm test`
-- **Per wave merge:** `cd /home/ob/Development/Tools/openrepo/packages/dashboard && pnpm test`
+- **Per task commit:** `cd ~/Development/Tools/openrepo/packages/dashboard && pnpm test`
+- **Per wave merge:** `cd ~/Development/Tools/openrepo/packages/dashboard && pnpm test`
 - **Phase gate:** Full suite green before `/gsd:verify-work`
 
 ### Wave 0 Gaps

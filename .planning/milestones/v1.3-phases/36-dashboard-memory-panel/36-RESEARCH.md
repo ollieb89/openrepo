@@ -443,7 +443,7 @@ const totalPages = Math.ceil(items.length / PAGE_SIZE);
 
 1. **memU memory item schema — exact field names**
    - What we know: The FastAPI `GET /memories` endpoint calls `memu.list_memory_items()`. The Python service returns items directly from the memu-py library. The `memory_client.py` in orchestration treats items as `dict` (no type annotation).
-   - What's unclear: The exact JSON field names returned by `list_memory_items()` — particularly whether it's `category`, `type`, `agent_type`, `created_at`, or similar. The memu-py `app/crud.py` at `/home/ollie/.openclaw/workspace/memory/src/memu/app/crud.py` can be read to determine the schema definitively.
+   - What's unclear: The exact JSON field names returned by `list_memory_items()` — particularly whether it's `category`, `type`, `agent_type`, `created_at`, or similar. The memu-py `app/crud.py` at `~/.openclaw/workspace/memory/src/memu/app/crud.py` can be read to determine the schema definitively.
    - Recommendation: Read `workspace/memory/src/memu/app/crud.py` during Wave 0 (type definition task) to determine exact schema. Define `MemoryItem` TypeScript type from that. The planner should include this as the first task of the first plan.
 
 2. **react-toastify CSS import**
@@ -465,14 +465,14 @@ However, the `tests/` directory in `workspace/occc/` exists (currently has only 
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/home/ollie/.openclaw/docker/memory/memory_service/routers/memories.py` — GET /memories and DELETE /memories/{id} implementations (read directly)
-- `/home/ollie/.openclaw/docker/memory/memory_service/routers/retrieve.py` — POST /retrieve implementation (read directly)
-- `/home/ollie/.openclaw/docker/memory/memory_service/models.py` — RetrieveRequest schema (read directly)
-- `/home/ollie/.openclaw/workspace/occc/src/lib/hooks/useTasks.ts` — SWR hook pattern (read directly)
-- `/home/ollie/.openclaw/workspace/occc/src/app/api/tasks/route.ts` — Next.js proxy API route pattern (read directly)
-- `/home/ollie/.openclaw/workspace/occc/src/components/layout/Sidebar.tsx` — Nav item pattern (read directly)
-- `/home/ollie/.openclaw/workspace/occc/package.json` — Installed deps including react-toastify ^10.0.5 (read directly)
-- `/home/ollie/.openclaw/orchestration/memory_client.py` — retrieve() response normalization pattern (lines 243-248) (read directly)
+- `~/.openclaw/docker/memory/memory_service/routers/memories.py` — GET /memories and DELETE /memories/{id} implementations (read directly)
+- `~/.openclaw/docker/memory/memory_service/routers/retrieve.py` — POST /retrieve implementation (read directly)
+- `~/.openclaw/docker/memory/memory_service/models.py` — RetrieveRequest schema (read directly)
+- `~/.openclaw/workspace/occc/src/lib/hooks/useTasks.ts` — SWR hook pattern (read directly)
+- `~/.openclaw/workspace/occc/src/app/api/tasks/route.ts` — Next.js proxy API route pattern (read directly)
+- `~/.openclaw/workspace/occc/src/components/layout/Sidebar.tsx` — Nav item pattern (read directly)
+- `~/.openclaw/workspace/occc/package.json` — Installed deps including react-toastify ^10.0.5 (read directly)
+- `~/.openclaw/orchestration/memory_client.py` — retrieve() response normalization pattern (lines 243-248) (read directly)
 
 ### Secondary (MEDIUM confidence)
 - react-toastify v10 API (`toast.success()`, `<ToastContainer />`, CSS import) — established library; training knowledge cross-referenced with package version

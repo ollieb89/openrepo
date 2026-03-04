@@ -240,7 +240,7 @@ Git operations can fail for many reasons (not a repo, conflicts, permission erro
 from orchestration.snapshot import l2_review_diff, l2_merge_staging
 from pathlib import Path
 
-workspace = Path('/home/ollie/Development/Projects/pumplai')
+workspace = Path('~/Development/Projects/pumplai')
 task_id = 'task-001'
 
 # Review the diff
@@ -276,7 +276,7 @@ python3 orchestration/monitor.py tail --interval 0.5
 ```python
 from orchestration.snapshot import cleanup_old_snapshots
 
-workspace = '/home/ollie/Development/Projects/pumplai'
+workspace = '~/Development/Projects/pumplai'
 
 # Keep last 100 snapshots (default)
 result = cleanup_old_snapshots(workspace)
