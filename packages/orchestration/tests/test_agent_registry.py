@@ -8,6 +8,22 @@ from pathlib import Path
 from openclaw.agent_registry import AgentRegistry, AgentLevel, AgentSpec
 
 
+# ── Test infrastructure ───────────────────────────────────────────────────────
+
+@pytest.fixture(autouse=True)
+def enable_registry_log_propagation():
+    """Enable log propagation on the agent_registry logger so caplog can capture warnings.
+
+    The get_logger() factory sets propagate=False by default (structured JSON mode).
+    For tests we need the stdlib propagation chain so caplog works.
+    """
+    logger = logging.getLogger("openclaw.agent_registry")
+    original = logger.propagate
+    logger.propagate = True
+    yield
+    logger.propagate = original
+
+
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
 def make_agent_dir(tmp_path: Path, agent_id: str, config_data: dict) -> None:
