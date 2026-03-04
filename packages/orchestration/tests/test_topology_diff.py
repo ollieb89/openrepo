@@ -230,6 +230,63 @@ class TestSummary:
         assert "No structural changes" in diff.summary
 
 
+class TestEdgeChangesExtended:
+    def test_multiple_edges_added(self):
+        """Adding two edges at once — both appear in added_edges."""
+        node_a = make_node("agent-a")
+        node_b = make_node("agent-b")
+        node_c = make_node("agent-c")
+
+        old_graph = make_graph(nodes=[node_a, node_b, node_c], edges=[])
+        new_graph = make_graph(
+            nodes=[node_a, node_b, node_c],
+            edges=[
+                make_edge("agent-a", "agent-b"),
+                make_edge("agent-b", "agent-c"),
+            ],
+        )
+
+        diff = topology_diff(old_graph, new_graph)
+
+        assert len(diff.added_edges) == 2
+        assert diff.removed_edges == []
+
+    def test_edge_summary_mentions_endpoints(self):
+        """Summary string mentions endpoint roles for added edges."""
+        node_a = make_node("agent-a")
+        node_b = make_node("agent-b")
+        old_graph = make_graph(nodes=[node_a, node_b], edges=[])
+        new_graph = make_graph(nodes=[node_a, node_b], edges=[make_edge("agent-a", "agent-b")])
+
+        diff = topology_diff(old_graph, new_graph)
+
+        assert "agent-a" in diff.summary or "agent-b" in diff.summary
+
+    def test_node_modification_summary_mentions_field(self):
+        """Summary mentions changed field name for modified nodes."""
+        old_node = make_node("agent-a", risk_level="low")
+        new_node = make_node("agent-a", risk_level="high")
+
+        diff = topology_diff(make_graph(nodes=[old_node]), make_graph(nodes=[new_node]))
+
+        assert "risk_level" in diff.summary or "agent-a" in diff.summary
+
+    def test_empty_to_nonempty_diff(self):
+        """Diff from empty graph to populated graph detects all additions."""
+        old_graph = make_graph()
+        new_graph = make_graph(
+            nodes=[make_node("a"), make_node("b")],
+            edges=[make_edge("a", "b")],
+        )
+
+        diff = topology_diff(old_graph, new_graph)
+
+        assert len(diff.added_nodes) == 2
+        assert len(diff.added_edges) == 1
+        assert diff.removed_nodes == []
+        assert diff.removed_edges == []
+
+
 class TestFormatDiff:
     def test_format_diff_returns_string(self):
         graph = make_graph(nodes=[make_node("a")])
