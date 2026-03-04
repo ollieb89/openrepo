@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Programmatic Integration & Real-Time Streaming
 status: executing
-stopped_at: Completed 71-01-PLAN.md
-last_updated: "2026-03-04T21:33:58.487Z"
+stopped_at: Completed 71-02-PLAN.md
+last_updated: "2026-03-04T21:37:40.670Z"
 last_activity: 2026-03-04 — Phase 70 Plan 01 complete, 707 tests pass
 progress:
   total_phases: 10
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
   percent: 10
 ---
 
@@ -68,6 +68,8 @@ v2.1 decisions:
 - [Phase 70-event-bridge-activation]: event_bus.emit() is the single canonical publish path; ensure_event_bridge() idempotent at long-running CLI startup
 - [Phase 71]: stream_logs() uses single-stream logs() with stream='stdout' label for all lines — simpler than demux, stderr distinction deferred
 - [Phase 71]: UnixSocketTransport heartbeat interval stored as _heartbeat_interval instance attr (default 30s) enabling test override without monkey-patching asyncio.sleep
+- [Phase 71-l3-output-streaming]: Ring buffer is module-level (shared across SSE connections) — simple approach sufficient for phase 71
+- [Phase 71-l3-output-streaming]: containerId prop kept as deprecated backward-compat fallback in LogViewer
 
 ### Pending Todos
 
@@ -81,6 +83,6 @@ None. Previously blocking issues resolved in Phase 68 Plan 01:
 
 ## Session Continuity
 
-Last session: 2026-03-04T21:33:58.483Z
-Stopped at: Completed 71-01-PLAN.md
+Last session: 2026-03-04T21:37:40.666Z
+Stopped at: Completed 71-02-PLAN.md
 Resume file: None
