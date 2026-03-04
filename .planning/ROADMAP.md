@@ -47,7 +47,7 @@
 - [x] **Phase 70: Event Bridge Activation** - Start Unix socket server, wire event bus to transport (completed 2026-03-04)
 - [x] **Phase 71: L3 Output Streaming** - Stream Docker container output through event bridge to dashboard SSE (completed 2026-03-04)
 - [x] **Phase 72: Gateway-Only Dispatch** - Remove execFileSync fallback, add bootstrap mode, gateway health check at startup (completed 2026-03-04)
-- [ ] **Phase 73: Unified Agent Registry** - Merge agent configs, auto-discovery, config drift detection
+- [x] **Phase 73: Unified Agent Registry** - Merge agent configs, auto-discovery, config drift detection (completed 2026-03-04)
 - [ ] **Phase 74: Dashboard Streaming UI** - Terminal-style live output panel with task board integration
 - [ ] **Phase 75: Unified Observability** - Consolidated metrics endpoint and pipeline timeline view
 - [ ] **Phase 76: SOUL Injection Verification** - Verify dynamic variables and topology context populated at spawn time
@@ -204,7 +204,7 @@ Plans:
 | 70. Event Bridge Activation | v2.1 | Complete    | 2026-03-04 | 2026-03-04 |
 | 71. L3 Output Streaming | 2/2 | Complete    | 2026-03-04 | - |
 | 72. Gateway-Only Dispatch | 1/1 | Complete    | 2026-03-04 | - |
-| 73. Unified Agent Registry | 1/2 | In Progress|  | - |
+| 73. Unified Agent Registry | 2/2 | Complete   | 2026-03-04 | - |
 | 74. Dashboard Streaming UI | v2.1 | 0/TBD | Not started | - |
 | 75. Unified Observability | v2.1 | 0/TBD | Not started | - |
 | 76. SOUL Injection Verification | v2.1 | 0/TBD | Not started | - |
