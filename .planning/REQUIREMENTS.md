@@ -87,33 +87,33 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DEBT-01 | — | Pending |
-| DEBT-02 | — | Pending |
-| DEBT-03 | — | Pending |
-| EVNT-01 | — | Pending |
-| EVNT-02 | — | Pending |
-| EVNT-03 | — | Pending |
-| EVNT-04 | — | Pending |
-| GATE-01 | — | Pending |
-| GATE-02 | — | Pending |
-| GATE-03 | — | Pending |
-| AREG-01 | — | Pending |
-| AREG-02 | — | Pending |
-| AREG-03 | — | Pending |
-| DASH-01 | — | Pending |
-| DASH-02 | — | Pending |
-| DASH-03 | — | Pending |
-| OBSV-01 | — | Pending |
-| OBSV-02 | — | Pending |
-| OBSV-03 | — | Pending |
-| DOCK-01 | — | Pending |
-| INTG-01 | — | Pending |
+| DEBT-01 | Phase 68 | Pending |
+| DEBT-02 | Phase 68 | Pending |
+| DEBT-03 | Phase 68 | Pending |
+| DOCK-01 | Phase 69 | Pending |
+| EVNT-01 | Phase 70 | Pending |
+| EVNT-02 | Phase 70 | Pending |
+| EVNT-03 | Phase 71 | Pending |
+| EVNT-04 | Phase 71 | Pending |
+| GATE-01 | Phase 72 | Pending |
+| GATE-02 | Phase 72 | Pending |
+| GATE-03 | Phase 72 | Pending |
+| AREG-01 | Phase 73 | Pending |
+| AREG-02 | Phase 73 | Pending |
+| AREG-03 | Phase 73 | Pending |
+| DASH-01 | Phase 74 | Pending |
+| DASH-02 | Phase 74 | Pending |
+| DASH-03 | Phase 74 | Pending |
+| OBSV-01 | Phase 75 | Pending |
+| OBSV-02 | Phase 75 | Pending |
+| OBSV-03 | Phase 76 | Pending |
+| INTG-01 | Phase 77 | Pending |
 
 **Coverage:**
 - v2.1 requirements: 21 total
-- Mapped to phases: 0
-- Unmapped: 21
+- Mapped to phases: 21
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-04*
-*Last updated: 2026-03-04 after initial definition*
+*Last updated: 2026-03-04 — traceability complete, all 21 requirements mapped to phases 68-77*

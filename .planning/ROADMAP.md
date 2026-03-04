@@ -10,6 +10,7 @@
 - ✅ **v1.5 Config Consolidation** — Phases 45-53 (shipped 2026-02-25)
 - ✅ **v1.6 Agent Autonomy** — Phases 54-60 (shipped 2026-02-26)
 - ✅ **v2.0 Structural Intelligence** — Phases 61-67 (shipped 2026-03-04)
+- 🚧 **v2.1 Programmatic Integration & Real-Time Streaming** — Phases 68-77 (in progress)
 
 ---
 
@@ -35,6 +36,134 @@
 
 ---
 
+### 🚧 v2.1 Programmatic Integration & Real-Time Streaming (In Progress)
+
+**Milestone Goal:** Replace CLI-level coupling with programmatic APIs, activate existing event infrastructure, and deliver live L3 output streaming to the dashboard.
+
+## Phases
+
+- [ ] **Phase 68: Tech Debt Resolution** - Resolve test failures, consolidate TopologyProposal, remove hardcoded paths
+- [ ] **Phase 69: Docker Base Image** - Create shared openclaw-base image and rebase L3 Dockerfile
+- [ ] **Phase 70: Event Bridge Activation** - Start Unix socket server, wire event bus to transport
+- [ ] **Phase 71: L3 Output Streaming** - Stream Docker container output through event bridge to dashboard SSE
+- [ ] **Phase 72: Gateway-Only Dispatch** - Remove execFileSync fallback, add bootstrap mode, gateway health check at startup
+- [ ] **Phase 73: Unified Agent Registry** - Merge agent configs, auto-discovery, config drift detection
+- [ ] **Phase 74: Dashboard Streaming UI** - Terminal-style live output panel with task board integration
+- [ ] **Phase 75: Unified Observability** - Consolidated metrics endpoint and pipeline timeline view
+- [ ] **Phase 76: SOUL Injection Verification** - Verify dynamic variables and topology context populated at spawn time
+- [ ] **Phase 77: Integration E2E Verification** - End-to-end verification of full pipeline
+
+## Phase Details
+
+### Phase 68: Tech Debt Resolution
+**Goal**: The codebase is clean enough to build on — all tests pass, models are consolidated, no developer-specific paths
+**Depends on**: Phase 67 (v2.0 complete)
+**Requirements**: DEBT-01, DEBT-02, DEBT-03
+**Success Criteria** (what must be TRUE):
+  1. `uv run pytest packages/orchestration/tests/` completes with zero failures including test_proposer.py and test_state_engine_memory.py
+  2. A single TopologyProposal class exists in proposal_models.py with graph field, rubric_score, and to_dict/from_dict — proposer.py imports and uses it directly
+  3. Running `grep -r "/home/ollie\|/home/ob" .` on tracked files returns no results
+  4. All runtime configs and SOUL templates reference OPENCLAW_ROOT or environment variables rather than absolute user paths
+**Plans**: TBD
+
+### Phase 69: Docker Base Image
+**Goal**: A shared openclaw-base image exists and L3 containers use it, reducing Dockerfile duplication and standardizing the base layer
+**Depends on**: Phase 68
+**Requirements**: DOCK-01
+**Success Criteria** (what must be TRUE):
+  1. `docker build -t openclaw-base:bookworm-slim docker/base/` succeeds
+  2. L3 Dockerfile uses `FROM openclaw-base:bookworm-slim` instead of a raw debian/ubuntu base
+  3. `make docker-l3` builds successfully using the shared base image
+**Plans**: TBD
+
+### Phase 70: Event Bridge Activation
+**Goal**: The event bridge Unix socket server starts automatically and all published events flow through it to connected clients
+**Depends on**: Phase 68
+**Requirements**: EVNT-01, EVNT-02
+**Success Criteria** (what must be TRUE):
+  1. Starting the orchestration layer starts the Unix socket server — no manual step required
+  2. A test client connecting to the Unix socket receives events published via the event bus within 100ms
+  3. All 17 event types published to the event bus are forwarded to connected socket clients without filtering or loss
+  4. Socket server handles client disconnect gracefully without crashing the orchestration process
+**Plans**: TBD
+
+### Phase 71: L3 Output Streaming
+**Goal**: L3 container stdout/stderr flows in real-time from pool.py through the event bridge and appears in the dashboard SSE stream
+**Depends on**: Phase 70
+**Requirements**: EVNT-03, EVNT-04
+**Success Criteria** (what must be TRUE):
+  1. While an L3 container is running, its stdout appears in the dashboard SSE stream within 2 seconds of being written
+  2. Each output line is tagged with the task ID so the dashboard can route to the correct terminal panel
+  3. The SSE endpoint sends heartbeat pings every 30 seconds — browser devtools shows the keepalive traffic
+  4. After a network interruption, the dashboard SSE client reconnects automatically and receives the last 100 buffered events for the task without manual refresh
+**Plans**: TBD
+
+### Phase 72: Gateway-Only Dispatch
+**Goal**: All directive routing goes through the gateway HTTP API — no CLI subprocess fallback exists — and the system can start without a gateway for setup tasks
+**Depends on**: Phase 68
+**Requirements**: GATE-01, GATE-02, GATE-03
+**Success Criteria** (what must be TRUE):
+  1. Removing the gateway while the router is running causes dispatch to fail with a clear error — not silently fall back to execFileSync
+  2. `grep -r "execFileSync" skills/router/` returns no results
+  3. Running `openclaw monitor status` with `OPENCLAW_BOOTSTRAP=1` succeeds even when the gateway process is not running
+  4. Starting the orchestration layer without bootstrap mode and without a gateway running produces a fatal startup error with a human-readable message
+**Plans**: TBD
+
+### Phase 73: Unified Agent Registry
+**Goal**: Agent configuration has one source of truth — per-agent config.json files — with auto-discovery at startup and drift warnings when central config diverges
+**Depends on**: Phase 68
+**Requirements**: AREG-01, AREG-02, AREG-03
+**Success Criteria** (what must be TRUE):
+  1. Adding a new agent directory under agents/ with a config.json causes it to appear in the registry at next startup without editing openclaw.json
+  2. `openclaw agent list` shows agents discovered from the filesystem, not only those in openclaw.json
+  3. A mismatch between openclaw.json agents.list and agents/*/agent/config.json produces a startup warning that names the conflicting fields
+  4. Removing an agent directory removes it from the registry on next startup
+**Plans**: TBD
+
+### Phase 74: Dashboard Streaming UI
+**Goal**: Users can open any active task on the task board and watch its L3 output stream live in a terminal-style panel
+**Depends on**: Phase 71
+**Requirements**: DASH-01, DASH-02, DASH-03
+**Success Criteria** (what must be TRUE):
+  1. The task board shows a live output pane alongside or beneath the task list — not a separate navigation step
+  2. Clicking a task row opens its output stream in the terminal panel within 500ms
+  3. Output auto-scrolls to the bottom as new lines arrive; scrolling up pauses auto-scroll with a visual indicator
+  4. Scrolling back to the bottom resumes auto-scroll automatically without clicking a button
+**Plans**: TBD
+
+### Phase 75: Unified Observability
+**Goal**: A single metrics endpoint consolidates all system metrics and the dashboard shows a pipeline timeline from L1 dispatch through L3 completion
+**Depends on**: Phase 71
+**Requirements**: OBSV-01, OBSV-02
+**Success Criteria** (what must be TRUE):
+  1. `GET /api/metrics` returns a JSON response containing both orchestration metrics (from Python) and dashboard-computed metrics in a single payload
+  2. The dashboard metrics page shows a timeline row per task with labeled segments: L1 dispatch, L2 decomposition, L3 execution — each with a timestamp and duration
+  3. Timestamps and durations in the timeline are accurate to within 1 second of actual event times
+**Plans**: TBD
+
+### Phase 76: SOUL Injection Verification
+**Goal**: Every L3 container spawned has its SOUL variables fully populated including active task count, pool utilization, and current topology context
+**Depends on**: Phase 73
+**Requirements**: OBSV-03
+**Success Criteria** (what must be TRUE):
+  1. Spawning an L3 container and inspecting its SOUL file shows non-empty values for active_task_count, pool_utilization, and topology_context
+  2. Spawning two concurrent L3 tasks shows different active_task_count values in their respective SOUL files
+  3. After proposing a topology, spawned L3 containers have the current topology archetype name and agent count in their SOUL context
+**Plans**: TBD
+
+### Phase 77: Integration E2E Verification
+**Goal**: The full pipeline works end-to-end — L1 dispatches through the gateway, L2 decomposes, L3 spawns with populated SOUL, output streams to the dashboard, events flow, and metrics update
+**Depends on**: Phase 74, Phase 75, Phase 76
+**Requirements**: INTG-01
+**Success Criteria** (what must be TRUE):
+  1. Issuing a directive at L1 results in a visible L3 task appearing in the dashboard task board within 5 seconds
+  2. The L3 task's live output stream appears in the terminal panel while the container is running
+  3. After L3 completes, the metrics endpoint reflects the completed task count and the pipeline timeline shows the full L1→L2→L3 duration
+  4. The event stream shows no gaps — all expected event types (dispatch, spawn, output, complete) appear in correct order
+**Plans**: TBD
+
+---
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -47,7 +176,17 @@
 | 45-53 | v1.5 | 22/22 | Complete | 2026-02-25 |
 | 54-60 | v1.6 | 14/14 | Complete | 2026-02-26 |
 | 61-67 | v2.0 | 17/17 | Complete | 2026-03-04 |
+| 68. Tech Debt Resolution | v2.1 | 0/TBD | Not started | - |
+| 69. Docker Base Image | v2.1 | 0/TBD | Not started | - |
+| 70. Event Bridge Activation | v2.1 | 0/TBD | Not started | - |
+| 71. L3 Output Streaming | v2.1 | 0/TBD | Not started | - |
+| 72. Gateway-Only Dispatch | v2.1 | 0/TBD | Not started | - |
+| 73. Unified Agent Registry | v2.1 | 0/TBD | Not started | - |
+| 74. Dashboard Streaming UI | v2.1 | 0/TBD | Not started | - |
+| 75. Unified Observability | v2.1 | 0/TBD | Not started | - |
+| 76. SOUL Injection Verification | v2.1 | 0/TBD | Not started | - |
+| 77. Integration E2E Verification | v2.1 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-17*
-*Last updated: 2026-03-04 — v2.0 Structural Intelligence shipped*
+*Last updated: 2026-03-04 — v2.1 Programmatic Integration & Real-Time Streaming roadmap created*
