@@ -130,9 +130,10 @@ Plans:
   2. `openclaw agent list` shows agents discovered from the filesystem, not only those in openclaw.json
   3. A mismatch between openclaw.json agents.list and agents/*/agent/config.json produces a startup warning that names the conflicting fields
   4. Removing an agent directory removes it from the registry on next startup
-**Plans**: 1 plan
+**Plans**: 2 plans
 Plans:
-- [ ] 69-01-PLAN.md — Create openclaw-base image and rebase L3 Dockerfile (DOCK-01)
+- [ ] 73-01-PLAN.md — Add drift detection, defaults inheritance, startup wiring to AgentRegistry (AREG-01, AREG-02, AREG-03)
+- [ ] 73-02-PLAN.md — Create `openclaw agent list` CLI command with table and JSON output (AREG-02, AREG-03)
 
 ### Phase 74: Dashboard Streaming UI
 **Goal**: Users can open any active task on the task board and watch its L3 output stream live in a terminal-style panel
@@ -145,7 +146,7 @@ Plans:
   4. Scrolling back to the bottom resumes auto-scroll automatically without clicking a button
 **Plans**: 1 plan
 Plans:
-- [ ] 69-01-PLAN.md — Create openclaw-base image and rebase L3 Dockerfile (DOCK-01)
+- [ ] 74-01-PLAN.md — Terminal-style live output panel with task board integration (DASH-01, DASH-02, DASH-03)
 
 ### Phase 75: Unified Observability
 **Goal**: A single metrics endpoint consolidates all system metrics and the dashboard shows a pipeline timeline from L1 dispatch through L3 completion
@@ -157,7 +158,7 @@ Plans:
   3. Timestamps and durations in the timeline are accurate to within 1 second of actual event times
 **Plans**: 1 plan
 Plans:
-- [ ] 69-01-PLAN.md — Create openclaw-base image and rebase L3 Dockerfile (DOCK-01)
+- [ ] 75-01-PLAN.md — Unified metrics endpoint and pipeline timeline view (OBSV-01, OBSV-02)
 
 ### Phase 76: SOUL Injection Verification
 **Goal**: Every L3 container spawned has its SOUL variables fully populated including active task count, pool utilization, and current topology context
@@ -169,7 +170,7 @@ Plans:
   3. After proposing a topology, spawned L3 containers have the current topology archetype name and agent count in their SOUL context
 **Plans**: 1 plan
 Plans:
-- [ ] 69-01-PLAN.md — Create openclaw-base image and rebase L3 Dockerfile (DOCK-01)
+- [ ] 76-01-PLAN.md — Verify SOUL dynamic variables populated at spawn time (OBSV-03)
 
 ### Phase 77: Integration E2E Verification
 **Goal**: The full pipeline works end-to-end — L1 dispatches through the gateway, L2 decomposes, L3 spawns with populated SOUL, output streams to the dashboard, events flow, and metrics update
@@ -182,7 +183,7 @@ Plans:
   4. The event stream shows no gaps — all expected event types (dispatch, spawn, output, complete) appear in correct order
 **Plans**: 1 plan
 Plans:
-- [ ] 69-01-PLAN.md — Create openclaw-base image and rebase L3 Dockerfile (DOCK-01)
+- [ ] 77-01-PLAN.md — End-to-end integration verification (INTG-01)
 
 ---
 
@@ -203,7 +204,7 @@ Plans:
 | 70. Event Bridge Activation | v2.1 | Complete    | 2026-03-04 | 2026-03-04 |
 | 71. L3 Output Streaming | 2/2 | Complete    | 2026-03-04 | - |
 | 72. Gateway-Only Dispatch | 1/1 | Complete    | 2026-03-04 | - |
-| 73. Unified Agent Registry | v2.1 | 0/TBD | Not started | - |
+| 73. Unified Agent Registry | v2.1 | 0/2 | Not started | - |
 | 74. Dashboard Streaming UI | v2.1 | 0/TBD | Not started | - |
 | 75. Unified Observability | v2.1 | 0/TBD | Not started | - |
 | 76. SOUL Injection Verification | v2.1 | 0/TBD | Not started | - |
@@ -211,4 +212,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-02-17*
-*Last updated: 2026-03-04 — Phase 72 planned (1 plan, GATE-01/GATE-02/GATE-03)*
+*Last updated: 2026-03-04 — Phase 73 planned (2 plans, AREG-01/AREG-02/AREG-03)*
