@@ -46,7 +46,10 @@
   3. System generates a human-readable structural diff between any two topology versions showing exactly which nodes and edges were added, removed, or modified
   4. System classifies a topology as Lean, Balanced, or Robust based on role count, hierarchy depth, and coordination pattern — consistently for the same topology
   5. Topology data files live under a dedicated `topology/` directory and are never read or written by L3 container flock operations
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 61-01-PLAN.md — Verify data model, serialization, versioning, and file isolation (TOPO-01, TOPO-02, TOPO-03, TOPO-06)
+- [ ] 61-02-PLAN.md — Verify diff engine and archetype classifier (TOPO-04, TOPO-05)
 
 ### Phase 62: Structure Proposal Engine
 **Goal**: Given an outcome description, the system generates 2-3 scored, justified topology proposals across Lean/Balanced/Robust archetypes using constraint-validated LLM output
@@ -120,7 +123,7 @@ Phases execute in numeric order: 61 → 62 → 63 → 64 → 65
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 61. Topology Foundation | v2.0 | 0/? | Not started | - |
+| 61. Topology Foundation | v2.0 | 0/2 | Not started | - |
 | 62. Structure Proposal Engine | 5/5 | Complete    | 2026-03-03 | - |
 | 63. Correction System and Approval Gate | 3/3 | Complete    | 2026-03-03 | - |
 | 64. Structural Memory | 2/2 | Complete    | 2026-03-04 | - |
