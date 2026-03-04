@@ -423,3 +423,82 @@ class TestApprovalGate:
 
         # Should hint at what to run
         assert "openclaw-propose" in result["reason"] or "propose" in result["reason"].lower()
+
+
+# ---------------------------------------------------------------------------
+# TestRubricScoresInAnnotations
+# ---------------------------------------------------------------------------
+
+class TestRubricScoresInAnnotations:
+    """Tests for the rubric_scores parameter on approve_topology()."""
+
+    @patch("openclaw.topology.approval.save_topology")
+    @patch("openclaw.topology.approval.append_changelog")
+    @patch("openclaw.topology.approval.load_topology")
+    def test_rubric_scores_written_to_annotations(self, mock_load, mock_append, mock_save):
+        """approve_topology writes rubric_scores to annotations when non-empty dict is passed."""
+        from openclaw.topology.approval import approve_topology
+
+        mock_load.return_value = None
+
+        rubric_scores = {
+            "lean": {
+                "complexity": 7,
+                "coordination_overhead": 6,
+                "risk_containment": 5,
+                "time_to_first_output": 8,
+                "cost_estimate": 7,
+                "preference_fit": 5,
+                "overall_confidence": 7,
+                "key_differentiators": [],
+            }
+        }
+
+        entry = approve_topology(
+            project_id="test-project",
+            approved_graph=_simple_graph(),
+            correction_type="initial",
+            rubric_scores=rubric_scores,
+        )
+
+        assert "annotations" in entry
+        assert "rubric_scores" in entry["annotations"]
+        assert entry["annotations"]["rubric_scores"] == rubric_scores
+
+    @patch("openclaw.topology.approval.save_topology")
+    @patch("openclaw.topology.approval.append_changelog")
+    @patch("openclaw.topology.approval.load_topology")
+    def test_rubric_scores_omitted_when_none(self, mock_load, mock_append, mock_save):
+        """approve_topology does NOT include rubric_scores key when rubric_scores=None."""
+        from openclaw.topology.approval import approve_topology
+
+        mock_load.return_value = None
+
+        entry = approve_topology(
+            project_id="test-project",
+            approved_graph=_simple_graph(),
+            correction_type="initial",
+            rubric_scores=None,
+        )
+
+        assert "annotations" in entry
+        assert "rubric_scores" not in entry["annotations"]
+
+    @patch("openclaw.topology.approval.save_topology")
+    @patch("openclaw.topology.approval.append_changelog")
+    @patch("openclaw.topology.approval.load_topology")
+    def test_rubric_scores_omitted_when_empty_dict(self, mock_load, mock_append, mock_save):
+        """approve_topology does NOT include rubric_scores key when rubric_scores={}."""
+        from openclaw.topology.approval import approve_topology
+
+        mock_load.return_value = None
+
+        entry = approve_topology(
+            project_id="test-project",
+            approved_graph=_simple_graph(),
+            correction_type="initial",
+            rubric_scores={},
+        )
+
+        assert "annotations" in entry
+        assert "rubric_scores" not in entry["annotations"]
