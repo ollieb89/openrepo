@@ -126,7 +126,9 @@ Plans:
   1. `approve_topology()` accepts optional rubric scores and writes them to `annotations['rubric_scores']` in changelog entries
   2. CLI callers (`propose.py`, `approve.py`) pass per-archetype rubric scores at approval time
   3. ConfidenceChart renders non-zero data points when changelog entries contain rubric_scores annotations
-**Plans**: 0 plans (pending `/gsd:plan-phase 66`)
+**Plans**: 1 plan
+Plans:
+- [ ] 66-01-PLAN.md — Add rubric_scores to approve_topology() and wire all CLI call sites
 
 ## Progress
 
@@ -140,7 +142,7 @@ Phases execute in numeric order: 61 → 62 → 63 → 64 → 65 → 66
 | 63. Correction System and Approval Gate | 3/3 | Complete    | 2026-03-03 | - |
 | 64. Structural Memory | 2/2 | Complete    | 2026-03-04 | - |
 | 65. Topology Observability | 3/3 | Complete    | 2026-03-04 | - |
-| 66. Wire Rubric Scores to Confidence Chart | 0/0 | Pending     | - | - |
+| 66. Wire Rubric Scores to Confidence Chart | 0/1 | Pending     | - | - |
 
 ---
 *Roadmap created: 2026-03-03*
