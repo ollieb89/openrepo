@@ -40,6 +40,7 @@ export default function LogViewer({ taskId, containerId, staticLines, isActive =
 
   const connectToEventSource = useCallback(() => {
     if (!isMountedRef.current) return;
+    if (!isActive) return;  // defensive guard
 
     // Close existing connection
     if (eventSourceRef.current) {
@@ -87,6 +88,7 @@ export default function LogViewer({ taskId, containerId, staticLines, isActive =
     eventSource.onerror = () => {
       if (!isMountedRef.current) return;
       setConnected(false);
+      setError('Connection lost. Reconnecting...');
       eventSource.close();
       eventSourceRef.current = null;
 
@@ -99,7 +101,7 @@ export default function LogViewer({ taskId, containerId, staticLines, isActive =
         }
       }, delay);
     };
-  }, [effectiveTaskId]);
+  }, [effectiveTaskId, isActive]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -136,11 +138,13 @@ export default function LogViewer({ taskId, containerId, staticLines, isActive =
     };
   }, [effectiveTaskId, connectToEventSource, isActive]);
 
+  const displayLines = (!isActive && staticLines) ? staticLines : logs;
+
   useEffect(() => {
     if (autoScrollRef.current && logContainerRef.current) {
       logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
     }
-  }, [logs]);
+  }, [displayLines]);
 
   const handleScroll = useCallback(() => {
     const el = logContainerRef.current;
@@ -162,8 +166,6 @@ export default function LogViewer({ taskId, containerId, staticLines, isActive =
       logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
     }
   }, []);
-
-  const displayLines = (!isActive && staticLines) ? staticLines : logs;
 
   if (!effectiveTaskId && !staticLines) {
     return (
@@ -187,12 +189,14 @@ export default function LogViewer({ taskId, containerId, staticLines, isActive =
               )} &middot; {displayLines.length} lines
             </p>
           </div>
-          <button
-            onClick={() => setLogs([])}
-            className="px-3 py-1 text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded text-gray-600 dark:text-gray-300"
-          >
-            Clear
-          </button>
+          {isActive && (
+            <button
+              onClick={() => setLogs([])}
+              className="px-3 py-1 text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded text-gray-600 dark:text-gray-300"
+            >
+              Clear
+            </button>
+          )}
         </div>
       )}
 
