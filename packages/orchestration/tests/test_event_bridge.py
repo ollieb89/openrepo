@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import importlib
+import json
 import os
 import sys
 import threading
@@ -344,3 +345,144 @@ class TestAllEventTypesMap:
             assert event is not None, f"Failed to map EventType: {et.value}"
             assert event.type == et
             assert event.domain is not None
+
+
+# ---------------------------------------------------------------------------
+# Test 10: TASK_OUTPUT event type maps correctly through bridge
+# ---------------------------------------------------------------------------
+
+class TestTaskOutputEventMapping:
+    """TASK_OUTPUT event envelope maps correctly to an OrchestratorEvent."""
+
+    def test_task_output_event_maps_correctly(self):
+        from openclaw.events.bridge import _envelope_to_event
+
+        envelope = {
+            "event_type": "task.output",
+            "project_id": "test",
+            "task_id": "task-1",
+            "payload": {"line": "hello", "stream": "stdout"},
+        }
+        event = _envelope_to_event(envelope)
+
+        assert event is not None
+        assert event.type == EventType.TASK_OUTPUT
+        assert event.domain == EventDomain.TASK
+        assert event.task_id == "task-1"
+        # payload key is not in _TOP_LEVEL, so the whole payload dict is in event.payload
+        assert event.payload is not None
+        assert event.payload["payload"]["line"] == "hello"
+        assert event.payload["payload"]["stream"] == "stdout"
+
+    def test_task_output_project_and_task_extracted(self):
+        from openclaw.events.bridge import _envelope_to_event
+
+        envelope = {
+            "event_type": "task.output",
+            "project_id": "proj-output",
+            "task_id": "t-output-1",
+            "payload": {"line": "stderr line", "stream": "stderr"},
+        }
+        event = _envelope_to_event(envelope)
+
+        assert event is not None
+        assert event.project_id == "proj-output"
+        assert event.task_id == "t-output-1"
+
+
+# ---------------------------------------------------------------------------
+# Test 11: Socket heartbeat is sent to connected clients
+# ---------------------------------------------------------------------------
+
+class TestHeartbeatSentToClients:
+    """UnixSocketTransport sends heartbeat JSON to connected clients."""
+
+    def test_heartbeat_sent_to_clients(self, sock_path, tmp_path):
+        from openclaw.events.transport import UnixSocketTransport
+
+        transport = UnixSocketTransport()
+        transport._heartbeat_interval = 1  # Use 1-second interval for fast testing
+
+        received: List[str] = []
+        done = threading.Event()
+
+        async def _run_server_and_client():
+            await transport.start_server()
+
+            # Connect a client and wait for heartbeat
+            reader, writer = await asyncio.wait_for(
+                asyncio.open_unix_connection(sock_path), timeout=2.0
+            )
+            try:
+                # Wait for heartbeat (should arrive within ~2 seconds at 1s interval)
+                line = await asyncio.wait_for(reader.readline(), timeout=3.0)
+                received.append(line.decode("utf-8").strip())
+            except asyncio.TimeoutError:
+                received.append("TIMEOUT")
+            finally:
+                writer.close()
+                try:
+                    await writer.wait_closed()
+                except Exception:
+                    pass
+            done.set()
+            await transport.stop_server()
+
+        asyncio.run(_run_server_and_client())
+
+        assert done.is_set(), "Test did not complete"
+        assert len(received) == 1, f"Expected 1 heartbeat, got: {received}"
+        assert received[0] != "TIMEOUT", "Timed out waiting for heartbeat"
+
+        heartbeat_data = json.loads(received[0])
+        assert heartbeat_data["type"] == "heartbeat"
+        assert "timestamp" in heartbeat_data
+
+    def test_heartbeat_handles_disconnected_client(self, sock_path):
+        """Heartbeat loop cleans up disconnected clients without crashing."""
+        from openclaw.events.transport import UnixSocketTransport
+
+        transport = UnixSocketTransport()
+        transport._heartbeat_interval = 1
+
+        received: List[str] = []
+
+        async def _run():
+            await transport.start_server()
+
+            # Connect two clients
+            reader1, writer1 = await asyncio.wait_for(
+                asyncio.open_unix_connection(sock_path), timeout=2.0
+            )
+            reader2, writer2 = await asyncio.wait_for(
+                asyncio.open_unix_connection(sock_path), timeout=2.0
+            )
+
+            # Immediately close client 1 to simulate disconnection
+            writer1.close()
+            try:
+                await writer1.wait_closed()
+            except Exception:
+                pass
+
+            # Wait for heartbeat on client 2 — should still arrive despite client 1 disconnect
+            try:
+                line = await asyncio.wait_for(reader2.readline(), timeout=3.0)
+                received.append(line.decode("utf-8").strip())
+            except asyncio.TimeoutError:
+                received.append("TIMEOUT")
+            finally:
+                writer2.close()
+                try:
+                    await writer2.wait_closed()
+                except Exception:
+                    pass
+
+            await transport.stop_server()
+
+        asyncio.run(_run())
+
+        assert len(received) == 1, f"Expected 1 heartbeat on client 2, got: {received}"
+        assert received[0] != "TIMEOUT", "Timed out — heartbeat not delivered to remaining client"
+        heartbeat_data = json.loads(received[0])
+        assert heartbeat_data["type"] == "heartbeat"

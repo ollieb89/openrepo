@@ -5,7 +5,8 @@ import atexit
 import json
 import logging
 import os
-from typing import Callable, Dict, Set
+import time
+from typing import Callable, Dict, Optional, Set
 from .protocol import OrchestratorEvent
 
 logger = logging.getLogger("openclaw.events.transport")
@@ -37,6 +38,8 @@ class UnixSocketTransport:
         self._subscribers: Dict[str, Set[Callable]] = {}
         self._server = None
         self._clients: Set[asyncio.StreamWriter] = set()
+        self._heartbeat_task: Optional[asyncio.Task] = None
+        self._heartbeat_interval: int = 30
 
     @property
     def SOCKET_PATH(self) -> str:
@@ -96,6 +99,9 @@ class UnixSocketTransport:
         # Register atexit cleanup so socket file is removed on graceful exit
         atexit.register(self._cleanup_socket, socket_path)
 
+        # Start heartbeat loop to keep connected clients alive
+        self._heartbeat_task = asyncio.ensure_future(self._heartbeat_loop())
+
         logger.info(f"Event server started on {socket_path}")
         return True
 
@@ -107,8 +113,34 @@ class UnixSocketTransport:
         except OSError:
             pass
 
+    async def _heartbeat_loop(self):
+        """Send periodic heartbeat to all connected clients."""
+        while True:
+            await asyncio.sleep(self._heartbeat_interval)
+            heartbeat = json.dumps({"type": "heartbeat", "timestamp": time.time()}) + "\n"
+            heartbeat_bytes = heartbeat.encode("utf-8")
+            disconnected = set()
+            for writer in list(self._clients):
+                try:
+                    writer.write(heartbeat_bytes)
+                    await writer.drain()
+                except ConnectionError:
+                    disconnected.add(writer)
+            for writer in disconnected:
+                self._clients.discard(writer)
+                writer.close()
+
     async def stop_server(self):
         """Stop the server and close all client connections."""
+        # Cancel heartbeat before closing clients
+        if self._heartbeat_task:
+            self._heartbeat_task.cancel()
+            try:
+                await self._heartbeat_task
+            except asyncio.CancelledError:
+                pass
+            self._heartbeat_task = None
+
         if self._server:
             self._server.close()
             await self._server.wait_closed()
