@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Programmatic Integration & Real-Time Streaming
 status: executing
-stopped_at: Phase 70 context gathered
-last_updated: "2026-03-04T20:07:47.693Z"
-last_activity: 2026-03-04 — Phase 68 Plan 01 complete, 694 tests pass
+stopped_at: Phase 70 Plan 01 complete — Event bridge activated
+last_updated: "2026-03-04T20:50:26Z"
+last_activity: 2026-03-04 — Phase 70 Plan 01 complete, 707 tests pass
 progress:
   total_phases: 10
-  completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
-  percent: 5
+  completed_phases: 2
+  total_plans: 2
+  completed_plans: 2
+  percent: 10
 ---
 
 # Project State: OpenClaw Agent Orchestration
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-04)
 
 **Core value:** The system designs and refactors its own orchestration
-**Current focus:** Phase 68 — Tech Debt Resolution (Plan 01 complete)
+**Current focus:** Phase 70 — Event Bridge Activation (Plan 01 complete)
 
 ## Current Position
 
-Phase: 68 of 77 (Tech Debt Resolution)
-Plan: 1 of 3 (68-01 complete — DEBT-01, DEBT-02 resolved)
+Phase: 70 of 77 (Event Bridge Activation)
+Plan: 1 of 1 (70-01 complete — EVNT-01, EVNT-02 resolved)
 Status: In progress
-Last activity: 2026-03-04 — Phase 68 Plan 01 complete, 694 tests pass
+Last activity: 2026-03-04 — Phase 70 Plan 01 complete, 707 tests pass
 
-Progress: [█░░░░░░░░░] 5%
+Progress: [██░░░░░░░░] 10%
 
 ## Performance Metrics
 
@@ -40,8 +40,9 @@ Progress: [█░░░░░░░░░] 5%
 - 31/31 requirements satisfied
 
 **v2.1 (current):**
-- 1 plan completed
+- 2 plans completed
 - Phase 68, Plan 01: 2 tasks, 13 files modified, 694 tests pass
+- Phase 70, Plan 01: 3 tasks, 9 files modified, 707 tests pass (duration: 9min)
 
 ## Accumulated Context
 
@@ -61,6 +62,10 @@ v2.1 decisions:
 - [Phase 68-tech-debt-resolution]: project.json workspace paths use ~/... tilde notation, expanded by os.path.expanduser() in project_config.get_workspace_path()
 - [Phase 68-tech-debt-resolution]: openclaw.json skills.load.extraDirs uses relative ./skills path (not absolute)
 - [Phase 69-docker-base-image]: openclaw-base:bookworm-slim is canonical base image for all OpenClaw containers; docker-l3 depends on docker-base (not docker-sandbox-base); no CMD in base image, consumers define their own entrypoint
+- [Phase 70-event-bridge-activation]: AutonomyEventBus.emit() already calls event_bus.emit() internally — no double-emission needed in hooks.py
+- [Phase 70-event-bridge-activation]: Bridge failure = warning, not crash — orchestration continues if socket server fails to start
+- [Phase 70-event-bridge-activation]: autonomy events have project_id='unknown' in bridge envelope — acceptable, fix in future phase if needed
+- [Phase 70-event-bridge-activation]: event_bus.emit() is the single canonical publish path; ensure_event_bridge() idempotent at long-running CLI startup
 
 ### Pending Todos
 
@@ -74,6 +79,6 @@ None. Previously blocking issues resolved in Phase 68 Plan 01:
 
 ## Session Continuity
 
-Last session: 2026-03-04T20:07:47.689Z
-Stopped at: Phase 70 context gathered
-Resume file: .planning/phases/70-event-bridge-activation/70-CONTEXT.md
+Last session: 2026-03-04T20:50:26Z
+Stopped at: Phase 70 Plan 01 complete — 70-01-SUMMARY.md created
+Resume file: .planning/phases/70-event-bridge-activation/70-01-SUMMARY.md

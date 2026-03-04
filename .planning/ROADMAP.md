@@ -92,7 +92,7 @@ Plans:
   4. Socket server handles client disconnect gracefully without crashing the orchestration process
 **Plans**: 1 plan
 Plans:
-- [ ] 70-01-PLAN.md — Wire event_bus to socket transport, migrate publishers, auto-start server (EVNT-01, EVNT-02)
+- [x] 70-01-PLAN.md — Wire event_bus to socket transport, migrate publishers, auto-start server (EVNT-01, EVNT-02)
 
 ### Phase 71: L3 Output Streaming
 **Goal**: L3 container stdout/stderr flows in real-time from pool.py through the event bridge and appears in the dashboard SSE stream
@@ -199,7 +199,7 @@ Plans:
 | 61-67 | v2.0 | 17/17 | Complete | 2026-03-04 |
 | 68. Tech Debt Resolution | 2/2 | Complete    | 2026-03-04 | - |
 | 69. Docker Base Image | 1/1 | Complete    | 2026-03-04 | - |
-| 70. Event Bridge Activation | v2.1 | 0/1 | Not started | - |
+| 70. Event Bridge Activation | v2.1 | 1/1 | Complete | 2026-03-04 |
 | 71. L3 Output Streaming | v2.1 | 0/TBD | Not started | - |
 | 72. Gateway-Only Dispatch | v2.1 | 0/TBD | Not started | - |
 | 73. Unified Agent Registry | v2.1 | 0/TBD | Not started | - |
@@ -210,4 +210,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-02-17*
-*Last updated: 2026-03-04 — Phase 70 planned (1 plan, EVNT-01/EVNT-02)*
+*Last updated: 2026-03-04 — Phase 70 complete (1 plan, EVNT-01/EVNT-02 satisfied, 707 tests pass)*

@@ -15,8 +15,8 @@ Requirements for v2.1 Programmatic Integration & Real-Time Streaming. Each maps 
 
 ### Event Infrastructure
 
-- [ ] **EVNT-01**: Event bridge Unix socket server starts automatically during orchestration startup
-- [ ] **EVNT-02**: Event bus handlers forward all published events through Unix socket transport to connected clients
+- [x] **EVNT-01**: Event bridge Unix socket server starts automatically during orchestration startup
+- [x] **EVNT-02**: Event bus handlers forward all published events through Unix socket transport to connected clients
 - [ ] **EVNT-03**: L3 container output (stdout/stderr) streamed from pool.py through event bridge to dashboard SSE in real-time
 - [ ] **EVNT-04**: Dashboard SSE endpoint has heartbeat keepalive and automatic reconnect with buffered history (last 100 events per task)
 
@@ -91,8 +91,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DEBT-02 | Phase 68, Plan 01 | Complete |
 | DEBT-03 | Phase 68 | Complete |
 | DOCK-01 | Phase 69 | Complete |
-| EVNT-01 | Phase 70 | Pending |
-| EVNT-02 | Phase 70 | Pending |
+| EVNT-01 | Phase 70, Plan 01 | Complete |
+| EVNT-02 | Phase 70, Plan 01 | Complete |
 | EVNT-03 | Phase 71 | Pending |
 | EVNT-04 | Phase 71 | Pending |
 | GATE-01 | Phase 72 | Pending |
