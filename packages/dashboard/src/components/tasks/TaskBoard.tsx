@@ -1,14 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import type { TaskStatus } from '@/lib/types';
+import type { Task, TaskStatus } from '@/lib/types';
 import { useTasks } from '@/lib/hooks/useTasks';
 import { useProject } from '@/context/ProjectContext';
 import TaskCard from './TaskCard';
 import TaskTerminalPanel from './TaskTerminalPanel';
 import StatusBadge from '@/components/common/StatusBadge';
 import Card from '@/components/common/Card';
-import type { TaskWithAutonomy } from '@/lib/types/autonomy';
 
 const STATUS_COLUMNS: { status: TaskStatus; label: string }[] = [
   { status: 'pending', label: 'Pending' },
@@ -21,7 +20,7 @@ const STATUS_COLUMNS: { status: TaskStatus; label: string }[] = [
 export default function TaskBoard() {
   const { projectId } = useProject();
   const { tasks, isLoading } = useTasks(projectId);
-  const [selectedTask, setSelectedTask] = useState<TaskWithAutonomy | null>(null);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   if (isLoading) {
     return (
@@ -71,7 +70,7 @@ export default function TaskBoard() {
                   <TaskCard 
                     key={task.id} 
                     task={task} 
-                    onClick={() => setSelectedTask(task as TaskWithAutonomy)} 
+                    onClick={() => setSelectedTask(task)}
                   />
                 ))}
               </div>
