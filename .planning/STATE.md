@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Structural Intelligence
 status: executing
-stopped_at: Completed 66-wire-rubric-scores-to-confidence-chart-01-PLAN.md
-last_updated: "2026-03-04T14:50:23.897Z"
+stopped_at: Completed 67-integration-cleanup-01-PLAN.md
+last_updated: "2026-03-04T16:02:45.217Z"
 last_activity: 2026-03-04 — Phase 01 Plan 01 complete (native ACP WebSocket endpoint, ServerAcpTranslator, E2E tests)
 progress:
-  total_phases: 6
-  completed_phases: 6
-  total_plans: 16
-  completed_plans: 16
+  total_phases: 7
+  completed_phases: 7
+  total_plans: 17
+  completed_plans: 17
   percent: 5
 ---
 
@@ -64,6 +64,7 @@ Progress: [█░░░░░░░░░] 5% (phase 01 — 1/? plans complete)
 | Phase 61-topology-foundation P01 | 2min | 2 tasks | 0 files |
 | Phase 61-02 P02 | 2min | 2 tasks | 1 files |
 | Phase 66-wire-rubric-scores-to-confidence-chart P01 | 4min | 2 tasks | 5 files |
+| Phase 67-integration-cleanup P01 | 4min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -116,6 +117,8 @@ Progress: [█░░░░░░░░░] 5% (phase 01 — 1/? plans complete)
 - [Phase 61-02]: Classifier already exceeded required 19 tests with 23 — no changes needed
 - [Phase 66-wire-rubric-scores-to-confidence-chart]: rubric_scores param added as Optional[dict] with default None on approve_topology() — backward compatible, truthy guard prevents empty dict in annotations
 - [Phase 66-wire-rubric-scores-to-confidence-chart]: Hard correction re-scores the imported (post-edit) graph under all 3 archetypes without explore flag — scoring for recording faithfully, not epsilon-greedy ranking
+- [Phase 67-integration-cleanup]: route() changed from async to sync in DirectiveRouter — __main__.py calls synchronously; GatewayClient dependency removed
+- [Phase 67-integration-cleanup]: agents/ namespace __init__.py files added — required for Python to import agents.main.skills.route_directive as a package
 
 ### Pending Todos
 
@@ -127,6 +130,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-04T14:47:19.954Z
-Stopped at: Completed 66-wire-rubric-scores-to-confidence-chart-01-PLAN.md
+Last session: 2026-03-04T16:02:45.212Z
+Stopped at: Completed 67-integration-cleanup-01-PLAN.md
 Resume file: None

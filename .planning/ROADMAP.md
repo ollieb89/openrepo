@@ -34,7 +34,7 @@
 - [x] **Phase 64: Structural Memory** - Correction storage, preference profiling, isolation from L3 SOUL injection (completed 2026-03-04)
 - [x] **Phase 65: Topology Observability** - Dashboard topology graph, proposal comparison, correction history, confidence timeline (completed 2026-03-04)
 - [x] **Phase 66: Wire Rubric Scores to Confidence Chart** - Close audit gap: pipe rubric scores through approve_topology() to ConfidenceChart annotations (completed 2026-03-04)
-- [ ] **Phase 67: Integration Cleanup** - Fix incomplete __all__ exports and broken route_directive import (gap closure from audit)
+- [x] **Phase 67: Integration Cleanup** - Fix incomplete __all__ exports and broken route_directive import (gap closure from audit) (completed 2026-03-04)
 
 ## Phase Details
 
@@ -156,7 +156,7 @@ Phases execute in numeric order: 61 → 62 → 63 → 64 → 65 → 66
 | 64. Structural Memory | 2/2 | Complete    | 2026-03-04 | - |
 | 65. Topology Observability | 3/3 | Complete    | 2026-03-04 | - |
 | 66. Wire Rubric Scores to Confidence Chart | 1/1 | Complete    | 2026-03-04 | - |
-| 67. Integration Cleanup | 0/1 | Pending     | - | - |
+| 67. Integration Cleanup | 1/1 | Complete   | 2026-03-04 | - |
 
 ---
 *Roadmap created: 2026-03-03*
