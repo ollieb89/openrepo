@@ -46,12 +46,12 @@ Requirements for structural intelligence milestone. Each maps to roadmap phases.
 
 ### Topology Observability
 
-- [ ] **TOBS-01**: Dashboard displays the currently proposed topology as a visual graph (nodes = roles, edges = relationships)
-- [ ] **TOBS-02**: Dashboard displays the approved topology alongside the proposed topology for comparison
-- [ ] **TOBS-03**: Dashboard shows correction history for a project with structural diffs between versions
-- [ ] **TOBS-04**: Dashboard shows a structural diff timeline — chronological view of how topology evolved across proposals and corrections
-- [ ] **TOBS-05**: Dashboard shows confidence evolution — how proposal confidence scores changed across correction cycles
-- [ ] **TOBS-06**: Dashboard shows the multi-proposal comparison view with rubric scores, key deltas, and archetype labels
+- [x] **TOBS-01**: Dashboard displays the currently proposed topology as a visual graph (nodes = roles, edges = relationships)
+- [x] **TOBS-02**: Dashboard displays the approved topology alongside the proposed topology for comparison
+- [x] **TOBS-03**: Dashboard shows correction history for a project with structural diffs between versions
+- [x] **TOBS-04**: Dashboard shows a structural diff timeline — chronological view of how topology evolved across proposals and corrections
+- [x] **TOBS-05**: Dashboard shows confidence evolution — how proposal confidence scores changed across correction cycles
+- [x] **TOBS-06**: Dashboard shows the multi-proposal comparison view with rubric scores, key deltas, and archetype labels
 
 ## v2.1 Requirements
 
@@ -114,12 +114,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SMEM-04 | Phase 64 | Complete |
 | SMEM-05 | Phase 64 | Complete |
 | SMEM-06 | Phase 64 | Complete |
-| TOBS-01 | Phase 65 | Pending |
-| TOBS-02 | Phase 65 | Pending |
-| TOBS-03 | Phase 65 | Pending |
-| TOBS-04 | Phase 65 | Pending |
-| TOBS-05 | Phase 65 | Pending |
-| TOBS-06 | Phase 65 | Pending |
+| TOBS-01 | Phase 65 | Complete |
+| TOBS-02 | Phase 65 | Complete |
+| TOBS-03 | Phase 65 | Complete |
+| TOBS-04 | Phase 65 | Complete |
+| TOBS-05 | Phase 65 | Complete |
+| TOBS-06 | Phase 65 | Complete |
 
 **Coverage:**
 - v2.0 requirements: 31 total

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Structural Intelligence
 status: executing
-stopped_at: Phase 65 context gathered
-last_updated: "2026-03-04T08:38:21.432Z"
+stopped_at: Completed 65-topology-observability-01-PLAN.md
+last_updated: "2026-03-04T09:20:52.404Z"
 last_activity: 2026-03-03 — Phase 62 Plan 03 complete (proposal models, rubric scorer, constraint linter)
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 10
-  completed_plans: 10
+  total_plans: 13
+  completed_plans: 11
   percent: 5
 ---
 
@@ -55,6 +55,7 @@ Progress: [█░░░░░░░░░] 5% (v2.0 — 1/? plans complete)
 | Phase 63 P02 | 6min | 2 tasks | 6 files |
 | Phase 64-structural-memory P01 | 3min | 1 tasks | 4 files |
 | Phase 64-structural-memory P02 | 5min | 2 tasks | 5 files |
+| Phase 65-topology-observability P01 | 3min | 3 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,7 @@ Progress: [█░░░░░░░░░] 5% (v2.0 — 1/? plans complete)
 - [Phase 64-structural-memory]: Dual-layer isolation: Layer 1 pre-filter uses metadata.category fallback to match both storage formats
 - [Phase 64-structural-memory]: explore flag drawn once per session at call site in propose.py — not per-archetype
 - [Phase 64-structural-memory]: ArchetypeClassifier enrichment and MemoryProfiler recompute are both non-blocking in approval.py
+- [Phase 65-01]: Topology nav uses Network icon from lucide-react; SWR 30s refresh (topology changes on corrections not continuously); API routes return null/[] for missing files (valid pre-proposal state)
 
 ### Pending Todos
 
@@ -103,6 +105,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-04T08:38:21.428Z
-Stopped at: Phase 65 context gathered
-Resume file: .planning/phases/65-topology-observability/65-CONTEXT.md
+Last session: 2026-03-04T09:20:52.399Z
+Stopped at: Completed 65-topology-observability-01-PLAN.md
+Resume file: None
