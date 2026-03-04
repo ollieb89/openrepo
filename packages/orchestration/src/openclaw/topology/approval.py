@@ -46,6 +46,7 @@ def approve_topology(
     approved_graph: TopologyGraph,
     correction_type: str,
     pushback_note: str = "",
+    rubric_scores: Optional[dict] = None,
 ) -> dict:
     """
     Atomically save an approved topology and append a changelog entry.
@@ -65,6 +66,9 @@ def approve_topology(
         pushback_note: Optional informational note about the original proposal scoring
                        higher (from compute_pushback_note). If non-empty, included
                        in entry["annotations"]["pushback_note"].
+        rubric_scores: Optional dict mapping archetype names to RubricScore.to_dict()
+                       dicts. Written to annotations["rubric_scores"] when non-empty.
+                       If None or empty dict, rubric_scores key is omitted from annotations.
 
     Returns:
         The changelog entry dict that was appended.
@@ -90,6 +94,8 @@ def approve_topology(
     annotations: dict = {}
     if pushback_note:
         annotations["pushback_note"] = pushback_note
+    if rubric_scores:
+        annotations["rubric_scores"] = rubric_scores
 
     # Enrich annotations with approved archetype (Phase 64)
     # Used by MemoryProfiler.compute_profile() to build affinity scores
