@@ -27,16 +27,33 @@ The system designs and refactors its own orchestration — proposing multi-agent
 
 ### Active
 
-(None — next milestone not yet defined. Use `/gsd:new-milestone` to begin.)
+## Current Milestone: v2.1 Programmatic Integration & Real-Time Streaming
+
+**Goal:** Replace CLI-level coupling with programmatic APIs, activate existing event infrastructure, and deliver live L3 output streaming to the dashboard.
+
+**Target features:**
+- Tech debt resolution (test failures, TopologyProposal consolidation, hardcoded path removal)
+- Event bridge activation (start Unix socket server, wire event bus, dashboard SSE verification)
+- Gateway-only dispatch (remove execFileSync fallback, route all directives through gateway HTTP API)
+- Unified Agent Registry (merge openclaw.json + per-agent configs, auto-discovery, resolve config drift)
+- L3 output streaming (Docker logs → event bus → Unix socket → dashboard SSE, live terminal view)
+- Cross-runtime observability (unified metrics endpoint, pipeline timeline view L1→L2→L3)
+- SOUL injection verification (ensure dynamic variables populated at spawn time, add topology context)
+- Docker base image sharing (shared base image, rebase L3 Dockerfile)
+- Bootstrap mode (gateway-free startup flag for initial setup)
+- Integration E2E verification
 
 ### Out of Scope
 
-- Mid-flight adaptation — requires topology-as-data to be stable first; v2.1+
-- Auto-scaling — dependent on structural scoring being proven; v2.1+
-- Self-refactoring execution graphs — research-grade complexity; v2.1+
-- Dynamic role spawning — needs runtime topology mutation; v2.1+
+- Mid-flight topology adaptation — requires stable integration layer first; v2.2+
+- Auto-scaling — dependent on structural scoring being proven; v2.2+
+- Self-refactoring execution graphs — research-grade complexity; v2.2+
+- Dynamic role spawning — needs runtime topology mutation; v2.2+
+- Multi-agent coordination (handoff protocols, shared task queues, collaborative memory, conflict resolution) — planned for v2.2
 - Consumer-facing UI — audience is AI-native product teams, platform teams, researchers
 - Protocol standardization (ACP) — deferred until structural intelligence is proven internally
+- Event persistence to disk/DB — in-memory buffer sufficient for v2.1; defer replay/compliance to v2.2
+- Git submodule wiring — deprioritized per user feedback
 
 ## Context
 
@@ -45,6 +62,12 @@ The system designs and refactors its own orchestration — proposing multi-agent
 - Existing infrastructure: Gateway, Docker containers, memU memory, autonomy framework, topology engine, dashboard
 - The system now proposes its own orchestration structure before execution, learning from human corrections
 - Target users: AI-native product teams, internal platform teams, multi-agent researchers
+- Event infrastructure exists but isn't wired: Unix socket transport, 17 event types defined, dashboard SSE bridge — server never started
+- Router already has fetch-to-gateway primary path with execFileSync fallback — v2.1 removes fallback
+- Per-agent config.json files are richer than openclaw.json entries — registry consolidation needed
+- Pre-existing test failures: async event loop issues in test_proposer.py, nested loop conflicts in test_state_engine_memory.py
+- Dual TopologyProposal classes (proposer.py vs proposal_models.py) with incompatible field names (graph vs topology)
+- Hardcoded /home/ollie and /home/ob paths in 15+ files including active runtime configs
 
 ## Constraints
 
@@ -67,4 +90,4 @@ The system designs and refactors its own orchestration — proposing multi-agent
 | Dataclasses over Pydantic | Consistent with AgentSpec pattern in existing codebase | ✓ Good — lightweight, no dependency added |
 
 ---
-*Last updated: 2026-03-04 after v2.0 milestone*
+*Last updated: 2026-03-04 after v2.1 milestone initialization*
