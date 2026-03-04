@@ -30,6 +30,7 @@ from .proposal_models import (
 )
 from .rubric import (
     RubricScorer,
+    score_proposal,
     find_key_differentiators,
     DEFAULT_WEIGHTS,
     DIMENSIONS,
@@ -46,6 +47,7 @@ from .renderer import (
     render_justifications,
     render_low_confidence_warning,
     render_full_output,
+    render_diff_summary,
 )
 
 __all__ = [
@@ -76,4 +78,6 @@ __all__ = [
     "render_justifications",
     "render_low_confidence_warning",
     "render_full_output",
+    "score_proposal",
+    "render_diff_summary",
 ]

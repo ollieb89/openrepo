@@ -10,12 +10,12 @@ import dataclasses
 from pathlib import Path
 
 # Make the repo root importable so `agents.*` can be imported as packages
-REPO_ROOT = str(Path(__file__).resolve().parents[4])
+REPO_ROOT = str(Path(__file__).resolve().parents[3])
 if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
 # Make openclaw importable within route_directive's own imports
-OPENCLAW_SRC = str(Path(__file__).resolve().parents[4] / "packages" / "orchestration" / "src")
+OPENCLAW_SRC = str(Path(__file__).resolve().parents[3] / "packages" / "orchestration" / "src")
 if OPENCLAW_SRC not in sys.path:
     sys.path.insert(0, OPENCLAW_SRC)
 

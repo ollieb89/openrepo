@@ -1,23 +1,60 @@
 """Route directives from L1 to the appropriate L2 PM via gateway API."""
 
-from openclaw.gateway_client import GatewayClient
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import List, Optional
+
 from openclaw.project_config import load_and_validate_openclaw_config
 
-class DirectiveRouter:
-    def __init__(self):
-        self.client = GatewayClient.from_config()
-        self.config = load_and_validate_openclaw_config()
 
-    async def route(self, directive: str, context: dict = None) -> dict:
+class RouteType(Enum):
+    TO_PM = "to_pm"
+    SPAWN_L3 = "spawn_l3"
+    COORDINATE = "coordinate"
+    ESCALATE = "escalate"
+    QUEUE = "queue"
+
+
+@dataclass
+class RouteDecision:
+    route_type: RouteType
+    target: str
+    reasoning: str
+    confidence: float
+    priority: str
+    alternatives: List[str] = field(default_factory=list)
+    swarm_state: Optional[dict] = None
+
+
+class DirectiveRouter:
+    def __init__(self, config: Optional[dict] = None, swarm_query=None):
+        self.config = config if config is not None else load_and_validate_openclaw_config()
+        self.swarm_query = swarm_query
+
+    def route(self, directive: str, context: dict = None) -> RouteDecision:
         """Analyze directive and route to the best PM agent."""
         target = self._resolve_target(directive, context)
-        result = await self.client.dispatch(target, directive)
-        return {"target": target, "run_id": result.run_id, "status": result.status}
+        route_type = self._infer_route_type(target)
+        return RouteDecision(
+            route_type=route_type,
+            target=target,
+            reasoning=f"Keyword match routed to {target}",
+            confidence=0.9,
+            priority="normal",
+        )
+
+    def _infer_route_type(self, target: str) -> RouteType:
+        """Infer RouteType from resolved target string."""
+        if target == "__propose__":
+            return RouteType.COORDINATE
+        if target == "l3_specialist":
+            return RouteType.SPAWN_L3
+        return RouteType.TO_PM
 
     def _resolve_target(self, directive: str, context: dict) -> str:
         """Resolve target agent using project registry and keyword matching."""
         # Uses agents/main/agent/config.json project_registry
-        # Priority: propose -> explicit mention → stack detection → generic → escalate
+        # Priority: propose -> explicit mention -> stack detection -> generic -> escalate
 
         if not context:
             context = {}
