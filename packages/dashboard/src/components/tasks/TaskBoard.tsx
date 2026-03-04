@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { Task, TaskStatus } from '@/lib/types';
+import type { TaskStatus } from '@/lib/types';
 import { useTasks } from '@/lib/hooks/useTasks';
 import { useProject } from '@/context/ProjectContext';
 import TaskCard from './TaskCard';
@@ -20,7 +20,10 @@ const STATUS_COLUMNS: { status: TaskStatus; label: string }[] = [
 export default function TaskBoard() {
   const { projectId } = useProject();
   const { tasks, isLoading } = useTasks(projectId);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const selectedTask = selectedTaskId
+    ? tasks.find(t => t.id === selectedTaskId) ?? null
+    : null;
 
   if (isLoading) {
     return (
@@ -70,7 +73,7 @@ export default function TaskBoard() {
                   <TaskCard 
                     key={task.id} 
                     task={task} 
-                    onClick={() => setSelectedTask(task)}
+                    onClick={() => setSelectedTaskId(task.id)}
                   />
                 ))}
               </div>
@@ -82,7 +85,7 @@ export default function TaskBoard() {
       {selectedTask && (
         <TaskTerminalPanel
           task={selectedTask}
-          onClose={() => setSelectedTask(null)}
+          onClose={() => setSelectedTaskId(null)}
         />
       )}
     </div>
