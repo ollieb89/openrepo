@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Programmatic Integration & Real-Time Streaming
 status: executing
-stopped_at: Phase 73 context gathered
-last_updated: "2026-03-04T22:23:54.370Z"
+stopped_at: Completed 73-01-PLAN.md
+last_updated: "2026-03-04T22:44:30.498Z"
 last_activity: 2026-03-04 — Phase 70 Plan 01 complete, 707 tests pass
 progress:
   total_phases: 10
   completed_phases: 4
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 7
+  completed_plans: 6
   percent: 10
 ---
 
@@ -72,6 +72,9 @@ v2.1 decisions:
 - [Phase 71-l3-output-streaming]: containerId prop kept as deprecated backward-compat fallback in LogViewer
 - [Phase 72-gateway-only-dispatch]: Router dispatches exclusively via gateway HTTP API — execFileSync fallback removed
 - [Phase 72-gateway-only-dispatch]: ensure_gateway() skips check in bootstrap mode (OPENCLAW_BOOTSTRAP=1); monitor status and project commands are bootstrap-safe
+- [Phase 73]: Logger propagate=False in get_logger() requires test fixture to re-enable propagation for caplog capture
+- [Phase 73]: [Phase 73-unified-agent-registry]: agent_registry.py imports only stdlib — no circular import possible with config.py
+- [Phase 73]: [Phase 73-unified-agent-registry]: Directories without agents/{id}/agent/config.json are not auto-registered; _templates silently skipped
 
 ### Pending Todos
 
@@ -85,6 +88,6 @@ None. Previously blocking issues resolved in Phase 68 Plan 01:
 
 ## Session Continuity
 
-Last session: 2026-03-04T22:23:54.365Z
-Stopped at: Phase 73 context gathered
-Resume file: .planning/phases/73-unified-agent-registry/73-CONTEXT.md
+Last session: 2026-03-04T22:44:30.493Z
+Stopped at: Completed 73-01-PLAN.md
+Resume file: None

@@ -204,7 +204,7 @@ Plans:
 | 70. Event Bridge Activation | v2.1 | Complete    | 2026-03-04 | 2026-03-04 |
 | 71. L3 Output Streaming | 2/2 | Complete    | 2026-03-04 | - |
 | 72. Gateway-Only Dispatch | 1/1 | Complete    | 2026-03-04 | - |
-| 73. Unified Agent Registry | v2.1 | 0/2 | Not started | - |
+| 73. Unified Agent Registry | 1/2 | In Progress|  | - |
 | 74. Dashboard Streaming UI | v2.1 | 0/TBD | Not started | - |
 | 75. Unified Observability | v2.1 | 0/TBD | Not started | - |
 | 76. SOUL Injection Verification | v2.1 | 0/TBD | Not started | - |

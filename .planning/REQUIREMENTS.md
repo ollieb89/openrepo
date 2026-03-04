@@ -28,9 +28,9 @@ Requirements for v2.1 Programmatic Integration & Real-Time Streaming. Each maps 
 
 ### Agent Registry
 
-- [ ] **AREG-01**: Single AgentRegistry class merges openclaw.json agents.list with agents/*/agent/config.json — per-agent config is source of truth
-- [ ] **AREG-02**: Auto-discovery scans agents/*/ at startup, registers all found agents
-- [ ] **AREG-03**: Config drift detection flags mismatches between central and per-agent configs at startup with warnings
+- [x] **AREG-01**: Single AgentRegistry class merges openclaw.json agents.list with agents/*/agent/config.json — per-agent config is source of truth
+- [x] **AREG-02**: Auto-discovery scans agents/*/ at startup, registers all found agents
+- [x] **AREG-03**: Config drift detection flags mismatches between central and per-agent configs at startup with warnings
 
 ### Dashboard Streaming
 
@@ -98,9 +98,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | GATE-01 | Phase 72 | Complete |
 | GATE-02 | Phase 72 | Complete |
 | GATE-03 | Phase 72 | Complete |
-| AREG-01 | Phase 73 | Pending |
-| AREG-02 | Phase 73 | Pending |
-| AREG-03 | Phase 73 | Pending |
+| AREG-01 | Phase 73 | Complete |
+| AREG-02 | Phase 73 | Complete |
+| AREG-03 | Phase 73 | Complete |
 | DASH-01 | Phase 74 | Pending |
 | DASH-02 | Phase 74 | Pending |
 | DASH-03 | Phase 74 | Pending |
