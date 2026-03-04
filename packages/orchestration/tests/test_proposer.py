@@ -233,7 +233,7 @@ class TestRejectionContext:
 
 class TestGenerateProposals:
     def _run(self, coro):
-        return asyncio.get_event_loop().run_until_complete(coro)
+        return asyncio.run(coro)
 
     def test_rejection_context_none_when_fresh(self):
         """When fresh=True, rejection context should not be loaded."""

@@ -159,7 +159,7 @@ def main() -> int:
     if selected.rubric_score:
         pushback = compute_pushback_note(
             selected.rubric_score,
-            selected.topology,
+            selected.graph,
             weights,
         )
 
@@ -173,7 +173,7 @@ def main() -> int:
     # --- Approve ---
     approve_topology(
         project_id,
-        selected.topology,
+        selected.graph,
         "initial",
         pushback,
         rubric_scores=rubric_scores,

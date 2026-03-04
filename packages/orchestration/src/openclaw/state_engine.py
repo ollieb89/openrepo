@@ -18,6 +18,8 @@ from typing import Any, Dict, List, Optional
 
 from .config import LOCK_TIMEOUT, LOCK_RETRY_ATTEMPTS, CACHE_TTL_SECONDS, ACTIVITY_LOG_MAX_ENTRIES
 from .logging import get_logger
+from .events.protocol import OrchestratorEvent, EventDomain, EventType
+from .events.transport import event_bridge
 from .project_config import get_active_project_id, get_memu_config
 
 logger = get_logger("state_engine")
@@ -374,6 +376,38 @@ class JarvisState:
                         except Exception as e:
                             logger.error(f"Memory trigger failed: {e}")
                             
+                        # Emit cross-runtime event
+                        try:
+                            project_id = get_active_project_id()
+                            evt_type = None
+                            if status == 'in_progress':
+                                evt_type = EventType.TASK_STARTED
+                            elif status == 'completed':
+                                evt_type = EventType.TASK_COMPLETED
+                            elif status == 'failed':
+                                evt_type = EventType.TASK_FAILED
+                            
+                            if evt_type:
+                                try:
+                                    loop = asyncio.get_running_loop()
+                                    loop.create_task(event_bridge.publish(OrchestratorEvent(
+                                        type=evt_type,
+                                        domain=EventDomain.TASK,
+                                        project_id=project_id,
+                                        task_id=task_id,
+                                        payload={"status": status, "activity": activity_entry}
+                                    )))
+                                except RuntimeError:
+                                    asyncio.run(event_bridge.publish(OrchestratorEvent(
+                                        type=evt_type,
+                                        domain=EventDomain.TASK,
+                                        project_id=project_id,
+                                        task_id=task_id,
+                                        payload={"status": status, "activity": activity_entry}
+                                    )))
+                        except Exception as e:
+                            logger.error(f"Event bridge publish failed: {e}")
+                            
                         # Emit phase lifecycle event (fire-and-forget, never raises)
                         try:
                             from .event_bus import emit
@@ -442,6 +476,30 @@ class JarvisState:
 
                         self._write_state_locked(f, state)
                         logger.info("Task created", extra={"task_id": task_id, "skill_hint": skill_hint})
+                        
+                        # Emit event (non-fatal — state operations must not fail due to events)
+                        try:
+                            project_id = get_active_project_id()
+                            try:
+                                loop = asyncio.get_running_loop()
+                                loop.create_task(event_bridge.publish(OrchestratorEvent(
+                                    type=EventType.TASK_CREATED,
+                                    domain=EventDomain.TASK,
+                                    project_id=project_id,
+                                    task_id=task_id,
+                                    payload={"skill_hint": skill_hint, "metadata": metadata}
+                                )))
+                            except RuntimeError:
+                                asyncio.run(event_bridge.publish(OrchestratorEvent(
+                                    type=EventType.TASK_CREATED,
+                                    domain=EventDomain.TASK,
+                                    project_id=project_id,
+                                    task_id=task_id,
+                                    payload={"skill_hint": skill_hint, "metadata": metadata}
+                                )))
+                        except Exception as exc:
+                            logger.warning("Event publish failed (non-fatal)", extra={"error": str(exc)})
+                        
                         return
 
                     finally:
