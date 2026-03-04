@@ -193,6 +193,33 @@ class TestApproveSuccess:
         # correction_type arg (3rd positional) should be "initial"
         assert mock_approve.call_args[0][2] == "initial"
 
+    def test_approve_passes_rubric_scores_kwarg(self):
+        """approve_topology is called with rubric_scores kwarg containing proposal scores."""
+        from openclaw.cli.approve import main
+
+        with patch("sys.argv", ["openclaw-approve"]):
+            with patch("openclaw.cli.approve.get_active_project_id", return_value="testproj"):
+                with patch("openclaw.cli.approve.load_pending_proposals",
+                           return_value=_make_proposal_set_dict()):
+                    with patch("openclaw.cli.approve._is_interactive", return_value=True):
+                        with patch("openclaw.cli.approve.get_topology_config", return_value={
+                            "proposal_confidence_warning_threshold": 6,
+                            "rubric_weights": {"complexity": 1.0},
+                        }):
+                            with patch("openclaw.cli.approve.approve_topology") as mock_approve:
+                                with patch("openclaw.cli.approve.compute_pushback_note", return_value=""):
+                                    with patch("builtins.input", return_value="1"):
+                                        main()
+
+        # rubric_scores kwarg must be present in the call
+        call_kwargs = mock_approve.call_args[1]
+        assert "rubric_scores" in call_kwargs, "rubric_scores kwarg must be passed to approve_topology"
+        rubric_scores = call_kwargs["rubric_scores"]
+        # The fixture has a "lean" proposal with rubric_score — expect rubric_scores["lean"]["complexity"] == 7
+        assert isinstance(rubric_scores, dict), "rubric_scores must be a dict"
+        assert "lean" in rubric_scores, "rubric_scores must contain the 'lean' archetype key"
+        assert rubric_scores["lean"]["complexity"] == 7
+
 
 # ---------------------------------------------------------------------------
 # Tests: invalid selection reprompt
