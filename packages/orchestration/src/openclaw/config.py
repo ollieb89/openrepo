@@ -447,3 +447,22 @@ def ensure_gateway() -> None:
     """
     import asyncio
     asyncio.run(_ensure_gateway_async())
+
+
+def get_agent_registry():
+    """Return a loaded AgentRegistry for the current project root.
+
+    Calling this at startup triggers auto-discovery, drift detection,
+    orphan warnings, and defaults inheritance. Non-fatal — returns an
+    empty registry if project root has no agents/ or openclaw.json.
+
+    This is the canonical way startup code and CLI commands obtain the
+    registry. Independent of ensure_gateway() — callers invoke them in
+    sequence as needed.
+
+    Returns:
+        AgentRegistry instance loaded from the current project root.
+    """
+    from openclaw.agent_registry import AgentRegistry
+    root = get_project_root()
+    return AgentRegistry(root)
