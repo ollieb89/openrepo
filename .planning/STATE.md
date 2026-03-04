@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Structural Intelligence
 status: executing
-stopped_at: Phase 66 context gathered
-last_updated: "2026-03-04T14:27:17.483Z"
+stopped_at: Completed 66-wire-rubric-scores-to-confidence-chart-01-PLAN.md
+last_updated: "2026-03-04T14:47:19.959Z"
 last_activity: 2026-03-04 — Phase 01 Plan 01 complete (native ACP WebSocket endpoint, ServerAcpTranslator, E2E tests)
 progress:
   total_phases: 6
-  completed_phases: 5
-  total_plans: 15
-  completed_plans: 15
+  completed_phases: 6
+  total_plans: 16
+  completed_plans: 16
   percent: 5
 ---
 
@@ -63,6 +63,7 @@ Progress: [█░░░░░░░░░] 5% (phase 01 — 1/? plans complete)
 | Phase 01-protocol-foundations P02 | 3min | 2 tasks | 6 files |
 | Phase 61-topology-foundation P01 | 2min | 2 tasks | 0 files |
 | Phase 61-02 P02 | 2min | 2 tasks | 1 files |
+| Phase 66-wire-rubric-scores-to-confidence-chart P01 | 4min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -113,6 +114,8 @@ Progress: [█░░░░░░░░░] 5% (phase 01 — 1/? plans complete)
 - [Phase 61-01]: Phase 61 code pre-built during Phases 62-65; verification plan confirmed all 15 tests pass with no code changes
 - [Phase 61-02]: Diff test count gap resolved by adding TestEdgeChangesExtended (4 tests) to reach required 21 total
 - [Phase 61-02]: Classifier already exceeded required 19 tests with 23 — no changes needed
+- [Phase 66-wire-rubric-scores-to-confidence-chart]: rubric_scores param added as Optional[dict] with default None on approve_topology() — backward compatible, truthy guard prevents empty dict in annotations
+- [Phase 66-wire-rubric-scores-to-confidence-chart]: Hard correction re-scores the imported (post-edit) graph under all 3 archetypes without explore flag — scoring for recording faithfully, not epsilon-greedy ranking
 
 ### Pending Todos
 
@@ -124,6 +127,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-04T14:27:17.479Z
-Stopped at: Phase 66 context gathered
-Resume file: .planning/phases/66-wire-rubric-scores-to-confidence-chart/66-CONTEXT.md
+Last session: 2026-03-04T14:47:19.954Z
+Stopped at: Completed 66-wire-rubric-scores-to-confidence-chart-01-PLAN.md
+Resume file: None
