@@ -21,6 +21,7 @@ from .logging import get_logger
 from .events.protocol import EventType
 from . import event_bus
 from .project_config import get_active_project_id, get_memu_config
+from .metrics import write_python_metrics_snapshot
 
 logger = get_logger("state_engine")
 
@@ -295,6 +296,12 @@ class JarvisState:
         f.flush()
         # Backup after successful write so .bak always holds the last known-good state
         self._create_backup()
+        # Write python-metrics.json snapshot alongside state file (non-blocking, failure-isolated)
+        try:
+            project_id = self.state_file.parent.name
+            write_python_metrics_snapshot(project_id, self.state_file, state)
+        except Exception as exc:
+            logger.warning("snapshot write failed (non-fatal)", extra={"error": str(exc)})
         # Write-through: update cache so next read_state() returns from memory
         self._cache = copy.deepcopy(state)
         self._cache_mtime = os.path.getmtime(self.state_file)
