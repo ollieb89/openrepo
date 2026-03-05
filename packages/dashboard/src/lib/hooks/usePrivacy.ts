@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import useSWR from 'swr';
 import type { PrivacyExecutionMode } from '@/lib/types/privacy';
 import type { PrivacyAuditEvent } from '@/lib/privacy/audit-log';
-import { apiPath } from '@/lib/api-client';
+import { apiJson, apiFetch } from '@/lib/api-client';
 
 interface PrivacySettings {
   projectId: string;
@@ -20,12 +20,8 @@ export interface PrivacyEventFilters {
   to: string;
 }
 
-const fetcher = async (url: string) => {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Request failed: ${response.status}`);
-  }
-  return response.json();
+const fetcher = async <T>(url: string): Promise<T> => {
+  return apiJson<T>(url);
 };
 
 function toIsoFromInput(value: string): string {
@@ -44,7 +40,7 @@ export function usePrivacy(projectId: string | null) {
   });
 
   const settingsUrl = projectId
-    ? apiPath(`/api/privacy/settings?projectId=${encodeURIComponent(projectId)}`)
+    ? `/api/privacy/settings?projectId=${encodeURIComponent(projectId)}`
     : null;
 
   const eventsUrl = useMemo(() => {
@@ -77,7 +73,7 @@ export function usePrivacy(projectId: string | null) {
       params.set('to', toIso);
     }
 
-    return apiPath(`/api/privacy/events?${params.toString()}`);
+    return `/api/privacy/events?${params.toString()}`;
   }, [filters, projectId]);
 
   const settingsSWR = useSWR<{ projectId: string; remoteInferenceEnabled: boolean; updatedAt: string | null }>(
@@ -93,15 +89,11 @@ export function usePrivacy(projectId: string | null) {
   async function setRemoteConsent(enabled: boolean): Promise<void> {
     if (!projectId) return;
 
-    const response = await fetch(apiPath('/api/privacy/settings'), {
+    await apiFetch('/api/privacy/settings', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ projectId, remoteInferenceEnabled: enabled }),
     });
-
-    if (!response.ok) {
-      throw new Error('Unable to update privacy settings.');
-    }
 
     await settingsSWR.mutate();
   }
@@ -109,15 +101,11 @@ export function usePrivacy(projectId: string | null) {
   async function revokeConsent(): Promise<void> {
     if (!projectId) return;
 
-    const response = await fetch(apiPath('/api/privacy/settings'), {
+    await apiFetch('/api/privacy/settings', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ projectId }),
     });
-
-    if (!response.ok) {
-      throw new Error('Unable to revoke consent.');
-    }
 
     await settingsSWR.mutate();
   }

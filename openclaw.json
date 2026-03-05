@@ -1,21 +1,27 @@
 {
   "meta": {
     "lastTouchedVersion": "2026.2.23",
-    "lastTouchedAt": "2026-02-25T03:26:34.250Z"
+    "lastTouchedAt": "2026-03-06T00:00:00.000Z"
   },
   "agents": {
     "defaults": {
+      "workspace": "~/.openclaw/workspace",
       "model": {
-        "primary": "google-gemini-cli/gemini-2.5-flash"
+        "primary": "google-gemini-cli/gemini-2.5-flash",
+        "fallbacks": [
+          "google-gemini-cli/gemini-3-pro-preview"
+        ]
       },
       "models": {
         "google-gemini-cli/gemini-3-pro-preview": {
+          "alias": "gemini-pro",
           "params": {
             "temperature": 0.4,
             "topP": 0.9
           }
         },
         "google-gemini-cli/gemini-2.5-flash": {
+          "alias": "gemini-flash",
           "params": {
             "temperature": 0.7
           }
@@ -26,13 +32,34 @@
       },
       "maxConcurrent": 4,
       "subagents": {
-        "maxConcurrent": 8
+        "maxConcurrent": 8,
+        "runTimeoutSeconds": 900
       },
+      "compaction": {
+        "mode": "safeguard",
+        "reserveTokensFloor": 24000,
+        "identifierPolicy": "strict"
+      },
+      "contextPruning": {
+        "mode": "cache-ttl",
+        "ttl": "1h",
+        "minPrunableToolChars": 50000
+      },
+      "blockStreamingDefault": "off",
+      "typingMode": "instant",
+      "typingIntervalSeconds": 6,
       "sandbox": {
         "mode": "non-main",
         "workspaceAccess": "none",
-        "scope": "session"
-      }
+        "scope": "agent",
+        "docker": {
+          "image": "openclaw-sandbox:bookworm-slim",
+          "network": "none",
+          "memory": "1g"
+        }
+      },
+      "imageMaxDimensionPx": 1200,
+      "userTimezone": "UTC"
     },
     "list": [
       {
@@ -59,95 +86,53 @@
         "orchestration": {
           "role": "strategic"
         }
-      },
-      {
-        "id": "pumplai_pm",
-        "name": "PumpLAI Project Manager",
-        "sandbox": {
-          "mode": "all"
-        },
-        "level": 2,
-        "reports_to": "clawdia_prime",
-        "subordinates": [
-          "l3_specialist"
-        ],
-        "orchestration": {
-          "role": "tactical"
-        }
-      },
-      {
-        "id": "nextjs_pm",
-        "name": "Frontend Architect",
-        "sandbox": {
-          "mode": "all"
-        },
-        "level": 2,
-        "reports_to": "clawdia_prime",
-        "subordinates": [
-          "l3_specialist"
-        ],
-        "orchestration": {
-          "role": "tactical"
-        }
-      },
-      {
-        "id": "python_backend_worker",
-        "name": "ML Pipeline Worker",
-        "sandbox": {
-          "mode": "off"
-        },
-        "level": 2,
-        "reports_to": "clawdia_prime",
-        "subordinates": [
-          "l3_specialist"
-        ],
-        "orchestration": {
-          "role": "tactical"
-        }
-      },
-      {
-        "id": "l3_specialist",
-        "name": "L3 Specialist Executor",
-        "sandbox": {
-          "mode": "all"
-        },
-        "level": 3,
-        "reports_to": "pumplai_pm",
-        "orchestration": {
-          "container": {
-            "image": "ubuntu:latest"
-          }
-        }
-      },
-      {
-        "id": "agent",
-        "name": "Dispatch Bridge",
-        "sandbox": {
-          "mode": "all"
-        },
-        "level": 3,
-        "reports_to": "pumplai_pm",
-        "orchestration": {
-          "container": {
-            "image": "ubuntu:latest"
-          }
-        }
       }
     ]
   },
   "commands": {
     "native": "auto",
     "nativeSkills": "auto",
+    "text": true,
+    "bash": false,
+    "config": true,
+    "debug": true,
     "restart": true,
+    "allowFrom": {
+      "*": [
+        "owner_id_here"
+      ]
+    },
     "ownerDisplay": "raw"
   },
   "channels": {
+    "defaults": {
+      "groupPolicy": "allowlist",
+      "heartbeat": {
+        "showOk": false,
+        "showAlerts": true,
+        "useIndicator": true
+      }
+    },
     "telegram": {
       "enabled": true,
-      "dmPolicy": "pairing",
       "botToken": "${OPENCLAW_TELEGRAM_BOT_TOKEN}",
+      "dmPolicy": "pairing",
       "groupPolicy": "allowlist",
-      "streaming": "partial"
+      "streaming": "partial",
+      "historyLimit": 50,
+      "mediaMaxMb": 5
+    },
+    "discord": {
+      "enabled": false,
+      "token": "${DISCORD_BOT_TOKEN}",
+      "dmPolicy": "pairing",
+      "streaming": "off"
+    },
+    "slack": {
+      "enabled": false,
+      "botToken": "${SLACK_BOT_TOKEN}",
+      "appToken": "${SLACK_APP_TOKEN}",
+      "dmPolicy": "pairing"
     }
   },
   "gateway": {
@@ -159,11 +144,37 @@
       "token": "${OPENCLAW_GATEWAY_TOKEN}"
     }
   },
+  "session": {
+    "scope": "per-sender",
+    "dmScope": "per-channel-peer",
+    "reset": {
+      "mode": "daily",
+      "atHour": 4
+    },
+    "maintenance": {
+      "mode": "warn",
+      "pruneAfter": "30d"
+    }
+  },
+  "messages": {
+    "responsePrefix": "🦞",
+    "ackReaction": "👀",
+    "inbound": {
+      "debounceMs": 2000
+    },
+    "tts": {
+      "auto": "off",
+      "provider": "openai"
+    }
+  },
   "skills": {
     "load": {
       "extraDirs": [
         "./skills"
       ]
+    },
+    "install": {
+      "nodeManager": "npm"
     }
   },
   "topology": {
@@ -182,17 +193,23 @@
       "memory": "memory-memu"
     },
     "entries": {
-      "telegram": {
-        "enabled": true
-      },
-      "google-gemini-cli-auth": {
-        "enabled": true
-      },
       "memory-memu": {
         "enabled": true,
         "config": {
           "geminiApiKey": "${GEMINI_API_KEY}"
         }
+      }
+    }
+  },
+  "browser": {
+    "enabled": true,
+    "evaluateEnabled": true,
+    "ssrfPolicy": {
+      "dangerouslyAllowPrivateNetwork": true
+    },
+    "profiles": {
+      "default": {
+        "cdpPort": 18800
       }
     }
   }

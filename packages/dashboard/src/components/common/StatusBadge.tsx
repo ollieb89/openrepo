@@ -8,6 +8,7 @@ const statusStyles: Record<TaskStatus, string> = {
   completed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
   failed: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
   rejected: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+  escalating: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
 };
 
 const statusLabels: Record<TaskStatus, string> = {
@@ -18,6 +19,7 @@ const statusLabels: Record<TaskStatus, string> = {
   completed: 'Completed',
   failed: 'Failed',
   rejected: 'Rejected',
+  escalating: 'Escalating',
 };
 
 export default function StatusBadge({ status }: { status: TaskStatus }) {

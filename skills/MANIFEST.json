@@ -1,34 +1,52 @@
 {
   "categories": {
     "orchestration-core": [
+      "openclaw-orchestrate",
+      "openclaw-spawn-l3",
+      "openclaw-review",
+      "openclaw-heartbeat",
       "router",
       "spawn",
       "review",
-      "openclaw-orchestrate",
-      "openclaw-spawn-l3",
-      "openclaw-heartbeat",
-      "openclaw-review"
-    ],
-    "orchestration-methodology": [
-      "brainstorming",
-      "executing-plans",
-      "test-driven-development",
-      "verification-before-completion",
-      "subagent-driven-development",
-      "systematic-debugging",
-      "self-improving-agent"
+      "openclaw-agent-run",
+      "openclaw-sandbox",
+      "openclaw-stream",
+      "openclaw-workspace-bootstrap",
+      "openclaw-memory-system",
+      "openclaw-models",
+      "openclaw-skills-author"
     ],
     "multi-agent": [
       "multi-agent",
       "dispatching-parallel-agents",
-      "pumplai_delegation"
+      "pumplai_delegation",
+      "subagent-driven-development"
+    ],
+    "methodology": [
+      "brainstorming",
+      "executing-plans",
+      "test-driven-development",
+      "verification-before-completion",
+      "systematic-debugging",
+      "self-improving-agent",
+      "writing-plans copy",
+      "receiving-code-review",
+      "requesting-code-review",
+      "finishing-a-development-branch",
+      "using-git-worktrees",
+      "using-superpowers"
     ],
     "integration": [
-      "oc-notion",
       "notion-kanban-sync",
-      "openclaw-memory-system",
-      "openclaw-models",
-      "notebooklm"
+      "notebooklm",
+      "clawddocs",
+      "oc-gog",
+      "oc-notion"
+    ],
+    "tools": [
+      "frontend-design-ultimate",
+      "free-ride",
+      "python-performance-optimization"
     ]
   }
 }

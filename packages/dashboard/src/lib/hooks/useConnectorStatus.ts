@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import useSWR from 'swr';
 import type { ConnectorHealthStatus, ConnectorSourceScope, ConnectorState } from '@/lib/types/connectors';
-import { apiPath } from '@/lib/api-client';
+import { apiJson, apiFetch } from '@/lib/api-client';
 
 const SLACK_CONNECTOR_ID = 'connector-slack-primary';
 
@@ -18,15 +18,8 @@ interface SlackChannelScopeResponse {
   firstSyncWindowDays: number;
 }
 
-const fetcher = async (url: string) => {
-  const response = await fetch(url);
-  if (response.status === 404) {
-    return null;
-  }
-  if (!response.ok) {
-    throw new Error(`Request failed (${response.status})`);
-  }
-  return response.json();
+const fetcher = async <T>(url: string): Promise<T> => {
+  return apiJson<T>(url);
 };
 
 function statusHelp(status: ConnectorHealthStatus | 'disconnected'): string {
@@ -53,7 +46,7 @@ export function useConnectorStatus() {
   const [isMutating, setIsMutating] = useState(false);
 
   const connectorSWR = useSWR<ConnectorDetailResponse | null>(
-    apiPath(`/api/connectors?id=${encodeURIComponent(SLACK_CONNECTOR_ID)}`),
+    `/api/connectors?id=${encodeURIComponent(SLACK_CONNECTOR_ID)}`,
     fetcher,
     {
       refreshInterval: 5000,
@@ -61,7 +54,7 @@ export function useConnectorStatus() {
     }
   );
 
-  const channelsSWR = useSWR<SlackChannelScopeResponse | null>(apiPath('/api/connectors/slack/channels'), fetcher, {
+  const channelsSWR = useSWR<SlackChannelScopeResponse | null>('/api/connectors/slack/channels', fetcher, {
     refreshInterval: 5000,
     revalidateOnFocus: false,
   });
@@ -90,14 +83,13 @@ export function useConnectorStatus() {
   async function connectSlack(input: { code: string; redirectUri: string; firstSyncWindowDays: number }) {
     setIsMutating(true);
     try {
-      const response = await fetch(apiPath('/api/connectors/slack/oauth'), {
+      const payload = await apiJson<any>('/api/connectors/slack/oauth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
       });
 
-      const payload = await response.json();
-      if (!response.ok || !payload.ok) {
+      if (!payload.ok) {
         throw new Error(payload.error || 'Failed to connect Slack');
       }
 
@@ -110,14 +102,13 @@ export function useConnectorStatus() {
   async function saveChannelScope(input: { selectedChannelIds: string[]; firstSyncWindowDays: number }) {
     setIsMutating(true);
     try {
-      const response = await fetch(apiPath('/api/connectors/slack/channels'), {
+      const payload = await apiJson<any>('/api/connectors/slack/channels', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
       });
 
-      const payload = await response.json();
-      if (!response.ok || !payload.ok) {
+      if (!payload.ok) {
         throw new Error(payload.error || 'Failed to save Slack channel scope');
       }
 
@@ -130,14 +121,13 @@ export function useConnectorStatus() {
   async function syncNow(firstWindowDays?: number) {
     setIsMutating(true);
     try {
-      const response = await fetch(apiPath('/api/connectors/slack/sync'), {
+      const payload = await apiJson<any>('/api/connectors/slack/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ firstSyncWindowDays: firstWindowDays }),
       });
 
-      const payload = await response.json();
-      if (!response.ok || !payload.ok) {
+      if (!payload.ok) {
         throw new Error(payload.error || 'Slack sync failed');
       }
 

@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import { useMemory } from '@/lib/hooks/useMemory';
 import { useProject } from '@/context/ProjectContext';
 import type { MemoryItem } from '@/lib/types/memory';
-import { apiPath } from '@/lib/api-client';
+import { apiJson, apiFetch } from '@/lib/api-client';
 import MemoryStatBar from './MemoryStatBar';
 import MemoryFilters from './MemoryFilters';
 import MemoryTable from './MemoryTable';
@@ -136,7 +136,7 @@ export default function MemoryPanel() {
     if (!projectId || scanRunning) return;
     setScanRunning(true);
     try {
-      const res = await fetch(apiPath('/api/memory/health-scan'), {
+      const data = await apiJson<any>('/api/memory/health-scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -147,8 +147,6 @@ export default function MemoryPanel() {
           similarity_max: healthSettings.similarity_max,
         }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
       const flags: HealthFlag[] = Array.isArray(data.flags) ? data.flags : [];
       const flagMap = new Map<string, HealthFlag>();
       for (const flag of flags) {
@@ -243,12 +241,11 @@ export default function MemoryPanel() {
 
   // Edit memory via PUT proxy
   async function handleEditMemory(id: string, content: string): Promise<void> {
-    const res = await fetch(apiPath(`/api/memory/${id}`), {
+    await apiFetch(`/api/memory/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content }),
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     await mutate();
     await runHealthScan();
   }
@@ -258,8 +255,7 @@ export default function MemoryPanel() {
     setDeletingIds(prev => new Set(Array.from(prev).concat([id])));
     await new Promise(resolve => setTimeout(resolve, DELETE_ANIMATION_MS));
 
-    const res = await fetch(apiPath(`/api/memory/${id}`), { method: 'DELETE' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    await apiFetch(`/api/memory/${id}`, { method: 'DELETE' });
 
     // Remove from health flags
     setHealthFlags(prev => {
@@ -306,12 +302,11 @@ export default function MemoryPanel() {
   async function handleArchiveMemory(memoryId: string): Promise<void> {
     const item = items.find((m: MemoryItem) => m.id === memoryId);
     const currentContent = item?.content ?? '';
-    const res = await fetch(`/api/memory/${memoryId}`, {
+    await apiFetch(`/api/memory/${memoryId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content: `[ARCHIVED ${new Date().toISOString()}] ${currentContent}` }),
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     handleDismissFlag(memoryId);
     await mutate();
     toast.success('Memory archived.');
@@ -349,8 +344,7 @@ export default function MemoryPanel() {
     await new Promise(resolve => setTimeout(resolve, DELETE_ANIMATION_MS));
 
     try {
-      const res = await fetch(apiPath(`/api/memory/${id}`), { method: 'DELETE' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await apiFetch(`/api/memory/${id}`, { method: 'DELETE' });
 
       // Optimistically remove from SWR cache
       await mutate(
@@ -396,7 +390,7 @@ export default function MemoryPanel() {
     await new Promise(resolve => setTimeout(resolve, DELETE_ANIMATION_MS));
 
     try {
-      await Promise.all(Array.from(ids).map(id => fetch(apiPath(`/api/memory/${id}`), { method: 'DELETE' }).then(r => { if (!r.ok) throw new Error(`HTTP ${r.status} for ${id}`); })));
+      await Promise.all(Array.from(ids).map(id => apiFetch(`/api/memory/${id}`, { method: 'DELETE' })));
 
       // Optimistically remove from SWR cache
       await mutate(
@@ -469,11 +463,10 @@ export default function MemoryPanel() {
         <button
           type="button"
           onClick={() => setActiveTab('list')}
-          className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-            activeTab === 'list'
-              ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
-              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-          }`}
+          className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'list'
+            ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
+            : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+            }`}
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
@@ -483,11 +476,10 @@ export default function MemoryPanel() {
         <button
           type="button"
           onClick={() => setActiveTab('health')}
-          className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-            activeTab === 'health'
-              ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
-              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-          }`}
+          className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'health'
+            ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
+            : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+            }`}
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -539,11 +531,10 @@ export default function MemoryPanel() {
               <button
                 type="button"
                 onClick={() => { setShowOnlyFlagged(v => !v); setPage(1); }}
-                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium border transition-colors ${
-                  showOnlyFlagged
-                    ? 'bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-700'
-                    : 'bg-white text-gray-600 border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
-                }`}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium border transition-colors ${showOnlyFlagged
+                  ? 'bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-700'
+                  : 'bg-white text-gray-600 border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -644,11 +635,10 @@ export default function MemoryPanel() {
                             key={p}
                             type="button"
                             onClick={() => setPage(p as number)}
-                            className={`rounded px-2.5 py-1 text-sm ${
-                              clampedPage === p
-                                ? 'bg-blue-600 text-white'
-                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                            }`}
+                            className={`rounded px-2.5 py-1 text-sm ${clampedPage === p
+                              ? 'bg-blue-600 text-white'
+                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                              }`}
                           >
                             {p}
                           </button>

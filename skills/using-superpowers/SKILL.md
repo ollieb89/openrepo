@@ -1,6 +1,10 @@
 ---
 name: using-superpowers
 description: Use when starting any conversation - establishes how to find and use skills, requiring Skill tool invocation before ANY response including clarifying questions
+metadata:
+  openclaw:
+    emoji: "⚡"
+    category: "methodology"
 ---
 
 <EXTREMELY-IMPORTANT>

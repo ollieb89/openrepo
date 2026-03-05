@@ -1,0 +1,637 @@
+{
+  "meta": {
+    "lastTouchedVersion": "2026.2.23",
+    "lastTouchedAt": "2026-03-05T21:07:09.000Z"
+  },
+  "providers": {
+    "openai": {
+      "name": "OpenAI",
+      "type": "openai",
+      "enabled": true,
+      "apiKeyEnv": "OPENAI_API_KEY"
+    },
+    "anthropic": {
+      "name": "Anthropic",
+      "type": "anthropic",
+      "enabled": true,
+      "apiKeyEnv": "ANTHROPIC_API_KEY"
+    },
+    "google": {
+      "name": "Google Gemini",
+      "type": "google",
+      "enabled": true,
+      "apiKeyEnv": "GEMINI_API_KEY"
+    },
+    "groq": {
+      "name": "Groq",
+      "type": "openai",
+      "enabled": true,
+      "baseUrl": "https://api.groq.com/openai/v1",
+      "apiKeyEnv": "GROQ_API_KEY"
+    },
+    "perplexity": {
+      "name": "Perplexity",
+      "type": "openai",
+      "enabled": true,
+      "baseUrl": "https://api.perplexity.ai",
+      "apiKeyEnv": "PERPLEXITY_API_KEY"
+    },
+    "openrouter": {
+      "name": "OpenRouter",
+      "type": "openai",
+      "enabled": true,
+      "baseUrl": "https://openrouter.ai/api/v1",
+      "apiKeyEnv": "OPENROUTER_API_KEY"
+    },
+    "ollama": {
+      "name": "Ollama",
+      "type": "openai",
+      "enabled": true
+    },
+    "cloudflare-ai-gateway": {
+      "name": "Cloudflare-ai-gateway",
+      "type": "openai",
+      "enabled": true
+    },
+    "github-copilot": {
+      "name": "Github-copilot",
+      "type": "openai",
+      "enabled": true
+    },
+    "huggingface": {
+      "name": "Huggingface",
+      "type": "openai",
+      "enabled": true
+    },
+    "bedrock": {
+      "name": "Bedrock",
+      "type": "openai",
+      "enabled": true
+    },
+    "together": {
+      "name": "Together",
+      "type": "openai",
+      "enabled": true
+    },
+    "minimax": {
+      "name": "Minimax",
+      "type": "openai",
+      "enabled": true
+    },
+    "qwen": {
+      "name": "Qwen",
+      "type": "openai",
+      "enabled": true
+    },
+    "deepgram": {
+      "name": "Deepgram",
+      "type": "openai",
+      "enabled": true
+    },
+    "qianfan": {
+      "name": "Qianfan",
+      "type": "openai",
+      "enabled": true
+    },
+    "claude-max-api-proxy": {
+      "name": "Claude-max-api-proxy",
+      "type": "openai",
+      "enabled": true
+    },
+    "litellm": {
+      "name": "Litellm",
+      "type": "openai",
+      "enabled": true
+    },
+    "venice": {
+      "name": "Venice",
+      "type": "openai",
+      "enabled": true
+    },
+    "synthetic": {
+      "name": "Synthetic",
+      "type": "openai",
+      "enabled": true
+    },
+    "kilocode": {
+      "name": "Kilocode",
+      "type": "openai",
+      "enabled": true
+    },
+    "xiaomi": {
+      "name": "Xiaomi",
+      "type": "openai",
+      "enabled": true
+    },
+    "mistral": {
+      "name": "Mistral",
+      "type": "openai",
+      "enabled": true
+    },
+    "vllm": {
+      "name": "Vllm",
+      "type": "openai",
+      "enabled": true
+    },
+    "glm": {
+      "name": "Glm",
+      "type": "openai",
+      "enabled": true
+    },
+    "nvidia": {
+      "name": "Nvidia",
+      "type": "openai",
+      "enabled": true
+    },
+    "vercel-ai-gateway": {
+      "name": "Vercel-ai-gateway",
+      "type": "openai",
+      "enabled": true
+    },
+    "zai": {
+      "name": "Zai",
+      "type": "openai",
+      "enabled": true
+    },
+    "moonshot": {
+      "name": "Moonshot",
+      "type": "openai",
+      "enabled": true
+    },
+    "opencode": {
+      "name": "Opencode",
+      "type": "openai",
+      "enabled": true
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "gpt-4o",
+        "fallbacks": [
+          "gpt-4o",
+          "claude-3-5-sonnet",
+          "gpt-4o-mini"
+        ],
+        "imageFallbacks": [
+          "claude-3-5-sonnet",
+          "gpt-4o"
+        ]
+      },
+      "models": {
+        "gpt-4o": {
+          "params": {
+            "temperature": 0.7
+          },
+          "aliases": [
+            "gpt-4"
+          ]
+        },
+        "gpt-4o-mini": {
+          "params": {
+            "temperature": 0.7
+          }
+        },
+        "o1-preview": {
+          "params": {}
+        },
+        "claude-3-5-sonnet": {
+          "params": {
+            "max_tokens": 4096
+          },
+          "aliases": [
+            "claude-3-5"
+          ]
+        },
+        "claude-3-haiku": {
+          "params": {}
+        },
+        "gemini-1.5-pro": {
+          "params": {},
+          "aliases": [
+            "gemini-pro"
+          ]
+        },
+        "gemini-1.5-flash": {
+          "params": {}
+        },
+        "llama-3-70b": {
+          "params": {}
+        },
+        "llama-3-8b": {
+          "params": {}
+        },
+        "mixtral-8x7b": {
+          "params": {}
+        }
+      },
+      "maxConcurrent": 4,
+      "subagents": {
+        "maxConcurrent": 8
+      },
+      "sandbox": {
+        "mode": "non-main",
+        "workspaceAccess": "none",
+        "scope": "session"
+      }
+    },
+    "list": [
+      {
+        "id": "main",
+        "name": "Central Core",
+        "level": 1,
+        "sandbox": {
+          "mode": "off"
+        }
+      }
+    ]
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "dmPolicy": "pairing",
+      "botToken": "${OPENCLAW_TELEGRAM_BOT_TOKEN}",
+      "groupPolicy": "allowlist",
+      "streaming": "partial"
+    },
+    "discord": {
+      "enabled": true,
+      "token": "${OPENCLAW_DISCORD_TOKEN}",
+      "guilds": "allowlist",
+      "streaming": "full"
+    },
+    "slack": {
+      "enabled": true,
+      "appToken": "${OPENCLAW_SLACK_APP_TOKEN}",
+      "botToken": "${OPENCLAW_SLACK_BOT_TOKEN}",
+      "signingSecret": "${OPENCLAW_SLACK_SIGNING_SECRET}",
+      "socketMode": true
+    },
+    "signal": {
+      "enabled": true,
+      "account": "${OPENCLAW_SIGNAL_ACCOUNT}",
+      "bin": "signal-cli"
+    },
+    "whatsapp": {
+      "enabled": false,
+      "pairing": "qr"
+    },
+    "zalo": {
+      "enabled": false
+    },
+    "irc": {
+      "enabled": false
+    },
+    "matrix": {
+      "enabled": false,
+      "homeserver": "https://matrix.org",
+      "accessToken": "${MATRIX_ACCESS_TOKEN}"
+    },
+    "zalouser": {
+      "enabled": false
+    },
+    "line": {
+      "enabled": false
+    },
+    "twitch": {
+      "enabled": false
+    },
+    "synology-chat": {
+      "enabled": false
+    },
+    "location": {
+      "enabled": false
+    },
+    "nostr": {
+      "enabled": false
+    },
+    "mattermost": {
+      "enabled": false
+    },
+    "group-messages": {
+      "enabled": false
+    },
+    "broadcast-groups": {
+      "enabled": false
+    },
+    "index": {
+      "enabled": false
+    },
+    "nextcloud-talk": {
+      "enabled": false
+    },
+    "msteams": {
+      "enabled": false
+    },
+    "imessage": {
+      "enabled": false
+    },
+    "bluebubbles": {
+      "enabled": false,
+      "serverUrl": "http://localhost:1234",
+      "password": "${BLUEBUBBLES_PASSWORD}"
+    },
+    "googlechat": {
+      "enabled": false
+    },
+    "channel-routing": {
+      "enabled": false
+    },
+    "tlon": {
+      "enabled": false
+    },
+    "feishu": {
+      "enabled": false
+    }
+  },
+  "gateway": {
+    "port": 18789,
+    "mode": "local",
+    "bind": "loopback",
+    "auth": {
+      "mode": "token",
+      "token": "${OPENCLAW_GATEWAY_TOKEN}",
+      "allowTailscale": true,
+      "rateLimit": {
+        "maxAttempts": 10,
+        "windowMs": 60000,
+        "lockoutMs": 300000,
+        "exemptLoopback": true
+      }
+    },
+    "tailscale": {
+      "mode": "off",
+      "resetOnExit": false
+    },
+    "controlUi": {
+      "enabled": true,
+      "basePath": "/openclaw",
+      "allowedOrigins": [
+        "http://localhost:3000"
+      ],
+      "dangerouslyAllowHostHeaderOriginFallback": false
+    },
+    "remote": {
+      "url": "ws://gateway.tailnet:18789",
+      "transport": "ssh",
+      "token": "${OPENCLAW_GATEWAY_TOKEN}"
+    },
+    "http": {
+      "endpoints": {
+        "chatCompletions": {
+          "enabled": false
+        },
+        "responses": {
+          "enabled": true,
+          "maxUrlParts": 10
+        }
+      },
+      "securityHeaders": {
+        "strictTransportSecurity": "max-age=31536000; includeSubDomains"
+      }
+    },
+    "tools": {
+      "allow": [
+        "gateway"
+      ],
+      "deny": [
+        "browser"
+      ]
+    },
+    "discovery": {
+      "mdns": {
+        "mode": "minimal"
+      },
+      "wideArea": {
+        "enabled": false
+      }
+    },
+    "trustedProxies": [],
+    "allowRealIpFallback": false
+  },
+  "plugins": {
+    "slots": {},
+    "entries": {
+      "@openclaw/voice-call": {
+        "enabled": false,
+        "config": {
+          "provider": "twilio"
+        }
+      },
+      "@openclaw/msteams": {
+        "enabled": false
+      },
+      "memory-lancedb": {
+        "enabled": true
+      },
+      "copilot-proxy": {
+        "enabled": false,
+        "config": {
+          "port": 5001
+        }
+      }
+    }
+  },
+  "system": {
+    "heartbeat": true,
+    "autoUpdate": false,
+    "usage-tracking": null,
+    "features": null,
+    "session-tool": null,
+    "agent-workspace": null,
+    "compaction": null,
+    "transcript-hygiene": null,
+    "typebox": null,
+    "kilo-gateway-integration": null,
+    "markdown-formatting": null,
+    "streaming": null,
+    "session-management-compaction": null,
+    "test": null,
+    "model-failover": null,
+    "architecture": null,
+    "session-pruning": null,
+    "agent": null,
+    "presence": null,
+    "AGENTS.default": null,
+    "token-use": null,
+    "api-usage-costs": null,
+    "typing-indicators": null,
+    "model-providers": null,
+    "system-prompt": null,
+    "multi-agent": null,
+    "secretref-credential-surface": null,
+    "messages": null,
+    "rpc": null,
+    "RELEASING": null,
+    "memory": null,
+    "device-models": null,
+    "timezone": null,
+    "queue": null,
+    "credits": null,
+    "context": null,
+    "agent-loop": null,
+    "session": null,
+    "oauth": null,
+    "prompt-caching": null,
+    "retry": null,
+    "wizard": null
+  },
+  "skills": {
+    "web_search": {
+      "enabled": true,
+      "engine": "google",
+      "max_results": 5
+    },
+    "researcher": {
+      "enabled": true,
+      "depth": "deep"
+    },
+    "coder": {
+      "enabled": true,
+      "language": "python"
+    },
+    "vision": {
+      "enabled": true
+    },
+    "browser-login": {
+      "enabled": false
+    },
+    "slash-commands": {
+      "enabled": false
+    },
+    "multi-agent-sandbox-tools": {
+      "enabled": false
+    },
+    "clawhub": {
+      "enabled": false
+    },
+    "acp-agents": {
+      "enabled": false
+    },
+    "creating-skills": {
+      "enabled": false
+    },
+    "lobster": {
+      "enabled": false
+    },
+    "chrome-extension": {
+      "enabled": false
+    },
+    "skills-config": {
+      "enabled": false
+    },
+    "web": {
+      "enabled": false
+    },
+    "browser-linux-troubleshooting": {
+      "enabled": false
+    },
+    "thinking": {
+      "enabled": false
+    },
+    "browser": {
+      "enabled": false
+    },
+    "agent-send": {
+      "enabled": false
+    },
+    "firecrawl": {
+      "enabled": false
+    },
+    "loop-detection": {
+      "enabled": false
+    },
+    "skills": {
+      "enabled": false
+    },
+    "subagents": {
+      "enabled": false
+    },
+    "elevated": {
+      "enabled": false
+    },
+    "diffs": {
+      "enabled": false
+    },
+    "reactions": {
+      "enabled": false
+    },
+    "pdf": {
+      "enabled": false
+    },
+    "exec": {
+      "enabled": false
+    },
+    "apply-patch": {
+      "enabled": false
+    },
+    "exec-approvals": {
+      "enabled": false
+    },
+    "plugin": {
+      "enabled": false
+    },
+    "llm-task": {
+      "enabled": false
+    }
+  },
+  "memory": {
+    "vectorStore": "chromadb",
+    "embeddingModel": "text-embedding-3-small"
+  },
+  "cron": {
+    "daily-cleanup": {
+      "expression": "0 0 * * *",
+      "command": "memory vacuum",
+      "enabled": true
+    },
+    "weekly-backup": {
+      "expression": "0 0 * * 0",
+      "command": "system backup",
+      "enabled": true
+    }
+  },
+  "security": {
+    "disableLocalNetwork": false,
+    "auditMode": "warn"
+  },
+  "dashboard": {
+    "theme": "dark",
+    "refreshRate": 5000
+  },
+  "acp": {
+    "enabled": true,
+    "port": 18888
+  },
+  "dns": {
+    "mode": "tailscale"
+  },
+  "tui": {
+    "theme": "lobster",
+    "historyLimit": 500
+  },
+  "approvals": {
+    "default": {
+      "status": "enabled",
+      "type": "allowlist"
+    }
+  },
+  "directory": {
+    "marketplace": "clawhub"
+  },
+  "sessions": {
+    "persistence": "sqlite",
+    "activeMinutes": 60
+  },
+  "logs": {
+    "level": "info",
+    "path": "~/.openclaw/logs"
+  },
+  "docs": {
+    "index": "local"
+  },
+  "sandbox": {
+    "defaultMode": "non-main",
+    "workspaceAccess": "none"
+  }
+}

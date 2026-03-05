@@ -1,6 +1,10 @@
 ---
 name: clawddocs
 description: Clawdbot documentation expert with decision tree navigation, search scripts, doc fetching, version tracking, and config snippets for all Clawdbot features
+metadata:
+  openclaw:
+    emoji: "📚"
+    category: "integration"
 ---
 
 # Clawdbot Documentation Expert

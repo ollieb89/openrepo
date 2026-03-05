@@ -1,0 +1,1697 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset
+      xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+            http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+<!-- created with Free Online Sitemap Generator www.xml-sitemaps.com -->
+
+
+<url>
+  <loc>https://docs.openclaw.ai/</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>1.00</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/install</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/channels</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/pi</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/tools</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/providers</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/platforms</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/help</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/start/showcase</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/concepts/features</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/start/getting-started</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/start/onboarding-overview</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/start/wizard</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/start/onboarding</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/start/openclaw</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/start/wizard-cli-reference</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/start/wizard-cli-automation</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/web/control-ui</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/web</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/tailscale</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/start/hubs</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/configuration</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/remote</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/channels/telegram</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/nodes</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/concepts/multi-agent</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/security</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/troubleshooting</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/reference/credits</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/install/installer</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/install/docker</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/install/podman</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/install/nix</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/install/ansible</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/install/bun</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/install/updating</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/install/migrating</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/install/uninstall</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/vps</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/install/fly</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/install/hetzner</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/install/gcp</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/install/macos-vm</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/install/exe-dev</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/install/railway</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/install/render</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/install/northflank</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/install/development-channels</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/install/node</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/start/setup</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/help/environment</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/channels/bluebubbles</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/channels/discord</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/channels/feishu</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/channels/googlechat</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/channels/imessage</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/channels/irc</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/channels/line</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/channels/matrix</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/channels/mattermost</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/channels/msteams</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/channels/nextcloud-talk</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/channels/nostr</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/channels/signal</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/channels/synology-chat</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/channels/slack</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/channels/tlon</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/channels/twitch</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/channels/whatsapp</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/channels/zalo</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/channels/zalouser</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/channels/pairing</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/channels/group-messages</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/channels/groups</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/channels/broadcast-groups</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/channels/channel-routing</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/channels/location</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/channels/troubleshooting</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/web/webchat</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/providers/models</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/concepts/architecture</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/concepts/agent</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/concepts/agent-loop</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/concepts/system-prompt</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/concepts/context</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/concepts/agent-workspace</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/concepts/oauth</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/start/bootstrapping</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/concepts/session</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/concepts/session-pruning</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/concepts/session-tool</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/concepts/memory</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/concepts/compaction</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/concepts/presence</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/concepts/messages</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/concepts/streaming</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/concepts/retry</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/concepts/queue</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/pi-dev</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/tools/apply-patch</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/brave-search</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/perplexity</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/tools/diffs</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/tools/pdf</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/tools/elevated</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/tools/exec</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/tools/exec-approvals</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/tools/firecrawl</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/tools/llm-task</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/tools/lobster</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/tools/loop-detection</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/tools/reactions</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/tools/thinking</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/tools/web</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/tools/browser</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/tools/browser-login</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/tools/chrome-extension</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/tools/browser-linux-troubleshooting</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/tools/agent-send</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/tools/subagents</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/tools/acp-agents</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/tools/multi-agent-sandbox-tools</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/tools/creating-skills</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/tools/slash-commands</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/tools/skills</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/tools/skills-config</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/tools/clawhub</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/tools/plugin</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/plugins/community</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/plugins/voice-call</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/plugins/zalouser</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/plugins/manifest</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/plugins/agent-tools</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/prose</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/automation/hooks</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/automation/cron-jobs</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/automation/cron-vs-heartbeat</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/automation/troubleshooting</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/automation/webhook</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/automation/gmail-pubsub</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/automation/poll</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/automation/auth-monitoring</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/nodes/troubleshooting</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/nodes/media-understanding</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/nodes/images</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/nodes/audio</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/nodes/camera</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/nodes/talk</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/nodes/voicewake</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/nodes/location-command</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/tts</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/concepts/models</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/concepts/model-providers</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/concepts/model-failover</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/providers/anthropic</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/providers/bedrock</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/providers/cloudflare-ai-gateway</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/providers/claude-max-api-proxy</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/providers/deepgram</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/providers/github-copilot</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/providers/huggingface</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/providers/kilocode</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/providers/litellm</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/providers/glm</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/providers/minimax</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/providers/moonshot</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/providers/mistral</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/providers/nvidia</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/providers/ollama</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/providers/openai</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/providers/opencode</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/providers/openrouter</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/providers/qianfan</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/providers/qwen</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/providers/synthetic</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/providers/together</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/providers/vercel-ai-gateway</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/providers/venice</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/providers/vllm</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/providers/xiaomi</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/providers/zai</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/platforms/macos</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/platforms/linux</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/platforms/windows</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/platforms/android</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/platforms/ios</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/platforms/digitalocean</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/platforms/oracle</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/platforms/raspberry-pi</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/platforms/mac/dev-setup</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/platforms/mac/menu-bar</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/platforms/mac/voicewake</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/platforms/mac/voice-overlay</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/platforms/mac/webchat</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/platforms/mac/canvas</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/platforms/mac/child-process</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/platforms/mac/health</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/platforms/mac/icon</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/platforms/mac/logging</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/platforms/mac/permissions</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/platforms/mac/remote</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/platforms/mac/signing</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/platforms/mac/release</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/platforms/mac/bundled-gateway</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/platforms/mac/xpc</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/platforms/mac/skills</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/platforms/mac/peekaboo</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/remote-gateway-readme</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/security/formal-verification</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/security/THREAT-MODEL-ATLAS</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/security/CONTRIBUTING-THREAT-MODEL</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/web/dashboard</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/web/tui</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/secrets</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/secrets-plan-contract</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/authentication</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/multiple-gateways</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/protocol</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/background-process</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/health</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/doctor</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/acp</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/agent</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/agents</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/approvals</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/browser</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/channels</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/clawbot</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/completion</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/config</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/configure</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/cron</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/daemon</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/dashboard</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/devices</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/directory</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/dns</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/docs</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/doctor</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/gateway</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/health</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/hooks</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/logs</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/memory</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/message</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/models</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/node</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/nodes</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/onboard</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/pairing</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/plugins</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/qr</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/reset</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/sandbox</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/secrets</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/security</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/sessions</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/setup</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/skills</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/status</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/system</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/tui</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/uninstall</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/update</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/voicecall</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/cli/webhooks</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/reference/rpc</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/reference/device-models</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/reference/AGENTS.default</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/reference/templates/AGENTS</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/reference/templates/BOOT</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/reference/templates/BOOTSTRAP</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/reference/templates/HEARTBEAT</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/reference/templates/IDENTITY</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/reference/templates/SOUL</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/reference/templates/TOOLS</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/reference/templates/USER</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/reference/wizard</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/reference/token-use</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/reference/secretref-credential-surface</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/reference/prompt-caching</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/reference/api-usage-costs</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/reference/transcript-hygiene</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/date-time</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/concepts/typebox</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/concepts/markdown-formatting</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/concepts/typing-indicators</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/concepts/usage-tracking</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/concepts/timezone</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/reference/RELEASING</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/reference/test</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/design/kilo-gateway-integration</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/experiments/onboarding-config-protocol</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/experiments/plans/acp-thread-bound-agents</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/experiments/plans/acp-unified-streaming-refactor</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/experiments/plans/browser-evaluate-cdp-refactor</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/experiments/plans/openresponses-gateway</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/experiments/plans/pty-process-supervision</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/experiments/plans/session-binding-channel-agnostic</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/experiments/research/memory</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/experiments/proposals/model-config</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/discovery</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/help/troubleshooting</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/help/faq</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/start/lore</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/help/debugging</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/help/testing</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/help/scripts</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/debug/node-issue</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/diagnostics/flags</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/reference/session-management-compaction</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/ci</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/start/docs-directory</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/logging</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/logging</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/configuration-examples</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/network</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/bonjour</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/network-model</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/pairing</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/gateway-lock</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/heartbeat</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/sandboxing</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/configuration-reference</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/auth-credential-semantics</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/trusted-proxy-auth</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/bridge-protocol</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/sandbox-vs-tool-policy-vs-elevated</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/nodes/index</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/openai-http-api</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.51</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/openresponses-http-api</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.51</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/tools-invoke-http-api</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.51</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/cli-backends</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.51</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/gateway/local-models</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.51</priority>
+</url>
+<url>
+  <loc>https://docs.openclaw.ai/channels/index</loc>
+  <lastmod>2026-03-05T20:39:47+00:00</lastmod>
+  <priority>0.51</priority>
+</url>
+
+
+</urlset>

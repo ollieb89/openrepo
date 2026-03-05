@@ -2,7 +2,10 @@
 name: oc-notion
 description: Notion API for creating and managing pages, databases, and blocks.
 homepage: https://developers.notion.com
-metadata: {"clawdbot":{"emoji":"📝"}}
+metadata:
+  openclaw:
+    emoji: "📝"
+    category: "integration"
 ---
 
 # notion

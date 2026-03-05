@@ -2,12 +2,14 @@
 Minimal async LLM client for topology proposal generation.
 
 Provider-configurable via OPENCLAW_LLM_PROVIDER env var.
-Supports Anthropic and Google Gemini.
+Supports Anthropic, OpenAI, and Google Gemini.
 
 Environment variables:
-  OPENCLAW_LLM_PROVIDER  "anthropic" (default) or "gemini"
+  OPENCLAW_LLM_PROVIDER  "anthropic" (default), "openai", or "gemini"
   OPENCLAW_LLM_MODEL     Model name override (provider-specific default applied if unset)
   ANTHROPIC_API_KEY      Anthropic API key (also accepts ANTHROPIC_TOKEN)
+  OPENAI_API_KEY         OpenAI API key
+  OPENAI_BASE_URL        Optional base URL for OpenAI-compatible providers
   GEMINI_API_KEY         Google Gemini API key
 
 Usage:
@@ -41,10 +43,12 @@ async def call_llm(system_prompt: str, user_message: str) -> str:
     provider = os.environ.get("OPENCLAW_LLM_PROVIDER", DEFAULT_PROVIDER)
     if provider == "anthropic":
         return await _call_anthropic(system_prompt, user_message)
+    elif provider == "openai":
+        return await _call_openai(system_prompt, user_message)
     elif provider == "gemini":
         return await _call_gemini(system_prompt, user_message)
     else:
-        raise ValueError(f"Unknown LLM provider: {provider!r}. Set OPENCLAW_LLM_PROVIDER to 'anthropic' or 'gemini'.")
+        raise ValueError(f"Unknown LLM provider: {provider!r}. Set OPENCLAW_LLM_PROVIDER to 'anthropic', 'openai', or 'gemini'.")
 
 
 async def _call_anthropic(system_prompt: str, user_message: str) -> str:
@@ -99,6 +103,37 @@ async def _call_gemini(system_prompt: str, user_message: str) -> str:
         resp.raise_for_status()
         data = resp.json()
         return data["candidates"][0]["content"]["parts"][0]["text"]
+
+
+async def _call_openai(system_prompt: str, user_message: str) -> str:
+    """Call the OpenAI Chat Completions API and return the text content."""
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError(
+            "OPENAI_API_KEY environment variable is required for OpenAI provider."
+        )
+
+    model = os.environ.get("OPENCLAW_LLM_MODEL", "gpt-4o")
+    base_url = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
+
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        resp = await client.post(
+            f"{base_url}/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_message},
+                ],
+            },
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        return data["choices"][0]["message"]["content"]
 
 
 def strip_markdown_fences(text: str) -> str:

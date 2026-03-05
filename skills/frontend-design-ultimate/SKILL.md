@@ -5,6 +5,7 @@ homepage: https://github.com/kesslerio/frontend-design-ultimate-clawhub-skill
 metadata:
   openclaw:
     emoji: "🎨"
+    category: "tools"
     requires:
       bins: ["node", "npm"]
 ---

@@ -1,6 +1,10 @@
 ---
 name: openclaw-sandbox
-description: Docker sandboxing configuration in OpenClaw. Use when enabling or configuring tool execution sandboxing, choosing sandbox scope (session/agent/shared), setting workspace access modes (none/ro/rw), adding custom volume mounts, configuring sandboxed browsers, or troubleshooting sandbox permission issues. Triggers for: "sandbox", "Docker isolation", "tool sandbox", "workspace access", "sandboxed run", "cap_drop", "custom mounts", "sandbox mode", "non-main sandbox", "sandboxed browser".
+description: "Docker sandboxing configuration in OpenClaw. Use when enabling or configuring tool execution sandboxing, choosing sandbox scope (session/agent/shared), setting workspace access modes (none/ro/rw), adding custom volume mounts, configuring sandboxed browsers, or troubleshooting sandbox permission issues. Triggers for: \"sandbox\", \"Docker isolation\", \"tool sandbox\", \"workspace access\", \"sandboxed run\", \"cap_drop\", \"custom mounts\", \"sandbox mode\", \"non-main sandbox\", \"sandboxed browser\"."
+metadata:
+  openclaw:
+    emoji: "🔒"
+    category: "orchestration-core"
 ---
 
 # OpenClaw Sandboxing

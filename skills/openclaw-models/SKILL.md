@@ -1,6 +1,10 @@
 ---
 name: openclaw-models
-description: Model selection, fallbacks, and configuration in OpenClaw. Use when switching models, setting primary/fallback models, adding model aliases, scanning OpenRouter for free models, checking auth status, configuring per-agent model overrides, or troubleshooting "model not allowed" errors. Triggers for: "change model", "model fallback", "OpenRouter", "/model", "model alias", "set primary model", "model auth", "model scan", "image model", "models list", "model not allowed".
+description: "Model selection, fallbacks, and configuration in OpenClaw. Use when switching models, setting primary/fallback models, adding model aliases, scanning OpenRouter for free models, checking auth status, configuring per-agent model overrides, or troubleshooting \"model not allowed\" errors. Triggers for: \"change model\", \"model fallback\", \"OpenRouter\", \"/model\", \"model alias\", \"set primary model\", \"model auth\", \"model scan\", \"image model\", \"models list\", \"model not allowed\"."
+metadata:
+  openclaw:
+    emoji: "🤖"
+    category: "orchestration-core"
 ---
 
 # OpenClaw Model Configuration

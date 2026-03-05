@@ -15,12 +15,18 @@ interface HealthStatus {
 
 export default function EnvironmentPage() {
   const { projectId } = useProject();
+  const [openclawRoot, setOpenclawRoot] = useState<string>('Loading...');
   const [statuses, setStatuses] = useState<HealthStatus[]>([
     { service: 'Gateway API', status: 'loading', icon: <Server className="w-5 h-5" /> },
     { service: 'Memory (memU)', status: 'loading', icon: <Database className="w-5 h-5" /> },
     { service: 'Event Bridge', status: 'loading', icon: <Zap className="w-5 h-5" /> },
     { service: 'Jarvis State', status: 'loading', icon: <Activity className="w-5 h-5" /> },
   ]);
+
+  // Load OPENCLAW_ROOT on client side only to avoid hydration mismatch
+  useEffect(() => {
+    setOpenclawRoot(process.env.OPENCLAW_ROOT || 'Not set');
+  }, []);
 
   useEffect(() => {
     async function checkHealth() {
@@ -99,7 +105,7 @@ export default function EnvironmentPage() {
         <div className="space-y-4">
           <div className="grid grid-cols-2 text-sm">
             <span className="text-gray-500">Project Root</span>
-            <span className="font-mono text-gray-900 dark:text-gray-100">{process.env.OPENCLAW_ROOT || '$OPENCLAW_ROOT'}</span>
+            <span className="font-mono text-gray-900 dark:text-gray-100">{openclawRoot}</span>
           </div>
           <div className="grid grid-cols-2 text-sm">
             <span className="text-gray-500">Active Project</span>

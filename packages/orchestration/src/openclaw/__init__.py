@@ -9,6 +9,17 @@ from this package root. Internal cross-module code should use direct
 submodule imports (e.g., `from openclaw.config import X`).
 """
 
+# Auto-start event bridge on import (idempotent, non-blocking)
+# This ensures events flow to the dashboard SSE endpoint
+import os
+if os.environ.get("OPENCLAW_DISABLE_EVENT_BRIDGE") != "1":
+    try:
+        from .events import ensure_event_bridge
+        ensure_event_bridge()
+    except Exception:
+        # Event bridge is optional — continue without it if startup fails
+        pass
+
 from .state_engine import JarvisState
 from .config import LOCK_TIMEOUT, POLL_INTERVAL, get_state_path, get_snapshot_dir, get_autonomy_config
 from .init import initialize_workspace, verify_workspace

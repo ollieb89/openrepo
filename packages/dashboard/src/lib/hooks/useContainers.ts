@@ -1,13 +1,13 @@
 import useSWR from 'swr';
 import type { Container } from '@/lib/types';
-import { apiPath } from '@/lib/api-client';
+import { apiJson } from '@/lib/api-client';
 
-const fetcher = (url: string) =>
-  fetch(url, { method: 'POST' }).then(res => res.json());
+const fetcher = <T>(url: string): Promise<T> =>
+  apiJson<T>(url, { method: 'POST' });
 
 export function useContainers() {
   const { data, error, isLoading } = useSWR<{ containers: Container[] }>(
-    apiPath('/api/swarm/stream'),
+    '/api/swarm/stream',
     fetcher,
     { refreshInterval: 5000 }
   );

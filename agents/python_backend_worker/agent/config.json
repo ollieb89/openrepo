@@ -1,0 +1,11 @@
+{
+  "id": "python_backend_worker",
+  "name": "ML Pipeline Worker",
+  "level": 2,
+  "reports_to": "clawdia_prime",
+  "subordinates": [
+    "l3_specialist"
+  ],
+  "role": "tactical",
+  "max_concurrent": 3
+}

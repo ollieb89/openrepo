@@ -6,6 +6,7 @@ import AutonomyStateBadge from './AutonomyStateBadge';
 import { useAutonomyEvents } from '@/hooks/useAutonomyEvents';
 import { useProject } from '@/context/ProjectContext';
 import type { AutonomyEvent, TaskWithAutonomy } from '@/lib/types/autonomy';
+import { apiFetch } from '@/lib/api-client';
 
 interface EscalationContextPanelProps {
   task: TaskWithAutonomy;
@@ -22,18 +23,18 @@ function formatTime(timestamp: number): string {
 export function EscalationContextPanel({ task }: EscalationContextPanelProps) {
   const { projectId } = useProject();
   const { events, connectionState } = useAutonomyEvents({ taskId: task.id });
-  
+
   if (!task.autonomy?.escalation) return null;
-  
+
   const escalation = task.autonomy.escalation;
-  const history = events.filter((e: AutonomyEvent) => 
+  const history = events.filter((e: AutonomyEvent) =>
     e.type.startsWith('autonomy.')
   );
 
   const handleResume = async () => {
     try {
-      const url = projectId ? `/api/tasks/${task.id}/resume?project=${projectId}` : `/api/tasks/${task.id}/resume`;
-      await fetch(url, { method: 'POST' });
+      const url = `/api/tasks/${task.id}/resume${projectId ? `?project=${projectId}` : ''}`;
+      await apiFetch(url, { method: 'POST' });
     } catch (err) {
       console.error('Failed to resume task:', err);
     }
@@ -41,8 +42,8 @@ export function EscalationContextPanel({ task }: EscalationContextPanelProps) {
 
   const handleFail = async () => {
     try {
-      const url = projectId ? `/api/tasks/${task.id}/fail?project=${projectId}` : `/api/tasks/${task.id}/fail`;
-      await fetch(url, { method: 'POST' });
+      const url = `/api/tasks/${task.id}/fail${projectId ? `?project=${projectId}` : ''}`;
+      await apiFetch(url, { method: 'POST' });
     } catch (err) {
       console.error('Failed to fail task:', err);
     }
@@ -57,7 +58,7 @@ export function EscalationContextPanel({ task }: EscalationContextPanelProps) {
             Escalation Details
           </h4>
         </div>
-        
+
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400">Reason</p>
@@ -82,9 +83,9 @@ export function EscalationContextPanel({ task }: EscalationContextPanelProps) {
             <AutonomyStateBadge state={task.autonomy.state} />
           </div>
         </div>
-        
+
         <hr className="border-red-200 dark:border-red-800 my-4" />
-        
+
         <div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
             Autonomy Event History
@@ -111,7 +112,7 @@ export function EscalationContextPanel({ task }: EscalationContextPanelProps) {
             )}
           </div>
         </div>
-        
+
         {task.autonomy.state === 'escalating' && (
           <div className="flex gap-2 mt-4">
             <button

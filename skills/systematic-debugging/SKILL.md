@@ -1,6 +1,10 @@
 ---
 name: systematic-debugging
 description: Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes
+metadata:
+  openclaw:
+    emoji: "🐛"
+    category: "methodology"
 ---
 
 # Systematic Debugging

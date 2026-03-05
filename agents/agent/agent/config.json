@@ -1,0 +1,10 @@
+{
+  "id": "agent",
+  "name": "Dispatch Bridge",
+  "level": 3,
+  "reports_to": "pumplai_pm",
+  "max_concurrent": 3,
+  "container": {
+    "image": "ubuntu:latest"
+  }
+}

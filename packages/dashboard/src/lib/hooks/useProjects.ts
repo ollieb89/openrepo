@@ -1,12 +1,12 @@
 import useSWR from 'swr';
 import type { Project } from '@/lib/types';
-import { apiPath } from '@/lib/api-client';
+import { apiJson } from '@/lib/api-client';
 
-const fetcher = (url: string) => fetch(url).then(res => res.json());
+const fetcher = <T>(url: string): Promise<T> => apiJson<T>(url);
 
 export function useProjects() {
   const { data, error, isLoading } = useSWR<{ projects: Project[]; activeId: string }>(
-    apiPath('/api/projects'),
+    '/api/projects',
     fetcher,
     { revalidateOnFocus: false }
   );

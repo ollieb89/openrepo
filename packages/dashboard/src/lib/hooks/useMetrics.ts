@@ -1,7 +1,9 @@
 import useSWR from 'swr';
 import type { MetricsResponse } from '@/lib/types';
 
-const fetcher = (url: string) => fetch(url).then(res => res.json());
+import { apiJson } from '@/lib/api-client';
+
+const fetcher = <T>(url: string): Promise<T> => apiJson<T>(url);
 
 export function useMetrics(projectId: string | null) {
   const { data, error, isLoading, mutate } = useSWR<MetricsResponse>(

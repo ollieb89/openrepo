@@ -1,6 +1,113 @@
 {
-  "project_id": "pumplai",
-  "tasks": {},
-  "created_at": 0,
-  "updated_at": 0
+  "version": "1.0.0",
+  "protocol": "jarvis",
+  "tasks": {
+    "task-completed-with-log": {
+      "id": "task-completed-with-log",
+      "status": "completed",
+      "skill_hint": "Implement auth middleware",
+      "activity_log": [
+        {
+          "timestamp": 1772687681.978129,
+          "status": "starting",
+          "entry": "Starting task: Implement auth middleware"
+        },
+        {
+          "timestamp": 1772687691.978129,
+          "status": "in_progress",
+          "entry": "Reading existing middleware patterns..."
+        },
+        {
+          "timestamp": 1772687701.978129,
+          "status": "in_progress",
+          "entry": "Created src/middleware/auth.ts"
+        },
+        {
+          "timestamp": 1772687711.978129,
+          "status": "in_progress",
+          "entry": "Added JWT verification logic"
+        },
+        {
+          "timestamp": 1772687721.978129,
+          "status": "in_progress",
+          "entry": "Writing tests..."
+        },
+        {
+          "timestamp": 1772687731.978129,
+          "status": "in_progress",
+          "entry": "test: auth middleware - 3 tests pass"
+        },
+        {
+          "timestamp": 1772687741.978129,
+          "status": "in_progress",
+          "entry": "Committing changes..."
+        },
+        {
+          "timestamp": 1772687751.978129,
+          "status": "completed",
+          "entry": "Task completed successfully"
+        }
+      ],
+      "created_at": 1772687681.978129,
+      "updated_at": 1772687751.978129,
+      "metadata": {}
+    },
+    "task-completed-no-log": {
+      "id": "task-completed-no-log",
+      "status": "completed",
+      "skill_hint": "Update README docs",
+      "activity_log": [],
+      "created_at": 1772687501.978129,
+      "updated_at": 1772687601.978129,
+      "metadata": {}
+    },
+    "task-failed-with-log": {
+      "id": "task-failed-with-log",
+      "status": "failed",
+      "skill_hint": "Fix database migration",
+      "activity_log": [
+        {
+          "timestamp": 1772687301.978129,
+          "status": "starting",
+          "entry": "Starting task: Fix database migration"
+        },
+        {
+          "timestamp": 1772687311.978129,
+          "status": "in_progress",
+          "entry": "Running migration scripts..."
+        },
+        {
+          "timestamp": 1772687321.978129,
+          "status": "in_progress",
+          "entry": "ERROR: column users.email already exists"
+        },
+        {
+          "timestamp": 1772687331.978129,
+          "status": "in_progress",
+          "entry": "Attempting rollback..."
+        },
+        {
+          "timestamp": 1772687341.978129,
+          "status": "failed",
+          "entry": "Task failed: migration conflict unresolvable"
+        }
+      ],
+      "created_at": 1772687301.978129,
+      "updated_at": 1772687341.978129,
+      "metadata": {}
+    },
+    "task-pending": {
+      "id": "task-pending",
+      "status": "pending",
+      "skill_hint": "Add caching layer",
+      "activity_log": [],
+      "created_at": 1772687791.978129,
+      "updated_at": 1772687791.978129,
+      "metadata": {}
+    }
+  },
+  "metadata": {
+    "created_at": 1772687201.978129,
+    "last_updated": 1772687801.978129
+  }
 }

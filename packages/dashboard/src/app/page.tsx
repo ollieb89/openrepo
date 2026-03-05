@@ -11,7 +11,7 @@ import { runRuntimeInference, type RuntimeInferenceResult } from '@/lib/privacy/
 import { usePrivacy } from '@/lib/hooks/usePrivacy';
 import { useEffect } from 'react';
 import { Decision } from '@/lib/types/decisions';
-import { apiPath } from '@/lib/api-client';
+import { apiJson } from '@/lib/api-client';
 
 export default function Home() {
   const { projectId, project } = useProject();
@@ -25,10 +25,14 @@ export default function Home() {
   useEffect(() => {
     async function loadRecentDecisions() {
       try {
-        const url = projectId ? apiPath(`/api/decisions?projectId=${projectId}`) : apiPath('/api/decisions');
-        const res = await fetch(url);
-        const data = await res.json();
-        setRecentDecisions(data.slice(0, 3));
+        const path = projectId ? `/api/decisions?projectId=${projectId}` : '/api/decisions';
+        const data = await apiJson<Decision[]>(path);
+        if (Array.isArray(data)) {
+          setRecentDecisions(data.slice(0, 3));
+        } else {
+          console.error('API returned non-array data:', data);
+          setRecentDecisions([]);
+        }
       } catch (err) {
         console.error('Failed to load recent decisions:', err);
       }

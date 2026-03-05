@@ -1,6 +1,10 @@
 ---
 name: openclaw-skills-author
-description: Create, configure, and publish OpenClaw-compatible skills. Use when writing a new SKILL.md, adding gating requirements (bins/env/config), configuring per-skill env vars or API keys, setting up auto-installers (brew/npm/uv), publishing to ClawHub, disabling or enabling bundled skills, or troubleshooting skill load failures. Triggers for: "create a skill", "write SKILL.md", "skill gating", "clawhub install", "skill not loading", "skill env var", "user-invocable skill", "command-dispatch", "openclaw skill format", "skill requires".
+description: "Create, configure, and publish OpenClaw-compatible skills. Use when writing a new SKILL.md, adding gating requirements (bins/env/config), configuring per-skill env vars or API keys, setting up auto-installers (brew/npm/uv), publishing to ClawHub, disabling or enabling bundled skills, or troubleshooting skill load failures. Triggers for: \"create a skill\", \"write SKILL.md\", \"skill gating\", \"clawhub install\", \"skill not loading\", \"skill env var\", \"user-invocable skill\", \"command-dispatch\", \"openclaw skill format\", \"skill requires\"."
+metadata:
+  openclaw:
+    emoji: "✍️"
+    category: "orchestration-core"
 ---
 
 # Authoring OpenClaw Skills
@@ -12,7 +16,7 @@ Skills are AgentSkills-compatible directories loaded by OpenClaw from three loca
 ```markdown
 ---
 name: my-skill
-description: What this skill does and when to trigger it. Be specific.
+description: "What this skill does and when to trigger it. Be specific."
 ---
 
 # My Skill

@@ -113,7 +113,59 @@ def build_variables(project_config: Dict[str, Any]) -> Dict[str, str]:
     }
 
 
-def render_soul(project_id: str) -> str:
+def build_dynamic_variables(project_id: str, agent_id: str, registry) -> dict:
+    """Build dynamic SOUL template variables from live system state."""
+    from openclaw.state_engine import JarvisState
+    from openclaw.config import get_state_path
+    from openclaw.topology.storage import load_topology
+
+    agent = registry.get(agent_id)
+    if not agent:
+        return {}
+
+    jarvis = JarvisState(get_state_path(project_id))
+    try:
+        state = jarvis.read_state()
+    except Exception:
+        state = {}
+
+    subordinates = registry.get_subordinates(agent_id)
+    active_tasks = [t for t in state.get("tasks", {}).values()
+                    if t.get("status") in ("pending", "in_progress")]
+
+    # Load topology context for SOUL injection (FR-08)
+    topology = load_topology(project_id)
+    topology_data = {
+        "topology_archetype": "unknown",
+        "topology_agent_count": "0",
+        "topology_confidence": "0.0",
+    }
+    if topology:
+        # Extract archetype from metadata or classify from graph structure
+        archetype = getattr(topology, 'metadata', {}).get('archetype', 'unknown')
+        topology_data["topology_archetype"] = archetype
+        topology_data["topology_agent_count"] = str(len(getattr(topology, 'nodes', [])))
+        # Structural confidence from topology metadata (set during approval)
+        confidence = getattr(topology, 'metadata', {}).get('structural_confidence', 0.0)
+        topology_data["topology_confidence"] = str(confidence)
+
+    return {
+        "superior_name": registry.get(agent.reports_to).name if agent.reports_to and registry.get(agent.reports_to) else "None",
+        "superior_id": agent.reports_to or "N/A",
+        "peer_agents": ", ".join(
+            a.name for a in registry.list_by_level(agent.level) if a.id != agent_id
+        ),
+        "subordinate_agents": ", ".join(s.name for s in subordinates),
+        "active_task_count": str(len(active_tasks)),
+        "pool_utilization": f"{len(active_tasks)}/{agent.max_concurrent}",
+        "autonomy_confidence": state.get("tasks", {}).get("confidence", "0.0"),  # Basic fallback, might be task specific though
+        "autonomy_state": state.get("tasks", {}).get("state", "N/A"),
+        # Topology context for SOUL injection (FR-08)
+        **topology_data,
+    }
+
+
+def render_soul(project_id: str, extra_variables: Optional[Dict[str, str]] = None) -> str:
     """
     Render a SOUL.md string for the given project.
     
@@ -130,6 +182,8 @@ def render_soul(project_id: str) -> str:
     root = _find_project_root()
     config = load_project_config(project_id)
     variables = build_variables(config)
+    if extra_variables:
+        variables.update(extra_variables)
 
     # Load and substitute default template
     template_path = root / "agents" / "_templates" / "soul-default.md"

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Lightbulb, ArrowRight, X } from 'lucide-react';
 import Link from 'next/link';
-import { apiPath } from '@/lib/api-client';
+import { apiJson } from '@/lib/api-client';
 
 export default function SuggestionToast() {
   const [count, setCount] = useState(0);
@@ -20,8 +20,7 @@ export default function SuggestionToast() {
 
   async function checkSuggestions() {
     try {
-      const res = await fetch(apiPath('/api/links/suggestions'));
-      const data = await res.json();
+      const data = await apiJson<any[]>('/api/links/suggestions');
       if (data.length > 0) {
         setCount(data.length);
         setVisible(true);
@@ -29,7 +28,15 @@ export default function SuggestionToast() {
         setVisible(false);
       }
     } catch (err) {
-      console.error('Failed to check suggestions:', err);
+      // Silently ignore auth errors - user not logged in yet
+      // Other errors are logged but don't spam the console
+      if (err instanceof Error && err.message.includes('Authentication required')) {
+        return;
+      }
+      // Only log non-auth errors in development
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('Suggestion check failed:', err);
+      }
     }
   }
 
@@ -44,8 +51,8 @@ export default function SuggestionToast() {
         <div>
           <h4 className="text-sm font-bold">New Link Suggestions</h4>
           <p className="text-xs text-white/80">Found {count} potential links between decisions and issues.</p>
-          <Link 
-            href="/tasks/review" 
+          <Link
+            href="/tasks/review"
             className="mt-2 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 hover:underline"
             onClick={() => setVisible(false)}
           >
@@ -53,7 +60,7 @@ export default function SuggestionToast() {
             <ArrowRight className="w-3 h-3" />
           </Link>
         </div>
-        <button 
+        <button
           onClick={() => setVisible(false)}
           className="absolute top-3 right-3 text-white/60 hover:text-white transition-colors"
         >

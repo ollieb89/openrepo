@@ -1,6 +1,10 @@
 ---
 name: openclaw-memory-system
 description: Use when implementing, operating, or debugging OpenClaw task memory behavior (memU retrieval, SOUL/MEMORY context injection, and post-task memorization). Trigger for requests about where memory is injected, when learnings are stored, how agent-type scoping works (L2_PM/L3_CODE/L3_TEST), or where task execution is dispatched to the actual LLM runtime.
+metadata:
+  openclaw:
+    emoji: "🧠"
+    category: "orchestration-core"
 ---
 
 # OpenClaw Memory System

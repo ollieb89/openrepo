@@ -252,8 +252,7 @@ Please execute this step now using your available tools. Reply with a summary of
         heartbeat_task = asyncio.create_task(self._heartbeat(step_num, total_steps))
         
         # Execute in executor to not block asyncio loop (since _invoke_cli is sync)
-        loop = asyncio.get_event_loop()
-        output = await loop.run_in_executor(None, self._invoke_cli, prompt)
+        output = await asyncio.get_running_loop().run_in_executor(None, self._invoke_cli, prompt)
         
         heartbeat_task.cancel()
         duration = time.time() - start_time

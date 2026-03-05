@@ -1,0 +1,11 @@
+{
+  "id": "nextjs_pm",
+  "name": "Frontend Architect",
+  "level": 2,
+  "reports_to": "clawdia_prime",
+  "subordinates": [
+    "l3_specialist"
+  ],
+  "role": "tactical",
+  "max_concurrent": 3
+}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Check, X, ExternalLink, Info, MessageSquare } from 'lucide-react';
-import { apiPath } from '@/lib/api-client';
+import { apiJson, apiFetch } from '@/lib/api-client';
 
 interface Suggestion {
   id: string;
@@ -28,8 +28,7 @@ export default function LinkReviewPanel() {
 
   async function fetchSuggestions() {
     try {
-      const res = await fetch(apiPath('/api/links/suggestions'));
-      const data = await res.json();
+      const data = await apiJson<Suggestion[]>('/api/links/suggestions');
       setSuggestions(data);
     } catch (err) {
       console.error('Failed to fetch suggestions:', err);
@@ -40,7 +39,7 @@ export default function LinkReviewPanel() {
 
   async function handleAction(id: string, action: 'accept' | 'reject') {
     try {
-      const res = await fetch(apiPath(`/api/links/suggestions/${id}/action`), {
+      const res = await apiFetch(`/api/links/suggestions/${id}/action`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action }),
@@ -127,14 +126,14 @@ export default function LinkReviewPanel() {
 
               {/* Actions */}
               <div className="flex md:flex-col border-t md:border-t-0 md:border-l border-slate-100 dark:border-slate-800">
-                <button 
+                <button
                   onClick={() => handleAction(s.id, 'accept')}
                   className="flex-1 p-4 flex items-center justify-center text-green-600 hover:bg-green-50 dark:hover:bg-green-900/10 transition-colors border-r md:border-r-0 md:border-b border-slate-100 dark:border-slate-800"
                   title="Accept Link"
                 >
                   <Check className="w-5 h-5" />
                 </button>
-                <button 
+                <button
                   onClick={() => handleAction(s.id, 'reject')}
                   className="flex-1 p-4 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
                   title="Dismiss"
@@ -143,7 +142,7 @@ export default function LinkReviewPanel() {
                 </button>
               </div>
             </div>
-            
+
             {/* Reasons footer */}
             <div className="px-5 py-2 border-t border-slate-100 dark:border-slate-800 flex items-center gap-4">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">

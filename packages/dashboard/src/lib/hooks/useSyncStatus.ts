@@ -1,7 +1,7 @@
 'use client';
 
 import useSWR from 'swr';
-import { apiPath } from '@/lib/api-client';
+import { apiPath, apiJson, apiFetch } from '@/lib/api-client';
 
 export type SyncHealthStatus = 'auth_expired' | 'error' | 'rate_limited' | 'syncing' | 'connected' | 'disconnected';
 export type SyncStage =
@@ -86,12 +86,8 @@ export const SYNC_STATUS_PRIORITY: SyncHealthStatus[] = [
   'disconnected',
 ];
 
-const fetcher = async (url: string) => {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch sync status (${response.status})`);
-  }
-  return (await response.json()) as SyncHealthPayload;
+const fetcher = async <T>(url: string): Promise<T> => {
+  return apiJson<T>(url);
 };
 
 export function sortStatusesByPriority(statuses: SyncHealthStatus[]): SyncHealthStatus[] {
@@ -137,7 +133,7 @@ export function reconnectHref(connector: Pick<SyncConnectorSnapshot, 'id' | 'pro
 }
 
 async function triggerConnectorSync(connector: Pick<SyncConnectorSnapshot, 'id' | 'provider'>): Promise<void> {
-  const response = await fetch(resolveSyncEndpoint(connector), {
+  const response = await apiFetch(resolveSyncEndpoint(connector), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -152,7 +148,7 @@ async function triggerConnectorSync(connector: Pick<SyncConnectorSnapshot, 'id' 
 }
 
 export function useSyncStatus() {
-  const syncSWR = useSWR<SyncHealthPayload>(apiPath('/api/connectors/health'), fetcher, {
+  const syncSWR = useSWR<SyncHealthPayload>('/api/connectors/health', fetcher, {
     refreshInterval: 3000,
     revalidateOnFocus: false,
   });

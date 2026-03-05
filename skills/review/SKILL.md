@@ -1,7 +1,10 @@
 ---
 name: review
 description: L3 Work Reviewer for git diffs on staging branches with merge or reject decisions.
-metadata: { "openclaw": { "emoji": "👁️", "category": "orchestration" } }
+metadata:
+  openclaw:
+    emoji: "📝"
+    category: "orchestration-core"
 ---
 
 # SKILL: L3 Work Reviewer

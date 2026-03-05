@@ -3,6 +3,7 @@
 import { useProject } from '@/context/ProjectContext';
 import { useTheme } from '@/context/ThemeContext';
 import HeaderSyncStatus from '@/components/layout/HeaderSyncStatus';
+import UnlockToggle from '@/components/layout/UnlockToggle';
 
 export default function Header() {
   const { projectId, projects, setProjectId, loading } = useProject();
@@ -13,6 +14,7 @@ export default function Header() {
       <div />
 
       <div className="flex items-center gap-4">
+        <UnlockToggle />
         <HeaderSyncStatus />
 
         {/* Project Switcher */}

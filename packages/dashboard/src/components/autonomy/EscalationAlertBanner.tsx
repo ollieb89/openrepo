@@ -14,8 +14,16 @@ export function EscalationAlertBanner() {
   const [showConnectionStatus, setShowConnectionStatus] = useState(false);
 
   useEffect(() => {
+    const wsEndpoint = wsUrl('/events');
+    
+    // Skip WebSocket if not configured
+    if (!wsEndpoint || wsEndpoint === 'ws://' || wsEndpoint === 'wss://') {
+      setConnectionState('unavailable');
+      return;
+    }
+    
     const client = createWsClient({
-      url: wsUrl('/events'),
+      url: wsEndpoint,
       silent: true, // Don't spam console with connection errors
       maxRetries: 2, // Limited retries - server is optional
       retryDelay: 3000,

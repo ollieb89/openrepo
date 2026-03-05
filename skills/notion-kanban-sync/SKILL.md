@@ -1,3 +1,11 @@
+---
+name: notion-kanban-sync
+description: "notion-kanban-sync"
+metadata:
+  openclaw:
+    emoji: "📊"
+    category: "integration"
+---
 # Skill: notion-kanban-sync
 
 ## Purpose

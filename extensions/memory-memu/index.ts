@@ -10,7 +10,7 @@ import { jsonResult } from "openclaw/plugin-sdk";
 import { spawn } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { readFileSync, appendFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -223,14 +223,6 @@ const memuPlugin = {
     }
 
     // ========================================================================
-    // Debug: image detection (temporary)
-    // ========================================================================
-    
-    api.on("message_received", async (event, ctx) => {
-      appendFileSync("/tmp/memu-image-debug.log", `\n[${new Date().toISOString()}] message_received:\n${JSON.stringify({ from: event.from, contentLen: event.content?.length, metadata: event.metadata }, null, 2)}\n`);
-    });
-
-    // ========================================================================
     // Lifecycle Hooks
     // ========================================================================
 
@@ -267,19 +259,6 @@ const memuPlugin = {
     if (cfg.autoCapture !== false) {
       api.on("agent_end", async (event) => {
         
-        // Debug: detect image blocks in messages
-        for (const msg of (event.messages ?? [])) {
-          const m = msg as Record<string, unknown>;
-          if (Array.isArray(m.content)) {
-            for (const block of m.content) {
-              const b = block as Record<string, unknown>;
-              if (b.type === "image" || b.type === "image_url" || b.type === "image_file") {
-                appendFileSync("/tmp/memu-image-debug.log", `\n[${new Date().toISOString()}] IMAGE BLOCK in agent_end:\n${JSON.stringify({ role: m.role, blockType: b.type, keys: Object.keys(b) }, null, 2)}\n`);
-              }
-            }
-          }
-        }
-
         api.logger.info?.(`memory-memu: agent_end triggered, success=${event.success}, messages=${event.messages?.length ?? 0}`);
         
         if (!event.success || !event.messages || event.messages.length === 0) {

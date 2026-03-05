@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { listAgents } from '@/lib/openclaw';
+import { getDb } from '@/lib/db';
 import { withAuth } from '@/lib/auth-middleware';
 
 async function handler(request: NextRequest): Promise<NextResponse> {
   try {
-    const agents = await listAgents();
+    const db = getDb();
+    const agents = db.prepare('SELECT * FROM agents').all();
     return NextResponse.json({ agents });
   } catch (error) {
     console.error('Error loading agents:', error);
-    return NextResponse.json({ error: 'Failed to load agents' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to load agents from index' }, { status: 500 });
   }
 }
 

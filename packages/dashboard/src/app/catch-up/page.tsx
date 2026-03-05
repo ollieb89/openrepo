@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Search, Info, Pin, Share2, Sparkles, AlertCircle } from 'lucide-react';
 import { SummaryStream } from '@/components/sync/SummaryStream';
-import { apiPath } from '@/lib/api-client';
+import { apiFetch } from '@/lib/api-client';
 
 export default function CatchUpPage() {
   const [query, setQuery] = useState('');
@@ -22,10 +22,10 @@ export default function CatchUpPage() {
     setSuggestions(null);
 
     try {
-      const res = await fetch(apiPath('/api/sync/catch-up'), {
+      const res = await apiFetch('/api/sync/catch-up', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           query: forcedId ? `${query} (id: ${forcedId})` : query,
           activeProjectId: 'default' // Should be dynamically selected if project selection is implemented
         }),
@@ -129,7 +129,7 @@ export default function CatchUpPage() {
       {(stream || (isSubmitting && !suggestions)) && (
         <div className="space-y-6">
           <SummaryStream stream={stream} onComplete={handleComplete} />
-          
+
           {/* Summary Controls Placeholder for Task 2 */}
           {!isSubmitting && stream && (
             <div className="flex justify-between items-center bg-slate-50 p-4 rounded-lg border border-slate-100">

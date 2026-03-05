@@ -8,15 +8,18 @@ class Settings(BaseSettings):
     DB_NAME: str = "openclaw_memory"
     DB_USER: str = "claw_admin"
 
-    # OpenRouter configuration (for chat/LLM)
+    # OpenRouter configuration (for chat/LLM + embeddings)
     OPENROUTER_API_KEY: str
-    OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
-    # Free/Open models on OpenRouter
-    OPENROUTER_CHAT_MODEL: str = "openrouter/meta-llama/llama-3.1-70b-instruct:free"
+    # Note: OpenRouter uses /api/v1 in endpoints, so base URL should not include it
+    OPENROUTER_BASE_URL: str = "https://openrouter.ai"
     
-    # OpenAI for embeddings (OpenRouter doesn't provide embeddings)
-    # Embeddings are very cheap ($0.02 per 1M tokens) or use OpenAI free tier
-    OPENAI_API_KEY: str = ""  # Optional - only needed for creating new embeddings
+    # Free/Open models on OpenRouter
+    OPENROUTER_CHAT_MODEL: str = "meta-llama/llama-3.3-70b-instruct:free"
+    # NVIDIA free embedding model on OpenRouter (768 dimensions)
+    OPENROUTER_EMBED_MODEL: str = "nvidia/llama-nemotron-embed-vl-1b-v2:free"
+    
+    # Optional: OpenAI fallback for embeddings (if OpenRouter fails)
+    OPENAI_API_KEY: str = ""
     OPENAI_EMBED_MODEL: str = "text-embedding-3-small"
 
     SERVICE_PORT: int = 18791

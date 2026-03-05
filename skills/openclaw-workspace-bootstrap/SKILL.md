@@ -1,6 +1,10 @@
 ---
 name: openclaw-workspace-bootstrap
-description: Set up and maintain an OpenClaw agent workspace. Use when initializing a new workspace, editing identity or persona files (SOUL.md, IDENTITY.md), configuring user profile (USER.md), setting up tool notes (TOOLS.md), managing AGENTS.md operating instructions, configuring HEARTBEAT.md, or understanding workspace file layout. Triggers for: "bootstrap workspace", "setup agent", "SOUL.md", "IDENTITY.md", "USER.md", "TOOLS.md", "AGENTS.md", "workspace files", "first run", "BOOTSTRAP.md", "agent persona".
+description: "Set up and maintain an OpenClaw agent workspace. Use when initializing a new workspace, editing identity or persona files (SOUL.md, IDENTITY.md), configuring user profile (USER.md), setting up tool notes (TOOLS.md), managing AGENTS.md operating instructions, configuring HEARTBEAT.md, or understanding workspace file layout. Triggers for: \"bootstrap workspace\", \"setup agent\", \"SOUL.md\", \"IDENTITY.md\", \"USER.md\", \"TOOLS.md\", \"AGENTS.md\", \"workspace files\", \"first run\", \"BOOTSTRAP.md\", \"agent persona\"."
+metadata:
+  openclaw:
+    emoji: "🏠"
+    category: "orchestration-core"
 ---
 
 # OpenClaw Workspace Bootstrap

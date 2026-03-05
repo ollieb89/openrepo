@@ -344,3 +344,29 @@ def validate_agent_hierarchy(config: Dict[str, Any], config_path: str) -> None:
         for err in errors:
             logger.error("Agent hierarchy validation error", extra={"error": err, "config_path": config_path})
         raise ConfigValidationError(errors)
+
+def validate_agent_hierarchy_advanced(registry) -> List[str]:
+    """Validate the complete agent hierarchy."""
+    from openclaw.agent_registry import AgentLevel
+    errors = []
+
+    # Every agent (except L1) must have a valid reports_to
+    for agent in registry._agents.values():
+        if agent.level > AgentLevel.L1 and not agent.reports_to:
+            errors.append(f"{agent.id}: L{agent.level} agent must have reports_to")
+        if agent.reports_to and not registry.get(agent.reports_to):
+            errors.append(f"{agent.id}: reports_to '{agent.reports_to}' not found")
+
+    # L3 agents must have container config
+    for agent in registry.list_by_level(AgentLevel.L3):
+        if not agent.container:
+            errors.append(f"{agent.id}: L3 agent missing container config")
+
+    # No circular reports_to chains
+    for agent in registry._agents.values():
+        chain = registry.get_hierarchy(agent.id)
+        ids = [a.id for a in chain]
+        if len(ids) != len(set(ids)):
+            errors.append(f"{agent.id}: circular hierarchy detected")
+
+    return errors

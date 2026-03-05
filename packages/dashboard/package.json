@@ -3,11 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 6987",
     "build": "next build",
     "start": "next start -p 6987",
     "lint": "next lint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "predev": "kill-port 6987 || true",
+    "dev": "dotenv -e .env.local -- next dev -p 6987",
+    "dev:clean": "rm -rf .next tsconfig.tsbuildinfo && pnpm dev",
+    "stop": "../../scripts/service-manager.sh stop next",
+    "kill": "../../scripts/service-manager.sh kill next",
+    "start:local": "../../scripts/start-dashboard.sh"
   },
   "dependencies": {
     "@dagrejs/dagre": "^2.0.4",
@@ -36,8 +41,10 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^8",
     "eslint-config-next": "15.5.12",
+    "kill-port": "^2.0.1",
     "typescript": "^5",
     "vitest": "^3.2.4"
   }

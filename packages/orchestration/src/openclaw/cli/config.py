@@ -215,6 +215,82 @@ def cmd_show(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_sync_agents(args: argparse.Namespace) -> int:
+    """Sync agents from unified registry to agents/*/agent/config.json."""
+    from openclaw.agent_registry import AgentRegistry
+    import json
+    
+    root = get_project_root()
+    registry = AgentRegistry(root)
+    
+    for aid, spec in registry._agents.items():
+        if aid == "main": # Skip main if needed or keep it, let's keep it.
+            pass
+            
+        agent_dir = root / "agents" / aid
+        if not agent_dir.exists():
+            print(f"{Colors.YELLOW}WARNING{Colors.RESET}: Directory for agent '{aid}' does not exist. Skipping.")
+            continue
+            
+        agent_config_dir = agent_dir / "agent"
+        agent_config_dir.mkdir(parents=True, exist_ok=True)
+        config_path = agent_config_dir / "config.json"
+        
+        # Load existing to preserve unknown fields, or create new
+        config_data = {}
+        if config_path.exists():
+            try:
+                with open(config_path, "r", encoding="utf-8") as f:
+                    config_data = json.load(f)
+            except Exception:
+                pass
+                
+        config_data["id"] = spec.id
+        config_data["name"] = spec.name
+        config_data["level"] = int(spec.level)
+        if spec.reports_to:
+            config_data["reports_to"] = spec.reports_to
+        if spec.subordinates:
+            config_data["subordinates"] = spec.subordinates
+        if spec.role:
+            config_data["role"] = spec.role
+        if spec.projects:
+            config_data["projects"] = spec.projects
+        if spec.max_concurrent:
+            config_data["max_concurrent"] = spec.max_concurrent
+        if spec.skill_registry:
+            config_data["skill_registry"] = spec.skill_registry
+        if spec.container:
+            config_data["container"] = spec.container
+        if spec.runtime:
+            config_data["runtime"] = spec.runtime
+            
+        with open(config_path, "w", encoding="utf-8") as f:
+            json.dump(config_data, f, indent=2, ensure_ascii=False)
+            f.write("\n")
+            
+        print(f"Synced {aid} -> {config_path}")
+        
+    return 0
+
+def cmd_validate(args: argparse.Namespace) -> int:
+    """Validate full agent hierarchy."""
+    from openclaw.agent_registry import AgentRegistry
+    from openclaw.config_validator import validate_agent_hierarchy_advanced
+    
+    root = get_project_root()
+    registry = AgentRegistry(root)
+    
+    errors = validate_agent_hierarchy_advanced(registry)
+    if errors:
+        print(f"{Colors.RED}Validation Failed:{Colors.RESET}")
+        for err in errors:
+            print(f"  - {err}")
+        return 1
+        
+    print(f"{Colors.GREEN}Validation Passed!{Colors.RESET} Hierarchy is valid.")
+    return 0
+
 def main() -> None:
     """CLI entrypoint for OpenClaw Config tools."""
     parser = argparse.ArgumentParser(
@@ -250,6 +326,18 @@ Environment variables (override config file values):
         help="Print what would change without modifying any files",
     )
 
+    # --- sync-agents ---
+    subparsers.add_parser(
+        "sync-agents",
+        help="Sync agents from unified registry to agents/*/agent/config.json",
+    )
+    
+    # --- validate ---
+    subparsers.add_parser(
+        "validate",
+        help="Validate full agent hierarchy",
+    )
+
     args = parser.parse_args()
 
     if not args.command:
@@ -260,6 +348,10 @@ Environment variables (override config file values):
         sys.exit(cmd_show(args))
     elif args.command == "migrate":
         sys.exit(cmd_migrate(args))
+    elif args.command == "sync-agents":
+        sys.exit(cmd_sync_agents(args))
+    elif args.command == "validate":
+        sys.exit(cmd_validate(args))
     else:
         parser.print_help()
         sys.exit(1)

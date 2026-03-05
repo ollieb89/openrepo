@@ -1,6 +1,10 @@
 ---
 name: multi-agent
 description: Use when running multiple coding agents in parallel or orchestrating complex multi-agent workflows. Covers individual agent execution (Codex, Claude, Gemini, OpenCode, Pi) with PTY mode, dependency-based orchestration with worktrees/tmux, and self-healing monitoring.
+metadata:
+  openclaw:
+    emoji: "👥"
+    category: "multi-agent"
 ---
 
 # Multi-Agent Orchestration & Execution

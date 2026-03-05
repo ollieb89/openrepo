@@ -1,7 +1,10 @@
 ---
 name: spawn
 description: L3 Specialist Container Spawning Module for isolated Docker containers with GPU passthrough and state synchronization.
-metadata: { "openclaw": { "emoji": "🐳", "category": "orchestration" } }
+metadata:
+  openclaw:
+    emoji: "🐳"
+    category: "orchestration-core"
 ---
 
 # SKILL: L3 Specialist Container Spawning

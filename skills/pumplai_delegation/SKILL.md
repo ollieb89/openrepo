@@ -1,3 +1,11 @@
+---
+name: pumplai_delegation
+description: "PumplAI Delegation"
+metadata:
+  openclaw:
+    emoji: "📋"
+    category: "multi-agent"
+---
 # SKILL: PumplAI Delegation
 **Description:** Primary delegation logic for ClawdiaPrime to route tasks to PumplAI_PM.
 

@@ -28,7 +28,12 @@
   "max_retries": 1,
   "doc_settings": {
     "default_generator": "docusaurus",
-    "supported_generators": ["docusaurus", "astro", "vitepress", "mkdocs"],
+    "supported_generators": [
+      "docusaurus",
+      "astro",
+      "vitepress",
+      "mkdocs"
+    ],
     "auto_deploy": true,
     "deploy_branch": "main",
     "preview_on_pr": true

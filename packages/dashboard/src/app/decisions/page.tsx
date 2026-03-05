@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useProject } from '@/context/ProjectContext';
 import { DecisionCard } from '@/components/decisions/DecisionCard';
 import { Decision } from '@/lib/types/decisions';
+import { apiJson, apiFetch } from '@/lib/api-client';
 
 export default function DecisionsPage() {
   const { projectId, project } = useProject();
@@ -16,11 +17,8 @@ export default function DecisionsPage() {
       return;
     }
     try {
-      const res = await fetch(`/api/decisions?projectId=${projectId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setDecisions(data);
-      }
+      const data = await apiJson<Decision[]>(`/api/decisions?projectId=${projectId}`);
+      setDecisions(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to fetch decisions:', error);
     } finally {
@@ -34,10 +32,8 @@ export default function DecisionsPage() {
 
   const handleHide = async (id: string) => {
     try {
-      const res = await fetch(`/api/decisions/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        setDecisions(prev => prev.filter(d => d.id !== id));
-      }
+      await apiFetch(`/api/decisions/${id}`, { method: 'DELETE' });
+      setDecisions(prev => prev.filter(d => d.id !== id));
     } catch (error) {
       console.error('Failed to hide decision:', error);
     }
@@ -45,15 +41,12 @@ export default function DecisionsPage() {
 
   const handleReSummarize = async (id: string, hint?: string) => {
     try {
-      const res = await fetch(`/api/decisions/${id}/re-summarize`, {
+      const updatedDecision = await apiJson<Decision>(`/api/decisions/${id}/re-summarize`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ hint }),
       });
-      if (res.ok) {
-        const updatedDecision = await res.json();
-        setDecisions(prev => prev.map(d => d.id === id ? updatedDecision : d));
-      }
+      setDecisions(prev => prev.map(d => d.id === id ? updatedDecision : d));
     } catch (error) {
       console.error('Failed to re-summarize:', error);
     }
@@ -87,9 +80,9 @@ export default function DecisionsPage() {
       ) : (
         <div className="space-y-4">
           {decisions.map(decision => (
-            <DecisionCard 
-              key={decision.id} 
-              decision={decision} 
+            <DecisionCard
+              key={decision.id}
+              decision={decision}
               projectName={project?.name}
               onHide={handleHide}
               onReSummarize={handleReSummarize}

@@ -7,6 +7,7 @@ import Card from '@/components/common/Card';
 import AutonomyStateBadge from './AutonomyStateBadge';
 import { useProject } from '@/context/ProjectContext';
 import type { TaskWithAutonomy, AutonomyState } from '@/lib/types/autonomy';
+import { apiJson, apiFetch } from '@/lib/api-client';
 
 interface EscalationCardProps {
   task: TaskWithAutonomy;
@@ -37,24 +38,24 @@ function EscalationCard({ task, onResume }: EscalationCardProps) {
           </div>
           <AutonomyStateBadge state={task.autonomy?.state as AutonomyState || 'escalating'} />
         </div>
-        
+
         <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
           {task.autonomy?.escalation?.reason || 'No reason provided'}
         </p>
-        
+
         <div className="flex justify-between items-center text-sm mb-3">
           <span className="text-gray-500 dark:text-gray-400">
             Confidence: {Math.round((task.autonomy?.escalation?.confidence || 0) * 100)}%
           </span>
           <span className="text-gray-400 dark:text-gray-500">
-            {task.autonomy?.escalation?.timestamp 
+            {task.autonomy?.escalation?.timestamp
               ? formatRelativeTime(task.autonomy.escalation.timestamp)
               : 'Unknown time'}
           </span>
         </div>
-        
+
         <div className="flex gap-2">
-          <Link 
+          <Link
             href={`/tasks?id=${task.id}`}
             className="inline-flex items-center px-3 py-1.5 rounded text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors"
           >
@@ -83,16 +84,13 @@ export function EscalationsPage() {
     if (!projectId) return;
     const fetchEscalatedTasks = async () => {
       try {
-        const response = await fetch(`/api/tasks?state=escalating&project=${projectId}`);
-        if (response.ok) {
-          const { tasks: rawTasks } = await response.json();
-          const tasksList = Array.isArray(rawTasks) ? rawTasks : [];
-          // Sort by escalation timestamp (newest first)
-          const sorted = tasksList.sort((a: TaskWithAutonomy, b: TaskWithAutonomy) =>
-            (b.autonomy?.escalation?.timestamp || 0) - (a.autonomy?.escalation?.timestamp || 0)
-          );
-          setTasks(sorted);
-        }
+        const { tasks: rawTasks } = await apiJson<any>(`/api/tasks?state=escalating&project=${projectId}`);
+        const tasksList = Array.isArray(rawTasks) ? rawTasks : [];
+        // Sort by escalation timestamp (newest first)
+        const sorted = tasksList.sort((a: TaskWithAutonomy, b: TaskWithAutonomy) =>
+          (b.autonomy?.escalation?.timestamp || 0) - (a.autonomy?.escalation?.timestamp || 0)
+        );
+        setTasks(sorted);
       } catch (err) {
         console.error('Failed to fetch escalated tasks:', err);
       } finally {
@@ -105,8 +103,8 @@ export function EscalationsPage() {
 
   const handleResume = async (taskId: string) => {
     try {
-      const url = projectId ? `/api/tasks/${taskId}/resume?project=${projectId}` : `/api/tasks/${taskId}/resume`;
-      await fetch(url, { method: 'POST' });
+      const url = `/api/tasks/${taskId}/resume${projectId ? `?project=${projectId}` : ''}`;
+      await apiFetch(url, { method: 'POST' });
       setTasks(prev => prev.filter(t => t.id !== taskId));
     } catch (err) {
       console.error('Failed to resume task:', err);
@@ -144,7 +142,7 @@ export function EscalationsPage() {
           </span>
         )}
       </div>
-      
+
       {tasks.length === 0 ? (
         <Card>
           <div className="py-12 text-center">

@@ -43,10 +43,10 @@ async def _run_memorize(service, request: MemorizeRequest) -> None:
 
         # Retrieve existing memories to check cosine similarity
         try:
+            where_filter = user_dict if user_dict else None
             existing = await service.retrieve(
-                query=request.resource_url,
-                user=user_dict if user_dict else None,
-                limit=5,
+                queries=[{"role": "user", "content": request.resource_url}],
+                where=where_filter,
             )
             items = existing.get("items", []) if isinstance(existing, dict) else []
             for item in items:

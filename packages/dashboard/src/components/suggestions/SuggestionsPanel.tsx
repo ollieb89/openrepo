@@ -5,8 +5,9 @@ import useSWR from 'swr';
 import type { Suggestion, SuggestionsData } from '@/lib/types/suggestions';
 import SuggestionCard from './SuggestionCard';
 import DismissedTab from './DismissedTab';
+import { apiJson } from '@/lib/api-client';
 
-const fetcher = (url: string) => fetch(url).then(r => r.json());
+const fetcher = <T,>(url: string): Promise<T> => apiJson<T>(url);
 
 function useSuggestions(projectId: string | null) {
   const key = projectId ? `/api/suggestions?project=${projectId}` : null;
@@ -48,7 +49,7 @@ export default function SuggestionsPanel({ projectId }: SuggestionsPanelProps) {
     setIsRunning(true);
     setRunError(null);
     try {
-      await fetch(`/api/suggestions?project=${projectId}`, { method: 'POST' });
+      await apiJson(`/api/suggestions?project=${projectId}`, { method: 'POST' });
       await mutate();
     } catch {
       setRunError('Analysis failed. Check that memU is running.');
@@ -58,23 +59,29 @@ export default function SuggestionsPanel({ projectId }: SuggestionsPanelProps) {
   }
 
   async function handleAccept(suggestion: Suggestion) {
-    const res = await fetch(`/api/suggestions/${suggestion.id}/action`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'accept', project: projectId, diff_text: suggestion.diff_text }),
-    });
-    if (res.ok) {
+    try {
+      await apiJson(`/api/suggestions/${suggestion.id}/action`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'accept', project: projectId, diff_text: suggestion.diff_text }),
+      });
       await mutate();
+    } catch {
+      // Handle error if needed
     }
   }
 
   async function handleReject(suggestion: Suggestion, reason: string) {
-    await fetch(`/api/suggestions/${suggestion.id}/action`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'reject', project: projectId, rejection_reason: reason }),
-    });
-    await mutate();
+    try {
+      await apiJson(`/api/suggestions/${suggestion.id}/action`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reject', project: projectId, rejection_reason: reason }),
+      });
+      await mutate();
+    } catch {
+      // Handle error if needed
+    }
   }
 
   const pendingSuggestions = (data?.suggestions ?? [])
@@ -129,11 +136,10 @@ export default function SuggestionsPanel({ projectId }: SuggestionsPanelProps) {
         <button
           type="button"
           onClick={() => setActiveTab('pending')}
-          className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-            activeTab === 'pending'
-              ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
-              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-          }`}
+          className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'pending'
+            ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
+            : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+            }`}
         >
           Pending
           {pendingSuggestions.length > 0 && (
@@ -145,11 +151,10 @@ export default function SuggestionsPanel({ projectId }: SuggestionsPanelProps) {
         <button
           type="button"
           onClick={() => setActiveTab('dismissed')}
-          className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-            activeTab === 'dismissed'
-              ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
-              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-          }`}
+          className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'dismissed'
+            ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
+            : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+            }`}
         >
           Dismissed
         </button>

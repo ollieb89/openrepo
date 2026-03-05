@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Card from '@/components/common/Card';
 import type { ConnectorHealthStatus } from '@/lib/types/connectors';
-import { apiPath } from '@/lib/api-client';
+import { apiJson, apiFetch } from '@/lib/api-client';
 
 type TrackerProvider = 'github' | 'linear';
 
@@ -78,12 +78,7 @@ export default function TrackerConnectorCard() {
     setError(null);
 
     try {
-      const response = await fetch(apiPath('/api/connectors/tracker'), { method: 'GET' });
-      if (!response.ok) {
-        throw new Error('Failed to load tracker connector');
-      }
-
-      const data = (await response.json()) as TrackerConnectorResponse;
+      const data = await apiJson<TrackerConnectorResponse>('/api/connectors/tracker');
       setSnapshot(data);
 
       if (data.connector) {
@@ -127,7 +122,7 @@ export default function TrackerConnectorCard() {
     setError(null);
 
     try {
-      const response = await fetch(apiPath('/api/connectors/tracker'), {
+      const body = await apiJson<any>('/api/connectors/tracker', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -138,9 +133,7 @@ export default function TrackerConnectorCard() {
           enabled: true,
         }),
       });
-
-      const body = await response.json();
-      if (!response.ok || body.ok === false) {
+      if (body.ok === false) {
         throw new Error(body.error || 'Failed to configure tracker connector');
       }
 
@@ -157,16 +150,14 @@ export default function TrackerConnectorCard() {
     setError(null);
 
     try {
-      const response = await fetch(apiPath('/api/connectors/tracker/sync'), {
+      const body = await apiJson<any>('/api/connectors/tracker/sync', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({}),
       });
-
-      const body = await response.json();
-      if (!response.ok || body.ok === false) {
+      if (body.ok === false) {
         throw new Error(body.error || 'Failed to sync tracker connector');
       }
 

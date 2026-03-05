@@ -1,0 +1,62 @@
+{
+  "project_id": "pumplai",
+  "proposal_id": null,
+  "version": 1,
+  "created_at": "2026-03-04T12:37:04.449518+00:00",
+  "metadata": {
+    "archetype": "lean"
+  },
+  "nodes": [
+    {
+      "id": "pumplai_pm",
+      "level": 0,
+      "intent": "Define project goals, provide business context, final business approval.",
+      "risk_level": "low",
+      "resource_constraints": null,
+      "estimated_load": null
+    },
+    {
+      "id": "agent",
+      "level": 1,
+      "intent": "Implement turborepo logic, integrate shared UI components into packages/ui, ensure functionality.",
+      "risk_level": "medium",
+      "resource_constraints": null,
+      "estimated_load": null
+    },
+    {
+      "id": "l3_specialist",
+      "level": 2,
+      "intent": "Provide architectural guidance on turborepo implementation, review core logic for best practices and correctness.",
+      "risk_level": "low",
+      "resource_constraints": null,
+      "estimated_load": null
+    }
+  ],
+  "edges": [
+    {
+      "from_role": "pumplai_pm",
+      "to_role": "agent",
+      "edge_type": "delegation"
+    },
+    {
+      "from_role": "agent",
+      "to_role": "l3_specialist",
+      "edge_type": "information_flow"
+    },
+    {
+      "from_role": "l3_specialist",
+      "to_role": "agent",
+      "edge_type": "information_flow"
+    },
+    {
+      "from_role": "agent",
+      "to_role": "l3_specialist",
+      "edge_type": "escalation"
+    },
+    {
+      "from_role": "pumplai_pm",
+      "to_role": "agent",
+      "edge_type": "review_gate"
+    }
+  ]
+}

@@ -125,7 +125,171 @@ OPENCLAW_JSON_SCHEMA: dict = {
             },
         },
         "commands":  {"type": "object"},
-        "channels":  {"type": "object"},
+        "channels": {
+            "type": "object",
+            "properties": {
+                "defaults": {
+                    "type": "object",
+                    "properties": {
+                        "groupPolicy": { "type": "string", "enum": ["open", "allowlist", "disabled"] },
+                        "heartbeat": {
+                            "type": "object",
+                            "properties": {
+                                "showOk": { "type": "boolean" },
+                                "showAlerts": { "type": "boolean" },
+                                "useIndicator": { "type": "boolean" }
+                            }
+                        }
+                    }
+                },
+                "modelByChannel": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "object",
+                        "additionalProperties": { "type": "string" }
+                    }
+                },
+                "whatsapp": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": { "type": "boolean" },
+                        "dmPolicy": { "type": "string", "enum": ["pairing", "allowlist", "open", "disabled"] },
+                        "allowFrom": { "type": "array", "items": { "type": "string" } },
+                        "textChunkLimit": { "type": "integer" },
+                        "chunkMode": { "type": "string", "enum": ["length", "newline"] },
+                        "mediaMaxMb": { "type": "integer" },
+                        "sendReadReceipts": { "type": "boolean" },
+                        "groups": { "type": "object" },
+                        "groupPolicy": { "type": "string", "enum": ["open", "allowlist", "disabled"] },
+                        "groupAllowFrom": { "type": "array", "items": { "type": "string" } },
+                        "accounts": { "type": "object" },
+                        "defaultAccount": { "type": "string" }
+                    }
+                },
+                "telegram": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": { "type": "boolean" },
+                        "botToken": { "type": "string" },
+                        "tokenFile": { "type": "string" },
+                        "dmPolicy": { "type": "string", "enum": ["pairing", "allowlist", "open", "disabled"] },
+                        "allowFrom": { "type": "array", "items": { "type": "string" } },
+                        "groups": { "type": "object" },
+                        "customCommands": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "command": { "type": "string" },
+                                    "description": { "type": "string" }
+                                }
+                            }
+                        },
+                        "historyLimit": { "type": "integer" },
+                        "replyToMode": { "type": "string", "enum": ["off", "first", "all"] },
+                        "linkPreview": { "type": "boolean" },
+                        "streaming": { "type": "string", "enum": ["off", "partial", "block", "progress"] },
+                        "actions": { "type": "object" },
+                        "reactionNotifications": { "type": "string", "enum": ["off", "own", "all"] },
+                        "mediaMaxMb": { "type": "integer" },
+                        "retry": { "type": "object" },
+                        "network": { "type": "object" },
+                        "proxy": { "type": "string" },
+                        "webhookUrl": { "type": "string" },
+                        "webhookSecret": { "type": "string" },
+                        "webhookPath": { "type": "string" }
+                    }
+                },
+                "discord": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": { "type": "boolean" },
+                        "token": { "type": "string" },
+                        "mediaMaxMb": { "type": "integer" },
+                        "allowBots": { "anyOf": [{ "type": "boolean" }, { "type": "string", "enum": ["mentions"] }] },
+                        "actions": { "type": "object" },
+                        "replyToMode": { "type": "string", "enum": ["off", "first", "all"] },
+                        "dmPolicy": { "type": "string", "enum": ["pairing", "allowlist", "open", "disabled"] },
+                        "allowFrom": { "type": "array", "items": { "type": "string" } },
+                        "dm": { "type": "object" },
+                        "guilds": { "type": "object" },
+                        "historyLimit": { "type": "integer" },
+                        "textChunkLimit": { "type": "integer" },
+                        "chunkMode": { "type": "string", "enum": ["length", "newline"] },
+                        "streaming": { "type": "string", "enum": ["off", "partial", "block", "progress"] },
+                        "maxLinesPerMessage": { "type": "integer" },
+                        "ui": { "type": "object" },
+                        "threadBindings": { "type": "object" },
+                        "voice": { "type": "object" },
+                        "retry": { "type": "object" },
+                        "autoPresence": { "type": "object" },
+                        "dangerouslyAllowNameMatching": { "type": "boolean" }
+                    }
+                },
+                "googlechat": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": { "type": "boolean" },
+                        "serviceAccountFile": { "type": "string" },
+                        "serviceAccount": { "type": "object" },
+                        "serviceAccountRef": { "type": "string" },
+                        "audienceType": { "type": "string", "enum": ["app-url", "project-number"] },
+                        "audience": { "type": "string" },
+                        "webhookPath": { "type": "string" },
+                        "botUser": { "type": "string" },
+                        "dm": { "type": "object" },
+                        "groupPolicy": { "type": "string", "enum": ["open", "allowlist", "disabled"] },
+                        "groups": { "type": "object" },
+                        "actions": { "type": "object" },
+                        "typingIndicator": { "type": "string", "enum": ["message", "off"] },
+                        "mediaMaxMb": { "type": "integer" },
+                        "dangerouslyAllowNameMatching": { "type": "boolean" }
+                    }
+                },
+                "slack": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": { "type": "boolean" },
+                        "botToken": { "type": "string" },
+                        "appToken": { "type": "string" },
+                        "signingSecret": { "type": "string" },
+                        "dmPolicy": { "type": "string", "enum": ["pairing", "allowlist", "open", "disabled"] },
+                        "allowFrom": { "type": "array", "items": { "type": "string" } },
+                        "dm": { "type": "object" },
+                        "channels": { "type": "object" },
+                        "historyLimit": { "type": "integer" },
+                        "allowBots": { "type": "boolean" },
+                        "reactionNotifications": { "type": "string", "enum": ["off", "own", "all", "allowlist"] },
+                        "reactionAllowlist": { "type": "array", "items": { "type": "string" } },
+                        "replyToMode": { "type": "string", "enum": ["off", "first", "all"] },
+                        "thread": { "type": "object" },
+                        "actions": { "type": "object" },
+                        "slashCommand": { "type": "object" },
+                        "textChunkLimit": { "type": "integer" },
+                        "chunkMode": { "type": "string", "enum": ["length", "newline"] },
+                        "streaming": { "type": "string", "enum": ["off", "partial", "block", "progress"] },
+                        "nativeStreaming": { "type": "boolean" },
+                        "mediaMaxMb": { "type": "integer" },
+                        "configWrites": { "type": "boolean" },
+                        "defaultAccount": { "type": "string" }
+                    }
+                },
+                "mattermost": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": { "type": "boolean" },
+                        "botToken": { "type": "string" },
+                        "baseUrl": { "type": "string" },
+                        "dmPolicy": { "type": "string", "enum": ["pairing", "allowlist", "open", "disabled"] },
+                        "chatmode": { "type": "string", "enum": ["oncall", "onmessage", "onchar"] },
+                        "oncharPrefixes": { "type": "array", "items": { "type": "string" } },
+                        "commands": { "type": "object" },
+                        "textChunkLimit": { "type": "integer" },
+                        "chunkMode": { "type": "string", "enum": ["length", "newline"] }
+                    }
+                }
+            }
+        },
         "gateway": {
             "type": "object",
             "required": ["port"],

@@ -1,7 +1,10 @@
 ---
 name: router
 description: Enables L1 orchestrators to delegate tasks to L2 project managers via the OpenClaw Gateway.
-metadata: { "openclaw": { "emoji": "🔀", "category": "orchestration" } }
+metadata:
+  openclaw:
+    emoji: "🔀"
+    category: "orchestration-core"
 ---
 # SKILL: Hub-and-Spoke Router
 

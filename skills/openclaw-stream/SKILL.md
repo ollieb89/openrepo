@@ -1,6 +1,10 @@
 ---
 name: openclaw-stream
-description: Streaming and block chunking configuration in OpenClaw. Use when enabling block streaming, configuring chunk sizes, setting up preview streaming (Telegram/Discord/Slack), adjusting coalescing behavior, enabling human-like pacing, or troubleshooting streaming issues. Triggers for: "block streaming", "stream chunks", "chunking", "preview streaming", "partial streaming", "coalesce", "chunk size", "blockStreamingDefault", "streaming mode", "Telegram streaming", "Discord streaming".
+description: "Streaming and block chunking configuration in OpenClaw. Use when enabling block streaming, configuring chunk sizes, setting up preview streaming (Telegram/Discord/Slack), adjusting coalescing behavior, enabling human-like pacing, or troubleshooting streaming issues. Triggers for: \"block streaming\", \"stream chunks\", \"chunking\", \"preview streaming\", \"partial streaming\", \"coalesce\", \"chunk size\", \"blockStreamingDefault\", \"streaming mode\", \"Telegram streaming\", \"Discord streaming\"."
+metadata:
+  openclaw:
+    emoji: "🌊"
+    category: "orchestration-core"
 ---
 
 # OpenClaw Streaming

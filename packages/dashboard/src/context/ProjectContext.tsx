@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import type { Project } from '@/lib/types';
-import { apiPath } from '@/lib/api-client';
+import { apiJson } from '@/lib/api-client';
 
 interface ProjectContextValue {
   projectId: string | null;
@@ -16,7 +16,7 @@ const ProjectContext = createContext<ProjectContextValue>({
   projectId: null,
   project: null,
   projects: [],
-  setProjectId: () => {},
+  setProjectId: () => { },
   loading: true,
 });
 
@@ -27,8 +27,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(apiPath('/api/projects'))
-      .then(res => res.json())
+    apiJson<any>('/api/projects')
       .then(data => {
         const projectList = data.projects || [];
         setProjects(projectList);

@@ -1,6 +1,6 @@
 import { getPrivacyGuard } from '@/lib/privacy/guard';
 import type { PrivacyDecision, PrivacyExecutionMode } from '@/lib/types/privacy';
-import { apiPath } from '@/lib/api-client';
+import { apiFetch } from '@/lib/api-client';
 
 const DEFAULT_REMOTE_ENDPOINT =
   process.env.NEXT_PUBLIC_PRIVACY_REMOTE_INFERENCE_ENDPOINT ?? 'https://postman-echo.com/post';
@@ -72,7 +72,7 @@ function toRuntimeResult(
 }
 
 async function defaultRemoteUsageLogger(projectId: string, reason: string): Promise<void> {
-  await fetch(apiPath('/api/privacy/events'), {
+  await apiFetch('/api/privacy/events', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

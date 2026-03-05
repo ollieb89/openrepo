@@ -1,6 +1,10 @@
 ---
 name: subagent-driven-development
 description: Use when executing implementation plans with independent tasks in the current session
+metadata:
+  openclaw:
+    emoji: "🔧"
+    category: "multi-agent"
 ---
 
 # Subagent-Driven Development

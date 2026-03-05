@@ -57,6 +57,34 @@ logger = get_logger("pool")
 
 _shutdown_handler_registered = False  # module-level idempotency guard — prevents double-registration if spawn_task() called multiple times
 
+# Per-task output buffer for FR-05: L3 Output Streaming (last 100 lines per task)
+_output_buffers: Dict[str, list] = {}
+_MAX_OUTPUT_BUFFER_LINES = 100
+
+
+def _add_to_output_buffer(task_id: str, line: str) -> None:
+    """Add a log line to the per-task output buffer (thread-safe)."""
+    if task_id not in _output_buffers:
+        _output_buffers[task_id] = []
+    _output_buffers[task_id].append(line)
+    # Keep only last 100 lines
+    if len(_output_buffers[task_id]) > _MAX_OUTPUT_BUFFER_LINES:
+        _output_buffers[task_id].pop(0)
+
+
+def get_output_buffer(task_id: str) -> list:
+    """Get the buffered output lines for a task.
+    
+    Returns:
+        List of buffered lines (last 100). Empty list if task not found.
+    """
+    return _output_buffers.get(task_id, []).copy()
+
+
+def clear_output_buffer(task_id: str) -> None:
+    """Clear the output buffer for a task (call when task completes)."""
+    _output_buffers.pop(task_id, None)
+
 
 class PoolOverflowError(Exception):
     """Raised when a pool slot cannot be acquired within the configured policy constraints.
@@ -239,7 +267,7 @@ class L3ContainerPool:
             # Priority queue mechanism: enqueue task with its priority number, then
             # tasks dequeue in priority order (lower number = higher priority) before
             # acquiring the semaphore slot.
-            ticket: asyncio.Future = asyncio.get_event_loop().create_future()
+            ticket: asyncio.Future = asyncio.get_running_loop().create_future()
             await self._priority_queue.put((priority, task_id, ticket))
             logger.debug(
                 "Task enqueued in priority queue",
@@ -420,8 +448,6 @@ class L3ContainerPool:
                 pass
             
             # Spawn container
-            loop = asyncio.get_event_loop()
-            
             is_gateway_healthy = await gateway_healthy()
             if use_sandbox and is_gateway_healthy:
                 logger.info("Spawning via Sandbox Adapter", extra={"task_id": task_id})
@@ -444,7 +470,7 @@ class L3ContainerPool:
                 container = MockContainer()
                 
             else:
-                container = await loop.run_in_executor(
+                container = await asyncio.get_running_loop().run_in_executor(
                     None,
                     lambda: spawn_l3_specialist(
                         task_id=task_id,
@@ -696,24 +722,33 @@ class L3ContainerPool:
         async def stream_logs():
             try:
                 from openclaw.event_bus import emit
-                loop = asyncio.get_event_loop()
                 # Get log stream from container (this is sync, run in executor)
-                log_stream = await loop.run_in_executor(
+                log_stream = await asyncio.get_running_loop().run_in_executor(
                     None,
                     lambda: container.logs(stream=True, follow=True, stdout=True, stderr=True),
                 )
 
                 async for log_line in log_stream:
                     decoded = log_line.decode("utf-8", errors="replace").strip()
+                    if not decoded:
+                        continue
+                    
                     logger.debug("L3 output", extra={"task_id": task_id, "output": decoded})
+                    
+                    # Add to buffer for reconnect history
+                    _add_to_output_buffer(task_id, decoded)
+                    
+                    # Emit event with proper format per FR-05
                     try:
                         emit({
                             "event_type": "task.output",
                             "project_id": self.project_id,
                             "task_id": task_id,
+                            "agent_id": "l3_specialist",  # L3 containers run as l3_specialist
+                            "timestamp": time.time(),
                             "payload": {
                                 "line": decoded,
-                                "stream": "stdout",
+                                "stream": "stdout",  # Docker mixes stdout/stderr in this mode
                             },
                         })
                     except Exception:
@@ -726,9 +761,8 @@ class L3ContainerPool:
 
         try:
             # Wait for container with timeout
-            loop = asyncio.get_event_loop()
             wait_result = await asyncio.wait_for(
-                loop.run_in_executor(None, container.wait),
+                asyncio.get_running_loop().run_in_executor(None, container.wait),
                 timeout=timeout_seconds,
             )
 
@@ -753,6 +787,8 @@ class L3ContainerPool:
                 await log_task
             except asyncio.CancelledError:
                 pass
+            # Clear output buffer for this task (FR-05)
+            clear_output_buffer(task_id)
 
     def get_active_count(self) -> int:
         """Return number of active containers."""

@@ -1,6 +1,10 @@
 ---
 name: notebooklm
 description: NotebookLM CLI wrapper via `node {baseDir}/scripts/notebooklm.mjs`. Use for auth, notebooks, chat, sources, notes, sharing, research, and artifact generation/download.
+metadata:
+  openclaw:
+    emoji: "📓"
+    category: "integration"
 ---
 
 # NotebookLM CLI Wrapper

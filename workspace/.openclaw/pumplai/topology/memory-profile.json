@@ -1,0 +1,14 @@
+{
+  "project_id": "pumplai",
+  "correction_count": 1,
+  "soft_correction_count": 0,
+  "hard_correction_count": 0,
+  "threshold_status": "below_threshold",
+  "archetype_affinity": {
+    "lean": 5.0,
+    "balanced": 5.0,
+    "robust": 5.0
+  },
+  "last_computed": "2026-03-04T12:37:51.395928+00:00",
+  "active_pattern_ids": []
+}

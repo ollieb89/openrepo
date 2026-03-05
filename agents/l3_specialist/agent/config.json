@@ -1,0 +1,10 @@
+{
+  "id": "l3_specialist",
+  "name": "L3 Specialist Executor",
+  "level": 3,
+  "reports_to": "pumplai_pm",
+  "max_concurrent": 3,
+  "container": {
+    "image": "ubuntu:latest"
+  }
+}

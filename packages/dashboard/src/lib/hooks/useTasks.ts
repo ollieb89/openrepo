@@ -8,7 +8,7 @@ export function useTasks(projectId: string | null) {
   const { data, error, isLoading } = useSWR<{ tasks: Task[] }>(
     projectId ? `/api/tasks?project=${projectId}` : null,
     fetcher,
-    { refreshInterval: 3000 }
+    { refreshInterval: 3000, revalidateOnFocus: false }
   );
 
   return {

@@ -6,10 +6,11 @@
 
 const BASE_PATH = '/occc';
 
-// WebSocket server URL - defaults to same host, different port
+// WebSocket server URL - set to empty to disable WebSocket connections
+// The WebSocket server is optional - dashboard works fine without it
 // Can be overridden via environment variable
 // Note: WebSocket server does NOT use basePath - it's a separate server
-const WS_SERVER_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8080';
+const WS_SERVER_URL = process.env.NEXT_PUBLIC_WS_URL || '';  // Disabled by default to avoid console errors
 
 /**
  * Get auth token from localStorage (client-side only)
@@ -34,9 +35,13 @@ export function apiPath(path: string): string {
  * Constructs a WebSocket URL.
  * Note: WebSocket server runs on a separate port and does NOT use basePath.
  * @param path - The WebSocket endpoint path (e.g., '/events')
- * @returns The full WebSocket URL (e.g., 'ws://localhost:8080/events')
+ * @returns The full WebSocket URL (e.g., 'ws://localhost:8080/events') or empty string if disabled
  */
 export function wsUrl(path: string): string {
+  // If WebSocket is disabled, return empty string
+  if (!WS_SERVER_URL) {
+    return '';
+  }
   // Ensure path starts with /
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   // WebSocket server does NOT include basePath

@@ -2,7 +2,8 @@
         submodule-init submodule-update \
         openclaw-install openclaw-build openclaw-link openclaw-skills \
         setup dev-all dev-dashboard dev-services \
-        docker-base docker-sandbox-base docker-sandbox-common docker-l3 docker-all
+        docker-base docker-sandbox-base docker-sandbox-common docker-l3 docker-all \
+        stop stop-all stop-dashboard stop-services list-services kill-port
 
 help: ## Show available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -20,12 +21,9 @@ lint: ## Lint Python code
 
 # --- Dashboard (Next.js) ---
 
-dashboard: ## Start dashboard dev server (port 6987) — OPENCLAW_ROOT must be exported
-	@if [ -z "$$OPENCLAW_ROOT" ]; then \
-		echo "ERROR: OPENCLAW_ROOT is not set. The dashboard requires this to locate suggest.py and soul-suggestions.json."; \
-		echo "  Run: export OPENCLAW_ROOT=$$HOME/.openclaw"; \
-		exit 1; \
-	fi
+dashboard: ## Start dashboard dev server (port 6987) — auto-sets OPENCLAW_ROOT to repo root
+	@export OPENCLAW_ROOT="$(CURDIR)"; \
+	echo "Starting dashboard with OPENCLAW_ROOT=$$OPENCLAW_ROOT"; \
 	cd packages/dashboard && pnpm install && pnpm run dev
 
 dev-dashboard: dashboard ## Start OCCC dashboard (port 6987)
@@ -34,9 +32,7 @@ dev-services: ## Start all background services (memU + OCCC dashboard + OpenClaw
 	@echo "Starting memU..."
 	$(MAKE) memory-up
 	@echo "Starting OCCC dashboard on :6987..."
-	@if [ -z "$$OPENCLAW_ROOT" ]; then \
-		echo "WARN: OPENCLAW_ROOT not set. Dashboard may fail. Run: export OPENCLAW_ROOT=$$HOME/.openclaw"; \
-	fi
+	@export OPENCLAW_ROOT="$(CURDIR)"; \
 	cd packages/dashboard && pnpm install && pnpm run dev &
 	@echo "All services started. OpenClaw gateway available on :18789 (OCCC on :6987, memU on :18791)"
 
@@ -112,3 +108,37 @@ clean: ## Remove build artifacts and caches
 	find packages/ -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	find packages/ -type d -name .pytest_cache -exec rm -rf {} + 2>/dev/null || true
 	find packages/ -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
+
+# --- Service Management ---
+
+stop: ## Stop services (use: make stop [next|node|python|docker|make|all])
+	@if [ -z "$(filter-out $@,$(MAKECMDGOALS))" ]; then \
+		$(MAKE) stop-dashboard; \
+	else \
+		./scripts/service-manager.sh stop $(filter-out $@,$(MAKECMDGOALS)); \
+	fi
+
+stop-all: ## Stop all services
+	./scripts/service-manager.sh stop all
+
+stop-dashboard: ## Stop Next.js dashboard
+	./scripts/service-manager.sh stop next
+	./scripts/service-manager.sh stop port:6987
+
+stop-services: ## Stop all background services (memU + dashboard)
+	$(MAKE) memory-down
+	$(MAKE) stop-dashboard
+
+list-services: ## List all running project services
+	./scripts/service-manager.sh list
+
+kill-port: ## Kill process on specific port (use: make kill-port PORT=6987)
+	@if [ -z "$(PORT)" ]; then \
+		echo "Usage: make kill-port PORT=6987"; \
+		exit 1; \
+	fi
+	./scripts/service-manager.sh kill port:$(PORT)
+
+# Catch-all for stop arguments
+%:
+	@:

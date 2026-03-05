@@ -1,6 +1,10 @@
 ---
 name: openclaw-agent-run
-description: Direct agent CLI invocations in OpenClaw. Use when running the `openclaw agent` command to trigger agent turns, targeting sessions or agents programmatically, delivering replies to channels, using --json output for automation, overriding thinking/verbose levels, or understanding session selection logic. Triggers for: "openclaw agent", "direct agent run", "send a message to agent", "--deliver", "--session-id", "agent turn", "CLI agent", "thinking level", "verbose mode", "--json output".
+description: "Direct agent CLI invocations in OpenClaw. Use when running the `openclaw agent` command to trigger agent turns, targeting sessions or agents programmatically, delivering replies to channels, using --json output for automation, overriding thinking/verbose levels, or understanding session selection logic. Triggers for: \"openclaw agent\", \"direct agent run\", \"send a message to agent\", \"--deliver\", \"--session-id\", \"agent turn\", \"CLI agent\", \"thinking level\", \"verbose mode\", \"--json output\"."
+metadata:
+  openclaw:
+    emoji: "▶️"
+    category: "orchestration-core"
 ---
 
 # Direct Agent Runs (`openclaw agent`)

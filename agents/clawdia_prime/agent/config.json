@@ -8,7 +8,9 @@
     "endpoint": "http://localhost:18789",
     "auth_source": "openclaw.json"
   },
-  "projects": ["main"],
+  "projects": [
+    "main"
+  ],
   "skill_registry": {
     "router": {
       "name": "Hub-and-Spoke Router (CLI)",
@@ -23,6 +25,9 @@
       "skill_path": "agents/clawdia_prime/skills/swarm_query"
     }
   },
-  "subordinates": ["pumplai_pm"],
-  "max_concurrent": 4
+  "subordinates": [
+    "pumplai_pm"
+  ],
+  "max_concurrent": 4,
+  "role": "strategic"
 }

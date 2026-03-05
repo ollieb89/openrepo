@@ -1,6 +1,10 @@
 ---
 name: test-driven-development
 description: Use when implementing any feature or bugfix, before writing implementation code
+metadata:
+  openclaw:
+    emoji: "🧪"
+    category: "methodology"
 ---
 
 # Test-Driven Development (TDD)

@@ -1,41 +1,200 @@
-# Repository Guidelines
+# Repository Guidelines for Agentic Coding
 
-## Project Structure & Module Organization
-- Root config in `openclaw.json`; adjust `source_directories` and agent mappings carefully.
-- Agent personas live in `agents/` (`clawdia_prime/`, `pumplai_pm/`, `l3_specialist/`); reuse `_templates/` for new identities.
-- Orchestration core is in `orchestration/` (`state_engine.py`, `snapshot.py`, `project_cli.py`, `monitor.py`).
-- Skills reside in `skills/` (`router/` for L1→L2 dispatch, `spawn/` for L2→L3 containers, `review/` for diff review).
-- Container image lives at `docker/l3-specialist/` (`Dockerfile`, `entrypoint.sh`).
-- Per-project manifests live under `projects/<id>/`; runtime state and snapshots are in `workspace/.openclaw/<id>/`.
-- Docs and dashboards: `docs/`, `workspace/occc/`; operational data sits in `logs/`, `sandboxes/`, `delivery-queue/`.
+This file provides guidance for AI agents operating in this repository.
+
+## Project Overview
+
+This is a monorepo containing:
+- **openclaw/** - Main TypeScript/Node.js application (AI gateway with messaging integrations)
+- **packages/orchestration/** - Python orchestration engine
+- **packages/dashboard/** - Next.js dashboard (React/TypeScript)
+- **skills/** - L1/L2/L3 agent skills and routing
+- **extensions/** - Channel plugins (Discord, Telegram, WhatsApp, etc.)
+- **docker/** - Container definitions
 
 ## Build, Test, and Development Commands
-- Build L3 image: `docker build -t openclaw-l3-specialist:latest docker/l3-specialist/`.
-- Initialize a project: `python3 orchestration/project_cli.py init --id myproject --name "My Project" [--workspace <path>]`.
-- Spawn a specialist: `python3 skills/spawn/spawn.py task-001 code "Implement feature" --workspace <path>`.
-- Monitor or inspect state: `python3 orchestration/monitor.py tail` and `python3 orchestration/monitor.py status`.
-- List/switch projects: `python3 orchestration/project_cli.py list` and `python3 orchestration/project_cli.py switch <id>`.
 
-## Coding Style & Naming Conventions
-- Python: prefer snake_case, explicit typing when practical, and small, testable functions.
-- JavaScript/Node (skills): use clear module boundaries and avoid shell-injection by keeping exec arguments array-based.
-- Config files (JSON): keep keys lower_snake_case; preserve existing ordering to ease diff review.
-- Directory naming mirrors roles (`l3_specialist`, `router`); new project folders follow `projects/<id>/`.
-- Default to ASCII; avoid embedding secrets in configs, prompts, or logs.
+### Node.js/TypeScript (openclaw, dashboard)
+
+```bash
+# Install dependencies
+pnpm install
+
+# Build & Type check
+pnpm build                          # Full build
+pnpm tsgo                          # TypeScript strict check
+
+# Linting & Formatting
+pnpm check                         # format:check + tsgo + lint
+pnpm lint                          # oxlint (type-aware)
+pnpm lint:fix                      # oxlint --fix + format
+pnpm format                        # oxfmt (write)
+pnpm format:check                  # oxfmt (check only)
+
+# Testing (Vitest)
+pnpm test                          # All unit tests
+pnpm test:fast                    # Unit tests only
+pnpm test:watch                   # Watch mode
+pnpm test:e2e                     # End-to-end tests
+pnpm test:live                    # Live tests (requires API keys)
+pnpm test:coverage                # With coverage report
+```
+
+**Running a Single Test:**
+```bash
+vitest run src/utils/usage-format.test.ts
+vitest run --config vitest.unit.config.ts src/my/test/file.test.ts
+vitest run -t "test name pattern"
+```
+
+### Python (orchestration package)
+
+```bash
+uv sync                            # Install dependencies
+uv run pyright packages/orchestration/  # Type check
+uv run ruff check packages/orchestration/ # Lint
+uv run ruff format packages/orchestration/ # Format
+pytest                             # Run tests
+pytest -k "test_name"             # Single test by pattern
+```
+
+### Docker Commands
+
+```bash
+docker build -t openclaw-l3-specialist:latest docker/l3-specialist/
+pnpm test:docker:live-models
+pnpm test:docker:live-gateway
+```
+
+## Code Style Guidelines
+
+### General Principles
+
+- **Language**: TypeScript (ESM) for JS/TS; Python for orchestration
+- **Strict typing**: Avoid `any`; prefer explicit types
+- **File size**: Keep files under ~500-700 LOC; split when needed
+- **Comments**: Add brief comments for tricky/non-obvious logic only
+
+### TypeScript Conventions
+
+```typescript
+// Imports: external > internal > relative
+import { ExternalLib } from 'external-lib';
+import { InternalModule } from '@/internal/module';
+import { helper } from './helpers';
+
+// Naming
+- Functions/variables: camelCase
+- Classes/Types/Interfaces: PascalCase
+- Constants: SCREAMING_SNAKE_CASE
+- Files: kebab-case.ts or PascalCase.tsx
+
+// Interfaces vs Types
+interface UserConfig {       // Objects with optional fields
+  name: string;
+  age?: number;
+}
+type UserStatus = 'active' | 'inactive';  // Unions, primitives
+
+// Error handling
+try {
+  await riskyOperation();
+} catch (err) {
+  if (err instanceof SpecificError) {
+    handleSpecific(err);
+  } else {
+    throw new AppError('Context', { cause: err });
+  }
+}
+
+// Async functions - handle errors
+async function fetchData(): Promise<Result> {
+  try {
+    const data = await externalCall();
+    return { ok: true, data };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+```
+
+### Python Conventions (orchestration/)
+
+```python
+# Imports: stdlib > third-party > local
+import os
+from typing import Optional
+
+import aiohttp
+from loguru import logger
+
+from orchestration.state import StateEngine
+
+# Naming: snake_case (functions/variables), PascalCase (classes)
+# Type hints: def process(items: list[str]) -> dict[str, int]:
+
+# Error handling
+try:
+    result = await fetch_data()
+except DataError as e:
+    logger.error(f"Failed to fetch: {e}")
+    raise
+```
+
+### React/Next.js (dashboard)
+
+```tsx
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/common';
+
+interface Props {
+  title: string;
+  onSubmit: () => void;
+}
+
+export function TaskBoard({ title, onSubmit }: Props) {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  return <div><h1>{title}</h1></div>;
+}
+
+// Hooks: useX naming
+export function useTasks() { /* ... */ }
+```
+
+### Configuration Files (JSON)
+
+- Keys: lower_snake_case
+- Preserve existing ordering for diff readability
+- Validate: `python -m json.tool <file>`
 
 ## Testing Guidelines
-- No automated test suite; rely on manual verification and dry-runs.
-- Before merging, run container-critical flows: project init, spawn, and monitor commands against a test project.
-- Review diffs for state file changes under `workspace/.openclaw/` to avoid corrupting task history.
-- Validate generated JSON with `python -m json.tool <file>` when editing configs.
 
-## Commit & Pull Request Guidelines
-- Use focused commits; conventional style encouraged (e.g., `chore: update spawn specialist docs`).
-- Summaries should state scope and impact; bodies note validation commands run and any state files touched.
-- For PRs, include linked issues/task IDs, expected outcomes, and screenshots for dashboard/UI changes.
-- Avoid rebasing away staging-branch history from L3 runs unless explicitly cleaning up rejected work.
+- Colocate tests: `src/utils/foo.ts` → `src/utils/foo.test.ts`
+- E2E tests: `*.e2e.test.ts`
+- Coverage threshold: 70% lines/branches/functions/statements
+- Live tests: `CLAWDBOT_LIVE_TEST=1 pnpm test:live`
 
-## Security & Configuration Tips
-- Keep `openclaw.json` trust paths minimal; avoid broadening `source_directories` without need.
-- Do not check credentials into `identity/`, `logs/`, or `workspace/` snapshots.
-- L3 containers are ephemeral; confirm cleanup policies before increasing concurrency or queue timeouts in `spawn/pool.py`.
+## Git & Commit Guidelines
+
+- Follow Conventional Commits: `feat:`, `fix:`, `refactor:`, `test:`
+- Create commits: `scripts/committer "message" file1.ts file2.ts`
+
+## Multi-Agent Safety
+
+- Do NOT create/apply/drop git stash entries unless requested
+- Do NOT create/remove git worktrees unless requested
+- Do NOT switch branches unless requested
+- Focus on your changes; don't touch unrelated WIP
+
+## Security Guidelines
+
+- Never commit secrets, credentials, or keys
+- Use environment variables for sensitive values
+- Keep `openclaw.json` trust paths minimal
+
+## Troubleshooting
+
+- Missing deps: `pnpm install` or `uv sync`
+- Type errors: `pnpm tsgo` or `uv run pyright`
+- Lint errors: `pnpm check`
+- Config JSON: `python -m json.tool <file>`

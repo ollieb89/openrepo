@@ -1,7 +1,8 @@
 import useSWR from 'swr';
 import type { TopologyApiResponse, ChangelogApiResponse, ChangelogEntry } from '@/lib/types/topology';
+import { apiJson } from '@/lib/api-client';
 
-const fetcher = (url: string) => fetch(url).then(res => res.json());
+const fetcher = <T>(url: string): Promise<T> => apiJson<T>(url);
 
 /**
  * SWR hook for fetching the current topology (approved graph + pending proposals).

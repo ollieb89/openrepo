@@ -15,33 +15,34 @@ logger = get_logger("service")
 
 
 def init_service(settings: Settings) -> MemoryService:
-    """Initialize MemoryService with postgres backend and LLM profiles.
+    """Initialize MemoryService with postgres backend and OpenRouter LLM profiles.
 
     The MemoryService constructor is synchronous. Individual methods
     (memorize, retrieve, list_memory_items, delete_memory_item) are async.
     
-    Uses OpenRouter for chat/LLM (free models) and OpenAI for embeddings.
-    If OpenAI key is not provided, embedding operations will fail gracefully.
+    Uses OpenRouter for both chat/LLM and embeddings (all free models).
+    Uses 'httpx' client backend which has proper OpenRouter embedding support.
     """
     llm_profiles = {
         "default": {
+            "provider": "openrouter",
             "api_key": settings.OPENROUTER_API_KEY,
             "base_url": settings.OPENROUTER_BASE_URL,
             "chat_model": settings.OPENROUTER_CHAT_MODEL,
+            "embed_model": settings.OPENROUTER_EMBED_MODEL,
+            "client_backend": "httpx",  # Required for OpenRouter embedding support
+        },
+        "embedding": {
+            "provider": "openrouter",
+            "api_key": settings.OPENROUTER_API_KEY,
+            "base_url": settings.OPENROUTER_BASE_URL,
+            "chat_model": settings.OPENROUTER_CHAT_MODEL,
+            "embed_model": settings.OPENROUTER_EMBED_MODEL,
+            "client_backend": "httpx",  # Required for OpenRouter embedding support
         },
     }
     
-    # Only add embedding profile if OpenAI key is provided
-    if settings.OPENAI_API_KEY and settings.OPENAI_API_KEY.startswith("sk-"):
-        llm_profiles["embedding"] = {
-            "api_key": settings.OPENAI_API_KEY,
-            "embed_model": settings.OPENAI_EMBED_MODEL,
-        }
-        logger.info("Embeddings configured with OpenAI")
-    else:
-        logger.warning("OPENAI_API_KEY not configured - embeddings disabled. "
-                      "New memories will be stored without embeddings. "
-                      "Conflict detection requires manual embedding insertion.")
+    logger.info(f"Embeddings configured with OpenRouter model: {settings.OPENROUTER_EMBED_MODEL}")
     
     service = MemoryService(
         llm_profiles=llm_profiles,
@@ -56,8 +57,13 @@ def init_service(settings: Settings) -> MemoryService:
                 "dsn": settings.dsn,
             },
         },
+        retrieve_config={
+            "method": "rag",
+            "route_intention": False,      # Disable LLM-based intention routing (saves chat API calls)
+            "sufficiency_check": False,     # Disable LLM sufficiency check (saves chat API calls)
+        },
     )
-    logger.info("MemoryService initialized (OpenRouter for chat)")
+    logger.info("MemoryService initialized (OpenRouter for chat + embeddings via httpx)")
     return service
 
 
