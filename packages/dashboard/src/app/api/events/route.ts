@@ -2,22 +2,9 @@ import { NextRequest } from 'next/server';
 import { connect } from 'node:net';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
+import { ringBuffer, addToRingBuffer } from '@/lib/event-ring-buffer';
 
 export const dynamic = 'force-dynamic';
-
-// In-memory ring buffer for SSE reconnection replay (last 100 events)
-const RING_BUFFER_SIZE = 100;
-const ringBuffer: { id: number; data: string }[] = [];
-let globalEventId = 0;
-
-function addToRingBuffer(data: string): number {
-  const id = ++globalEventId;
-  ringBuffer.push({ id, data });
-  if (ringBuffer.length > RING_BUFFER_SIZE) {
-    ringBuffer.shift();
-  }
-  return id;
-}
 
 export async function GET(request: NextRequest) {
   const ocRoot = process.env.OPENCLAW_ROOT || join(homedir(), '.openclaw');
