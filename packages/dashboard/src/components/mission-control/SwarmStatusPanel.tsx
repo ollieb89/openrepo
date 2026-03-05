@@ -21,10 +21,10 @@ export default function SwarmStatusPanel() {
     ? Math.round(((metrics?.lifecycle.completed ?? 0) / total) * 100)
     : null;
 
-  // todayCostUsd and todayTokens are not yet tracked in MetricsResponse;
-  // keep the conditional render guarded for when they are added.
-  const todayCostUsdVal = null as number | null;
-  const todayTokensVal = null as number | null;
+  // Show cost row only once the usage log file exists (avoids 0/0 flash on first load)
+  const showCost = metrics?.usageLogPresent === true;
+  const todayCostUsdVal = showCost ? (metrics?.todayCostUsd ?? null) : null;
+  const todayTokensVal = showCost ? (metrics?.todayTokens ?? null) : null;
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 flex flex-col gap-3">
