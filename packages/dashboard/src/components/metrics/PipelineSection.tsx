@@ -39,7 +39,7 @@ function formatDuration(seconds: number): string {
 function matchesStageFilter(item: PipelineItem, stageFilter: StageFilter): boolean {
   if (stageFilter === 'all') return true;
   const activeStage = item.stages.find(s => s.status === 'active' || s.status === 'failed');
-  if (!activeStage) return stageFilter === 'all';
+  if (!activeStage) return false;
   return activeStage.name.startsWith(stageFilter);
 }
 
