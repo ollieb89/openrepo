@@ -12,6 +12,11 @@ describe('suffixOverlapMerge', () => {
     expect(suffixOverlapMerge(live, [])).toEqual(live);
   });
 
+  it('returns supplemental unchanged when live is empty', () => {
+    const sup = [entry('a'), entry('b'), entry('c')];
+    expect(suffixOverlapMerge([], sup)).toEqual(sup);
+  });
+
   it('appends non-overlapping supplemental to live', () => {
     const live = [entry('a'), entry('b')];
     const sup = [entry('c'), entry('d')];
