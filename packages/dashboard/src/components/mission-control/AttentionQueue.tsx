@@ -1,0 +1,242 @@
+'use client';
+
+import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
+import { apiJson, apiFetch } from '@/lib/api-client';
+import { useProject } from '@/context/ProjectContext';
+import type { Decision } from '@/lib/types/decisions';
+
+type ItemKind = 'escalation' | 'decision' | 'suggestion';
+
+interface AttentionItem {
+  id: string;
+  kind: ItemKind;
+  label: string;
+}
+
+interface SuggestionRecord {
+  id: string;
+  status: string;
+  evidence_count: number;
+  title?: string;
+  summary?: string;
+}
+
+interface SuggestionsResponse {
+  version: string;
+  last_run: number | null;
+  suggestions: SuggestionRecord[];
+}
+
+const MAX_ITEMS = 5;
+const POLL_INTERVAL_MS = 30_000;
+
+export default function AttentionQueue() {
+  const { projectId } = useProject();
+  const [items, setItems] = useState<AttentionItem[]>([]);
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+
+  const loadItems = useCallback(async () => {
+    if (!projectId) return;
+
+    const next: AttentionItem[] = [];
+
+    // Escalations — no API route yet, skip silently
+    // (No /api/escalations endpoint exists)
+
+    // Decisions — returns Decision[] directly
+    try {
+      const decisions = await apiJson<Decision[]>(
+        `/api/decisions?projectId=${encodeURIComponent(projectId)}`
+      );
+      for (const d of decisions) {
+        next.push({
+          id: d.id,
+          kind: 'decision',
+          label: d.outcome || d.citation || 'Pending decision',
+        });
+      }
+    } catch {
+      // Silently degrade
+    }
+
+    // Suggestions — returns { suggestions: SuggestionRecord[] }
+    try {
+      const data = await apiJson<SuggestionsResponse>(
+        `/api/suggestions?project=${encodeURIComponent(projectId)}`
+      );
+      const pending = (data.suggestions ?? []).filter(
+        (s) => s.status === 'pending' || s.status === 'new'
+      );
+      for (const s of pending) {
+        next.push({
+          id: s.id,
+          kind: 'suggestion',
+          label: s.title ?? s.summary ?? s.id,
+        });
+      }
+    } catch {
+      // Silently degrade
+    }
+
+    // Sort: escalations first, then decisions, then suggestions
+    const kindOrder: Record<ItemKind, number> = {
+      escalation: 0,
+      decision: 1,
+      suggestion: 2,
+    };
+    next.sort((a, b) => kindOrder[a.kind] - kindOrder[b.kind]);
+
+    setItems(next);
+    setLoading(false);
+  }, [projectId]);
+
+  useEffect(() => {
+    loadItems();
+    const interval = setInterval(loadItems, POLL_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [loadItems]);
+
+  const dismissItem = (id: string) => {
+    setDismissed((prev) => new Set([...prev, id]));
+  };
+
+  const handleDecisionDismiss = async (id: string) => {
+    dismissItem(id);
+    try {
+      await apiFetch(`/api/decisions/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    } catch {
+      // Optimistic — already removed from UI
+    }
+  };
+
+  const handleDecisionAccept = async (id: string) => {
+    // Accept is not a supported action for decisions via the API —
+    // the DELETE endpoint marks as hidden (dismiss). We treat accept as dismiss here.
+    dismissItem(id);
+    try {
+      await apiFetch(`/api/decisions/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    } catch {
+      // Optimistic — already removed from UI
+    }
+  };
+
+  const handleSuggestionAction = async (
+    id: string,
+    action: 'accept' | 'reject'
+  ) => {
+    dismissItem(id);
+    try {
+      await apiFetch(`/api/suggestions/${encodeURIComponent(id)}/action`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, project: projectId }),
+      });
+    } catch {
+      // Optimistic — already removed from UI
+    }
+  };
+
+  const visibleItems = items
+    .filter((item) => !dismissed.has(item.id))
+    .slice(0, MAX_ITEMS);
+
+  if (loading) {
+    return (
+      <div className="text-sm text-gray-500 dark:text-gray-400 py-2">
+        Loading...
+      </div>
+    );
+  }
+
+  if (visibleItems.length === 0) {
+    return (
+      <div className="text-sm text-gray-500 dark:text-gray-400 py-2 text-center">
+        All clear ✓
+      </div>
+    );
+  }
+
+  return (
+    <ul className="space-y-2">
+      {visibleItems.map((item) => (
+        <li
+          key={item.id}
+          className="flex items-center gap-2 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2"
+        >
+          {/* Kind badge */}
+          <span
+            className={[
+              'shrink-0 text-xs font-semibold px-1.5 py-0.5 rounded',
+              item.kind === 'escalation'
+                ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
+                : item.kind === 'decision'
+                ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'
+                : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
+            ].join(' ')}
+          >
+            {item.kind === 'escalation'
+              ? 'ESC'
+              : item.kind === 'decision'
+              ? 'DEC'
+              : 'SUG'}
+          </span>
+
+          {/* Label */}
+          <span className="flex-1 text-sm text-gray-700 dark:text-gray-200 truncate">
+            {item.label}
+          </span>
+
+          {/* Actions */}
+          {item.kind === 'escalation' && (
+            <Link
+              href="/escalations"
+              className="shrink-0 text-xs font-medium px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700 transition-colors"
+            >
+              Review
+            </Link>
+          )}
+
+          {item.kind === 'decision' && (
+            <div className="flex shrink-0 gap-1">
+              <button
+                onClick={() => handleDecisionAccept(item.id)}
+                aria-label="Accept decision"
+                className="text-xs px-2 py-1 rounded bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
+              >
+                ✓
+              </button>
+              <button
+                onClick={() => handleDecisionDismiss(item.id)}
+                aria-label="Dismiss decision"
+                className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {item.kind === 'suggestion' && (
+            <div className="flex shrink-0 gap-1">
+              <button
+                onClick={() => handleSuggestionAction(item.id, 'accept')}
+                aria-label="Accept suggestion"
+                className="text-xs px-2 py-1 rounded bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
+              >
+                ✓
+              </button>
+              <button
+                onClick={() => handleSuggestionAction(item.id, 'reject')}
+                aria-label="Reject suggestion"
+                className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
