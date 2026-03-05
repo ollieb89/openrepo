@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { TaskStatus } from '@/lib/types';
 import { useTasks } from '@/lib/hooks/useTasks';
 import { useProject } from '@/context/ProjectContext';
@@ -35,6 +35,11 @@ export default function TaskBoard() {
   const selectedTask = selectedTaskId
     ? tasks.find(t => t.id === selectedTaskId) ?? null
     : null;
+
+  const columnTasksMap = useMemo(
+    () => new Map(STATUS_COLUMNS.map(col => [col.status, getColumnTasks(tasks, col.status)])),
+    [tasks]
+  );
 
   function handleTaskClick(taskId: string) {
     setSelectedTaskId(taskId);
@@ -91,12 +96,14 @@ export default function TaskBoard() {
       {/* Stats summary row */}
       <div className="grid grid-cols-5 gap-3 flex-shrink-0">
         {STATUS_COLUMNS.map(col => {
-          const count = getColumnTasks(tasks, col.status).length;
+          const count = columnTasksMap.get(col.status)!.length;
           const isActive = filterStatus === col.status;
           return (
             <button
               key={col.status}
               onClick={() => handleStatClick(col.status)}
+              aria-label={`Filter by ${col.label}${isActive ? ' (active)' : ''}`}
+              aria-pressed={isActive}
               className={`p-3 rounded-lg border text-center transition-all ${
                 isActive
                   ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700 ring-1 ring-blue-400'
@@ -121,7 +128,7 @@ export default function TaskBoard() {
       <div className="flex gap-4 flex-1 min-h-0">
         <div className="flex-1 flex gap-4 overflow-x-auto pb-4">
           {STATUS_COLUMNS.map(col => {
-            const colTasks = getColumnTasks(tasks, col.status);
+            const colTasks = columnTasksMap.get(col.status)!;
             const isDimmed = filterStatus !== null && filterStatus !== col.status;
 
             return (
