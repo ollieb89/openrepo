@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
 import type { Task, TaskActivityEntry } from '@/lib/types';
 import type { LogEntry } from '@/components/LogViewer';
 import LogViewer from '@/components/LogViewer';
@@ -9,6 +10,14 @@ interface TaskTerminalPanelProps {
   task: Task;
   onClose: () => void;
 }
+
+type BannerState = 'none' | 'syncing' | 'stored' | 'empty';
+
+const BANNER_TEXT: Record<Exclude<BannerState, 'none'>, string> = {
+  syncing: 'Task completed — syncing final log…',
+  stored: 'Task completed — showing stored log',
+  empty: 'Task completed',
+};
 
 function activityToLogEntries(entries: TaskActivityEntry[]): LogEntry[] {
   return entries.map(e => ({
@@ -20,7 +29,33 @@ function activityToLogEntries(entries: TaskActivityEntry[]): LogEntry[] {
 
 export default function TaskTerminalPanel({ task, onClose }: TaskTerminalPanelProps) {
   const isActive = task.status === 'in_progress' || task.status === 'starting';
-  const staticLines = isActive ? undefined : activityToLogEntries(task.activity_log);
+
+  // Stable logTaskId — advances only when user selects a genuinely different task.
+  // task.id is a stable primitive string even when the task object is replaced by polling.
+  const [logTaskId, setLogTaskId] = useState(task.id);
+  useEffect(() => { setLogTaskId(task.id); }, [task.id]);
+
+  // Banner state: tracks completion transition
+  const [bannerState, setBannerState] = useState<BannerState>('none');
+
+  // Completion edge detection: true → false triggers 'syncing' flash
+  const wasActiveRef = useRef(isActive);
+  useEffect(() => {
+    if (wasActiveRef.current && !isActive) {
+      setBannerState('syncing');
+    }
+    wasActiveRef.current = isActive;
+  }, [isActive]);
+
+  // Deterministic banner — keyed on activity_log presence, not async callback
+  useEffect(() => {
+    if (!isActive) {
+      setBannerState(task.activity_log.length > 0 ? 'stored' : 'empty');
+    }
+  }, [isActive, task.activity_log.length]);
+
+  // supplementalLines: activity_log entries for LogViewer Effect C to merge
+  const supplementalLines = isActive ? undefined : activityToLogEntries(task.activity_log);
 
   return (
     <div className="flex flex-col w-80 flex-shrink-0 border-l border-gray-800 bg-gray-950 h-full">
@@ -39,12 +74,19 @@ export default function TaskTerminalPanel({ task, onClose }: TaskTerminalPanelPr
         </button>
       </div>
 
+      {/* Completion banner — non-blocking strip explaining source-of-truth transition */}
+      {bannerState !== 'none' && (
+        <div className="px-3 py-1 bg-gray-800 border-b border-gray-700 text-xs text-gray-500 flex-shrink-0 select-none">
+          {BANNER_TEXT[bannerState]}
+        </div>
+      )}
+
       {/* Terminal body */}
       <div className="flex-1 overflow-hidden">
         <LogViewer
-          taskId={isActive ? task.id : undefined}
-          staticLines={staticLines}
+          taskId={logTaskId}
           isActive={isActive}
+          supplementalLines={supplementalLines}
           hideHeader={true}
         />
       </div>
