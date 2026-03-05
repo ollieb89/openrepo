@@ -165,6 +165,17 @@ export default function LogViewer({ taskId, containerId, staticLines, isActive =
     }
 
     connectToEventSource();
+
+    return () => {
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+    };
   }, [effectiveTaskId, isActive, connectToEventSource]);
 
   // Effect C: supplemental merge — runs at most once per task completion
