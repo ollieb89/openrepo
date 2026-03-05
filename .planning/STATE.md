@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Programmatic Integration & Real-Time Streaming
 status: executing
-stopped_at: Phase 74 context gathered
-last_updated: "2026-03-05T09:38:58.209Z"
+stopped_at: Phase 74 Plan 01 task 1 complete — awaiting human-verify checkpoint
+last_updated: "2026-03-05T09:54:37.906Z"
 last_activity: 2026-03-04 — Phase 70 Plan 01 complete, 707 tests pass
 progress:
   total_phases: 10
-  completed_phases: 5
-  total_plans: 7
-  completed_plans: 7
+  completed_phases: 6
+  total_plans: 8
+  completed_plans: 8
   percent: 10
 ---
 
@@ -76,6 +76,8 @@ v2.1 decisions:
 - [Phase 73]: [Phase 73-unified-agent-registry]: agent_registry.py imports only stdlib — no circular import possible with config.py
 - [Phase 73]: [Phase 73-unified-agent-registry]: Directories without agents/{id}/agent/config.json are not auto-registered; _templates silently skipped
 - [Phase 73]: openclaw-agent entry point installed in project .venv; main(argv) pattern enables monkeypatch testing without subprocess
+- [Phase 74-dashboard-streaming-ui]: getTaskCardClassName extracted as named export to enable pure-function testing in vitest node environment
+- [Phase 74-dashboard-streaming-ui]: TaskCard selected state uses ring-2 (stronger than filter button ring-1) to visually distinguish selected card
 
 ### Pending Todos
 
@@ -89,6 +91,6 @@ None. Previously blocking issues resolved in Phase 68 Plan 01:
 
 ## Session Continuity
 
-Last session: 2026-03-05T09:38:58.204Z
-Stopped at: Phase 74 context gathered
-Resume file: .planning/phases/74-dashboard-streaming-ui/74-CONTEXT.md
+Last session: 2026-03-05T09:54:33.952Z
+Stopped at: Phase 74 Plan 01 task 1 complete — awaiting human-verify checkpoint
+Resume file: None
