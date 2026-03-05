@@ -34,13 +34,13 @@ Requirements for v2.1 Programmatic Integration & Real-Time Streaming. Each maps 
 
 ### Dashboard Streaming
 
-- [ ] **DASH-01**: Terminal-style output panel renders live L3 output per active task
-- [ ] **DASH-02**: Click task on task board opens live output stream
-- [ ] **DASH-03**: Auto-scroll with pause-on-scroll-up, resume-on-scroll-to-bottom behavior
+- [x] **DASH-01**: Terminal-style output panel renders live L3 output per active task
+- [x] **DASH-02**: Click task on task board opens live output stream
+- [x] **DASH-03**: Auto-scroll with pause-on-scroll-up, resume-on-scroll-to-bottom behavior
 
 ### Observability
 
-- [ ] **OBSV-01**: Unified /api/metrics endpoint consolidates Python orchestration metrics and dashboard-computed metrics
+- [x] **OBSV-01**: Unified /api/metrics endpoint consolidates Python orchestration metrics and dashboard-computed metrics
 - [ ] **OBSV-02**: Pipeline timeline view shows L1 dispatch → L2 decomposition → L3 execution with timestamps and durations
 - [ ] **OBSV-03**: SOUL dynamic variables (active_task_count, pool_utilization, topology context) verified populated at spawn time
 
@@ -101,10 +101,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AREG-01 | Phase 73 | Complete |
 | AREG-02 | Phase 73 | Complete |
 | AREG-03 | Phase 73 | Complete |
-| DASH-01 | Phase 74 | Pending |
-| DASH-02 | Phase 74 | Pending |
-| DASH-03 | Phase 74 | Pending |
-| OBSV-01 | Phase 75 | Pending |
+| DASH-01 | Phase 74 | Complete |
+| DASH-02 | Phase 74 | Complete |
+| DASH-03 | Phase 74 | Complete |
+| OBSV-01 | Phase 75 | Complete |
 | OBSV-02 | Phase 75 | Pending |
 | OBSV-03 | Phase 76 | Pending |
 | INTG-01 | Phase 77 | Pending |

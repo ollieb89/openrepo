@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Programmatic Integration & Real-Time Streaming
 status: executing
-stopped_at: Phase 75 context gathered
-last_updated: "2026-03-05T15:44:13.277Z"
+stopped_at: Completed 75-unified-observability 75-01-PLAN.md
+last_updated: "2026-03-05T16:38:28.071Z"
 last_activity: 2026-03-04 — Phase 70 Plan 01 complete, 707 tests pass
 progress:
   total_phases: 10
   completed_phases: 6
-  total_plans: 8
-  completed_plans: 8
+  total_plans: 10
+  completed_plans: 9
   percent: 10
 ---
 
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-04)
 
 **Core value:** The system designs and refactors its own orchestration
-**Current focus:** Phase 70 — Event Bridge Activation (Plan 01 complete)
+**Current focus:** Phase 75 — Unified Observability (Plan 01 complete — OBSV-01 resolved)
 
 ## Current Position
 
-Phase: 70 of 77 (Event Bridge Activation)
-Plan: 1 of 1 (70-01 complete — EVNT-01, EVNT-02 resolved)
+Phase: 75 of 77 (Unified Observability)
+Plan: 1 of 2 (75-01 complete — OBSV-01 resolved)
 Status: In progress
-Last activity: 2026-03-04 — Phase 70 Plan 01 complete, 707 tests pass
+Last activity: 2026-03-05 — Phase 75 Plan 01 complete, 761 Python tests + 11 TS metrics tests pass
 
-Progress: [██░░░░░░░░] 10%
+Progress: [█████████░] 90%
 
 ## Performance Metrics
 
@@ -40,9 +40,10 @@ Progress: [██░░░░░░░░] 10%
 - 31/31 requirements satisfied
 
 **v2.1 (current):**
-- 2 plans completed
+- 3 plans completed
 - Phase 68, Plan 01: 2 tasks, 13 files modified, 694 tests pass
 - Phase 70, Plan 01: 3 tasks, 9 files modified, 707 tests pass (duration: 9min)
+- Phase 75, Plan 01: 3 tasks, 5 files modified, 761 Python + 11 TS metrics tests pass (duration: 5min)
 
 ## Accumulated Context
 
@@ -78,6 +79,9 @@ v2.1 decisions:
 - [Phase 73]: openclaw-agent entry point installed in project .venv; main(argv) pattern enables monkeypatch testing without subprocess
 - [Phase 74-dashboard-streaming-ui]: getTaskCardClassName extracted as named export to enable pure-function testing in vitest node environment
 - [Phase 74-dashboard-streaming-ui]: TaskCard selected state uses ring-2 (stronger than filter button ring-1) to visually distinguish selected card
+- [Phase 75-unified-observability]: Lazy import JarvisState inside collect_metrics() to break circular import with state_engine
+- [Phase 75-unified-observability]: collect_metrics_from_state() receives pre-loaded state dict to avoid re-entrant fcntl lock deadlock
+- [Phase 75-unified-observability]: project_id derived from self.state_file.parent.name in _write_state_locked snapshot hook
 
 ### Pending Todos
 
@@ -91,6 +95,6 @@ None. Previously blocking issues resolved in Phase 68 Plan 01:
 
 ## Session Continuity
 
-Last session: 2026-03-05T15:44:13.273Z
-Stopped at: Phase 75 context gathered
-Resume file: .planning/phases/75-unified-observability/75-CONTEXT.md
+Last session: 2026-03-05T16:38:28.066Z
+Stopped at: Completed 75-unified-observability 75-01-PLAN.md
+Resume file: None
