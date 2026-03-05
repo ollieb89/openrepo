@@ -171,6 +171,7 @@ export default function TaskBoard() {
                       key={task.id}
                       task={task}
                       onClick={() => handleTaskClick(task.id)}
+                      isSelected={selectedTaskId === task.id}
                     />
                   ))}
                 </div>

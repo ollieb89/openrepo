@@ -17,15 +17,24 @@ function timeAgo(timestamp: number): string {
 interface TaskCardProps {
   task: Task;
   onClick: (task: Task) => void;
+  isSelected?: boolean;
 }
 
-export default function TaskCard({ task, onClick }: TaskCardProps) {
+export function getTaskCardClassName(isSelected: boolean): string {
+  const base = 'p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm cursor-pointer transition-all';
+  const state = isSelected
+    ? 'border border-blue-400 dark:border-blue-500 ring-2 ring-blue-400 dark:ring-blue-500 bg-blue-50 dark:bg-blue-900/20'
+    : 'border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600';
+  return `${base} ${state}`;
+}
+
+export default function TaskCard({ task, onClick, isSelected = false }: TaskCardProps) {
   const lastActivity = task.activity_log[task.activity_log.length - 1];
 
   return (
     <div
       onClick={() => onClick(task)}
-      className="p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm cursor-pointer hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 transition-all"
+      className={getTaskCardClassName(isSelected)}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
         <span className="text-xs font-mono text-gray-500 dark:text-gray-400 truncate">
