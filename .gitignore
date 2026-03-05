@@ -74,3 +74,4 @@ temp/
 
 # Docker
 .dockerignore
+.worktrees
