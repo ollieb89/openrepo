@@ -28,7 +28,7 @@ export interface TaskActivityEntry {
   entry: string;
 }
 
-export type TaskStatus = 'pending' | 'in_progress' | 'starting' | 'testing' | 'completed' | 'failed' | 'rejected';
+export type TaskStatus = 'pending' | 'in_progress' | 'starting' | 'testing' | 'completed' | 'failed' | 'rejected' | 'escalating';
 
 export interface Task {
   id: string;
@@ -56,6 +56,17 @@ export interface MetricsResponse {
   poolMax: number;
   poolActive: number;
   projectId: string;
+  autonomy: {
+    avgConfidence: number;
+    activeContexts: number;
+  };
+  memory: {
+    healthy: boolean;
+    latencyMs?: number;
+  };
+  todayTokens: number;
+  todayCostUsd: number;
+  usageLogPresent: boolean;
 }
 
 export interface Container {
