@@ -9,6 +9,57 @@ import { aggregateTodayUsage } from './usage-aggregator';
 
 const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT || path.join(os.homedir(), '.openclaw');
 
+// ---------------------------------------------------------------------------
+// readPythonSnapshot: reads python-metrics.json and returns a unified payload
+// ---------------------------------------------------------------------------
+
+export interface PythonSnapshotResult {
+  python: Record<string, unknown> | null;
+  meta: {
+    snapshot_missing: boolean;
+    snapshot_age_s: number | null;
+  };
+}
+
+/**
+ * Read python-metrics.json from disk and return a normalized result.
+ *
+ * Returns:
+ * - { python: data, meta: { snapshot_missing: false, snapshot_age_s: N } } on success
+ * - { python: null, meta: { snapshot_missing: true, snapshot_age_s: null } } on any error
+ *
+ * All errors (ENOENT, JSON parse, etc.) are swallowed — the dashboard still
+ * renders without Python-side metrics.
+ */
+export async function readPythonSnapshot(snapshotPath: string): Promise<PythonSnapshotResult> {
+  try {
+    const raw = await readFile(snapshotPath, 'utf-8');
+    const data = JSON.parse(raw) as { python: Record<string, unknown>; meta: { generated_at: number } };
+
+    const generatedAt = data?.meta?.generated_at;
+    const snapshotAgeS =
+      typeof generatedAt === 'number'
+        ? Math.round((Date.now() / 1000 - generatedAt) * 10) / 10
+        : null;
+
+    return {
+      python: data.python ?? null,
+      meta: {
+        snapshot_missing: false,
+        snapshot_age_s: snapshotAgeS,
+      },
+    };
+  } catch {
+    return {
+      python: null,
+      meta: {
+        snapshot_missing: true,
+        snapshot_age_s: null,
+      },
+    };
+  }
+}
+
 async function checkMemoryHealth(): Promise<{ healthy: boolean; latency?: number }> {
   try {
     let baseUrl = 'http://localhost:18791';
@@ -37,7 +88,9 @@ async function handler(request: NextRequest): Promise<NextResponse> {
     const { searchParams } = new URL(request.url);
     const projectId = searchParams.get('project') || await getActiveProjectId();
 
-    const [[tasks, project], memoryHealth, usageResult] = await Promise.all([
+    const snapshotPath = path.join(OPENCLAW_ROOT, 'workspace', '.openclaw', projectId, 'python-metrics.json');
+
+    const [[tasks, project], memoryHealth, usageResult, pythonSnapshot] = await Promise.all([
       Promise.all([
         getTaskState(projectId),
         getProject(projectId),
@@ -56,6 +109,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
           return { present: false, tokens: 0, costUsd: 0 };
         }
       })(),
+      readPythonSnapshot(snapshotPath),
     ]);
 
     const poolMax = project?.l3_overrides?.max_concurrent ?? 3;
@@ -112,7 +166,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
       ? tasksWithConfidence.reduce((acc, t) => acc + (t as any).autonomy.confidence_score, 0) / tasksWithConfidence.length
       : 1.0;
 
-    const response: MetricsResponse = {
+    const response: MetricsResponse & { python: Record<string, unknown> | null; meta: { snapshot_missing: boolean; snapshot_age_s: number | null } } = {
       completionDurations: durationEntries,
       lifecycle: { pending, active, completed, failed },
       poolUtilization,
@@ -130,6 +184,8 @@ async function handler(request: NextRequest): Promise<NextResponse> {
       todayTokens: usageResult.tokens,
       todayCostUsd: usageResult.costUsd,
       usageLogPresent: usageResult.present,
+      python: pythonSnapshot.python,
+      meta: pythonSnapshot.meta,
     };
 
     return NextResponse.json(response);
