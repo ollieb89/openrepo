@@ -1,8 +1,11 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useSWRConfig } from 'swr';
 import type { TaskStatus } from '@/lib/types';
+import { EventType } from '@/lib/types/events';
 import { useTasks } from '@/lib/hooks/useTasks';
+import { useEvents } from '@/hooks/useEvents';
 import { useProject } from '@/context/ProjectContext';
 import TaskCard from './TaskCard';
 import TaskTerminalPanel from './TaskTerminalPanel';
@@ -17,6 +20,14 @@ const STATUS_COLUMNS: { status: TaskStatus; label: string }[] = [
   { status: 'completed', label: 'Completed' },
   { status: 'failed', label: 'Failed' },
 ];
+
+const TASK_LIFECYCLE_EVENTS = new Set<string>([
+  EventType.TASK_CREATED,
+  EventType.TASK_STARTED,
+  EventType.TASK_COMPLETED,
+  EventType.TASK_FAILED,
+  EventType.TASK_ESCALATED,
+]);
 
 function getColumnTasks(tasks: ReturnType<typeof useTasks>['tasks'], status: TaskStatus) {
   return tasks.filter(t =>
@@ -33,6 +44,16 @@ export default function TaskBoard() {
   const { tasks, isLoading } = useTasks(projectId);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<TaskStatus | null>(null);
+
+  const { mutate } = useSWRConfig();
+  const { lastEvent } = useEvents(projectId ?? undefined);
+
+  useEffect(() => {
+    if (!projectId || !lastEvent) return;
+    if (TASK_LIFECYCLE_EVENTS.has(lastEvent.type)) {
+      mutate(`/api/tasks?project=${projectId}`);
+    }
+  }, [lastEvent, mutate, projectId]);
 
   const selectedTask = selectedTaskId
     ? tasks.find(t => t.id === selectedTaskId) ?? null
