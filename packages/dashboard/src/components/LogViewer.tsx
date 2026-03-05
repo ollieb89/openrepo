@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { EventType, OrchestratorEvent, TaskOutputPayload } from '@/lib/types/events';
+import { suffixOverlapMerge } from '@/lib/logViewer-utils';
 
 export interface LogEntry {
   line: string;
@@ -13,17 +14,19 @@ interface LogViewerProps {
   taskId?: string;
   /** @deprecated Use taskId instead */
   containerId?: string;
-  /** Pre-built log lines for completed/failed tasks (skips SSE when isActive=false) */
+  /** @deprecated Use supplementalLines instead */
   staticLines?: LogEntry[];
-  /** When false and staticLines provided, SSE is not opened. Default: true */
+  /** When false, SSE is not opened. Default: true */
   isActive?: boolean;
-  /** Hide the built-in header (title, connected status, clear button). Default: false */
+  /** Hide the built-in header. Default: false */
   hideHeader?: boolean;
+  /** Activity log entries to merge into the live buffer on task completion (Effect C). */
+  supplementalLines?: LogEntry[];
 }
 
 const MAX_LOG_ENTRIES = 1000;
 
-export default function LogViewer({ taskId, containerId, staticLines, isActive = true, hideHeader = false }: LogViewerProps) {
+export default function LogViewer({ taskId, containerId, staticLines, isActive = true, hideHeader = false, supplementalLines }: LogViewerProps) {
   // Prefer taskId; fall back to containerId for backward compat
   const effectiveTaskId = taskId || containerId;
 
@@ -37,6 +40,8 @@ export default function LogViewer({ taskId, containerId, staticLines, isActive =
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMountedRef = useRef(true);
   const autoScrollRef = useRef(true);
+  const prevTaskIdRef = useRef<string | undefined>(undefined);
+  const mergedForTaskIdRef = useRef<string | undefined>(undefined);
 
   const connectToEventSource = useCallback(() => {
     if (!isMountedRef.current) return;
@@ -103,28 +108,9 @@ export default function LogViewer({ taskId, containerId, staticLines, isActive =
     };
   }, [effectiveTaskId, isActive]);
 
+  // Mount/unmount lifecycle — isMountedRef management and final SSE cleanup
   useEffect(() => {
     isMountedRef.current = true;
-
-    if (!effectiveTaskId) {
-      setLogs([]);
-      setConnected(false);
-      setError(null);
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-        eventSourceRef.current = null;
-      }
-      return;
-    }
-
-    setLogs([]);
-    setError(null);
-    reconnectDelayRef.current = 1000;
-
-    if (isActive !== false) {
-      connectToEventSource();
-    }
-
     return () => {
       isMountedRef.current = false;
       if (reconnectTimerRef.current) {
@@ -136,7 +122,65 @@ export default function LogViewer({ taskId, containerId, staticLines, isActive =
         eventSourceRef.current = null;
       }
     };
-  }, [effectiveTaskId, connectToEventSource, isActive]);
+  }, []);
+
+  // Effect A: log lifecycle — clears buffer only on real task switch
+  // INVARIANT: never clears logs due to isActive changes
+  useEffect(() => {
+    const prevId = prevTaskIdRef.current;
+    prevTaskIdRef.current = effectiveTaskId;
+
+    if (prevId === effectiveTaskId) return; // same id — no-op
+
+    if (prevId === undefined && effectiveTaskId !== undefined) {
+      // Initialize: first mount or resuming from undefined — start fresh
+      setLogs([]);
+      setError(null);
+      reconnectDelayRef.current = 1000;
+    } else if (prevId !== undefined && effectiveTaskId === undefined) {
+      // Task removed/hidden: PRESERVE BUFFER — stop streaming but do not erase
+      setConnected(false);
+      setError(null);
+    } else if (prevId !== effectiveTaskId && effectiveTaskId !== undefined) {
+      // Real task switch: clear buffer and start fresh
+      setLogs([]);
+      setError(null);
+      reconnectDelayRef.current = 1000;
+    }
+  }, [effectiveTaskId]);
+
+  // Effect B: SSE lifecycle — connects/disconnects stream, never touches logs
+  useEffect(() => {
+    if (!effectiveTaskId || isActive === false) {
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+      setConnected(false);
+      return;
+    }
+
+    connectToEventSource();
+  }, [effectiveTaskId, isActive, connectToEventSource]);
+
+  // Effect C: supplemental merge — runs at most once per task completion
+  // Appends any activity_log tail entries not already in the live buffer.
+  useEffect(() => {
+    if (
+      !isActive &&
+      supplementalLines &&
+      supplementalLines.length > 0 &&
+      effectiveTaskId &&
+      effectiveTaskId !== mergedForTaskIdRef.current
+    ) {
+      mergedForTaskIdRef.current = effectiveTaskId;
+      setLogs(prev => suffixOverlapMerge(prev, supplementalLines));
+    }
+  }, [isActive, supplementalLines, effectiveTaskId]);
 
   const displayLines = (!isActive && staticLines) ? staticLines : logs;
 
