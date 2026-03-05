@@ -156,9 +156,10 @@ Plans:
   1. `GET /api/metrics` returns a JSON response containing both orchestration metrics (from Python) and dashboard-computed metrics in a single payload
   2. The dashboard metrics page shows a timeline row per task with labeled segments: L1 dispatch, L2 decomposition, L3 execution — each with a timestamp and duration
   3. Timestamps and durations in the timeline are accurate to within 1 second of actual event times
-**Plans**: 1 plan
+**Plans:** 2 plans
 Plans:
-- [ ] 75-01-PLAN.md — Unified metrics endpoint and pipeline timeline view (OBSV-01, OBSV-02)
+- [ ] 75-01-PLAN.md — Python snapshot writer + /api/metrics unified response (OBSV-01)
+- [ ] 75-02-PLAN.md — Pipeline timeline UI: PipelineStrip, TaskPulse expand, Metrics page section (OBSV-02)
 
 ### Phase 76: SOUL Injection Verification
 **Goal**: Every L3 container spawned has its SOUL variables fully populated including active task count, pool utilization, and current topology context
@@ -206,10 +207,10 @@ Plans:
 | 72. Gateway-Only Dispatch | 1/1 | Complete    | 2026-03-04 | - |
 | 73. Unified Agent Registry | 2/2 | Complete    | 2026-03-04 | - |
 | 74. Dashboard Streaming UI | 1/1 | Complete   | 2026-03-05 | - |
-| 75. Unified Observability | v2.1 | 0/TBD | Not started | - |
+| 75. Unified Observability | v2.1 | 0/2 | Not started | - |
 | 76. SOUL Injection Verification | v2.1 | 0/TBD | Not started | - |
 | 77. Integration E2E Verification | v2.1 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-17*
-*Last updated: 2026-03-04 — Phase 73 planned (2 plans, AREG-01/AREG-02/AREG-03)*
+*Last updated: 2026-03-05 — Phase 75 planned (2 plans, OBSV-01/OBSV-02)*
