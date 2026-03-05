@@ -35,6 +35,7 @@ export default function AttentionQueue() {
   const { projectId } = useProject();
   const [items, setItems] = useState<AttentionItem[]>([]);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const [acting, setActing] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
   const loadItems = useCallback(async () => {
@@ -118,11 +119,14 @@ export default function AttentionQueue() {
   };
 
   const handleDecisionAction = async (id: string) => {
+    setActing(prev => new Set([...prev, id]));
     dismissItem(id);
     try {
       await apiFetch(`/api/decisions/${encodeURIComponent(id)}`, { method: 'DELETE' });
     } catch {
       setDismissed(prev => { const n = new Set(prev); n.delete(id); return n; });
+    } finally {
+      setActing(prev => { const n = new Set(prev); n.delete(id); return n; });
     }
   };
 
@@ -130,16 +134,18 @@ export default function AttentionQueue() {
     id: string,
     action: 'accept' | 'reject'
   ) => {
-    const itemId = id;
-    dismissItem(itemId);
+    setActing(prev => new Set([...prev, id]));
+    dismissItem(id);
     try {
-      await apiFetch(`/api/suggestions/${encodeURIComponent(itemId)}/action`, {
+      await apiFetch(`/api/suggestions/${encodeURIComponent(id)}/action`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, project: projectId }),
       });
     } catch {
-      setDismissed(prev => { const n = new Set(prev); n.delete(itemId); return n; });
+      setDismissed(prev => { const n = new Set(prev); n.delete(id); return n; });
+    } finally {
+      setActing(prev => { const n = new Set(prev); n.delete(id); return n; });
     }
   };
 
@@ -204,37 +210,31 @@ export default function AttentionQueue() {
           )}
 
           {item.kind === 'decision' && (
-            <div className="flex shrink-0 gap-1">
-              <button
-                onClick={() => handleDecisionAction(item.id)}
-                aria-label="Accept decision"
-                className="text-xs px-2 py-1 rounded bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
-              >
-                ✓
-              </button>
-              <button
-                onClick={() => handleDecisionAction(item.id)}
-                aria-label="Dismiss decision"
-                className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-              >
-                ✕
-              </button>
-            </div>
+            <button
+              onClick={() => handleDecisionAction(item.id)}
+              disabled={acting.has(item.id)}
+              aria-label="Mark decision as done"
+              className="shrink-0 text-xs px-2 py-1 rounded bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Done
+            </button>
           )}
 
           {item.kind === 'suggestion' && (
             <div className="flex shrink-0 gap-1">
               <button
                 onClick={() => handleSuggestionAction(item.id, 'accept')}
+                disabled={acting.has(item.id)}
                 aria-label="Accept suggestion"
-                className="text-xs px-2 py-1 rounded bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
+                className="text-xs px-2 py-1 rounded bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 ✓
               </button>
               <button
                 onClick={() => handleSuggestionAction(item.id, 'reject')}
+                disabled={acting.has(item.id)}
                 aria-label="Reject suggestion"
-                className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 ✕
               </button>
