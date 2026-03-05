@@ -42,8 +42,21 @@ export default function AttentionQueue() {
 
     const next: AttentionItem[] = [];
 
-    // Escalations — no API route yet, skip silently
-    // (No /api/escalations endpoint exists)
+    // Escalations — fetched from /api/tasks?state=escalating
+    try {
+      const { tasks: escalatedTasks } = await apiJson<{ tasks: Array<{ id: string; title?: string }> }>(
+        `/api/tasks?state=escalating&project=${encodeURIComponent(projectId)}`
+      );
+      for (const t of Array.isArray(escalatedTasks) ? escalatedTasks : []) {
+        next.push({
+          id: t.id,
+          kind: 'escalation',
+          label: t.title ?? t.id,
+        });
+      }
+    } catch {
+      // Silently degrade
+    }
 
     // Decisions — returns Decision[] directly
     try {
@@ -89,6 +102,8 @@ export default function AttentionQueue() {
     next.sort((a, b) => kindOrder[a.kind] - kindOrder[b.kind]);
 
     setItems(next);
+    const nextIds = new Set(next.map(i => i.id));
+    setDismissed(prev => new Set([...prev].filter(id => nextIds.has(id))));
     setLoading(false);
   }, [projectId]);
 
@@ -102,23 +117,12 @@ export default function AttentionQueue() {
     setDismissed((prev) => new Set([...prev, id]));
   };
 
-  const handleDecisionDismiss = async (id: string) => {
+  const handleDecisionAction = async (id: string) => {
     dismissItem(id);
     try {
       await apiFetch(`/api/decisions/${encodeURIComponent(id)}`, { method: 'DELETE' });
     } catch {
-      // Optimistic — already removed from UI
-    }
-  };
-
-  const handleDecisionAccept = async (id: string) => {
-    // Accept is not a supported action for decisions via the API —
-    // the DELETE endpoint marks as hidden (dismiss). We treat accept as dismiss here.
-    dismissItem(id);
-    try {
-      await apiFetch(`/api/decisions/${encodeURIComponent(id)}`, { method: 'DELETE' });
-    } catch {
-      // Optimistic — already removed from UI
+      setDismissed(prev => { const n = new Set(prev); n.delete(id); return n; });
     }
   };
 
@@ -126,15 +130,16 @@ export default function AttentionQueue() {
     id: string,
     action: 'accept' | 'reject'
   ) => {
-    dismissItem(id);
+    const itemId = id;
+    dismissItem(itemId);
     try {
-      await apiFetch(`/api/suggestions/${encodeURIComponent(id)}/action`, {
+      await apiFetch(`/api/suggestions/${encodeURIComponent(itemId)}/action`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, project: projectId }),
       });
     } catch {
-      // Optimistic — already removed from UI
+      setDismissed(prev => { const n = new Set(prev); n.delete(itemId); return n; });
     }
   };
 
@@ -201,14 +206,14 @@ export default function AttentionQueue() {
           {item.kind === 'decision' && (
             <div className="flex shrink-0 gap-1">
               <button
-                onClick={() => handleDecisionAccept(item.id)}
+                onClick={() => handleDecisionAction(item.id)}
                 aria-label="Accept decision"
                 className="text-xs px-2 py-1 rounded bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
               >
                 ✓
               </button>
               <button
-                onClick={() => handleDecisionDismiss(item.id)}
+                onClick={() => handleDecisionAction(item.id)}
                 aria-label="Dismiss decision"
                 className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               >
