@@ -58,7 +58,7 @@ export default function PipelineView({ status, compact = false }: PipelineProps)
       status === 'in_progress' ? 'executing' :
       status === 'testing' ? 'review' :
       status === 'completed' ? 'merge' :
-      status === 'failed' || status === 'rejected' ? 'failed' : 'directive'
+      status === 'failed' || status === 'rejected' ? 'executing' : 'directive'
     );
 
     const stepIndex = sequence.indexOf(step);
@@ -84,7 +84,7 @@ export default function PipelineView({ status, compact = false }: PipelineProps)
 
   if (compact) {
     return (
-      <div className="px-3 py-2 bg-gray-900 border-b border-gray-800">
+      <div className="px-3 py-2 bg-gray-50 dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
         {steps.map(s => (
           <Step key={s.key} label={s.label} status={getStepStatus(s.key)} compact />
         ))}

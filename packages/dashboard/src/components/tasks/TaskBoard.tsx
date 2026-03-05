@@ -22,7 +22,9 @@ function getColumnTasks(tasks: ReturnType<typeof useTasks>['tasks'], status: Tas
   return tasks.filter(t =>
     status === 'in_progress'
       ? t.status === 'in_progress' || t.status === 'starting'
-      : t.status === status
+      : status === 'failed'
+        ? t.status === 'failed' || t.status === 'rejected'
+        : t.status === status
   );
 }
 
@@ -96,7 +98,7 @@ export default function TaskBoard() {
       {/* Stats summary row */}
       <div className="grid grid-cols-5 gap-3 flex-shrink-0">
         {STATUS_COLUMNS.map(col => {
-          const count = columnTasksMap.get(col.status)!.length;
+          const count = (columnTasksMap.get(col.status) ?? []).length;
           const isActive = filterStatus === col.status;
           return (
             <button
@@ -128,7 +130,7 @@ export default function TaskBoard() {
       <div className="flex gap-4 flex-1 min-h-0">
         <div className="flex-1 flex gap-4 overflow-x-auto pb-4">
           {STATUS_COLUMNS.map(col => {
-            const colTasks = columnTasksMap.get(col.status)!;
+            const colTasks = columnTasksMap.get(col.status) ?? [];
             const isDimmed = filterStatus !== null && filterStatus !== col.status;
 
             return (
