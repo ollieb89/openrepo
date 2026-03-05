@@ -5,6 +5,7 @@ import type { Task, TaskActivityEntry } from '@/lib/types';
 import type { LogEntry } from '@/components/LogViewer';
 import LogViewer from '@/components/LogViewer';
 import StatusBadge from '@/components/common/StatusBadge';
+import PipelineView from './PipelineView';
 
 interface TaskTerminalPanelProps {
   task: Task;
@@ -72,6 +73,11 @@ export default function TaskTerminalPanel({ task, onClose }: TaskTerminalPanelPr
         >
           ×
         </button>
+      </div>
+
+      {/* Pipeline stage indicator */}
+      <div className="flex-shrink-0">
+        <PipelineView status={task.status} compact />
       </div>
 
       {/* Completion banner — non-blocking strip explaining source-of-truth transition */}
