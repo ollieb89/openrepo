@@ -49,7 +49,7 @@
 - [x] **Phase 72: Gateway-Only Dispatch** - Remove execFileSync fallback, add bootstrap mode, gateway health check at startup (completed 2026-03-04)
 - [x] **Phase 73: Unified Agent Registry** - Merge agent configs, auto-discovery, config drift detection (completed 2026-03-04)
 - [x] **Phase 74: Dashboard Streaming UI** - Terminal-style live output panel with task board integration (completed 2026-03-05)
-- [ ] **Phase 75: Unified Observability** - Consolidated metrics endpoint and pipeline timeline view
+- [x] **Phase 75: Unified Observability** - Consolidated metrics endpoint and pipeline timeline view (completed 2026-03-05)
 - [ ] **Phase 76: SOUL Injection Verification** - Verify dynamic variables and topology context populated at spawn time
 - [ ] **Phase 77: Integration E2E Verification** - End-to-end verification of full pipeline
 
@@ -156,7 +156,7 @@ Plans:
   1. `GET /api/metrics` returns a JSON response containing both orchestration metrics (from Python) and dashboard-computed metrics in a single payload
   2. The dashboard metrics page shows a timeline row per task with labeled segments: L1 dispatch, L2 decomposition, L3 execution — each with a timestamp and duration
   3. Timestamps and durations in the timeline are accurate to within 1 second of actual event times
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [ ] 75-01-PLAN.md — Python snapshot writer + /api/metrics unified response (OBSV-01)
 - [ ] 75-02-PLAN.md — Pipeline timeline UI: PipelineStrip, TaskPulse expand, Metrics page section (OBSV-02)
@@ -207,7 +207,7 @@ Plans:
 | 72. Gateway-Only Dispatch | 1/1 | Complete    | 2026-03-04 | - |
 | 73. Unified Agent Registry | 2/2 | Complete    | 2026-03-04 | - |
 | 74. Dashboard Streaming UI | 1/1 | Complete   | 2026-03-05 | - |
-| 75. Unified Observability | 1/2 | In Progress|  | - |
+| 75. Unified Observability | 2/2 | Complete   | 2026-03-05 | - |
 | 76. SOUL Injection Verification | v2.1 | 0/TBD | Not started | - |
 | 77. Integration E2E Verification | v2.1 | 0/TBD | Not started | - |
 

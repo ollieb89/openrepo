@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Programmatic Integration & Real-Time Streaming
 status: executing
-stopped_at: Completed 75-unified-observability 75-01-PLAN.md
-last_updated: "2026-03-05T16:38:28.071Z"
-last_activity: 2026-03-04 — Phase 70 Plan 01 complete, 707 tests pass
+stopped_at: Completed 75-unified-observability 75-02-PLAN.md
+last_updated: "2026-03-05T16:47:06.808Z"
+last_activity: 2026-03-05 — Phase 75 Plan 01 complete, 761 Python tests + 11 TS metrics tests pass
 progress:
   total_phases: 10
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 10
-  completed_plans: 9
-  percent: 10
+  completed_plans: 10
+  percent: 90
 ---
 
 # Project State: OpenClaw Agent Orchestration
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-04)
 
 **Core value:** The system designs and refactors its own orchestration
-**Current focus:** Phase 75 — Unified Observability (Plan 01 complete — OBSV-01 resolved)
+**Current focus:** Phase 75 — Unified Observability (COMPLETE — OBSV-01 and OBSV-02 resolved)
 
 ## Current Position
 
 Phase: 75 of 77 (Unified Observability)
-Plan: 1 of 2 (75-01 complete — OBSV-01 resolved)
-Status: In progress
-Last activity: 2026-03-05 — Phase 75 Plan 01 complete, 761 Python tests + 11 TS metrics tests pass
+Plan: 2 of 2 (75-02 complete — OBSV-02 resolved)
+Status: Phase complete
+Last activity: 2026-03-05 — Phase 75 Plan 02 complete, 125/127 TS tests pass (10 new pipeline tests), 9 files modified
 
-Progress: [█████████░] 90%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -40,10 +40,11 @@ Progress: [█████████░] 90%
 - 31/31 requirements satisfied
 
 **v2.1 (current):**
-- 3 plans completed
+- 4 plans completed
 - Phase 68, Plan 01: 2 tasks, 13 files modified, 694 tests pass
 - Phase 70, Plan 01: 3 tasks, 9 files modified, 707 tests pass (duration: 9min)
 - Phase 75, Plan 01: 3 tasks, 5 files modified, 761 Python + 11 TS metrics tests pass (duration: 5min)
+- Phase 75, Plan 02: 3 tasks, 9 files modified, 125/127 TS tests pass — 10 new pipeline tests (duration: 6min)
 
 ## Accumulated Context
 
@@ -82,6 +83,8 @@ v2.1 decisions:
 - [Phase 75-unified-observability]: Lazy import JarvisState inside collect_metrics() to break circular import with state_engine
 - [Phase 75-unified-observability]: collect_metrics_from_state() receives pre-loaded state dict to avoid re-entrant fcntl lock deadlock
 - [Phase 75-unified-observability]: project_id derived from self.state_file.parent.name in _write_state_locked snapshot hook
+- [Phase 75]: ExpandedPipelineRow inner subcomponent calls usePipeline unconditionally to avoid conditional hook violation
+- [Phase 75]: TaskPulse includes failed/escalating tasks in visible pulse list — operators need to see failures alongside active tasks
 
 ### Pending Todos
 
@@ -95,6 +98,6 @@ None. Previously blocking issues resolved in Phase 68 Plan 01:
 
 ## Session Continuity
 
-Last session: 2026-03-05T16:38:28.066Z
-Stopped at: Completed 75-unified-observability 75-01-PLAN.md
+Last session: 2026-03-05T16:47:06.804Z
+Stopped at: Completed 75-unified-observability 75-02-PLAN.md
 Resume file: None

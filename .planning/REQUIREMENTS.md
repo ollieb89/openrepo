@@ -41,7 +41,7 @@ Requirements for v2.1 Programmatic Integration & Real-Time Streaming. Each maps 
 ### Observability
 
 - [x] **OBSV-01**: Unified /api/metrics endpoint consolidates Python orchestration metrics and dashboard-computed metrics
-- [ ] **OBSV-02**: Pipeline timeline view shows L1 dispatch → L2 decomposition → L3 execution with timestamps and durations
+- [x] **OBSV-02**: Pipeline timeline view shows L1 dispatch → L2 decomposition → L3 execution with timestamps and durations
 - [ ] **OBSV-03**: SOUL dynamic variables (active_task_count, pool_utilization, topology context) verified populated at spawn time
 
 ### Docker
@@ -105,7 +105,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DASH-02 | Phase 74 | Complete |
 | DASH-03 | Phase 74 | Complete |
 | OBSV-01 | Phase 75 | Complete |
-| OBSV-02 | Phase 75 | Pending |
+| OBSV-02 | Phase 75 | Complete |
 | OBSV-03 | Phase 76 | Pending |
 | INTG-01 | Phase 77 | Pending |
 
