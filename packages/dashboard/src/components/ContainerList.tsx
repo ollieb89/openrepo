@@ -39,14 +39,18 @@ export default function ContainerList({ onSelectContainer, selectedContainerId }
                   <h3 className="text-sm font-medium text-gray-900 dark:text-white">
                     {container.name.replace(/^\//, '')}
                   </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{container.image}</p>
+                  {container.image && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{container.image}</p>
+                  )}
                   <p className="text-xs text-gray-400 dark:text-gray-500">{container.status}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-gray-400 dark:text-gray-500">
-                    {new Date(container.created * 1000).toLocaleString()}
-                  </p>
-                  {container.labels['openclaw.agent'] && (
+                  {container.created != null && (
+                    <p className="text-xs text-gray-400 dark:text-gray-500">
+                      {new Date(container.created * 1000).toLocaleString()}
+                    </p>
+                  )}
+                  {container.labels?.['openclaw.agent'] && (
                     <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-2 py-0.5 rounded mt-1 inline-block">
                       {container.labels['openclaw.agent']}
                     </span>

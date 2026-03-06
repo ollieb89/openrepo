@@ -1,20 +1,28 @@
-import useSWR from 'swr';
-import type { Container } from '@/lib/types';
-import { apiJson } from '@/lib/api-client';
+import useSWR from 'swr'
+import { apiJson } from '@/lib/api-client'
 
-const fetcher = <T>(url: string): Promise<T> =>
-  apiJson<T>(url, { method: 'POST' });
+export type ContainerInfo = {
+  id: string
+  name: string
+  cpu_percent: number
+  memory_mb: number
+  status: string
+  // Legacy fields used by ContainerList component (optional)
+  image?: string
+  created?: number
+  labels?: Record<string, string>
+}
 
 export function useContainers() {
-  const { data, error, isLoading } = useSWR<{ containers: Container[] }>(
-    '/api/swarm/stream',
-    fetcher,
-    { refreshInterval: 5000 }
-  );
+  const { data, error, isLoading } = useSWR<{ containers: ContainerInfo[] }>(
+    '/api/containers',
+    apiJson,
+    { refreshInterval: 3000 }
+  )
 
   return {
-    containers: data?.containers || [],
-    isLoading,
+    containers: (data?.containers ?? []) as ContainerInfo[],
     error,
-  };
+    isLoading,
+  }
 }

@@ -4,11 +4,13 @@ import Link from 'next/link';
 import { useProject } from '@/context/ProjectContext';
 import { useAgents } from '@/lib/hooks/useAgents';
 import { useMetrics } from '@/lib/hooks/useMetrics';
+import { useContainers } from '@/lib/hooks/useContainers';
 
 export default function SwarmStatusPanel() {
   const { projectId } = useProject();
   const { agents } = useAgents(projectId);
   const { metrics } = useMetrics(projectId);
+  const { containers } = useContainers();
 
   const l1 = agents.filter(a => a.level === 1);
   const l2 = agents.filter(a => a.level === 2);
@@ -93,6 +95,30 @@ export default function SwarmStatusPanel() {
           <span className="font-mono text-gray-700 dark:text-gray-300">
             ~${todayCostUsdVal.toFixed(2)} · {(todayTokensVal / 1_000_000).toFixed(1)}M tok
           </span>
+        </div>
+      )}
+
+      {/* Active L3 container metrics */}
+      {containers.length > 0 && (
+        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+          <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+            Active Containers
+          </h3>
+          <div className="space-y-1">
+            {containers.map(c => (
+              <div key={c.id} className="flex items-center justify-between text-xs">
+                <span
+                  className="text-gray-700 dark:text-gray-300 truncate max-w-[140px]"
+                  title={c.name}
+                >
+                  {c.name}
+                </span>
+                <span className="text-gray-500 dark:text-gray-400 ml-2 shrink-0 tabular-nums">
+                  {c.cpu_percent.toFixed(1)}% · {c.memory_mb}MB
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
