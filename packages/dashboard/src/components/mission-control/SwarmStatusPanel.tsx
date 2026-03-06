@@ -114,7 +114,7 @@ export default function SwarmStatusPanel() {
                   {c.name}
                 </span>
                 <span className="text-gray-500 dark:text-gray-400 ml-2 shrink-0 tabular-nums">
-                  {c.cpu_percent.toFixed(1)}% · {c.memory_mb}MB
+                  {c.cpu_percent > 0 ? `${c.cpu_percent.toFixed(1)}%` : '--'} · {c.memory_mb > 0 ? `${c.memory_mb}MB` : '--'}
                 </span>
               </div>
             ))}
