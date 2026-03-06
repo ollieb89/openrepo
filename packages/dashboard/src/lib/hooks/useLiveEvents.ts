@@ -96,10 +96,10 @@ export function useLiveEvents(projectId: string | null): {
     });
 
     es.onerror = () => {
-      // Only transition away from 'live'; connecting/reconnecting already have the timer
-      if (statusRef.current === 'live') {
+      // Transition to reconnecting from 'live' or 'connecting' (engine_offline / immediate error)
+      if (statusRef.current === 'live' || statusRef.current === 'connecting') {
         updateStatus('reconnecting');
-        // Restart offline timer on error while live
+        // Restart offline timer on error
         if (offlineTimerRef.current) clearTimeout(offlineTimerRef.current);
         offlineTimerRef.current = setTimeout(() => {
           if (statusRef.current !== 'live') {

@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { connect } from 'node:net';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
+import { existsSync } from 'node:fs';
 import { ringBuffer, addToRingBuffer } from '@/lib/event-ring-buffer';
 
 export const dynamic = 'force-dynamic';
@@ -25,6 +26,14 @@ export async function GET(request: NextRequest) {
         for (const e of missed) {
           controller.enqueue(encoder.encode(`id: ${e.id}\nevent: message\ndata: ${e.data}\n\n`));
         }
+      }
+
+      // Gracefully degrade when the orchestration socket doesn't exist yet
+      if (!existsSync(socketPath)) {
+        console.warn(`[SSE Bridge] Socket not found: ${socketPath} — engine offline`);
+        controller.enqueue(encoder.encode('event: error\ndata: {"reason":"engine_offline"}\n\n'));
+        try { controller.close(); } catch { /* already closed */ }
+        return;
       }
 
       const client = connect(socketPath);
