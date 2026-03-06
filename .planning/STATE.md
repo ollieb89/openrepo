@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Programmatic Integration & Real-Time Streaming
 status: completed
-stopped_at: Phase 78 context gathered
-last_updated: "2026-03-06T10:43:29.047Z"
+stopped_at: Completed 78-01-PLAN.md
+last_updated: "2026-03-06T11:09:40.857Z"
 last_activity: 2026-03-05 — Phase 75 Plan 02 complete, 125/127 TS tests pass (10 new pipeline tests), 9 files modified
 progress:
   total_phases: 13
-  completed_phases: 9
-  total_plans: 12
-  completed_plans: 12
+  completed_phases: 10
+  total_plans: 13
+  completed_plans: 13
   percent: 100
 ---
 
@@ -85,6 +85,8 @@ v2.1 decisions:
 - [Phase 75-unified-observability]: project_id derived from self.state_file.parent.name in _write_state_locked snapshot hook
 - [Phase 75]: ExpandedPipelineRow inner subcomponent calls usePipeline unconditionally to avoid conditional hook violation
 - [Phase 75]: TaskPulse includes failed/escalating tasks in visible pulse list — operators need to see failures alongside active tasks
+- [Phase 78]: INTG-01 marked requirements_completed even with 4 live criteria deferred — automated evidence sufficient for traceability; live confirmation is Phase 79 scope
+- [Phase 78]: All deferred live E2E items (phases 74, 75, 77) directed to Phase 79 as single canonical live execution target
 
 ### Pending Todos
 
@@ -98,6 +100,6 @@ None. Previously blocking issues resolved in Phase 68 Plan 01:
 
 ## Session Continuity
 
-Last session: 2026-03-06T10:43:29.042Z
-Stopped at: Phase 78 context gathered
-Resume file: .planning/phases/78-verification-documentation-closure/78-CONTEXT.md
+Last session: 2026-03-06T11:09:40.852Z
+Stopped at: Completed 78-01-PLAN.md
+Resume file: None
