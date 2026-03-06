@@ -434,7 +434,9 @@ To be filled in Task 4
 
 5. **Test: `tracker-adapter` — sourceId slash causes ENOENT** — `saveSyncRecords` in `packages/dashboard/src/lib/sync/storage.ts` calls `mkdirSync` only for the `connectorId` level; when `sourceId` contains a slash (e.g., `"acme/repo"`), the intermediate subdirectory is not created, causing ENOENT at runtime. (test: `tests/connectors/tracker-adapter.test.ts`)
 
-6. **Dev server was in a corrupt state due to failed production build** — Running `npm run build` (which failed, Task 1 audit) caused a partial wipe of `.next/server/`, deleting `next-font-manifest.json` and `routes-manifest.json`. The already-running dev server could no longer serve any route (all 500). A dev server restart was required before this API sweep could produce meaningful results.
+6. **`/api/sync/catch-up` returns 500 for all user queries** — Catch-up page posts to this route; the endpoint returns `{"error":"Failed to process catch-up query"}` regardless of input. The Catch-up feature is completely non-functional. (`packages/dashboard/src/app/api/sync/catch-up/`)
+
+7. **Dev server was in a corrupt state due to failed production build** — Running `npm run build` (which failed, Task 1 audit) caused a partial wipe of `.next/server/`, deleting `next-font-manifest.json` and `routes-manifest.json`. The already-running dev server could no longer serve any route (all 500). A dev server restart was required before this API sweep could produce meaningful results.
 
 ### P2: Stale or Wrong Data
 
@@ -450,9 +452,7 @@ To be filled in Task 4
 
 6. **`/occc/settings` returns 404 — missing root settings page** — `src/app/settings/` has no `page.tsx`. Any link to `/settings` (without a sub-path) produces a Next.js 404. Three sub-pages exist (`/settings/gateway`, `/settings/connectors`, `/settings/privacy`) but the parent route is unroutable. (`packages/dashboard/src/app/settings/`)
 
-7. **`/api/sync/catch-up` returns 500 for all user queries** — Catch-up page posts to this route; the endpoint returns `{"error":"Failed to process catch-up query"}` regardless of input. The Catch-up feature is completely non-functional. (`packages/dashboard/src/app/api/sync/catch-up/`)
-
-8. **Environment page reports Event Bridge as healthy when SSE is broken** — Hard-coded `newStatuses[2].status = 'healthy'` in `src/app/environment/page.tsx` makes Event Bridge always show green, masking the actual SSE ENOENT failure. (`packages/dashboard/src/app/environment/page.tsx`)
+7. **Environment page reports Event Bridge as healthy when SSE is broken** — Hard-coded `newStatuses[2].status = 'healthy'` in `src/app/environment/page.tsx` makes Event Bridge always show green, masking the actual SSE ENOENT failure. (`packages/dashboard/src/app/environment/page.tsx`)
 
 ### P3: Cosmetic / Minor
 
