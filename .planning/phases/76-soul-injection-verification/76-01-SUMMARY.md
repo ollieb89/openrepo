@@ -2,6 +2,7 @@
 phase: 76-soul-injection-verification
 plan: "76-01"
 requirement: OBSV-03
+requirements_completed: [OBSV-03]
 ---
 
 # Phase 76 Plan 01: SOUL Injection Verification Summary
