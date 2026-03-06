@@ -1,48 +1,14 @@
 'use client'
 
 import type { Task } from '@/lib/types'
+import { buildJourney } from '@/lib/journey-utils'
 
-export type Journey = {
-  dispatched_at: number | null
-  assigned_at: number | null
-  branch: string | null
-  completed_at: number | null
-  stage: string
-}
+// Re-export Journey type and buildJourney for consumers that import from this module.
+export type { Journey } from '@/lib/journey-utils'
+export { buildJourney } from '@/lib/journey-utils'
 
 type Props = {
   task: Task
-}
-
-/**
- * Build a Journey object from Task fields.
- * Exported for unit testing.
- */
-export function buildJourney(task: Task): Journey {
-  const meta = task.metadata as Record<string, unknown>
-
-  const branch =
-    typeof meta?.l3_branch === 'string' ? meta.l3_branch : null
-
-  const assignedAt =
-    typeof meta?.started_at === 'number'
-      ? (meta.started_at as number)
-      : null
-
-  const completedAt =
-    typeof meta?.completed_at === 'number'
-      ? (meta.completed_at as number)
-      : task.status === 'completed' || task.status === 'failed' || task.status === 'rejected'
-        ? task.updated_at
-        : null
-
-  return {
-    dispatched_at: task.created_at ?? null,
-    assigned_at: assignedAt,
-    branch,
-    completed_at: completedAt,
-    stage: task.status,
-  }
 }
 
 /**
@@ -58,11 +24,14 @@ export function fmtTimestamp(ts: number | null): string {
   })
 }
 
+// NOTE: L3 execution start time is not separately tracked in the data model yet;
+// the stage shows branch name only for now.
+// TODO: add a dedicated l3_started_at field to task metadata when L3 timing is instrumented.
 const STAGE_LABELS = [
-  { key: 'dispatched_at' as const, label: 'L1 Dispatch' },
-  { key: 'assigned_at' as const, label: 'L2 Assignment' },
-  { key: 'assigned_at' as const, label: 'L3 Execution', showBranch: true },
-  { key: 'completed_at' as const, label: 'Completion' },
+  { key: 'dispatched_at' as const, label: 'L1 Dispatch', l3Stage: false },
+  { key: 'assigned_at' as const,   label: 'L2 Assignment', l3Stage: false },
+  { key: 'assigned_at' as const,   label: 'L3 Execution', showBranch: true, l3Stage: true },
+  { key: 'completed_at' as const,  label: 'Completion', l3Stage: false },
 ]
 
 export function TaskJourneyPanel({ task }: Props) {
@@ -84,7 +53,8 @@ export function TaskJourneyPanel({ task }: Props) {
                 {s.label}
               </div>
               <div className="text-xs text-gray-500 dark:text-gray-400">
-                {fmtTimestamp(journey[s.key])}
+                {/* L3 Execution: show "—" — start time is not separately tracked yet */}
+                {s.l3Stage ? '—' : fmtTimestamp(journey[s.key])}
               </div>
               {s.showBranch && journey.branch && (
                 <div className="mt-0.5 text-xs font-mono text-indigo-600 dark:text-indigo-400">
