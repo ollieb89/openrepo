@@ -9,6 +9,7 @@ import { useEvents } from '@/hooks/useEvents';
 import { useProject } from '@/context/ProjectContext';
 import TaskCard from './TaskCard';
 import TaskTerminalPanel from './TaskTerminalPanel';
+import { TaskJourneyPanel } from './TaskJourneyPanel';
 import PipelineView from './PipelineView';
 import StatusBadge from '@/components/common/StatusBadge';
 import Card from '@/components/common/Card';
@@ -181,10 +182,13 @@ export default function TaskBoard() {
         </div>
 
         {selectedTask && (
-          <TaskTerminalPanel
-            task={selectedTask}
-            onClose={() => setSelectedTaskId(null)}
-          />
+          <div className="flex flex-col gap-3 w-96 shrink-0 overflow-y-auto">
+            <TaskJourneyPanel task={selectedTask} />
+            <TaskTerminalPanel
+              task={selectedTask}
+              onClose={() => setSelectedTaskId(null)}
+            />
+          </div>
         )}
       </div>
     </div>
