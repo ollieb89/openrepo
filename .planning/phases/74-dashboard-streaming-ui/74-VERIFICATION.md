@@ -58,8 +58,8 @@ human_verification:
 
 | Artifact | Status | Details |
 |----------|--------|---------|
-| `packages/dashboard/src/components/mission-control/TaskCard.tsx` | VERIFIED | Exports `getTaskCardClassName`. `isSelected` prop controls ring-2/bg-blue-50 vs border-gray-200 className. |
-| `packages/dashboard/src/components/mission-control/TaskBoard.tsx` | VERIFIED | Manages selected task state; renders TaskCard per task; shows TaskJourneyPanel for selected task. |
+| `packages/dashboard/src/components/tasks/TaskCard.tsx` | VERIFIED | Exports `getTaskCardClassName`. `isSelected` prop controls ring-2/bg-blue-50 vs border-gray-200 className. |
+| `packages/dashboard/src/components/tasks/TaskBoard.tsx` | VERIFIED | Manages selected task state; renders TaskCard per task; shows TaskJourneyPanel for selected task. |
 | `packages/dashboard/tests/components/tasks/TaskCard.test.ts` | VERIFIED | 4 tests covering isSelected=true (ring-2 present), isSelected=false (ring-2 absent), default (border-gray-200), optional prop behavior. All pass. |
 
 ---
