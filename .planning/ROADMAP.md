@@ -200,9 +200,10 @@ Plans:
   3. Phase 76 SUMMARY.md requirements_completed frontmatter includes OBSV-03
   4. Phase 77 VERIFICATION.md exists and documents the 6 passing automated integration tests
   5. Phase 77 SUMMARY.md requirements_completed frontmatter includes INTG-01
-**Plans**: 1 plan
+**Plans**: 2 plans
 Plans:
-- [ ] 78-01-PLAN.md — Write VERIFICATION.md for phases 74, 76, 77; fix requirements_completed frontmatter (OBSV-03, INTG-01, DASH-01/02/03)
+- [x] 78-01-PLAN.md — Write VERIFICATION.md for phases 74, 76, 77; fix requirements_completed frontmatter (OBSV-03, INTG-01, DASH-01/02/03)
+- [ ] 78-02-PLAN.md — Fix wrong artifact paths in 74-VERIFICATION.md (mission-control → tasks) (DASH-01, DASH-02, DASH-03)
 
 ### Phase 79: INTG-01 Live E2E Execution
 **Goal**: The 4 INTG-01 live system success criteria (deferred to 77-E2E-CHECKLIST.md) are executed with a running system and documented in a formal VERIFICATION.md update
