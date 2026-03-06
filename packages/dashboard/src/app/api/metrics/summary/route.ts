@@ -25,17 +25,19 @@ interface SummaryResponse {
 }
 
 /**
- * Calculate trend with simulated variation
- * In production, this would compare with historical data
+ * Calculate trend by comparing current value to a previous value.
+ * Returns neutral when no historical data is available.
  */
-function calculateTrend(currentValue: number): { trend: 'up' | 'down' | 'neutral'; trendValue: string } {
-  // Simulate trend with small random variation (-10% to +10%)
-  const variation = (Math.random() - 0.5) * 0.2;
-  const previousValue = currentValue * (1 - variation);
-  const percentChange = previousValue !== 0 
-    ? ((currentValue - previousValue) / previousValue) * 100 
-    : 0;
-  
+function calculateTrend(
+  currentValue: number,
+  previousValue: number | null = null,
+): { trend: 'up' | 'down' | 'neutral'; trendValue: string } {
+  if (previousValue === null || previousValue === 0) {
+    return { trend: 'neutral', trendValue: '0%' };
+  }
+
+  const percentChange = ((currentValue - previousValue) / previousValue) * 100;
+
   let trend: 'up' | 'down' | 'neutral';
   if (Math.abs(percentChange) < 1) {
     trend = 'neutral';
@@ -44,9 +46,9 @@ function calculateTrend(currentValue: number): { trend: 'up' | 'down' | 'neutral
   } else {
     trend = 'down';
   }
-  
+
   const trendValue = `${Math.abs(percentChange).toFixed(0)}%`;
-  
+
   return { trend, trendValue };
 }
 
