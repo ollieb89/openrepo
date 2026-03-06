@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { readPythonSnapshot } from '@/app/api/metrics/route';
+import { readPythonSnapshot } from '@/lib/metrics-utils';
 
 // ---------------------------------------------------------------------------
 // Mock fs/promises so tests never touch the filesystem

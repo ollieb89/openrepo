@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { filterPipelines } from '@/app/api/pipeline/route';
+import { filterPipelines } from '@/lib/pipeline-utils';
 
 // Minimal PipelineItem stub for testing the pure filter function
 const makePipeline = (taskId: string) => ({
