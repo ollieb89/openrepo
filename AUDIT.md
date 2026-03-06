@@ -239,7 +239,179 @@ The route only exposes `export const PATCH = withAuth(...)`. A GET to `/api/conf
 
 ## Page Issues
 
-To be filled in Task 3
+**HTTP status sweep (GET with auth token, dev server at `http://localhost:6987/occc`):**
+
+| Page | URL | HTTP Status | Notes |
+|------|-----|-------------|-------|
+| Home | `/occc/` | 308 → `/occc` | Permanent redirect to basePath root; `/occc` itself returns 200. Correct. |
+| Mission Control | `/occc/mission-control` | 200 | — |
+| Tasks | `/occc/tasks` | 200 | — |
+| Metrics | `/occc/metrics` | 200 | — |
+| Memory | `/occc/memory` | 200 | — |
+| Topology | `/occc/topology` | 200 | — |
+| Decisions | `/occc/decisions` | 200 | — |
+| Agents | `/occc/agents` | 200 | — |
+| Escalations | `/occc/escalations` | 200 | — |
+| Suggestions | `/occc/suggestions` | 200 | — |
+| Catch-up | `/occc/catch-up` | 200 | — |
+| Settings | `/occc/settings` | 404 | No `page.tsx` at `src/app/settings/` root — only sub-pages exist. |
+| Environment | `/occc/environment` | 200 | — |
+| Containers | `/occc/containers` | 200 | — |
+| Settings/Gateway | `/occc/settings/gateway` | 200 | — |
+| Settings/Connectors | `/occc/settings/connectors` | 200 | — |
+| Settings/Privacy | `/occc/settings/privacy` | 200 | — |
+
+### Per-page analysis
+
+#### Home (`src/app/page.tsx`)
+
+- `'use client'` present; uses `useState`, `useEffect`, `useMemo` — correct.
+- Fetches `/api/decisions` (working endpoint, returns `[]`). Array check before `.slice()` is guarded: `if (Array.isArray(data))`. No crash risk.
+- Links to `/settings/privacy` which is a valid sub-page (200). The link target is a relative path without basePath — Next.js `<Link>` handles basePath automatically. Correct.
+- No SSE dependency.
+- **Issues:** None. Page renders correctly (empty decisions state shown).
+
+#### Mission Control (`src/app/mission-control/page.tsx`)
+
+- `'use client'` present; delegates entirely to four child components.
+- `LiveEventFeed` uses `useLiveEvents` hook → opens `EventSource` to `/api/events`. The SSE route immediately returns `event: error` (socket ENOENT). The hook transitions to `offline` after 4 seconds and then polls `/api/events/latest` every 3 seconds as fallback. Ring buffer is currently empty, so the feed shows "Offline — waiting for events…". **Impact: live feed always shows offline with zero events.**
+- `AttentionQueue` calls three hooks: `useEscalatingTasks` (`/api/tasks` — working), `useDecisions` (`/api/decisions` — working, returns `[]`), `useSuggestions` (`/api/suggestions?project=...` — working, returns `[]`). All gracefully handle empty responses. No crash risk.
+- `TaskPulse` calls `useTasks` (`/api/tasks` — working) and `usePipeline` per expanded task (`/api/pipeline` — working). No crash risk.
+- `SwarmStatusPanel` calls `useAgents` (`/api/agents` — working) and `useMetrics` (`/api/metrics` — working). No crash risk.
+- **Issues:** `LiveEventFeed` is permanently offline due to SSE bridge failure (P1, already classified). All other panels functional.
+
+#### Tasks (`src/app/tasks/page.tsx`)
+
+- `'use client'` present; delegates to `TaskBoard` component.
+- No direct broken endpoint usage at page level.
+- `TaskBoard` would use `useTasks` or similar — not read in detail, but `/api/tasks` is working.
+- **Issues:** None found at page level.
+
+#### Metrics (`src/app/metrics/page.tsx`)
+
+- `'use client'` present; complex page with 5 parallel `apiJson` calls.
+- Calls `/api/metrics/summary` — returns non-deterministic trend values due to `Math.random()` (P2 known).
+- Calls `/api/metrics/trends` — always returns all-zero data because `completed_at` is missing from task metadata (P2 known). `TrendLineChart` receives `null` for `data` prop (handled with `data={trends}` — component must handle null gracefully).
+- Calls `/api/metrics/agents` — working.
+- Calls `/api/tasks` — working.
+- Calls `/api/metrics/distribution` — working.
+- All five fetches use `.catch(() => null)` so one failure does not prevent others from rendering. Safe.
+- No SSE dependency.
+- **Issues:** TrendLineChart shows all-zero data (P2). Summary KPI trends are non-deterministic (P2). Both are known issues.
+
+#### Memory (`src/app/memory/page.tsx`)
+
+- `'use client'` present; delegates entirely to `MemoryPanel` component.
+- `MemoryPanel` would call `/api/memory` — working (returns `{"items":[],"total":0,...}`).
+- **Issues:** None found at page level.
+
+#### Topology (`src/app/topology/page.tsx`)
+
+- `'use client'` present; uses `useTopology` and `useTopologyChangelog` hooks.
+- `useTopology` fetches `/api/topology?project=<id>` — working (returns approved topology).
+- `useTopologyChangelog` fetches `/api/topology/changelog?project=<id>` — endpoint exists (`src/app/api/topology/changelog/`) and returns HTTP 200.
+- **Style inconsistency (not a bug):** Page reads `localStorage.getItem('occc-project')` directly in a `useEffect` instead of using `useProject()` from `ProjectContext`. Both use the same key `'occc-project'`, so the value is identical. No functional impact.
+- Empty state renders correctly when `!projectId || !hasData`.
+- **Issues:** Minor: bypasses `ProjectContext` in favor of direct `localStorage` access. Not a bug but diverges from every other page pattern.
+
+#### Decisions (`src/app/decisions/page.tsx`)
+
+- `'use client'` present; fetches `/api/decisions?projectId=<id>` — working (returns `[]`).
+- `handleHide` calls `DELETE /api/decisions/<id>` and `handleReSummarize` calls `POST /api/decisions/<id>/re-summarize` — these routes were not explicitly tested, but they are not broken based on existing audit. If they 404, the `catch` block logs to console and the UI does not crash.
+- Array check `Array.isArray(data)` guards the `.map()`. Safe.
+- **Issues:** None found.
+
+#### Agents (`src/app/agents/page.tsx`)
+
+- `'use client'` present; delegates entirely to `AgentTree` component.
+- `AgentTree` would use `/api/agents` — working (returns 1 agent).
+- **Issues:** None found at page level.
+
+#### Escalations (`src/app/escalations/page.tsx`)
+
+- `'use client'` present; delegates to `EscalationsPage` component.
+- `EscalationsPage` fetches from `/api/tasks` (working) and `/api/tasks/<id>/autonomy` or similar for escalation data. No broken endpoints identified.
+- **Issues:** None found at page level.
+
+#### Suggestions (`src/app/suggestions/page.tsx`)
+
+- `'use client'` present; delegates to `SuggestionsPanel` with `projectId` from `ProjectContext`.
+- `SuggestionsPanel` would call `/api/suggestions?project=<id>` — when `projectId` is null (not yet loaded), `useSuggestions` passes `null` as SWR key, so no request is made. Correct.
+- **Issues:** None found at page level.
+
+#### Catch-up (`src/app/catch-up/page.tsx`)
+
+- `'use client'` present.
+- POSTs to `/api/sync/catch-up`. Tested: returns HTTP 500 with `{"error":"Failed to process catch-up query"}`. Any user query results in a 500 error.
+- The page renders an error state via `setError(err.message)` in the catch block — it will display the error message. No crash. But the feature is completely non-functional.
+- Hard-coded `activeProjectId: 'default'` in the POST body — does not use the `useProject()` context, so the project selection UI has no effect on catch-up queries.
+- **Issues:** `/api/sync/catch-up` returns 500 for all queries (P1 — feature completely broken). Hard-coded `activeProjectId: 'default'` ignores active project selection (P2).
+
+#### Settings (root) (`src/app/settings/`)
+
+- **No `page.tsx` exists at `src/app/settings/`**. Navigating to `/occc/settings` returns 404. There are only sub-pages: `/settings/gateway`, `/settings/connectors`, `/settings/privacy`.
+- Any navigation link or UI element pointing to `/settings` (not a sub-page) results in a 404.
+- **Issues:** Missing root settings index page — 404 on `/occc/settings` (P2).
+
+#### Settings/Gateway (`src/app/settings/gateway/page.tsx`)
+
+- No `'use client'` directive at the page level — but it imports `DiffViewer` which is `'use client'`. This is valid in Next.js App Router: a server component can import a client component.
+- `DiffViewer` fetches `/api/config/staged` (HTTP 200 — returns `{"staged":{},"live":{...}}`). Working.
+- `DiffViewer` calls `POST /api/config/apply` on button click. Endpoint exists. Not tested for correctness, but no crash on fetch.
+- **Issues:** None found. (The `DiffViewer` on this page does NOT hit `/api/config/gateway` — that broken route is a separate resource.)
+
+#### Settings/Connectors (`src/app/settings/connectors/page.tsx`)
+
+- No `'use client'` at page level; child components are likely client components.
+- Renders `SlackConnectorCard`, `TrackerConnectorCard`, `SyncDashboard`, `SyncToast`.
+- These components call connector-related endpoints (`/api/connectors`, `/api/connectors/health`) which are working (return empty arrays).
+- **Issues:** None at page level.
+
+#### Settings/Privacy (`src/app/settings/privacy/page.tsx`)
+
+- `'use client'` present; delegates to `PrivacyCenter`.
+- No broken endpoint dependency identified.
+- **Issues:** None found at page level.
+
+#### Environment (`src/app/environment/page.tsx`)
+
+- `'use client'` present.
+- Calls `/api/health/gateway` — returns 200 (`{"status":"needs_ui_build",...}`). `res.ok` is `true`, so Gateway shows as **healthy** even though the status is `needs_ui_build`. Misleading display.
+- Calls `/api/health/memory` — returns 200 (`{"status":"ok"}`). Correctly shows healthy.
+- Hard-codes `'healthy'` for "Event Bridge" without any real check — placeholder comment in code. Always shows green regardless of SSE bridge state.
+- Calls `/api/tasks?projectId=<id>` for "Jarvis State" check — working, returns 200.
+- Reads `process.env.OPENCLAW_ROOT` on the client side. This is a server-side env var not prefixed `NEXT_PUBLIC_`, so it will always be `undefined` in the browser. The page displays "Not set" as the Project Root value.
+- Hard-coded string `/tmp/openclaw-events.sock` for "Event Socket" is wrong — the actual socket path is `$OPENCLAW_ROOT/run/events.sock`. The env var is not client-accessible anyway.
+- **Issues:** Gateway health shows "healthy" when status is actually `needs_ui_build` (misleading — P3). Event Bridge always shows healthy despite SSE being broken (P2). `OPENCLAW_ROOT` always shows "Not set" in browser (P3). Socket path is hard-coded and wrong (P3).
+
+#### Containers (`src/app/containers/page.tsx`)
+
+- `'use client'` present; uses `ContainerList` and `LogViewer`.
+- `ContainerList` would fetch from a containers-related endpoint (likely `/api/containers` or Docker-related route). Not a known broken endpoint.
+- `LogViewer` with `containerId={selectedContainerId}` — when `undefined`, the viewer likely shows an empty/idle state. No null safety issue at page level.
+- **Issues:** None found at page level (functionality depends on Docker being available, which is a runtime environment concern, not a code defect).
+
+### Summary table
+
+| Page | HTTP Status | Broken Endpoint Dependency | SSE Affected | New Issues Found | Priority |
+|------|-------------|---------------------------|--------------|-----------------|----------|
+| Home | 200 (via 308) | None | No | None | — |
+| Mission Control | 200 | `/api/events` SSE (LiveEventFeed always offline) | Yes | None beyond known | P1 |
+| Tasks | 200 | None | No | None | — |
+| Metrics | 200 | `/api/metrics/trends` (all-zero), `/api/metrics/summary` (random trends) | No | None beyond known | P2 |
+| Memory | 200 | None | No | None | — |
+| Topology | 200 | None | No | Bypasses `useProject()`, reads localStorage directly | P3 |
+| Decisions | 200 | None | No | None | — |
+| Agents | 200 | None | No | None | — |
+| Escalations | 200 | None | No | None | — |
+| Suggestions | 200 | None | No | None | — |
+| Catch-up | 200 | `/api/sync/catch-up` returns 500 for all queries | No | Hard-coded `activeProjectId: 'default'` | P1 |
+| Settings (root) | 404 | — | No | Missing `page.tsx` — 404 on nav | P2 |
+| Settings/Gateway | 200 | None (uses `/api/config/staged`, not broken `/api/config/gateway`) | No | None | — |
+| Settings/Connectors | 200 | None | No | None | — |
+| Settings/Privacy | 200 | None | No | None | — |
+| Environment | 200 | None (but misleads on health) | No | Gateway shows healthy when `needs_ui_build`; Event Bridge always green; `OPENCLAW_ROOT` always "Not set"; wrong socket path | P2/P3 |
+| Containers | 200 | None | No | None | — |
 
 ## SSE / Real-time Issues
 
@@ -276,6 +448,12 @@ To be filled in Task 4
 
 5. **Test: `slack-adapter` teardown pollution** — `.tmp` directory is not cleaned up between test runs, causing an `ENOTEMPTY` error on the next run. Flaky test teardown only manifests on consecutive runs. Does not affect production. Classify as CI reliability issue (P2) unless evidence shows it blocks CI.
 
+6. **`/occc/settings` returns 404 — missing root settings page** — `src/app/settings/` has no `page.tsx`. Any link to `/settings` (without a sub-path) produces a Next.js 404. Three sub-pages exist (`/settings/gateway`, `/settings/connectors`, `/settings/privacy`) but the parent route is unroutable. (`packages/dashboard/src/app/settings/`)
+
+7. **`/api/sync/catch-up` returns 500 for all user queries** — Catch-up page posts to this route; the endpoint returns `{"error":"Failed to process catch-up query"}` regardless of input. The Catch-up feature is completely non-functional. (`packages/dashboard/src/app/api/sync/catch-up/`)
+
+8. **Environment page reports Event Bridge as healthy when SSE is broken** — Hard-coded `newStatuses[2].status = 'healthy'` in `src/app/environment/page.tsx` makes Event Bridge always show green, masking the actual SSE ENOENT failure. (`packages/dashboard/src/app/environment/page.tsx`)
+
 ### P3: Cosmetic / Minor
 
 1. **`next lint` deprecation warning** — `next lint` will be removed in Next.js 16. Should migrate to direct ESLint CLI invocation.
@@ -291,3 +469,9 @@ To be filled in Task 4
 6. **Ollama models not available in test environment** — `mxbai-embed-large` and `phi3:mini` are referenced by `src/lib/ollama.ts` but not present locally. Errors are swallowed gracefully, but the indexing and summarization paths are untestable without the models or proper mocks.
 
 7. **`/api/swarm/stream` GET handler uses manual inline auth instead of `withAuth`** — The GET handler in `packages/dashboard/src/app/api/swarm/stream/route.ts` calls `validateToken()` and `createUnauthorizedResponse()` directly in the handler body. All other protected routes in the app use the `withAuth` middleware wrapper. The POST handler in the same file correctly uses `withAuth`. The inconsistency means any future auth policy change applied to `withAuth` (token rotation, rate limiting, audit logging) will silently not apply to the GET SSE stream. Additionally, the GET 400 error body is plain text (`"Container ID is required"`) while all other routes return JSON error objects — inconsistent error shape.
+
+8. **Topology page bypasses `ProjectContext` and reads `localStorage` directly** — `src/app/topology/page.tsx` uses a manual `useEffect` + `localStorage.getItem('occc-project')` pattern instead of calling `useProject()`. The same key `'occc-project'` is used, so there is no functional difference, but the inconsistency means topology will not reactively update if project selection changes mid-session without a re-render. (`packages/dashboard/src/app/topology/page.tsx`)
+
+9. **Environment page: `OPENCLAW_ROOT` always shows "Not set"** — `process.env.OPENCLAW_ROOT` is not prefixed with `NEXT_PUBLIC_`, so it is `undefined` in the browser. The page always displays "Not set" for Project Root. The socket path is also hard-coded to `/tmp/openclaw-events.sock`, which differs from the actual path `$OPENCLAW_ROOT/run/events.sock`. (`packages/dashboard/src/app/environment/page.tsx`)
+
+10. **Catch-up page hard-codes `activeProjectId: 'default'`** — The POST body sent to `/api/sync/catch-up` always contains `activeProjectId: 'default'` regardless of which project is selected in the UI. `useProject()` is not used in this page. (`packages/dashboard/src/app/catch-up/page.tsx`)
