@@ -215,6 +215,37 @@ class DockerLogStreamParser {
   }
 }
 
+export interface OpenClawContainerInfo {
+  id: string;
+  name: string;
+  cpu_percent: number;
+  memory_mb: number;
+  status: string;
+}
+
+/**
+ * List all OpenClaw L3 containers matching the 'openclaw-' name pattern,
+ * returning lightweight metric stubs (CPU stats require a separate stats call
+ * and are set to 0 here for simplicity — callers can enrich if needed).
+ */
+export async function listOpenClawContainers(): Promise<OpenClawContainerInfo[]> {
+  if (!(await checkDockerAvailability())) {
+    throw new Error('Docker socket not available');
+  }
+
+  const containers = await docker.listContainers({
+    filters: { name: ['openclaw'] },
+  });
+
+  return containers.map((c) => ({
+    id: c.Id.slice(0, 12),
+    name: c.Names[0]?.replace(/^\//, '') ?? c.Id.slice(0, 12),
+    cpu_percent: 0,
+    memory_mb: 0,
+    status: c.State,
+  }));
+}
+
 /**
  * Stream container logs with automatic redaction.
  *
