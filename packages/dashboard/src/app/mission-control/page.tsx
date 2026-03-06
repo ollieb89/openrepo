@@ -4,6 +4,7 @@ import AttentionQueue from '@/components/mission-control/AttentionQueue';
 import LiveEventFeed from '@/components/mission-control/LiveEventFeed';
 import SwarmStatusPanel from '@/components/mission-control/SwarmStatusPanel';
 import TaskPulse from '@/components/mission-control/TaskPulse';
+import { AlertSection } from '@/components/mission-control/AlertSection';
 
 export default function MissionControlPage() {
   return (
@@ -31,9 +32,10 @@ export default function MissionControlPage() {
           <LiveEventFeed />
         </div>
 
-        {/* Right column: swarm status */}
-        <div>
+        {/* Right column: swarm status + alerts */}
+        <div className="space-y-6">
           <SwarmStatusPanel />
+          <AlertSection />
         </div>
       </div>
     </div>
