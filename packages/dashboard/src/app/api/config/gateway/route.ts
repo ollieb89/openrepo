@@ -3,7 +3,7 @@ import { getDb } from '@/lib/db';
 import { withAuth } from '@/lib/auth-middleware';
 import { withWriteLock } from '@/lib/safety';
 import { z } from 'zod';
-import { crypto } from 'crypto';
+import { randomUUID } from 'node:crypto';
 
 const GatewayPatchSchema = z.record(z.any());
 
@@ -13,7 +13,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
         const validated = GatewayPatchSchema.parse(body);
         const db = getDb();
 
-        const requestId = crypto.randomUUID();
+        const requestId = randomUUID();
 
         // We'll use a transaction for safety
         const update = db.transaction((patch: Record<string, any>) => {
@@ -31,7 +31,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
           INSERT INTO audit_log (id, request_id, actor, action, target, before_json, after_json, diff_summary, status)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).run(
-                    uuidv4(),
+                    randomUUID(),
                     requestId,
                     'user', // TODO: get from auth
                     'update_staged',
@@ -56,7 +56,4 @@ async function handler(request: NextRequest): Promise<NextResponse> {
     }
 }
 
-// Ensure uuid is available or polyfill if needed. Next.js usually has it or we can use crypto.randomUUID()
-// Let's use crypto.randomUUID() instead of uuidv4 to avoid extra dependency if not present.
-// Actually uuid is not in package.json, so I'll use crypto.randomUUID().
 export const PATCH = withAuth(withWriteLock(handler));
