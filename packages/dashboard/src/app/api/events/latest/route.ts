@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ringBuffer } from '@/lib/event-ring-buffer';
+import { withAuth } from '@/lib/auth-middleware';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +13,7 @@ export interface LiveEventLatest {
   ts: number;
 }
 
-export async function GET(request: NextRequest) {
+async function handler(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const rawLimit = parseInt(searchParams.get('limit') ?? '50', 10);
   const limit = Number.isFinite(rawLimit) ? Math.min(200, Math.max(1, rawLimit)) : 50;
@@ -39,3 +40,5 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({ events });
 }
+
+export const GET = withAuth(handler);
