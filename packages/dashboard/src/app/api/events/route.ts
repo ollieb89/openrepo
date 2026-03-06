@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
 
       client.on('error', (err) => {
         console.error('[SSE Bridge] Socket error:', err.message);
-        controller.enqueue(encoder.encode(`event: error\ndata: {"message":"${err.message}"}\n\n`));
+        controller.enqueue(encoder.encode(`event: error\ndata: ${JSON.stringify({ message: 'socket_error' })}\n\n`));
         // Don't close yet, let it try to reconnect or handle gracefully
       });
 
