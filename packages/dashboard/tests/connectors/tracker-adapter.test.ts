@@ -11,7 +11,8 @@ import { createLinearTrackerAdapter } from '../../src/lib/connectors/tracker-lin
 import { loadCheckpoint } from '../../src/lib/sync/checkpoints';
 import { runIncrementalSync } from '../../src/lib/sync/engine';
 
-const testStorePath = path.join(process.cwd(), '.tmp', `tracker-runtime-${process.pid}.json`);
+const testTmpDir = path.join(process.cwd(), '.tmp', `tracker-adapter-${process.pid}`);
+const testStorePath = path.join(testTmpDir, `tracker-runtime-${process.pid}.json`);
 
 describe('tracker adapters', () => {
   beforeEach(async () => {
@@ -21,7 +22,7 @@ describe('tracker adapters', () => {
 
   afterEach(async () => {
     await clearConnectorRuntimeStoreForTests();
-    await fs.rm(path.dirname(testStorePath), { recursive: true, force: true });
+    await fs.rm(testTmpDir, { recursive: true, force: true });
     delete process.env.CONNECTOR_RUNTIME_STORE_PATH;
   });
 

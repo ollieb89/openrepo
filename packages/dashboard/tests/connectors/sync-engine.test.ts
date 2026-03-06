@@ -17,7 +17,8 @@ import {
   type SyncRecord,
 } from '../../src/lib/sync/engine';
 
-const testStorePath = path.join(process.cwd(), '.tmp', `connector-runtime-${process.pid}.json`);
+const testTmpDir = path.join(process.cwd(), '.tmp', `sync-engine-${process.pid}`);
+const testStorePath = path.join(testTmpDir, `connector-runtime-${process.pid}.json`);
 
 describe('connector runtime primitives', () => {
   beforeEach(async () => {
@@ -28,7 +29,7 @@ describe('connector runtime primitives', () => {
   afterEach(async () => {
     await clearConnectorRuntimeStoreForTests();
     clearConnectorSyncAdaptersForTests();
-    await fs.rm(path.dirname(testStorePath), { recursive: true, force: true });
+    await fs.rm(testTmpDir, { recursive: true, force: true });
     delete process.env.CONNECTOR_RUNTIME_STORE_PATH;
   });
 

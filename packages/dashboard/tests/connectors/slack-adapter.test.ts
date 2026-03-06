@@ -10,7 +10,8 @@ import {
 } from '../../src/lib/connectors/slack';
 import type { ConnectorCheckpoint } from '../../src/lib/types/connectors';
 
-const testStorePath = path.join(process.cwd(), '.tmp', `slack-adapter-${process.pid}.json`);
+const testTmpDir = path.join(process.cwd(), '.tmp', `slack-adapter-${process.pid}`);
+const testStorePath = path.join(testTmpDir, `slack-adapter-${process.pid}.json`);
 
 describe('slack adapter', () => {
   const originalFetch = global.fetch;
@@ -22,7 +23,7 @@ describe('slack adapter', () => {
 
   afterEach(async () => {
     await clearConnectorRuntimeStoreForTests();
-    await fs.rm(path.dirname(testStorePath), { recursive: true, force: true });
+    await fs.rm(testTmpDir, { recursive: true, force: true });
     delete process.env.CONNECTOR_RUNTIME_STORE_PATH;
     global.fetch = originalFetch;
   });

@@ -21,12 +21,11 @@ export async function saveSyncRecords(
 ): Promise<void> {
   if (records.length === 0) return;
 
-  const recordsDir = path.join(GET_RECORDS_ROOT(), connectorId);
-  if (!fs.existsSync(recordsDir)) {
-    fs.mkdirSync(recordsDir, { recursive: true });
+  const filePath = path.join(GET_RECORDS_ROOT(), connectorId, `${sourceId}.json`);
+  const fileDir = path.dirname(filePath);
+  if (!fs.existsSync(fileDir)) {
+    fs.mkdirSync(fileDir, { recursive: true });
   }
-
-  const filePath = path.join(recordsDir, `${sourceId}.json`);
 
   // Load existing records if any
   let existingRecords: SyncRecord[] = [];
