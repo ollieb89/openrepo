@@ -50,7 +50,7 @@
 - [x] **Phase 73: Unified Agent Registry** - Merge agent configs, auto-discovery, config drift detection (completed 2026-03-04)
 - [x] **Phase 74: Dashboard Streaming UI** - Terminal-style live output panel with task board integration (completed 2026-03-05)
 - [x] **Phase 75: Unified Observability** - Consolidated metrics endpoint and pipeline timeline view (completed 2026-03-05)
-- [ ] **Phase 76: SOUL Injection Verification** - Verify dynamic variables and topology context populated at spawn time
+- [x] **Phase 76: SOUL Injection Verification** - Verify dynamic variables and topology context populated at spawn time (completed 2026-03-06)
 - [ ] **Phase 77: Integration E2E Verification** - End-to-end verification of full pipeline
 
 ## Phase Details
@@ -171,7 +171,7 @@ Plans:
   3. After proposing a topology, spawned L3 containers have the current topology archetype name and agent count in their SOUL context
 **Plans**: 1 plan
 Plans:
-- [ ] 76-01-PLAN.md — Verify SOUL dynamic variables populated at spawn time (OBSV-03)
+- [x] 76-01-PLAN.md — Verify SOUL dynamic variables populated at spawn time (OBSV-03) [COMPLETE: 773 tests pass]
 
 ### Phase 77: Integration E2E Verification
 **Goal**: The full pipeline works end-to-end — L1 dispatches through the gateway, L2 decomposes, L3 spawns with populated SOUL, output streams to the dashboard, events flow, and metrics update
@@ -208,9 +208,9 @@ Plans:
 | 73. Unified Agent Registry | 2/2 | Complete    | 2026-03-04 | - |
 | 74. Dashboard Streaming UI | 1/1 | Complete   | 2026-03-05 | - |
 | 75. Unified Observability | 2/2 | Complete   | 2026-03-05 | - |
-| 76. SOUL Injection Verification | v2.1 | 0/TBD | Not started | - |
-| 77. Integration E2E Verification | v2.1 | 0/TBD | Not started | - |
+| 76. SOUL Injection Verification | v2.1 | 1/1 | Complete | 2026-03-06 |
+| 77. Integration E2E Verification | v2.1 | 0/1 | Planned | - |
 
 ---
 *Roadmap created: 2026-02-17*
-*Last updated: 2026-03-05 — Phase 75 planned (2 plans, OBSV-01/OBSV-02)*
+*Last updated: 2026-03-06 — Phases 76-77 planned (76-01-PLAN.md, 77-01-PLAN.md)*
