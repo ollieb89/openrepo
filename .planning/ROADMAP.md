@@ -214,9 +214,11 @@ Plans:
   1. Docker + gateway + dashboard are all running simultaneously
   2. All 4 items in 77-E2E-CHECKLIST.md are executed and pass: task appears in task board, live output streams, metrics update after completion, event order is correct
   3. Phase 77 VERIFICATION.md updated with live results and INTG-01 marked fully satisfied
-**Plans**: 1 plan
+**Plans**: 3 plans
 Plans:
-- [ ] 79-01-PLAN.md — Execute 77-E2E-CHECKLIST.md live criteria and document results (INTG-01)
+- [ ] 79-01-PLAN.md — Service health gates: Docker, memU, gateway, dashboard, Docker images, project config (INTG-01)
+- [ ] 79-02-PLAN.md — Live criterion execution: 4 INTG-01 criteria + DASH-01/DASH-03 via Playwright MCP (INTG-01)
+- [ ] 79-03-PLAN.md — VERIFICATION.md updates: 77-VERIFICATION.md (10/10) and 74-VERIFICATION.md (3/3) (INTG-01)
 
 ### Phase 80: Nyquist Compliance + Tech Debt Cleanup
 **Goal**: All v2.1 phases have VALIDATION.md files, dead code is removed, and low-severity cosmetic issues are fixed
@@ -256,9 +258,9 @@ Plans:
 | 76. SOUL Injection Verification | v2.1 | 1/1 | Complete | 2026-03-06 |
 | 77. Integration E2E Verification | v2.1 | 1/1 | Complete | 2026-03-06 |
 | 78. Verification Documentation Closure | 2/2 | Complete    | 2026-03-06 | - |
-| 79. INTG-01 Live E2E Execution | v2.1 | 0/1 | Pending | - |
+| 79. INTG-01 Live E2E Execution | v2.1 | 0/3 | Pending | - |
 | 80. Nyquist Compliance + Tech Debt Cleanup | v2.1 | 0/1 | Pending | - |
 
 ---
 *Roadmap created: 2026-02-17*
-*Last updated: 2026-03-06 — gap closure phases 78-80 added per v2.1 audit (OBSV-03, INTG-01, nyquist)*
+*Last updated: 2026-03-06 — Phase 79 expanded to 3 plans (service gates, criterion execution, VERIFICATION.md updates)*
