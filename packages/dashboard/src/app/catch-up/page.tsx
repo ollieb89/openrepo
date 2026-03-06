@@ -4,8 +4,10 @@ import React, { useState } from 'react';
 import { Search, Info, Pin, Share2, Sparkles, AlertCircle } from 'lucide-react';
 import { SummaryStream } from '@/components/sync/SummaryStream';
 import { apiFetch } from '@/lib/api-client';
+import { useProject } from '@/context/ProjectContext';
 
 export default function CatchUpPage() {
+  const { projectId } = useProject();
   const [query, setQuery] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [stream, setStream] = useState<ReadableStream | null>(null);
@@ -27,7 +29,7 @@ export default function CatchUpPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: forcedId ? `${query} (id: ${forcedId})` : query,
-          activeProjectId: 'default' // Should be dynamically selected if project selection is implemented
+          activeProjectId: projectId ?? 'default',
         }),
       });
 
