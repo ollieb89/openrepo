@@ -415,7 +415,78 @@ The route only exposes `export const PATCH = withAuth(...)`. A GET to `/api/conf
 
 ## SSE / Real-time Issues
 
-To be filled in Task 4
+### How It Works
+
+`useLiveEvents` (at `packages/dashboard/src/lib/hooks/useLiveEvents.ts`) is the primary real-time hook. It opens a browser `EventSource` to `/api/events`, which the Next.js route handler bridges to a Unix socket (`$OPENCLAW_ROOT/run/events.sock`). Events arriving on the socket are pushed to the browser as SSE frames and simultaneously written into an in-process ring buffer (`src/lib/event-ring-buffer.ts`, capacity 100). If the SSE connection does not reach `open` state within 4 000 ms (`OFFLINE_TIMEOUT_MS`), the hook transitions to `'offline'` and activates a SWR-based polling fallback that hits `/api/events/latest` every 3 seconds. The fallback reads the same ring buffer and returns a snapshot as `{ events: [...] }`. A periodic reconnect timer (10 000 ms, `RECONNECT_INTERVAL_MS`) retries the SSE connection whenever the hook is in `'offline'` or `'reconnecting'` state.
+
+There is a second, older SSE hook — `useEvents` (at `packages/dashboard/src/hooks/useEvents.ts`) — that connects directly to `/api/events` without any offline fallback or status tracking. It is used only by `TaskBoard`. It also has no `projectId` filtering in the `useCallback` dependency array (see Hook Code Issues below).
+
+`LogViewer` (`packages/dashboard/src/components/LogViewer.tsx`) opens its own independent `EventSource` to `/api/events` and filters for `EventType.TASK_OUTPUT` frames matching a specific `task_id`. It implements exponential-backoff reconnect (1 s → 30 s cap).
+
+### SSE Endpoint (/api/events)
+
+**Status: Broken when orchestration engine is not running.**
+
+Root cause: `packages/dashboard/src/app/api/events/route.ts` calls `net.connect(socketPath)` immediately when the SSE stream is opened. The socket path resolves to `$OPENCLAW_ROOT/run/events.sock` (default: `~/.openclaw/run/events.sock`). When the orchestration engine is not running, the socket file does not exist. The `'error'` event fires synchronously with `ENOENT`, the route sends `event: error\ndata: {"message":"connect ENOENT ..."}\n\n`, and the stream closes via the `'close'` handler calling `controller.close()`.
+
+The consequence is a permanent connect-error-close cycle: the browser `EventSource` fires `onerror`, the hook sets a timer, and attempts to reconnect every 10 s. The server log floods with `[SSE Bridge] Socket error: connect ENOENT` on every cycle. There is no guard that holds the SSE response open, sends a retry hint, or delays the socket connection attempt.
+
+One additional flaw: when the socket error fires before `onopen`, the `onerror` handler in `useLiveEvents` does not transition state (line 99–109 only acts if `statusRef.current === 'live'`). The offline timer set during `connect()` is the only mechanism that eventually moves the hook to `'offline'`. This means the UI stays in `'connecting'` or `'reconnecting'` for the full 4 s timeout on every reconnect cycle before falling back, rather than reacting immediately to the error frame.
+
+### Fallback Polling (/api/events/latest)
+
+**Status: Endpoint works; always returns an empty array when the orchestration engine has never run.**
+
+`curl -s -H "Authorization: Bearer dev-token" http://localhost:6987/occc/api/events/latest` returns:
+```json
+{"events":[]}
+```
+
+The ring buffer (`event-ring-buffer.ts`) is a module-scope in-process singleton. It is only populated when the SSE bridge successfully reads data from the Unix socket and calls `addToRingBuffer()`. Because the socket never connects when the engine is not running, the buffer is always empty. The fallback polling therefore returns `{"events":[]}` indefinitely — it does not fail or throw, but it also provides no data.
+
+The `/api/events/latest` route has no `withAuth` guard (already classified as P2 in the API Issues section).
+
+The fallback polling is triggered only when `status === 'offline'`. Because the hook's `onerror` callback does not immediately set offline state (it waits for the 4 s timer), there is a 4 s gap on every reconnect cycle where the fallback SWR key is `null` and no polling request is made.
+
+### Hook Code Issues
+
+**1. `useLiveEvents` — `onerror` does not immediately transition to offline on initial connect failure (useLiveEvents.ts lines 98–110)**
+
+The `onerror` handler only calls `updateStatus('reconnecting')` and restarts the offline timer when `statusRef.current === 'live'`. If the hook is in `'connecting'` or `'reconnecting'` state when the error fires (which is always the case when the socket does not exist), the error is silently swallowed and the hook waits for the offline timer to expire. The UI stays frozen in `'connecting'` for 4 s instead of reacting immediately to the server's explicit `event: error` frame. A fix would be to also handle the `'reconnecting'` → timer-restart case and the `'connecting'` → immediate-offline case in `onerror`.
+
+**2. `useEvents` (legacy hook) — no fallback, no status, no reconnect limit (hooks/useEvents.ts)**
+
+The legacy `useEvents` hook in `src/hooks/useEvents.ts` opens an `EventSource` with no offline fallback, no status reporting, and no reconnect throttle. The browser `EventSource` specification reconnects automatically on every error; without any limiting logic, this produces a tight reconnect loop against the permanently-broken `/api/events` endpoint. The hook exposes a `reconnect` function but no `status` state, so consumers (`TaskBoard`) have no way to indicate offline state in the UI.
+
+**3. `useEvents` — missing `projectId` in URL path (hooks/useEvents.ts line 17)**
+
+`useEvents` constructs the URL as `/api/events?project=${projectId}`. However, the server-side route handler in `packages/dashboard/src/app/api/events/route.ts` does not read or apply a `project` query parameter — it forwards all socket events to all connected clients. Project filtering is performed client-side only inside `useLiveEvents` (line 83). The `?project=` parameter is silently ignored by the server, so `useEvents` provides no server-side filtering despite implying it does.
+
+**4. `LogViewer` — tight exponential-backoff loop against broken endpoint (LogViewer.tsx lines 93–107)**
+
+`LogViewer` starts backoff at 1 s and doubles up to 30 s. While this is better than no throttle, it still produces a significant number of connection attempts (at 1 s, 2 s, 4 s, 8 s, 16 s, then every 30 s) against an endpoint that is permanently broken. All reconnect attempts generate server-side socket ENOENT errors and log noise.
+
+**5. `LogViewer` — `connectToEventSource` callback has `effectiveTaskId` and `isActive` in deps, but Effect B also lists `connectToEventSource` as dep (LogViewer.tsx lines 152–179)**
+
+When `effectiveTaskId` changes, `connectToEventSource` is re-created (new callback reference), which re-triggers Effect B, which closes the old `EventSource` and opens a new one. This is the intended behavior. However, there is a subtle race: Effect A (lines 127–150) runs before Effect B (lines 152–179) on the same render. If Effect A sets state (`setLogs([])`) and Effect B immediately opens a new connection, the cleanup of the previous Effect B's `EventSource` happens inside Effect B's return function — which runs before the new Effect B body. This ordering is correct but tightly coupled; a future change that re-orders effects could introduce a double-open or leak.
+
+**6. No `Last-Event-ID` sent by browser `EventSource` API for `useLiveEvents` — replay logic is unreachable in practice (route.ts lines 22–28)**
+
+`packages/dashboard/src/app/api/events/route.ts` implements replay of missed events using `Last-Event-ID`. The browser `EventSource` API does send this header automatically after a reconnect if the server assigned event IDs. The route does assign IDs via `id: ${e.id}` on each emitted event. However, since the socket never connects when the engine is not running, no events with IDs are ever sent, so `Last-Event-ID` is never populated by the client in practice. The replay logic is correct but unreachable in the current environment.
+
+### Affected Components
+
+The following components are directly affected by the SSE bridge failure:
+
+| Component | File | Hook Used | Impact |
+|-----------|------|-----------|--------|
+| `LiveEventFeed` | `src/components/mission-control/LiveEventFeed.tsx` | `useLiveEvents` | Always shows "offline (polling)" status; event list always empty; polls `/api/events/latest` every 3 s with no result |
+| `TaskBoard` | `src/components/tasks/TaskBoard.tsx` | `useEvents` (legacy) | No live task updates; tight reconnect loop against broken endpoint; no visual indicator of offline state |
+| `LogViewer` | `src/components/LogViewer.tsx` | Direct `EventSource` | Never shows live task output; exponential-backoff reconnects every 1–30 s; always shows "Reconnecting…" status |
+| `TaskTerminalPanel` | `src/components/tasks/TaskTerminalPanel.tsx` | `LogViewer` (child) | Inherits `LogViewer` failure; task output pane permanently empty |
+| Containers page | `src/app/containers/page.tsx` | `LogViewer` (child) | Inherits `LogViewer` failure; container log view permanently empty |
+
+The Mission Control page (`/occc/mission-control`) is the primary user-visible surface area. Its `LiveEventFeed` shows "offline (polling)" immediately after 4 s and remains in that state. All other real-time panels on Mission Control (`AttentionQueue`, `TaskPulse`, `SwarmStatusPanel`) use SWR polling against REST endpoints and are unaffected by the SSE failure.
 
 ## Priority Classification
 
