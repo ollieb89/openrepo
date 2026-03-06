@@ -2,6 +2,7 @@
 phase: 77-integration-e2e-verification
 plan: "77-01"
 requirement: INTG-01
+requirements_completed: [INTG-01]
 ---
 
 # Phase 77 Plan 01: Integration E2E Verification Summary
