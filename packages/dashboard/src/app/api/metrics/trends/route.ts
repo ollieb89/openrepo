@@ -100,9 +100,14 @@ async function handler(request: NextRequest): Promise<NextResponse> {
     for (const task of tasks) {
       // Only include completed tasks
       if (task.status !== 'completed') continue;
-      
-      // Check if within date range
-      const completedAt = task.metadata?.completed_at as number | undefined;
+
+      // Check if within date range — prefer metadata.completed_at, fall back to
+      // top-level updated_at (set when the task transitions to 'completed') or
+      // created_at as a last resort so tasks with metadata: {} are not dropped.
+      const completedAt =
+        (task.metadata?.completed_at as number | undefined) ??
+        task.updated_at ??
+        task.created_at;
       if (!completedAt) continue;
       
       if (daysParam && completedAt < cutoffSeconds) continue;
