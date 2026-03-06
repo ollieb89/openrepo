@@ -63,6 +63,15 @@ async function handler(req: NextRequest) {
 
   } catch (error) {
     console.error('[CatchUp] API Error:', error);
+    const msg = error instanceof Error ? error.message : String(error);
+    // Ollama / embedding service unavailable — surface as 503 so callers can retry
+    if (
+      msg.includes('not available') ||
+      msg.includes('ECONNREFUSED') ||
+      msg.includes('fetch failed')
+    ) {
+      return NextResponse.json({ error: 'engine_offline' }, { status: 503 });
+    }
     return NextResponse.json({ error: 'Failed to process catch-up query' }, { status: 500 });
   }
 }
