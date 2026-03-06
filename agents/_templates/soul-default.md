@@ -9,6 +9,11 @@
 **Active Tasks**: $active_task_count
 **Pool Utilization**: $pool_utilization
 
+## Topology Context
+**Archetype**: $topology_archetype
+**Agent Count**: $topology_agent_count
+**Structural Confidence**: $topology_confidence
+
 ## Memory Context
 $memory_section
 
