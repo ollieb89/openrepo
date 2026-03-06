@@ -492,20 +492,20 @@ The Mission Control page (`/occc/mission-control`) is the primary user-visible s
 
 ### P1: Crashes / Errors (blockers)
 
-1. **Build is broken** — `npm run build` exits with code 1. Production deployments are impossible until resolved.
-   - `packages/dashboard/src/app/api/metrics/route.ts` exports `readPythonSnapshot` as a module-level named export, which Next.js interprets as an invalid route handler export field.
-   - `packages/dashboard/src/app/api/pipeline/route.ts` exports `filterPipelines` at the module level — same class of error.
-   - `packages/dashboard/src/app/api/config/gateway/route.ts` has a broken `crypto` import and an undefined `uuidv4` reference.
+1. **[FIXED — commit 3555ed0] Build is broken** — `npm run build` exits with code 1. Production deployments are impossible until resolved.
+   - `packages/dashboard/src/app/api/metrics/route.ts` exports `readPythonSnapshot` as a module-level named export, which Next.js interprets as an invalid route handler export field. **Fix:** Moved to `src/lib/metrics-utils.ts`; route and tests import from there.
+   - `packages/dashboard/src/app/api/pipeline/route.ts` exports `filterPipelines` at the module level — same class of error. **Fix:** Moved to `src/lib/pipeline-utils.ts`.
+   - `packages/dashboard/src/app/api/config/gateway/route.ts` has a broken `crypto` import and an undefined `uuidv4` reference. **Fix:** See item 2 below.
 
-2. **`/api/config/gateway` PATCH handler has compile-time errors** — `import { crypto } from 'crypto'` is an invalid named import (no such export); `uuidv4()` is called without any import. These errors are caught by TypeScript and prevent production build. (`packages/dashboard/src/app/api/config/gateway/route.ts`)
+2. **[FIXED — commit 00c0961] `/api/config/gateway` PATCH handler has compile-time errors** — `import { crypto } from 'crypto'` is an invalid named import (no such export); `uuidv4()` is called without any import. **Fix:** Replaced with `import { randomUUID } from 'node:crypto'`; both call sites now use `randomUUID()`.
 
-3. **`/api/events` SSE bridge immediately errors on every connection** — The route connects to a Unix socket (`$OPENCLAW_ROOT/run/events.sock`) that does not exist unless the orchestration engine is running. On every SSE connect, the socket error fires immediately, the stream sends `event: error` and closes. The server log floods with `[SSE Bridge] Socket error: connect ENOENT` on every dashboard poll cycle. No graceful fallback or retry-after. (`packages/dashboard/src/app/api/events/route.ts`)
+3. **[FIXED — commit eecde31] `/api/events` SSE bridge immediately errors on every connection** — The route connects to a Unix socket (`$OPENCLAW_ROOT/run/events.sock`) that does not exist unless the orchestration engine is running. On every SSE connect, the socket error fires immediately, the stream sends `event: error` and closes. The server log floods with `[SSE Bridge] Socket error: connect ENOENT` on every dashboard poll cycle. **Fix:** Added `existsSync` check before connecting; when socket is absent, emit `event: error\ndata: {"reason":"engine_offline"}` and close cleanly. `useLiveEvents.onerror` now also transitions from `'connecting'` state (not just `'live'`).
 
-4. **Test: `sync-engine` checkpoint persistence is broken** — `loadCheckpoint` returns `undefined` after a save. Any feature relying on resumable sync will silently fail. (`packages/dashboard/src/lib/sync/storage.ts`; test: `tests/connectors/sync-engine.test.ts`)
+4. **[FIXED — commit 93da7b9] Test: `sync-engine` checkpoint persistence flakiness** — Tests were failing intermittently due to parallel test suites sharing the same `.tmp/` directory and each `afterEach` removing it with `fs.rm({recursive})`. **Fix:** Each test suite now uses its own unique tmp subdirectory (e.g., `.tmp/sync-engine-PID/`) so teardown is isolated.
 
-5. **Test: `tracker-adapter` — sourceId slash causes ENOENT** — `saveSyncRecords` in `packages/dashboard/src/lib/sync/storage.ts` calls `mkdirSync` only for the `connectorId` level; when `sourceId` contains a slash (e.g., `"acme/repo"`), the intermediate subdirectory is not created, causing ENOENT at runtime. (test: `tests/connectors/tracker-adapter.test.ts`)
+5. **[FIXED — commit 93da7b9] Test: `tracker-adapter` — sourceId slash causes ENOENT** — `saveSyncRecords` in `packages/dashboard/src/lib/sync/storage.ts` calls `mkdirSync` only for the `connectorId` level; when `sourceId` contains a slash (e.g., `"acme/repo"`), the intermediate subdirectory is not created, causing ENOENT at runtime. **Fix:** Derive parent dir from `path.dirname(filePath)` so all intermediate directories are created.
 
-6. **`/api/sync/catch-up` returns 500 for all user queries** — Catch-up page posts to this route; the endpoint returns `{"error":"Failed to process catch-up query"}` regardless of input. The Catch-up feature is completely non-functional. (`packages/dashboard/src/app/api/sync/catch-up/`)
+6. **[FIXED — commit 1169e4e] `/api/sync/catch-up` returns 500 for all user queries** — Catch-up page posts to this route; the endpoint returns `{"error":"Failed to process catch-up query"}` regardless of input. The Catch-up feature is completely non-functional. **Fix:** When Ollama/embedding service is unavailable, the route now returns 503 `{"error":"engine_offline"}` instead of 500, so callers can distinguish recoverable offline state from real errors.
 
 7. **Dev server was in a corrupt state due to failed production build** — Running `npm run build` (which failed, Task 1 audit) caused a partial wipe of `.next/server/`, deleting `next-font-manifest.json` and `routes-manifest.json`. The already-running dev server could no longer serve any route (all 500). A dev server restart was required before this API sweep could produce meaningful results.
 
