@@ -10,7 +10,7 @@
 - ✅ **v1.5 Config Consolidation** — Phases 45-53 (shipped 2026-02-25)
 - ✅ **v1.6 Agent Autonomy** — Phases 54-60 (shipped 2026-02-26)
 - ✅ **v2.0 Structural Intelligence** — Phases 61-67 (shipped 2026-03-04)
-- ✅ **v2.1 Programmatic Integration & Real-Time Streaming** — Phases 68-77 (shipped 2026-03-06)
+- 🔄 **v2.1 Programmatic Integration & Real-Time Streaming** — Phases 68-80 (gap closure in progress)
 
 ---
 
@@ -36,7 +36,7 @@
 
 ---
 
-### ✅ v2.1 Programmatic Integration & Real-Time Streaming (Shipped 2026-03-06)
+### 🔄 v2.1 Programmatic Integration & Real-Time Streaming (Gap Closure In Progress)
 
 **Milestone Goal:** Replace CLI-level coupling with programmatic APIs, activate existing event infrastructure, and deliver live L3 output streaming to the dashboard.
 
@@ -52,6 +52,9 @@
 - [x] **Phase 75: Unified Observability** - Consolidated metrics endpoint and pipeline timeline view (completed 2026-03-05)
 - [x] **Phase 76: SOUL Injection Verification** - Verify dynamic variables and topology context populated at spawn time (completed 2026-03-06)
 - [x] **Phase 77: Integration E2E Verification** - End-to-end verification of full pipeline (completed 2026-03-06)
+- [ ] **Phase 78: Verification Documentation Closure** - Write missing VERIFICATION.md files for phases 74, 76, 77 (automated portion)
+- [ ] **Phase 79: INTG-01 Live E2E Execution** - Execute 4 deferred live INTG-01 success criteria with full system running
+- [ ] **Phase 80: Nyquist Compliance + Tech Debt Cleanup** - Write missing VALIDATION.md for phases 69-73, 76-77; remove dead code; fix cosmetic issues
 
 ## Phase Details
 
@@ -186,6 +189,47 @@ Plans:
 Plans:
 - [x] 77-01-PLAN.md — End-to-end integration verification (INTG-01) [COMPLETE: 779 tests pass]
 
+### Phase 78: Verification Documentation Closure
+**Goal**: All phases with missing VERIFICATION.md files have them written and requirements_completed frontmatter is correct — closing the 3-source documentation gate for OBSV-03 and the automated portion of INTG-01
+**Depends on**: Phase 77
+**Requirements**: OBSV-03, INTG-01 (automated criteria), DASH-01, DASH-02, DASH-03
+**Gap Closure**: Closes documentation gaps identified in v2.1 audit
+**Success Criteria** (what must be TRUE):
+  1. Phase 74 VERIFICATION.md exists and documents DASH-01, DASH-02, DASH-03 as verified
+  2. Phase 76 VERIFICATION.md exists and all 3 OBSV-03 success criteria are marked passed
+  3. Phase 76 SUMMARY.md requirements_completed frontmatter includes OBSV-03
+  4. Phase 77 VERIFICATION.md exists and documents the 6 passing automated integration tests
+  5. Phase 77 SUMMARY.md requirements_completed frontmatter includes INTG-01
+**Plans**: 1 plan
+Plans:
+- [ ] 78-01-PLAN.md — Write VERIFICATION.md for phases 74, 76, 77; fix requirements_completed frontmatter (OBSV-03, INTG-01, DASH-01/02/03)
+
+### Phase 79: INTG-01 Live E2E Execution
+**Goal**: The 4 INTG-01 live system success criteria (deferred to 77-E2E-CHECKLIST.md) are executed with a running system and documented in a formal VERIFICATION.md update
+**Depends on**: Phase 78
+**Requirements**: INTG-01
+**Gap Closure**: Closes live criteria gap identified in v2.1 audit
+**Success Criteria** (what must be TRUE):
+  1. Docker + gateway + dashboard are all running simultaneously
+  2. All 4 items in 77-E2E-CHECKLIST.md are executed and pass: task appears in task board, live output streams, metrics update after completion, event order is correct
+  3. Phase 77 VERIFICATION.md updated with live results and INTG-01 marked fully satisfied
+**Plans**: 1 plan
+Plans:
+- [ ] 79-01-PLAN.md — Execute 77-E2E-CHECKLIST.md live criteria and document results (INTG-01)
+
+### Phase 80: Nyquist Compliance + Tech Debt Cleanup
+**Goal**: All v2.1 phases have VALIDATION.md files, dead code is removed, and low-severity cosmetic issues are fixed
+**Depends on**: Phase 79
+**Requirements**: (no new requirements — closes tech debt)
+**Gap Closure**: Closes nyquist and tech debt gaps identified in v2.1 audit
+**Success Criteria** (what must be TRUE):
+  1. VALIDATION.md exists for phases 69, 70, 71, 72, 73, 76, 77 with nyquist_compliant: true
+  2. collect_metrics() in metrics.py is removed (dead code with no callers in production path)
+  3. environment/page.tsx socket path display label matches the actual socket path used in route.ts
+**Plans**: 1 plan
+Plans:
+- [ ] 80-01-PLAN.md — Write VALIDATION.md for phases 69-73, 76-77; remove dead code; fix cosmetic label (tech debt)
+
 ---
 
 ## Progress
@@ -210,7 +254,10 @@ Plans:
 | 75. Unified Observability | 2/2 | Complete   | 2026-03-05 | - |
 | 76. SOUL Injection Verification | v2.1 | 1/1 | Complete | 2026-03-06 |
 | 77. Integration E2E Verification | v2.1 | 1/1 | Complete | 2026-03-06 |
+| 78. Verification Documentation Closure | v2.1 | 0/1 | Pending | - |
+| 79. INTG-01 Live E2E Execution | v2.1 | 0/1 | Pending | - |
+| 80. Nyquist Compliance + Tech Debt Cleanup | v2.1 | 0/1 | Pending | - |
 
 ---
 *Roadmap created: 2026-02-17*
-*Last updated: 2026-03-06 — v2.1 milestone shipped, all 10 phases complete (68-77)*
+*Last updated: 2026-03-06 — gap closure phases 78-80 added per v2.1 audit (OBSV-03, INTG-01, nyquist)*
