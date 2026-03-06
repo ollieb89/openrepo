@@ -1,7 +1,7 @@
 'use client';
 
 import useSWR from 'swr';
-import { apiPath, apiJson, apiFetch } from '@/lib/api-client';
+import { apiJson, apiFetch } from '@/lib/api-client';
 
 export type SyncHealthStatus = 'auth_expired' | 'error' | 'rate_limited' | 'syncing' | 'connected' | 'disconnected';
 export type SyncStage =
@@ -113,13 +113,15 @@ export function statusTrafficLight(status: SyncHealthStatus): 'red' | 'amber' | 
 }
 
 export function resolveSyncEndpoint(connector: Pick<SyncConnectorSnapshot, 'id' | 'provider'>): string {
+  // Return bare API paths — callers use apiFetch() which prepends the basePath.
+  // Using apiPath() here would cause double-prefixing (/occc/occc/api/...).
   if (connector.id === 'connector-slack-primary' || connector.provider === 'slack') {
-    return apiPath('/api/connectors/slack/sync');
+    return '/api/connectors/slack/sync';
   }
   if (connector.id === 'connector-tracker' || connector.provider === 'github' || connector.provider === 'linear') {
-    return apiPath('/api/connectors/tracker/sync');
+    return '/api/connectors/tracker/sync';
   }
-  return apiPath(`/api/connectors/${encodeURIComponent(connector.id)}/sync`);
+  return `/api/connectors/${encodeURIComponent(connector.id)}/sync`;
 }
 
 export function reconnectHref(connector: Pick<SyncConnectorSnapshot, 'id' | 'provider'>): string {
