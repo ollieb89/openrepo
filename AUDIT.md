@@ -149,7 +149,7 @@ Error: ENOENT: no such file or directory, open '/home/ob/.openclaw/workspace/.op
  ❯ tests/connectors/tracker-adapter.test.ts:106:5
 ```
 
-The test calls `runIncrementalSync` which tries to write to a live filesystem path (`~/.openclaw/workspace/...`) that does not exist in the test environment. The sync engine's `saveSyncRecords` function does not create intermediate directories before writing, so it throws ENOENT. Tests should use a temp directory or mock the filesystem.
+The `saveSyncRecords` function in `src/lib/sync/storage.ts` calls `mkdirSync` with `recursive: true`, but only for the `connectorId` directory level. When `sourceId` contains a slash (e.g., `"acme/repo"`), the intermediate subdirectory (`acme/`) is not created before the `writeFileSync` call, causing ENOENT. The fix is to derive the full parent path from `filePath` and pass it to `mkdirSync`, rather than only creating the `connectorId` level directory.
 
 ### Notable stderr (non-fatal, tests still pass):
 
@@ -192,24 +192,22 @@ To be filled in Task 4
 ### P1: Crashes / Errors (blockers)
 
 1. **Build is broken** — `npm run build` exits with code 1. Production deployments are impossible until resolved.
-   - `src/app/api/metrics/route.ts` exports `readPythonSnapshot` as a module-level named export, which Next.js interprets as an invalid route handler export field.
-   - `src/app/api/pipeline/route.ts` exports `filterPipelines` at the module level — same class of error.
-   - `src/app/api/config/gateway/route.ts` has a broken `crypto` import and an undefined `uuidv4` reference.
+   - `packages/dashboard/src/app/api/metrics/route.ts` exports `readPythonSnapshot` as a module-level named export, which Next.js interprets as an invalid route handler export field.
+   - `packages/dashboard/src/app/api/pipeline/route.ts` exports `filterPipelines` at the module level — same class of error.
+   - `packages/dashboard/src/app/api/config/gateway/route.ts` has a broken `crypto` import and an undefined `uuidv4` reference.
 
-2. **Test: `sync-engine` checkpoint persistence is broken** — `loadCheckpoint` returns `undefined` after a save. Any feature relying on resumable sync will silently fail.
+2. **Test: `sync-engine` checkpoint persistence is broken** — `loadCheckpoint` returns `undefined` after a save. Any feature relying on resumable sync will silently fail. (`packages/dashboard/src/lib/sync/storage.ts`; test: `tests/sync/sync-engine.test.ts`)
 
-3. **Test: `tracker-adapter` writes to live filesystem** — `saveSyncRecords` in `src/lib/sync/storage.ts` calls `fs.writeFileSync` without creating parent directories, and tests hit the real `~/.openclaw` path instead of a temp dir. This would cause runtime crashes when the target directory does not exist.
-
-4. **Test: `slack-adapter` teardown pollution** — `.tmp` directory is not cleaned up between test runs, causing an `ENOTEMPTY` error on the next run. Flaky test that will break CI on the second consecutive run.
+3. **Test: `tracker-adapter` — sourceId slash causes ENOENT** — `saveSyncRecords` in `packages/dashboard/src/lib/sync/storage.ts` calls `mkdirSync` only for the `connectorId` level; when `sourceId` contains a slash (e.g., `"acme/repo"`), the intermediate subdirectory is not created, causing ENOENT at runtime. (test: `tests/sync/tracker-adapter.test.ts`)
 
 ### P2: Stale or Wrong Data
 
-To be determined from Tasks 2-4
+1. **`resolveSyncEndpoint` base-path mismatch** (P2, pending investigation) — Returns URLs with `/occc` prefix (the app's `basePath`) where tests expect bare `/api/...` paths. If basePath is applied twice in production, sync requests would 404. Needs investigation to determine if this is test-only or production bug.
+
+2. **Test: `slack-adapter` teardown pollution** — `.tmp` directory is not cleaned up between test runs, causing an `ENOTEMPTY` error on the next run. Flaky test teardown only manifests on consecutive runs. Does not affect production. Classify as CI reliability issue (P2) unless evidence shows it blocks CI.
 
 ### P3: Cosmetic / Minor
 
-1. **`resolveSyncEndpoint` base-path prefix** — Returns URLs with `/occc` prefix (the app's `basePath`) where tests expect bare `/api/...` paths. Whether this is a test bug or a production bug needs review.
+1. **`next lint` deprecation warning** — `next lint` will be removed in Next.js 16. Should migrate to direct ESLint CLI invocation.
 
-2. **`next lint` deprecation warning** — `next lint` will be removed in Next.js 16. Should migrate to direct ESLint CLI invocation.
-
-3. **Ollama models not available in test environment** — `mxbai-embed-large` and `phi3:mini` are referenced by `src/lib/ollama.ts` but not present locally. Errors are swallowed gracefully, but the indexing and summarization paths are untestable without the models or proper mocks.
+2. **Ollama models not available in test environment** — `mxbai-embed-large` and `phi3:mini` are referenced by `src/lib/ollama.ts` but not present locally. Errors are swallowed gracefully, but the indexing and summarization paths are untestable without the models or proper mocks.
