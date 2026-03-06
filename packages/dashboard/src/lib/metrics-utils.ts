@@ -5,6 +5,7 @@ export interface PythonSnapshotResult {
   meta: {
     snapshot_missing: boolean;
     snapshot_age_s: number | null;
+    snapshot_error: string | null;
   };
 }
 
@@ -34,14 +35,16 @@ export async function readPythonSnapshot(snapshotPath: string): Promise<PythonSn
       meta: {
         snapshot_missing: false,
         snapshot_age_s: snapshotAgeS,
+        snapshot_error: null,
       },
     };
-  } catch {
+  } catch (err) {
     return {
       python: null,
       meta: {
         snapshot_missing: true,
         snapshot_age_s: null,
+        snapshot_error: err instanceof Error ? err.message : 'unknown error',
       },
     };
   }

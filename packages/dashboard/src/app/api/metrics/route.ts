@@ -116,7 +116,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
       ? tasksWithConfidence.reduce((acc, t) => acc + (t as any).autonomy.confidence_score, 0) / tasksWithConfidence.length
       : 1.0;
 
-    const response: MetricsResponse & { python: Record<string, unknown> | null; meta: { snapshot_missing: boolean; snapshot_age_s: number | null } } = {
+    const response: MetricsResponse & { python: Record<string, unknown> | null; meta: { snapshot_missing: boolean; snapshot_age_s: number | null; snapshot_error: string | null } } = {
       completionDurations: durationEntries,
       lifecycle: { pending, active, completed, failed },
       poolUtilization,
