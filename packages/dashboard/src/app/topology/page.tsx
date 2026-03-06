@@ -2,8 +2,9 @@
 
 import '@xyflow/react/dist/style.css';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useTopology, useTopologyChangelog } from '@/lib/hooks/useTopology';
+import { useProject } from '@/context/ProjectContext';
 import { DualPanel } from '@/components/topology/DualPanel';
 import { ProposalComparison } from '@/components/topology/ProposalComparison';
 import { CorrectionTimeline } from '@/components/topology/CorrectionTimeline';
@@ -36,13 +37,8 @@ function formatTimestamp(ts: string): string {
 // ---------------------------------------------------------------------------
 
 export default function TopologyPage() {
-  // Project ID from localStorage (same pattern as other pages)
-  const [projectId, setProjectId] = useState<string | null>(null);
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setProjectId(localStorage.getItem('occc-project'));
-    }
-  }, []);
+  // Project ID from context — reactive to project switching
+  const { projectId } = useProject();
 
   // Data hooks
   const { topology, isLoading: topoLoading, error: topoError } = useTopology(projectId);
