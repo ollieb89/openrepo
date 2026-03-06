@@ -207,6 +207,7 @@ None — ESLint is clean. Note: `next lint` is deprecated as of Next.js 15 and w
 | /api/connectors/health | GET | 401 | 200 | OK — returns `{"summary":{"dominantStatus":"disconnected",...},"connectors":[]}`. | — |
 | /api/config/gateway | GET | 405 | 405 | **No GET handler** — route only exports `PATCH`. GET returns 405 Method Not Allowed. Additionally, the route file has two compile-time errors: `import { crypto } from 'crypto'` (no such named export — should be `import { randomUUID } from 'node:crypto'`) and `uuidv4()` called without import. These errors prevent production build. | P1 |
 | /api/graph/ripple-effects | GET | 401 | 400 | **400 without `?id=` param** — returns `{"error":"Missing id parameter"}`. With `?id=test-task` returns `200 {"id":"test-task","effects":[],"count":0}`. The 400 is intentional validation but not documented. | P3 |
+| /api/swarm/stream | GET | 401 | 400 | **400 without `?containerId=` param** — returns `"Container ID is required"` (plain text, not JSON). Auth check is **manual inline** (`validateToken()` called directly in handler body) rather than `withAuth` middleware — inconsistent with every other protected route in the app. The POST handler on the same file correctly uses `withAuth`. | P3 |
 
 ### Additional observations
 
@@ -288,3 +289,5 @@ To be filled in Task 4
 5. **`/api/config/gateway` has no GET handler** — Only `PATCH` is exported. GET returns 405. If any UI component attempts to read current gateway config, it will fail silently.
 
 6. **Ollama models not available in test environment** — `mxbai-embed-large` and `phi3:mini` are referenced by `src/lib/ollama.ts` but not present locally. Errors are swallowed gracefully, but the indexing and summarization paths are untestable without the models or proper mocks.
+
+7. **`/api/swarm/stream` GET handler uses manual inline auth instead of `withAuth`** — The GET handler in `packages/dashboard/src/app/api/swarm/stream/route.ts` calls `validateToken()` and `createUnauthorizedResponse()` directly in the handler body. All other protected routes in the app use the `withAuth` middleware wrapper. The POST handler in the same file correctly uses `withAuth`. The inconsistency means any future auth policy change applied to `withAuth` (token rotation, rate limiting, audit logging) will silently not apply to the GET SSE stream. Additionally, the GET 400 error body is plain text (`"Container ID is required"`) while all other routes return JSON error objects — inconsistent error shape.
