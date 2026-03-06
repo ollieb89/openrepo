@@ -38,6 +38,14 @@ Before criterion execution, in order:
 - Confirm via: `curl http://localhost:6987/occc/api/health` → `event_bridge.status`
 - Fail fast if bridge is still unhealthy after starting the monitor — report exactly which step failed
 
+### Event bridge initialization ownership (first live-system investigation)
+The core question Plan 02 retry must answer before running criteria:
+- What process is supposed to own the bridge socket in a live system?
+- Does the bridge only start in standalone Python mode (not in the `/occc` Next.js + gateway integration path)?
+- Does the Next.js dev proxy or production entrypoint bypass the Python bootstrap entirely?
+- What is the expected process lifecycle for the socket when using `make dashboard` + gateway together?
+Treat `useEvents.ts` URL fix as already resolved. The remaining investigation is purely about socket bootstrap ownership. This is the first check in the live run — diagnose before dispatching any L1 directive.
+
 ### Service startup
 - Services confirmed running from Plan 01: Docker, memU, gateway, dashboard all healthy
 - If retrying from cold start: full startup with health gates applies (Plan 01 sequence)
