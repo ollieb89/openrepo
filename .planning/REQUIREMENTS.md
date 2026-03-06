@@ -50,7 +50,7 @@ Requirements for v2.1 Programmatic Integration & Real-Time Streaming. Each maps 
 
 ### Integration Verification
 
-- [ ] **INTG-01**: End-to-end test: L1 dispatches via gateway → L2 decomposes → L3 spawns with populated SOUL → output streams to dashboard → events flow → metrics update
+- [x] **INTG-01**: End-to-end test: L1 dispatches via gateway → L2 decomposes → L3 spawns with populated SOUL → output streams to dashboard → events flow → metrics update
 
 ## v2.2 Requirements (Deferred)
 
@@ -107,7 +107,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OBSV-01 | Phase 75 | Complete |
 | OBSV-02 | Phase 75 | Complete |
 | OBSV-03 | Phase 76 | Complete |
-| INTG-01 | Phase 77 | Pending |
+| INTG-01 | Phase 77 | Complete |
 
 **Coverage:**
 - v2.1 requirements: 21 total

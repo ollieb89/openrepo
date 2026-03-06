@@ -10,7 +10,7 @@
 - ✅ **v1.5 Config Consolidation** — Phases 45-53 (shipped 2026-02-25)
 - ✅ **v1.6 Agent Autonomy** — Phases 54-60 (shipped 2026-02-26)
 - ✅ **v2.0 Structural Intelligence** — Phases 61-67 (shipped 2026-03-04)
-- 🚧 **v2.1 Programmatic Integration & Real-Time Streaming** — Phases 68-77 (in progress)
+- ✅ **v2.1 Programmatic Integration & Real-Time Streaming** — Phases 68-77 (shipped 2026-03-06)
 
 ---
 
@@ -36,7 +36,7 @@
 
 ---
 
-### 🚧 v2.1 Programmatic Integration & Real-Time Streaming (In Progress)
+### ✅ v2.1 Programmatic Integration & Real-Time Streaming (Shipped 2026-03-06)
 
 **Milestone Goal:** Replace CLI-level coupling with programmatic APIs, activate existing event infrastructure, and deliver live L3 output streaming to the dashboard.
 
@@ -51,7 +51,7 @@
 - [x] **Phase 74: Dashboard Streaming UI** - Terminal-style live output panel with task board integration (completed 2026-03-05)
 - [x] **Phase 75: Unified Observability** - Consolidated metrics endpoint and pipeline timeline view (completed 2026-03-05)
 - [x] **Phase 76: SOUL Injection Verification** - Verify dynamic variables and topology context populated at spawn time (completed 2026-03-06)
-- [ ] **Phase 77: Integration E2E Verification** - End-to-end verification of full pipeline
+- [x] **Phase 77: Integration E2E Verification** - End-to-end verification of full pipeline (completed 2026-03-06)
 
 ## Phase Details
 
@@ -184,7 +184,7 @@ Plans:
   4. The event stream shows no gaps — all expected event types (dispatch, spawn, output, complete) appear in correct order
 **Plans**: 1 plan
 Plans:
-- [ ] 77-01-PLAN.md — End-to-end integration verification (INTG-01)
+- [x] 77-01-PLAN.md — End-to-end integration verification (INTG-01) [COMPLETE: 779 tests pass]
 
 ---
 
@@ -209,8 +209,8 @@ Plans:
 | 74. Dashboard Streaming UI | 1/1 | Complete   | 2026-03-05 | - |
 | 75. Unified Observability | 2/2 | Complete   | 2026-03-05 | - |
 | 76. SOUL Injection Verification | v2.1 | 1/1 | Complete | 2026-03-06 |
-| 77. Integration E2E Verification | v2.1 | 0/1 | Planned | - |
+| 77. Integration E2E Verification | v2.1 | 1/1 | Complete | 2026-03-06 |
 
 ---
 *Roadmap created: 2026-02-17*
-*Last updated: 2026-03-06 — Phases 76-77 planned (76-01-PLAN.md, 77-01-PLAN.md)*
+*Last updated: 2026-03-06 — v2.1 milestone shipped, all 10 phases complete (68-77)*
