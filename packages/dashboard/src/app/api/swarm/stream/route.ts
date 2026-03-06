@@ -1,20 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { streamContainerLogs, listSwarmContainers } from '@/lib/docker';
-import { validateToken, isAuthRequired, createUnauthorizedResponse } from '@/lib/auth';
 import { withAuth } from '@/lib/auth-middleware';
 
-export async function GET(request: NextRequest) {
-  // Check authentication
-  if (isAuthRequired()) {
-    const authHeader = request.headers.get('Authorization');
-    const customTokenHeader = request.headers.get('X-OpenClaw-Token');
-    const queryToken = new URL(request.url).searchParams.get('_token');
-
-    if (!validateToken(authHeader || undefined, customTokenHeader || undefined, queryToken || undefined)) {
-      return createUnauthorizedResponse();
-    }
-  }
-
+async function getHandler(request: NextRequest): Promise<Response> {
   const { searchParams } = new URL(request.url);
   const containerId = searchParams.get('containerId');
 
@@ -86,4 +74,5 @@ async function postHandler(request: NextRequest) {
   }
 }
 
+export const GET = withAuth(getHandler);
 export const POST = withAuth(postHandler);
