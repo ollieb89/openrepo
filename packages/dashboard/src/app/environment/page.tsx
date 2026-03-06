@@ -23,7 +23,7 @@ export default function EnvironmentPage() {
     { service: 'Jarvis State', status: 'loading', icon: <Activity className="w-5 h-5" /> },
   ]);
 
-  // Load OPENCLAW_ROOT on client side only to avoid hydration mismatch
+  // OPENCLAW_ROOT is exposed as a build-time env constant via next.config.js env block
   useEffect(() => {
     setOpenclawRoot(process.env.OPENCLAW_ROOT || 'Not set');
   }, []);
@@ -49,8 +49,13 @@ export default function EnvironmentPage() {
         newStatuses[1].status = 'unhealthy';
       }
 
-      // Check Event Bridge (via a small ping or just status)
-      newStatuses[2].status = 'healthy'; // Placeholder
+      // Check Event Bridge via the events/latest endpoint
+      try {
+        const res = await apiFetch('/api/events/latest?limit=1');
+        newStatuses[2].status = res.ok ? 'healthy' : 'unhealthy';
+      } catch (e) {
+        newStatuses[2].status = 'unhealthy';
+      }
 
       // Check Jarvis State
       try {
@@ -113,7 +118,9 @@ export default function EnvironmentPage() {
           </div>
           <div className="grid grid-cols-2 text-sm">
             <span className="text-gray-500">Event Socket</span>
-            <span className="font-mono text-gray-900 dark:text-gray-100">/tmp/openclaw-events.sock</span>
+            <span className="font-mono text-gray-900 dark:text-gray-100">
+              {(process.env.OPENCLAW_ROOT || '~/.openclaw') + '/run/events.sock'}
+            </span>
           </div>
         </div>
       </Card>
