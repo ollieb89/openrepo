@@ -511,19 +511,19 @@ The Mission Control page (`/occc/mission-control`) is the primary user-visible s
 
 ### P2: Stale or Wrong Data
 
-1. **`/api/metrics/trends` always returns all-zero counts** — The route buckets tasks by `task.metadata.completed_at`. All tasks in the workspace state have `metadata: {}` — no `completed_at` field — so the bucket map is empty and `generateEmptyPoints()` is called instead, producing all-zero rows. Trends are invisible on the Metrics page even when tasks have been completed. (`packages/dashboard/src/app/api/metrics/trends/route.ts`)
+1. ~~**`/api/metrics/trends` always returns all-zero counts**~~ **FIXED** (commit 7f4ca21) — Falls back to `task.updated_at ?? task.created_at` when `task.metadata.completed_at` is absent, so completed tasks appear in trend charts.
 
-2. **`/api/metrics/summary` uses `Math.random()` for trend direction** — `calculateTrend()` simulates historical comparison with random variation: `const variation = (Math.random() - 0.5) * 0.2`. Two identical requests return different trend arrows and percentages. Not suitable for production display. (`packages/dashboard/src/app/api/metrics/summary/route.ts`)
+2. ~~**`/api/metrics/summary` uses `Math.random()` for trend direction**~~ **FIXED** (commit ad082d1) — `calculateTrend()` now accepts an optional `previousValue`; returns `neutral`/`0%` when no historical data is available. No more random variation between requests.
 
-3. **`/api/events/latest` is unauthenticated** — Returns ring buffer snapshot without any auth check. No `withAuth` wrapper in `packages/dashboard/src/app/api/events/latest/route.ts`. Any caller can read all recent events.
+3. ~~**`/api/events/latest` is unauthenticated**~~ **FIXED** (commit 20d6c57) — GET handler wrapped with `withAuth`; unauthenticated callers receive 401.
 
-4. **`resolveSyncEndpoint` base-path mismatch** (P2, pending investigation) — Returns URLs with `/occc` prefix (the app's `basePath`) where tests expect bare `/api/...` paths. If basePath is applied twice in production, sync requests would 404. Needs investigation to determine if this is test-only or production bug.
+4. ~~**`resolveSyncEndpoint` base-path mismatch**~~ **FIXED** (commit af2b4c4) — Root cause was a production double-prefix bug: `resolveSyncEndpoint` called `apiPath()` and its result was passed to `apiFetch()` which also calls `apiPath()`, producing `/occc/occc/api/...` URLs. Fixed by returning bare `/api/...` paths; `apiFetch` applies the single prefix.
 
-5. **Test: `slack-adapter` teardown pollution** — `.tmp` directory is not cleaned up between test runs, causing an `ENOTEMPTY` error on the next run. Flaky test teardown only manifests on consecutive runs. Does not affect production. Classify as CI reliability issue (P2) unless evidence shows it blocks CI.
+5. **Test: `slack-adapter` teardown pollution** — Verified passing (2/2) after Task 5 test-isolation fixes. No further action required.
 
-6. **`/occc/settings` returns 404 — missing root settings page** — `src/app/settings/` has no `page.tsx`. Any link to `/settings` (without a sub-path) produces a Next.js 404. Three sub-pages exist (`/settings/gateway`, `/settings/connectors`, `/settings/privacy`) but the parent route is unroutable. (`packages/dashboard/src/app/settings/`)
+6. ~~**`/occc/settings` returns 404 — missing root settings page**~~ **FIXED** (commit 1a1d6d1) — Added `src/app/settings/page.tsx` that redirects to `/settings/gateway`.
 
-7. **Environment page reports Event Bridge as healthy when SSE is broken** — Hard-coded `newStatuses[2].status = 'healthy'` in `src/app/environment/page.tsx` makes Event Bridge always show green, masking the actual SSE ENOENT failure. (`packages/dashboard/src/app/environment/page.tsx`)
+7. ~~**Environment page reports Event Bridge as healthy when SSE is broken**~~ **FIXED** (commit f71f9de) — Replaced hard-coded `'healthy'` with a real fetch to `/api/events/latest`. Also fixed `OPENCLAW_ROOT` always showing "Not set" by exposing it via `next.config.js` `env` block, and corrected hard-coded socket path to `$OPENCLAW_ROOT/run/events.sock`.
 
 ### P3: Cosmetic / Minor
 
