@@ -235,3 +235,162 @@ $memory_section
                 assert "balanced" in soul
                 assert "0.85" in soul
                 assert "Memory item 1" in soul
+
+
+class TestSOULPopulationIntegration:
+    """Integration tests verifying SOUL variables are populated from real data layer."""
+
+    @pytest.fixture
+    def project_env(self, tmp_path):
+        """Create a minimal but real filesystem project structure under tmp_path."""
+        # agents/_templates/soul-default.md — copy the real template
+        real_template = (
+            Path(__file__).parent.parent.parent.parent
+            / "agents" / "_templates" / "soul-default.md"
+        )
+        template_dest = tmp_path / "agents" / "_templates" / "soul-default.md"
+        template_dest.parent.mkdir(parents=True)
+        template_dest.write_text(real_template.read_text())
+
+        # projects/testproj/project.json
+        project_dir = tmp_path / "projects" / "testproj"
+        project_dir.mkdir(parents=True)
+        project_config = {
+            "id": "testproj",
+            "name": "Test Project",
+            "agent_display_name": "Test PM",
+            "tech_stack": {"frontend": "React", "backend": "Python", "infra": "Docker"},
+            "agents": {"l2_pm": "test_pm"},
+        }
+        (project_dir / "project.json").write_text(json.dumps(project_config))
+
+        # workspace/.openclaw/testproj/workspace-state.json — empty tasks
+        state_dir = tmp_path / "workspace" / ".openclaw" / "testproj"
+        state_dir.mkdir(parents=True)
+        state_file = state_dir / "workspace-state.json"
+        state_file.write_text(json.dumps({"tasks": {}}))
+
+        # agents/test_pm/agent/config.json — L2 PM
+        pm_agent_dir = tmp_path / "agents" / "test_pm" / "agent"
+        pm_agent_dir.mkdir(parents=True)
+        (pm_agent_dir / "config.json").write_text(json.dumps({
+            "id": "test_pm",
+            "name": "Test PM",
+            "level": 2,
+            "reports_to": "clawdia_prime",
+            "max_concurrent": 2,
+            "skills": [],
+        }))
+
+        # agents/l3_specialist/agent/config.json — L3, max_concurrent=1 for deterministic pool_utilization
+        l3_agent_dir = tmp_path / "agents" / "l3_specialist" / "agent"
+        l3_agent_dir.mkdir(parents=True)
+        (l3_agent_dir / "config.json").write_text(json.dumps({
+            "id": "l3_specialist",
+            "name": "L3 Specialist",
+            "level": 3,
+            "reports_to": "test_pm",
+            "max_concurrent": 1,
+            "skills": [],
+        }))
+
+        return {"tmp_path": tmp_path, "state_file": state_file, "project_config": project_config}
+
+    def test_active_task_count_nonzero_when_task_in_progress(self, project_env):
+        """active_task_count and pool_utilization reflect a real in-progress task."""
+        tmp_path = project_env["tmp_path"]
+        state_file = project_env["state_file"]
+
+        with patch("openclaw.config.get_project_root", return_value=tmp_path), \
+             patch("openclaw.soul_renderer._find_project_root", return_value=tmp_path), \
+             patch("openclaw.config.get_state_path", return_value=state_file):
+
+            from openclaw.state_engine import JarvisState
+            jarvis = JarvisState(state_file)
+            jarvis.create_task("task-001", "code", metadata={})
+            jarvis.update_task("task-001", "in_progress", "Starting work")
+
+            registry = AgentRegistry(tmp_path)
+            vars_ = build_dynamic_variables("testproj", "l3_specialist", registry)
+
+        assert vars_["active_task_count"] == "1"
+        assert vars_["pool_utilization"] == "1/1"
+
+    def test_two_concurrent_states_show_different_counts(self, project_env):
+        """Count before adding a task differs from count after."""
+        tmp_path = project_env["tmp_path"]
+        state_file = project_env["state_file"]
+
+        with patch("openclaw.config.get_project_root", return_value=tmp_path), \
+             patch("openclaw.soul_renderer._find_project_root", return_value=tmp_path), \
+             patch("openclaw.config.get_state_path", return_value=state_file):
+
+            registry = AgentRegistry(tmp_path)
+
+            # Count before any tasks
+            vars_before = build_dynamic_variables("testproj", "l3_specialist", registry)
+            count_before = vars_before["active_task_count"]
+
+            # Add a task and re-query
+            from openclaw.state_engine import JarvisState
+            jarvis = JarvisState(state_file)
+            jarvis.create_task("task-002", "code", metadata={})
+            jarvis.update_task("task-002", "in_progress", "Running")
+
+            vars_after = build_dynamic_variables("testproj", "l3_specialist", registry)
+            count_after = vars_after["active_task_count"]
+
+        assert count_before != count_after
+        assert count_after == "1"
+
+    def test_topology_context_in_rendered_soul_after_save(self, project_env):
+        """Topology data saved via save_topology() appears in rendered SOUL."""
+        tmp_path = project_env["tmp_path"]
+        state_file = project_env["state_file"]
+        project_config = project_env["project_config"]
+
+        nodes = [
+            TopologyNode(id="agent-a", level=1, intent="orchestrate", risk_level="low"),
+            TopologyNode(id="agent-b", level=2, intent="coordinate", risk_level="medium"),
+            TopologyNode(id="agent-c", level=3, intent="execute", risk_level="low"),
+        ]
+        graph = TopologyGraph(
+            project_id="testproj",
+            nodes=nodes,
+            edges=[],
+            metadata={"archetype": "balanced", "structural_confidence": 0.82},
+        )
+
+        with patch("openclaw.config.get_project_root", return_value=tmp_path), \
+             patch("openclaw.soul_renderer._find_project_root", return_value=tmp_path), \
+             patch("openclaw.config.get_state_path", return_value=state_file), \
+             patch("openclaw.topology.storage.get_project_root", return_value=tmp_path), \
+             patch("openclaw.soul_renderer.load_project_config", return_value=project_config):
+
+            save_topology("testproj", graph)
+
+            registry = AgentRegistry(tmp_path)
+            dynamic_vars = build_dynamic_variables("testproj", "l3_specialist", registry)
+
+            assert dynamic_vars["topology_archetype"] == "balanced"
+            assert dynamic_vars["topology_agent_count"] == "3"
+            assert dynamic_vars["topology_confidence"] == "0.82"
+
+            soul = render_soul(
+                "testproj",
+                extra_variables={**dynamic_vars, "memory_section": "No context loaded."},
+            )
+
+        assert "balanced" in soul
+
+    def test_soul_template_has_topology_placeholders(self):
+        """The real soul-default.md template contains all topology variable placeholders."""
+        real_template = (
+            Path(__file__).parent.parent.parent.parent
+            / "agents" / "_templates" / "soul-default.md"
+        )
+        content = real_template.read_text()
+
+        assert "$topology_archetype" in content
+        assert "$topology_agent_count" in content
+        assert "$topology_confidence" in content
