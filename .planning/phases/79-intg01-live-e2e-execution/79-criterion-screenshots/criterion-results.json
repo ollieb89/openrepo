@@ -1,0 +1,49 @@
+{
+  "baseline_page_loaded": true,
+  "T0": 1772923327940,
+  "criterion1": {
+    "pass": true,
+    "elapsed_ms": 12757,
+    "T0": 1772923327940,
+    "T1": 1772923340697,
+    "note": "Task appeared in dashboard after dispatch"
+  },
+  "criterion2": {
+    "pass": true,
+    "clicked": true,
+    "hasConnected": true,
+    "hasPanel": true
+  },
+  "dash01": {
+    "pass": true,
+    "hasConnected": true
+  },
+  "dash03": {
+    "pass": false,
+    "scroll_indicator_appeared": false,
+    "indicator_dismissed": true
+  },
+  "criterion3": {
+    "pass": true,
+    "has_completed": true,
+    "has_numbers": true,
+    "has_pipeline": true
+  },
+  "criterion4": {
+    "pass": true,
+    "partial": false,
+    "dispatch_events": [
+      "task.created",
+      "task.started",
+      "task.output",
+      "task.output",
+      "task.output",
+      "task.output",
+      "task.output",
+      "task.output",
+      "task.output",
+      "task.completed"
+    ],
+    "sse_connected": false
+  }
+}

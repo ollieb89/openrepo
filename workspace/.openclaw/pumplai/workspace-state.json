@@ -104,6 +104,66 @@
       "created_at": 1772687791.978129,
       "updated_at": 1772687791.978129,
       "metadata": {}
+    },
+    "task-hello-world-python-live": {
+      "id": "task-hello-world-python-live",
+      "status": "completed",
+      "skill_hint": "Write a hello world Python script",
+      "created_at": 1772923327.9795017,
+      "activity_log": [
+        {
+          "timestamp": 1772923327.9795024,
+          "status": "created",
+          "entry": "Task created: Write a hello world Python script"
+        },
+        {
+          "timestamp": 1772923328.480518,
+          "status": "in_progress",
+          "entry": "L3 container starting: write hello world Python script"
+        },
+        {
+          "timestamp": 1772923328.9815443,
+          "status": "in_progress",
+          "entry": "+ Initializing Python environment..."
+        },
+        {
+          "timestamp": 1772923329.7826598,
+          "status": "in_progress",
+          "entry": "+ Creating hello_world.py..."
+        },
+        {
+          "timestamp": 1772923330.585512,
+          "status": "in_progress",
+          "entry": "  print(\"Hello, World!\")"
+        },
+        {
+          "timestamp": 1772923331.386595,
+          "status": "in_progress",
+          "entry": "+ Running: python hello_world.py"
+        },
+        {
+          "timestamp": 1772923332.1876314,
+          "status": "in_progress",
+          "entry": "  Hello, World!"
+        },
+        {
+          "timestamp": 1772923332.9886558,
+          "status": "in_progress",
+          "entry": "+ Script executed successfully"
+        },
+        {
+          "timestamp": 1772923333.7899315,
+          "status": "in_progress",
+          "entry": "+ Committing: feat: add hello world Python script"
+        },
+        {
+          "timestamp": 1772923334.5914435,
+          "status": "completed",
+          "entry": "Task completed: hello world Python script created and committed"
+        }
+      ],
+      "started_at": 1772923328.480516,
+      "completed_at": 1772923334.5914416
     }
   },
   "metadata": {
