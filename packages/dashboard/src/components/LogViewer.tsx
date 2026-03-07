@@ -53,7 +53,7 @@ export default function LogViewer({ taskId, containerId, staticLines, isActive =
       eventSourceRef.current = null;
     }
 
-    const eventSource = new EventSource('/api/events');
+    const eventSource = new EventSource('/occc/api/events');
     eventSourceRef.current = eventSource;
 
     eventSource.onopen = () => {
