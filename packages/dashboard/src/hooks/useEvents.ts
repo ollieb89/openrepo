@@ -24,7 +24,7 @@ export function useEvents(projectId?: string) {
     }
 
     setStatus('connecting');
-    const url = projectId ? `/api/events?project=${projectId}` : '/api/events';
+    const url = projectId ? `/occc/api/events?project=${projectId}` : '/occc/api/events';
     const es = new EventSource(url);
 
     es.addEventListener('connected', () => {
