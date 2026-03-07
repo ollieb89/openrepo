@@ -1,0 +1,19 @@
+{
+  "elapsed_ms": null,
+  "t0": 1772925439947,
+  "task_created_time": null,
+  "task_id": null,
+  "events_received": [],
+  "sse_error": false,
+  "task_row_visible_without_reload": true,
+  "dom_check": {
+    "matching_count": 0,
+    "has_verbose_text": true,
+    "has_task_id": true,
+    "page_title": "OCCC - OpenClaw Control Center",
+    "task_id": "task-verbose-output-test",
+    "body_text_snippet": "OCCC\n\nControl Center\n\nMission Control\nEscalations\nTasks\nContainers\nAgents\nTopology\nMetrics\nMemory\nSuggestions\nDecisions\nLink Review\nCatch Up\nEnvironment\n\nEXTERNAL\n\nAgent Runtime\nLocked\nSync: Disconnected\n0 issues\nProject:\nFinAI\nGerIAI\nGeriApp\nPumplAI\nReplyIQ\nRivalSignal\nSmartAI\nUgro Data\nViflo\nTASK BOARD\n\nL3 specialist tasks across the development workflow\n\n1\nPending\n1\nIn Progress\n0\nTesting\n3\nCompleted\n1\nFailed\nPending\n1\ntask-pending\nPending\nAdd caching layer\n2d ago\n0 events\nIn Progress\n1\ntask-verbose-output-test\nIn Progress\nBuild a verbose output test project with numpy, pandas, and tests\n\nDownloading numpy-1.26.0-cp311-cp311-linux_x86_64.whl\n\n2s ago\n9 events\nTesting\n0\nCompleted\n3\ntask-completed-with-log\nCompleted\nImplement auth middleware\n\nTask completed successfully\n\n2d ago\n8 events\ntas"
+  },
+  "T0_dispatch": 1772925440951,
+  "verdict": "PARTIAL"
+}
