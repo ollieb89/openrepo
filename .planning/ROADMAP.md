@@ -214,11 +214,13 @@ Plans:
   1. Docker + gateway + dashboard are all running simultaneously
   2. All 4 items in 77-E2E-CHECKLIST.md are executed and pass: task appears in task board, live output streams, metrics update after completion, event order is correct
   3. Phase 77 VERIFICATION.md updated with live results and INTG-01 marked fully satisfied
-**Plans**: 3 plans
+**Plans**: 5 plans (3 original + 2 gap closure)
 Plans:
-- [ ] 79-01-PLAN.md — Service health gates: Docker, memU, gateway, dashboard, Docker images, project config (INTG-01)
-- [ ] 79-02-PLAN.md — Live criterion execution: 4 INTG-01 criteria + DASH-01/DASH-03 via Playwright MCP (INTG-01)
-- [ ] 79-03-PLAN.md — VERIFICATION.md updates: 77-VERIFICATION.md (10/10) and 74-VERIFICATION.md (3/3) (INTG-01)
+- [x] 79-01-PLAN.md — Service health gates: Docker, memU, gateway, dashboard, Docker images, project config (INTG-01) [COMPLETE: all 6 gates passed]
+- [ ] 79-02-PLAN.md — Live criterion execution: 4 INTG-01 criteria + DASH-01/DASH-03 via Playwright MCP (INTG-01) [BLOCKED: event bridge offline — see 79-04/79-05 gap closure]
+- [ ] 79-03-PLAN.md — VERIFICATION.md updates: 77-VERIFICATION.md (10/10) and 74-VERIFICATION.md (3/3) (INTG-01) [COMPLETE: documented blocked state]
+- [ ] 79-04-PLAN.md — Gap closure: commit useEvents.ts fix, correct ROADMAP, start event bridge (INTG-01)
+- [ ] 79-05-PLAN.md — Gap closure: live criterion execution retry + VERIFICATION.md updates (INTG-01)
 
 ### Phase 80: Nyquist Compliance + Tech Debt Cleanup
 **Goal**: All v2.1 phases have VALIDATION.md files, dead code is removed, and low-severity cosmetic issues are fixed
