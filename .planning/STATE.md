@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Programmatic Integration & Real-Time Streaming
 status: completed
-stopped_at: Completed 79-03-PLAN.md — VERIFICATION.md files updated with Phase 79 Plan 02 execution attempt results
-last_updated: "2026-03-07T22:00:44.964Z"
+stopped_at: Completed 79-04-PLAN.md — useEvents.ts fix committed, ROADMAP.md corrected, event bridge confirmed healthy
+last_updated: "2026-03-07T22:26:28.648Z"
 last_activity: 2026-03-05 — Phase 75 Plan 02 complete, 125/127 TS tests pass (10 new pipeline tests), 9 files modified
 progress:
   total_phases: 13
-  completed_phases: 11
-  total_plans: 17
-  completed_plans: 17
+  completed_phases: 10
+  total_plans: 19
+  completed_plans: 18
   percent: 100
 ---
 
@@ -88,6 +88,7 @@ v2.1 decisions:
 - [Phase 78]: INTG-01 marked requirements_completed even with 4 live criteria deferred — automated evidence sufficient for traceability; live confirmation is Phase 79 scope
 - [Phase 78]: All deferred live E2E items (phases 74, 75, 77) directed to Phase 79 as single canonical live execution target
 - [Phase 79-intg01-live-e2e-execution]: VERIFICATION.md updates document actual blocked state from Phase 79 Plan 02 — INTG-01 remains PARTIALLY SATISFIED until event bridge is running for retry
+- [Phase 79-04]: Health endpoint /occc/api/health nests services under 'services' key — bridge status is h['services']['event_bridge']['status']
 
 ### Pending Todos
 
@@ -101,6 +102,6 @@ None. Previously blocking issues resolved in Phase 68 Plan 01:
 
 ## Session Continuity
 
-Last session: 2026-03-07T22:00:44.960Z
-Stopped at: Completed 79-03-PLAN.md — VERIFICATION.md files updated with Phase 79 Plan 02 execution attempt results
+Last session: 2026-03-07T22:26:28.643Z
+Stopped at: Completed 79-04-PLAN.md — useEvents.ts fix committed, ROADMAP.md corrected, event bridge confirmed healthy
 Resume file: None
