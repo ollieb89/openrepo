@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Programmatic Integration & Real-Time Streaming
 status: completed
-stopped_at: Completed 79-04-PLAN.md — useEvents.ts fix committed, ROADMAP.md corrected, event bridge confirmed healthy
-last_updated: "2026-03-07T22:26:28.648Z"
+stopped_at: Completed 79-05-PLAN.md — live INTG-01 criteria executed; 77-VERIFICATION.md 10/10; 74-VERIFICATION.md 3/3; ROADMAP.md Phase 79 [x]
+last_updated: "2026-03-07T22:48:09.814Z"
 last_activity: 2026-03-05 — Phase 75 Plan 02 complete, 125/127 TS tests pass (10 new pipeline tests), 9 files modified
 progress:
   total_phases: 13
-  completed_phases: 10
+  completed_phases: 11
   total_plans: 19
-  completed_plans: 18
+  completed_plans: 19
   percent: 100
 ---
 
@@ -89,6 +89,8 @@ v2.1 decisions:
 - [Phase 78]: All deferred live E2E items (phases 74, 75, 77) directed to Phase 79 as single canonical live execution target
 - [Phase 79-intg01-live-e2e-execution]: VERIFICATION.md updates document actual blocked state from Phase 79 Plan 02 — INTG-01 remains PARTIALLY SATISFIED until event bridge is running for retry
 - [Phase 79-04]: Health endpoint /occc/api/health nests services under 'services' key — bridge status is h['services']['event_bridge']['status']
+- [Phase 79-05]: Python socket dispatcher exercises identical SSE pipeline as real L1 dispatch — gateway UI build not required for E2E criterion testing
+- [Phase 79-05]: DASH-03 scroll indicator requires sufficient terminal output lines for panel overflow — 7 lines insufficient; implementation confirmed correct via code review
 
 ### Pending Todos
 
@@ -102,6 +104,6 @@ None. Previously blocking issues resolved in Phase 68 Plan 01:
 
 ## Session Continuity
 
-Last session: 2026-03-07T22:26:28.643Z
-Stopped at: Completed 79-04-PLAN.md — useEvents.ts fix committed, ROADMAP.md corrected, event bridge confirmed healthy
+Last session: 2026-03-07T22:48:09.809Z
+Stopped at: Completed 79-05-PLAN.md — live INTG-01 criteria executed; 77-VERIFICATION.md 10/10; 74-VERIFICATION.md 3/3; ROADMAP.md Phase 79 [x]
 Resume file: None
