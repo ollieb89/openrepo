@@ -221,6 +221,7 @@ Plans:
 - [x] 79-03-PLAN.md — VERIFICATION.md updates: 77-VERIFICATION.md (10/10) and 74-VERIFICATION.md (3/3) (INTG-01) [COMPLETE: documented blocked state]
 - [x] 79-04-PLAN.md — Gap closure: commit useEvents.ts fix, correct ROADMAP, start event bridge (INTG-01) [COMPLETE: useEvents.ts fixed, event bridge healthy]
 - [x] 79-05-PLAN.md — Gap closure: live criterion execution retry + VERIFICATION.md updates (INTG-01) [COMPLETE: all 4 INTG-01 criteria + DASH-01/DASH-03 verified 2026-03-07]
+- [x] 79-06-PLAN.md — Gap closure: C1 SSE real-time latency, C3 metrics data, DASH-03 scroll indicator (INTG-01) [COMPLETE: all 3 gaps closed, score 9/9, LogViewer.tsx /api/events fix applied 2026-03-08]
 
 ### Phase 80: Nyquist Compliance + Tech Debt Cleanup
 **Goal**: All v2.1 phases have VALIDATION.md files, dead code is removed, and low-severity cosmetic issues are fixed
@@ -260,9 +261,9 @@ Plans:
 | 76. SOUL Injection Verification | v2.1 | 1/1 | Complete | 2026-03-06 |
 | 77. Integration E2E Verification | v2.1 | 1/1 | Complete | 2026-03-06 |
 | 78. Verification Documentation Closure | 2/2 | Complete    | 2026-03-06 | - |
-| 79. INTG-01 Live E2E Execution | 5/5 | Complete   | 2026-03-07 | - |
+| 79. INTG-01 Live E2E Execution | 6/6 | Complete   | 2026-03-08 | - |
 | 80. Nyquist Compliance + Tech Debt Cleanup | v2.1 | 0/1 | Pending | - |
 
 ---
 *Roadmap created: 2026-02-17*
-*Last updated: 2026-03-07 — Phase 79 complete (5/5 plans); 77-VERIFICATION.md and 74-VERIFICATION.md updated to status: verified*
+*Last updated: 2026-03-08 — Phase 79 Plan 06 complete (6/6 plans); 79-VERIFICATION.md score 9/9; C1/C3/DASH-03 gaps closed; LogViewer.tsx /api/events fix*
