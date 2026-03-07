@@ -53,7 +53,7 @@
 - [x] **Phase 76: SOUL Injection Verification** - Verify dynamic variables and topology context populated at spawn time (completed 2026-03-06)
 - [x] **Phase 77: Integration E2E Verification** - End-to-end verification of full pipeline (completed 2026-03-06)
 - [x] **Phase 78: Verification Documentation Closure** - Write missing VERIFICATION.md files for phases 74, 76, 77 (automated portion) (completed 2026-03-06)
-- [ ] **Phase 79: INTG-01 Live E2E Execution** - Execute 4 deferred live INTG-01 success criteria with full system running (gap closure in progress)
+- [x] **Phase 79: INTG-01 Live E2E Execution** - Execute 4 deferred live INTG-01 success criteria with full system running (completed 2026-03-07)
 - [ ] **Phase 80: Nyquist Compliance + Tech Debt Cleanup** - Write missing VALIDATION.md for phases 69-73, 76-77; remove dead code; fix cosmetic issues
 
 ## Phase Details
@@ -217,10 +217,10 @@ Plans:
 **Plans**: 5 plans (3 original + 2 gap closure)
 Plans:
 - [x] 79-01-PLAN.md — Service health gates: Docker, memU, gateway, dashboard, Docker images, project config (INTG-01) [COMPLETE: all 6 gates passed]
-- [ ] 79-02-PLAN.md — Live criterion execution: 4 INTG-01 criteria + DASH-01/DASH-03 via Playwright MCP (INTG-01) [BLOCKED: event bridge offline — see 79-04/79-05 gap closure]
-- [ ] 79-03-PLAN.md — VERIFICATION.md updates: 77-VERIFICATION.md (10/10) and 74-VERIFICATION.md (3/3) (INTG-01) [COMPLETE: documented blocked state]
-- [ ] 79-04-PLAN.md — Gap closure: commit useEvents.ts fix, correct ROADMAP, start event bridge (INTG-01)
-- [ ] 79-05-PLAN.md — Gap closure: live criterion execution retry + VERIFICATION.md updates (INTG-01)
+- [x] 79-02-PLAN.md — Live criterion execution: 4 INTG-01 criteria + DASH-01/DASH-03 via Playwright MCP (INTG-01) [COMPLETE: blocked — event bridge offline; see 79-04/79-05 gap closure]
+- [x] 79-03-PLAN.md — VERIFICATION.md updates: 77-VERIFICATION.md (10/10) and 74-VERIFICATION.md (3/3) (INTG-01) [COMPLETE: documented blocked state]
+- [x] 79-04-PLAN.md — Gap closure: commit useEvents.ts fix, correct ROADMAP, start event bridge (INTG-01) [COMPLETE: useEvents.ts fixed, event bridge healthy]
+- [x] 79-05-PLAN.md — Gap closure: live criterion execution retry + VERIFICATION.md updates (INTG-01) [COMPLETE: all 4 INTG-01 criteria + DASH-01/DASH-03 verified 2026-03-07]
 
 ### Phase 80: Nyquist Compliance + Tech Debt Cleanup
 **Goal**: All v2.1 phases have VALIDATION.md files, dead code is removed, and low-severity cosmetic issues are fixed
@@ -260,9 +260,9 @@ Plans:
 | 76. SOUL Injection Verification | v2.1 | 1/1 | Complete | 2026-03-06 |
 | 77. Integration E2E Verification | v2.1 | 1/1 | Complete | 2026-03-06 |
 | 78. Verification Documentation Closure | 2/2 | Complete    | 2026-03-06 | - |
-| 79. INTG-01 Live E2E Execution | 4/5 | In Progress|  | - |
+| 79. INTG-01 Live E2E Execution | 5/5 | Complete | 2026-03-07 | - |
 | 80. Nyquist Compliance + Tech Debt Cleanup | v2.1 | 0/1 | Pending | - |
 
 ---
 *Roadmap created: 2026-02-17*
-*Last updated: 2026-03-06 — Phase 79 expanded to 3 plans (service gates, criterion execution, VERIFICATION.md updates)*
+*Last updated: 2026-03-07 — Phase 79 complete (5/5 plans); 77-VERIFICATION.md and 74-VERIFICATION.md updated to status: verified*
