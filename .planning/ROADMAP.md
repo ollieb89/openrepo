@@ -234,7 +234,7 @@ Plans:
   3. environment/page.tsx socket path display label matches the actual socket path used in route.ts
 **Plans**: 1 plan
 Plans:
-- [ ] 80-01-PLAN.md — Write VALIDATION.md for phases 69-73, 76-77; remove dead code; fix cosmetic label (tech debt)
+- [ ] 80-01-PLAN.md — Write VALIDATION.md for phases 69-73, 76-77; remove dead code; verify socket label (tech debt)
 
 ---
 
