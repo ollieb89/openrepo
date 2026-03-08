@@ -4,7 +4,7 @@ milestone: v2.1
 milestone_name: Programmatic Integration & Real-Time Streaming
 status: completed
 stopped_at: Phase 82 complete — v2.1 milestone fully Nyquist-attested (82-01-PLAN.md)
-last_updated: "2026-03-08T02:36:03.219Z"
+last_updated: "2026-03-08T02:38:45.411Z"
 last_activity: 2026-03-05 — Phase 75 Plan 02 complete, 125/127 TS tests pass (10 new pipeline tests), 9 files modified
 progress:
   total_phases: 15
