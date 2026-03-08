@@ -264,7 +264,7 @@ Plans:
   5. Phase 80 VALIDATION.md exists with `nyquist_compliant: true`
 **Plans**: 1 plan
 Plans:
-- [ ] 82-01-PLAN.md — Run /gsd:validate-phase for phases 74, 75, 78, 79, 80 (Nyquist gap closure)
+- [ ] 82-01-PLAN.md — Write retroactive attestation VALIDATION.md for phases 74, 75, 78, 79, 80 + update milestone audit
 
 ---
 
