@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 
 import openclaw.metrics as m
-from openclaw.metrics import write_python_metrics_snapshot
+from openclaw.metrics import write_python_metrics_snapshot, collect_metrics_from_state
 
 
 # ---------------------------------------------------------------------------
@@ -214,4 +214,34 @@ def test_no_reentrant_lock(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> N
     assert len(jarvis_instantiated) == 0, (
         "write_python_metrics_snapshot must NOT instantiate JarvisState — "
         "it should use the state_dict parameter directly to avoid re-entrant lock deadlock"
+    )
+
+
+# ---------------------------------------------------------------------------
+# GAP-04 tests: collect_metrics_from_state reads per-project max_concurrent
+# ---------------------------------------------------------------------------
+
+
+def test_collect_metrics_default_max_concurrent() -> None:
+    """collect_metrics_from_state with no project_id returns default max_concurrent=3."""
+    result = collect_metrics_from_state(_minimal_state_dict())
+    assert result["pool"]["max_concurrent"] == 3
+
+
+def test_collect_metrics_returns_project_max_concurrent(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """collect_metrics_from_state with project_id reads max_concurrent from project config."""
+    # Create a project.json with l3_overrides.max_concurrent=5
+    project_dir = tmp_path / "projects" / "testproj"
+    project_dir.mkdir(parents=True)
+    (project_dir / "project.json").write_text(
+        '{"l3_overrides": {"max_concurrent": 5}}'
+    )
+
+    monkeypatch.setenv("OPENCLAW_ROOT", str(tmp_path))
+
+    result = collect_metrics_from_state(_minimal_state_dict(), "testproj")
+    assert result["pool"]["max_concurrent"] == 5, (
+        f"Expected max_concurrent=5 from project config, got {result['pool']['max_concurrent']}"
     )

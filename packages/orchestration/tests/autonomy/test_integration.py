@@ -387,6 +387,70 @@ class TestEndToEndLifecycle:
         assert hooks.get_autonomy_context("cleanup-test") is None
 
 
+class TestGap03ProjectId:
+    """GAP-03 tests: project_id threading through events and hooks."""
+
+    def test_to_dict_includes_project_id(self):
+        """AutonomyStateChanged.to_dict() has project_id key when project_id is supplied."""
+        event = AutonomyStateChanged(
+            task_id="t1",
+            project_id="proj-x",
+            old_state="planning",
+            new_state="executing",
+            reason="Test",
+        )
+        d = event.to_dict()
+        assert "project_id" in d, "to_dict() must include 'project_id' key"
+        assert d["project_id"] == "proj-x"
+
+    def test_to_dict_project_id_none_by_default(self):
+        """AutonomyStateChanged.to_dict() project_id is None when not supplied."""
+        event = AutonomyStateChanged(
+            task_id="t1",
+            old_state="",
+            new_state="planning",
+            reason="Test",
+        )
+        d = event.to_dict()
+        assert d.get("project_id") is None
+
+    def test_on_task_spawn_emits_with_project_id(self, mock_event_bus, clear_hooks_store):
+        """on_task_spawn with project_id in task_spec emits event with project_id."""
+        with patch('openclaw.event_bus.emit') as mock_emit:
+            mock_emit.side_effect = mock_event_bus.emit
+
+            hooks.on_task_spawn("task-001", {"project_id": "proj-alpha", "max_retries": 1})
+
+            all_events = mock_event_bus.get_events(EVENT_STATE_CHANGED)
+            assert len(all_events) >= 1
+            assert all_events[0]["project_id"] == "proj-alpha", (
+                f"emitted envelope must have project_id='proj-alpha', got {all_events[0]}"
+            )
+
+    def test_on_task_failed_emits_autonomy_escalation_event(self, mock_event_bus, clear_hooks_store):
+        """on_task_failed escalation path emits event_type='autonomy.escalation' with project_id."""
+        all_captured = []
+
+        def capture(envelope):
+            all_captured.append(envelope)
+
+        with patch('openclaw.event_bus.emit') as mock_emit:
+            mock_emit.side_effect = lambda ev: (mock_event_bus.emit(ev), all_captured.append(ev))
+
+            hooks.on_task_spawn("task-002", {"project_id": "proj-beta", "max_retries": 0})
+            hooks.on_container_healthy("task-002")
+            hooks.on_task_failed("task-002", "error")
+
+        escalation_events = [
+            e for e in all_captured if e.get("event_type") == "autonomy.escalation"
+        ]
+        assert len(escalation_events) >= 1, (
+            f"Expected at least one 'autonomy.escalation' event, got event types: "
+            f"{[e.get('event_type') for e in all_captured]}"
+        )
+        assert escalation_events[0].get("project_id") == "proj-beta"
+
+
 class TestErrorHandling:
     """Tests for error handling and edge cases."""
 
