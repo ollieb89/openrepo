@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Programmatic Integration & Real-Time Streaming
 status: completed
-stopped_at: Phase 82 context gathered
-last_updated: "2026-03-08T02:08:06.332Z"
+stopped_at: Phase 82 complete — v2.1 milestone fully Nyquist-attested (82-01-PLAN.md)
+last_updated: "2026-03-08T02:36:03.219Z"
 last_activity: 2026-03-05 — Phase 75 Plan 02 complete, 125/127 TS tests pass (10 new pipeline tests), 9 files modified
 progress:
   total_phases: 15
-  completed_phases: 13
-  total_plans: 22
-  completed_plans: 22
+  completed_phases: 14
+  total_plans: 23
+  completed_plans: 23
   percent: 100
 ---
 
@@ -97,6 +97,8 @@ v2.1 decisions:
 - [Phase 80-nyquist-compliance-tech-debt-cleanup]: collect_metrics() removed — dead code with deadlock risk; collect_metrics_from_state() is sole production API
 - [Phase 80-nyquist-compliance-tech-debt-cleanup]: environment/page.tsx socket path label confirmed correct — matches route.ts; no code change needed
 - [Phase 81-alert-metrics-accuracy]: [Phase 81-alert-metrics-accuracy]: project_id uses Optional[str]=None on AutonomyEvent; _task_project_map threads it through hooks.py; dual emit (escalation_triggered + autonomy.escalation) for bridge routing; collect_metrics_from_state accepts project_id with default empty string for backward compat
+- [Phase 82-nyquist-v2.1-completion]: Deliverables attestation format used for phases 78 and 80 (documentation/cleanup phases) — no test suite exists for attestation work; deliverable presence is the verification
+- [Phase 82-nyquist-v2.1-completion]: Accepted Deferrals section in 75-VALIDATION.md uses user-locked framing — automated 9/9 evidence sufficient; 4 browser items are plan-approved deferrals per CONTEXT.md
 
 ### Pending Todos
 
@@ -110,6 +112,6 @@ None. Previously blocking issues resolved in Phase 68 Plan 01:
 
 ## Session Continuity
 
-Last session: 2026-03-08T02:08:06.327Z
-Stopped at: Phase 82 context gathered
-Resume file: .planning/phases/82-nyquist-v2.1-completion/82-CONTEXT.md
+Last session: 2026-03-08T02:36:03.214Z
+Stopped at: Phase 82 complete — v2.1 milestone fully Nyquist-attested (82-01-PLAN.md)
+Resume file: None

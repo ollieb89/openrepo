@@ -56,7 +56,7 @@
 - [x] **Phase 79: INTG-01 Live E2E Execution** - Execute 4 deferred live INTG-01 success criteria with full system running (completed 2026-03-07)
 - [x] **Phase 80: Nyquist Compliance + Tech Debt Cleanup** - Write missing VALIDATION.md for phases 69-73, 76-77; remove dead code; fix cosmetic issues (completed 2026-03-08)
 - [x] **Phase 81: Alert & Metrics Accuracy** - Fix autonomy alert project_id scoping (GAP-03) and metrics.py hardcoded max_concurrent (GAP-04) (completed 2026-03-08)
-- [ ] **Phase 82: Nyquist v2.1 Completion** - Run /gsd:validate-phase for phases 74, 75, 78, 79, 80 to flip nyquist_compliant: true
+- [x] **Phase 82: Nyquist v2.1 Completion** - Run /gsd:validate-phase for phases 74, 75, 78, 79, 80 to flip nyquist_compliant: true (completed 2026-03-08)
 
 ## Phase Details
 
@@ -294,7 +294,7 @@ Plans:
 | 79. INTG-01 Live E2E Execution | 6/6 | Complete    | 2026-03-07 | - |
 | 80. Nyquist Compliance + Tech Debt Cleanup | 1/1 | Complete    | 2026-03-08 | - |
 | 81. Alert & Metrics Accuracy | 1/1 | Complete    | 2026-03-08 | - |
-| 82. Nyquist v2.1 Completion | v2.1 | 0/1 | Pending | - |
+| 82. Nyquist v2.1 Completion | 1/1 | Complete   | 2026-03-08 | - |
 
 ---
 *Roadmap created: 2026-02-17*
