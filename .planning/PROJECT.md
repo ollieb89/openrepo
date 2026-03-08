@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A cognitive infrastructure layer for autonomous multi-agent systems. OpenClaw manages not just agent execution, but the organizational structure of agent swarms — proposing, scoring, and evolving the topology of how agents collaborate. Built on a battle-tested 3-tier hierarchy (v1.0-v1.6) with Docker isolation, memory, autonomy, and observability. v2.0 added pre-execution structural intelligence: the system now designs its own orchestration before executing it.
+A cognitive infrastructure layer for autonomous multi-agent systems. OpenClaw manages not just agent execution, but the organizational structure of agent swarms — proposing, scoring, and evolving the topology of how agents collaborate. Built on a battle-tested 3-tier hierarchy (v1.0-v1.6) with Docker isolation, memory, autonomy, and observability. v2.0 added pre-execution structural intelligence: the system designs its own orchestration before executing it. v2.1 activated the real-time event pipeline: live L3 output streams to the dashboard, all directives route through the gateway API, and the unified metrics endpoint consolidates cross-layer observability.
 
 ## Core Value
 
@@ -24,24 +24,17 @@ The system designs and refactors its own orchestration — proposing multi-agent
 - ✓ Dual correction system — v2.0 (soft feedback + hard direct edit with approval gate enforcement)
 - ✓ Structural memory — v2.0 (decay-weighted preference profiling, epsilon-greedy exploration, LLM pattern extraction, L3 isolation)
 - ✓ Topology observability — v2.0 (React Flow DAG, dual-panel comparison, correction timeline, confidence evolution chart)
+- ✓ Tech debt cleared — v2.1 (test failures fixed, TopologyProposal consolidated, hardcoded paths removed)
+- ✓ Live event bridge — v2.1 (Unix socket server auto-starts, all 17 event types flow to dashboard SSE)
+- ✓ Gateway-only dispatch — v2.1 (execFileSync fallback removed, bootstrap mode for setup CLI)
+- ✓ Unified AgentRegistry — v2.1 (auto-discovery, drift detection, per-agent config as source of truth)
+- ✓ Terminal streaming dashboard — v2.1 (live L3 output panel, auto-scroll, click-to-open task stream)
+- ✓ Pipeline timeline & unified metrics — v2.1 (/api/metrics consolidates Python + dashboard; PipelineStrip shows L1→L2→L3)
+- ✓ INTG-01 live E2E verified — v2.1 (Playwright-confirmed: dispatch → task board → live stream → metrics → event order)
 
 ### Active
 
-## Current Milestone: v2.1 Programmatic Integration & Real-Time Streaming
-
-**Goal:** Replace CLI-level coupling with programmatic APIs, activate existing event infrastructure, and deliver live L3 output streaming to the dashboard.
-
-**Target features:**
-- Tech debt resolution (test failures, TopologyProposal consolidation, hardcoded path removal)
-- Event bridge activation (start Unix socket server, wire event bus, dashboard SSE verification)
-- Gateway-only dispatch (remove execFileSync fallback, route all directives through gateway HTTP API)
-- Unified Agent Registry (merge openclaw.json + per-agent configs, auto-discovery, resolve config drift)
-- L3 output streaming (Docker logs → event bus → Unix socket → dashboard SSE, live terminal view)
-- Cross-runtime observability (unified metrics endpoint, pipeline timeline view L1→L2→L3)
-- SOUL injection verification (ensure dynamic variables populated at spawn time, add topology context)
-- Docker base image sharing (shared base image, rebase L3 Dockerfile)
-- Bootstrap mode (gateway-free startup flag for initial setup)
-- Integration E2E verification
+*(Planning next milestone — see /gsd:new-milestone)*
 
 ### Out of Scope
 
@@ -57,17 +50,13 @@ The system designs and refactors its own orchestration — proposing multi-agent
 
 ## Context
 
-- 67 phases shipped across 8 milestones (v1.0-v2.0)
-- ~365K LOC across Python + TypeScript
-- Existing infrastructure: Gateway, Docker containers, memU memory, autonomy framework, topology engine, dashboard
-- The system now proposes its own orchestration structure before execution, learning from human corrections
+- 82 phases shipped across 9 milestones (v1.0-v2.1)
+- ~88,500 LOC across Python + TypeScript
+- Infrastructure: Gateway (HTTP API), Docker L3 containers, memU memory, autonomy framework, topology engine, event bridge (Unix socket), dashboard (Next.js)
+- The system proposes its own orchestration structure, learns from corrections, and now streams live agent output to operators in real-time
 - Target users: AI-native product teams, internal platform teams, multi-agent researchers
-- Event infrastructure exists but isn't wired: Unix socket transport, 17 event types defined, dashboard SSE bridge — server never started
-- Router already has fetch-to-gateway primary path with execFileSync fallback — v2.1 removes fallback
-- Per-agent config.json files are richer than openclaw.json entries — registry consolidation needed
-- Pre-existing test failures: async event loop issues in test_proposer.py, nested loop conflicts in test_state_engine_memory.py
-- Dual TopologyProposal classes (proposer.py vs proposal_models.py) with incompatible field names (graph vs topology)
-- Hardcoded ~/ and ~/ paths in 15+ files including active runtime configs
+- All v2.1 tech debt resolved: single TopologyProposal class, no hardcoded paths, all tests passing
+- Event bridge is the operational dependency: dashboard SSE requires Python orchestration process to be running
 
 ## Constraints
 
@@ -86,8 +75,13 @@ The system designs and refactors its own orchestration — proposing multi-agent
 | Execute-then-analyze on direct edit | Respects user authority, non-blocking, learns asynchronously | ✓ Good — no latency on hard corrections |
 | Pre-execution only (no mid-flight) | Scopes milestone cleanly; adaptation is v2.1+ | ✓ Good — clean boundary, deferred complexity |
 | Topology data in separate files | Avoids fcntl contention with L3 workspace-state.json | ✓ Good — no lock conflicts observed |
-| Dual TopologyProposal classes | Separate proposer vs presentation concerns; bridged by conversion shim | ⚠️ Revisit — tech debt, consolidate in future |
+| Dual TopologyProposal classes | Separate proposer vs presentation concerns; bridged by conversion shim | ✓ Resolved — consolidated in v2.1 Phase 68 |
 | Dataclasses over Pydantic | Consistent with AgentSpec pattern in existing codebase | ✓ Good — lightweight, no dependency added |
+| Gateway-only dispatch | Remove execFileSync fallback; all L1→L2 directives through HTTP API | ✓ Good — clean dispatch boundary, gateway is required runtime dep |
+| event_bus.emit() as single publish path | Wrap all event emissions through bus; bridge handler forwards to socket | ✓ Good — no double-emission, bridge failure is non-fatal warning |
+| In-memory event ring buffer | Shared module-level ring (100 events per task) for SSE reconnect replay | ✓ Good — sufficient for v2.1; defer disk persistence to v2.2 |
+| Per-agent config.json as source of truth | AgentRegistry merges per-agent files into openclaw.json at startup with drift warnings | ✓ Good — eliminates manual openclaw.json sync |
+| project_id on AutonomyEvent | Optional[str] field threads project context through hooks._task_project_map | ✓ Good — GAP-03 closed; alerts now project-scoped |
 
 ---
-*Last updated: 2026-03-04 after v2.1 milestone initialization*
+*Last updated: 2026-03-08 after v2.1 milestone*

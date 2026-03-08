@@ -4,7 +4,7 @@ milestone: v2.1
 milestone_name: Programmatic Integration & Real-Time Streaming
 status: completed
 stopped_at: Phase 82 complete — v2.1 milestone fully Nyquist-attested (82-01-PLAN.md)
-last_updated: "2026-03-08T02:38:45.411Z"
+last_updated: "2026-03-08T02:43:09.750Z"
 last_activity: 2026-03-05 — Phase 75 Plan 02 complete, 125/127 TS tests pass (10 new pipeline tests), 9 files modified
 progress:
   total_phases: 15
@@ -18,10 +18,10 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-04)
+See: .planning/PROJECT.md (updated 2026-03-08 after v2.1 milestone)
 
-**Core value:** The system designs and refactors its own orchestration
-**Current focus:** Phase 75 — Unified Observability (COMPLETE — OBSV-01 and OBSV-02 resolved)
+**Core value:** The system designs and refactors its own orchestration — with live real-time streaming of agent output to operators
+**Current focus:** Planning next milestone (v2.2) — use /gsd:new-milestone
 
 ## Current Position
 

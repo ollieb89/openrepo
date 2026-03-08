@@ -1,0 +1,91 @@
+{
+  "verdict": "PASS",
+  "reason": "Found numeric completed count: 2 in completed context",
+  "numeric_completed_count": 2,
+  "numeric_values_found": [
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "1",
+    "16",
+    "14",
+    "15",
+    "11",
+    "13",
+    "42",
+    "12"
+  ],
+  "completed_context": "trends over time\n\nMar 2\nMar 3\nMar 4\nMar 5\nMar 6\nMar 7\nMar 8\n0\n1\n2\n3\n4\n0\n1\n2\n3\n4\nCompleted\nThroughput\nSTATUS DISTRIBUTION\n\nTask status over time\n\nMar 2\nMar 3\nMar 4\nMar 5\nMar 6\nMar 7\nMar 8\n0\n1\n2\n3\n4\nCompleted\nIn Progress\nPending\nFai",
+  "dom_inspection": {
+    "page_title": "OCCC - OpenClaw Control Center",
+    "url": "http://localhost:6987/occc/metrics",
+    "td": [
+      "task-pending",
+      "Pending",
+      "Add caching layer",
+      "Mar 5, 06:16 AM",
+      "Mar 5, 06:16 AM",
+      "task-completed-with-log",
+      "Completed",
+      "Implement auth middleware",
+      "Mar 5, 06:14 AM",
+      "Mar 5, 06:15 AM"
+    ],
+    "th": [
+      "ID ↕",
+      "Status ↕",
+      "Skill ↕",
+      "Created ↕",
+      "Updated ↓"
+    ],
+    ".recharts-text": [
+      "Mar 2",
+      "Mar 3",
+      "Mar 4",
+      "Mar 5",
+      "Mar 6",
+      "Mar 7",
+      "Mar 8",
+      "0",
+      "1",
+      "2"
+    ],
+    "completed_context": "trends over time\n\nMar 2\nMar 3\nMar 4\nMar 5\nMar 6\nMar 7\nMar 8\n0\n1\n2\n3\n4\n0\n1\n2\n3\n4\nCompleted\nThroughput\nSTATUS DISTRIBUTION\n\nTask status over time\n\nMar 2\nMar 3\nMar 4\nMar 5\nMar 6\nMar 7\nMar 8\n0\n1\n2\n3\n4\nCompleted\nIn Progress\nPending\nFai",
+    "numeric_values_found": [
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "1",
+      "16",
+      "14",
+      "15",
+      "11",
+      "13",
+      "42",
+      "12"
+    ],
+    "full_text_snippet": "OCCC\n\nControl Center\n\nMission Control\nEscalations\nTasks\nContainers\nAgents\nTopology\nMetrics\nMemory\nSuggestions\nDecisions\nLink Review\nCatch Up\nEnvironment\n\nEXTERNAL\n\nAgent Runtime\nLocked\nSync: Disconnected\n0 issues\nProject:\nFinAI\nGerIAI\nGeriApp\nPumplAI\nReplyIQ\nRivalSignal\nSmartAI\nUgro Data\nViflo\nTASK METRICS\n\nMonitor task completion, throughput, and agent performance\n\n7d\n30d\n90d\nAll\nCustom ▼\n\nCompletion Rate\n\n0%\n\nThroughput\n\n0\n\nCycle Time\n\n0s\n\nWIP\n\n0\n\nFailure Rate\n\n0%\n\nCOMPLETION & THROUGHPUT\n\nTask trends over time\n\nMar 2\nMar 3\nMar 4\nMar 5\nMar 6\nMar 7\nMar 8\n0\n1\n2\n3\n4\n0\n1\n2\n3\n4\nCompleted\nThroughput\nSTATUS DISTRIBUTION\n\nTask status over time\n\nMar 2\nMar 3\nMar 4\nMar 5\nMar 6\nMar 7\nMar 8\n0\n1\n2\n3\n4\nCompleted\nIn Progress\nPending\nFailed\nAGENT LEADERBOARD\n\nNo agent data available\n\nTASK DETAILS\nExport\nAll Status\nPending\nIn Progress\nStarting\nTesting\nCompleted\nFailed\nRejected\nID\n↕\n\t\nStatus\n↕\n\t\nSkill\n↕\n\t\nCreated\n↕\n\t\nUpdated\n↓\n\ntask-pending\tPending\tAdd caching layer\tMar 5, 06:16 AM\tMar 5, 06:16 AM\ntask-completed-with-log\tCompleted\tImplement auth middleware\tMar 5, 06:14 AM\tMar 5, 06:15 AM\ntask-completed-no-log\tCompleted\tUpdate README docs\tMar 5, 06:11 AM\tMar 5, 06:13 AM\ntask-failed-with-log\tFailed\tFix database migration\tMar 5, 06:08 AM\tMar 5, 06:09 AM\ntask-hello-world-python-live\tCompleted\tWrite a hello world Python script\tMar 7, 11:42 PM\tInvalid Date\ntask-verbose-output-test\tCompleted\tBuild a verbose output test project with numpy, pandas, and tests\tMar 8, 12:17 AM\tInvalid Date\nPIPELINE TIMELINE\n6 tasks\nAll statuses\nPending\nIn progress\nCompleted\nFailed\nAll stages\nL1\nL2\nL3\nAny duration\n< 30s\n30s – 5m\n> 5m\ntask-verbose-output-test\nCompleted\n!\n—\ntask-hello-world-python-live\nCompleted\n!\n—\ntask-pending\nPending\n—\ntask-completed-with-log\nCompleted\n!\n—\ntask-completed-no-log\nCompleted\n!\n—\ntask-failed-with-log\nFailed\n!\n—\n0"
+  },
+  "pipeline": {
+    "timeline_found": false,
+    "row_count": 7,
+    "row_texts": [
+      "ID ↕Status ↕Skill ↕Created ↕Updated ↓",
+      "task-pendingPendingAdd caching layerMar 5, 06:16 AMMar 5, 06:16 AM",
+      "task-completed-with-logCompletedImplement auth middlewareMar 5, 06:14 AMMar 5, 06:15 AM",
+      "task-completed-no-logCompletedUpdate README docsMar 5, 06:11 AMMar 5, 06:13 AM",
+      "task-failed-with-logFailedFix database migrationMar 5, 06:08 AMMar 5, 06:09 AM",
+      "task-hello-world-python-liveCompletedWrite a hello world Python scriptMar 7, 11:42 PMInvalid Date",
+      "task-verbose-output-testCompletedBuild a verbose output test project with numpy, pandas, and testsMar 8, 12:17 AMInvalid Date"
+    ],
+    "stat_elements": []
+  }
+}

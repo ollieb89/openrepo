@@ -1,0 +1,24 @@
+{
+  "task_id": "task-hello-world-python-live",
+  "T0": 1772923327979,
+  "T_created": 1772923327980,
+  "elapsed_created_ms": 1,
+  "T_started": 1772923328481,
+  "elapsed_started_ms": 502,
+  "T_completed": 1772923334592,
+  "elapsed_completed_ms": 6613,
+  "output_lines": 7,
+  "events_emitted": [
+    "task.created",
+    "task.started",
+    "task.output",
+    "task.output",
+    "task.output",
+    "task.output",
+    "task.output",
+    "task.output",
+    "task.output",
+    "task.completed"
+  ],
+  "criterion1_pass": true
+}

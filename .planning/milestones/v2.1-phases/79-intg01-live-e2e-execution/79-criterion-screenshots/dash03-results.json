@@ -1,0 +1,60 @@
+{
+  "verdict": "PASS",
+  "panel_overflow": true,
+  "scrollHeight": 1543,
+  "clientHeight": 397,
+  "child_count": 38,
+  "log_container_class": "h-full overflow-y-auto p-3",
+  "indicator_appeared": true,
+  "indicator_dismissed": true,
+  "task_appeared_via_sse": true,
+  "logviewer_url_fix": "LogViewer.tsx fixed from /api/events to /occc/api/events",
+  "indicator_check": {
+    "has_scroll_to_resume": true,
+    "has_down_arrow": true,
+    "resume_button": {
+      "html": "<button class=\"px-3 py-1 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-full text-xs border border-gray-600\">↓ scroll to resume</button>",
+      "text": "↓ scroll to resume"
+    },
+    "indicator_element": "<div class=\"absolute bottom-3 right-3\"><button class=\"px-3 py-1 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-full text-xs border border-gray-600\">↓ scroll to resume</button></div>",
+    "down_arrow_elements": [
+      {
+        "tag": "BUTTON",
+        "text": "↓ scroll to resume",
+        "class": "px-3 py-1 bg-gray-700 hover:bg-gray-600 text-gray-"
+      }
+    ],
+    "all_buttons": [
+      "Locked",
+      "1Pending",
+      "1In Progress",
+      "0Testing",
+      "3Completed",
+      "1Failed",
+      "×",
+      "↓ scroll to resume"
+    ],
+    "body_text_lines": [
+      "[12:30:25 AM] + Writing main function: process_data()",
+      "[12:30:25 AM] + Writing utility function: validate_input()",
+      "[12:30:26 AM] + Writing test suite: test_main.py",
+      "[12:30:26 AM] + Running tests: python -m pytest test_main.py -v",
+      "[12:30:26 AM] PASSED test_main.py::test_process_data_empty_input",
+      "[12:30:27 AM] PASSED test_main.py::test_process_data_valid_input",
+      "[12:30:27 AM] PASSED test_main.py::test_validate_input_none",
+      "[12:30:27 AM] PASSED test_main.py::test_validate_input_valid",
+      "[12:30:28 AM] 4 passed in 0.12s",
+      "[12:30:28 AM] + Running linter: flake8 verbose_output_project/",
+      "[12:30:28 AM] verbose_output_project/main.py - OK",
+      "[12:30:28 AM] verbose_output_project/__init__.py - OK",
+      "[12:30:29 AM] + Formatting with black: 2 files reformatted",
+      "[12:30:29 AM] + Building documentation: pdoc verbose_output_project/",
+      "[12:30:29 AM] + Documentation written to docs/index.html",
+      "[12:30:30 AM] + Staging changes: git add verbose_output_project/ test_main.py",
+      "[12:30:30 AM] + Committing: feat: add verbose output test project",
+      "[12:30:30 AM] + Push complete: branch l3/task-verbose-output-test",
+      "[12:30:31 AM] Task completed: verbose output test project created and committed",
+      "↓ scroll to resume"
+    ]
+  }
+}

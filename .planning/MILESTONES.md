@@ -1,5 +1,23 @@
 # Milestones
 
+## v2.1 Programmatic Integration & Real-Time Streaming (Shipped: 2026-03-08)
+
+**Phases:** 68-82 (15 phases) | **Plans:** 24 executed | **Timeline:** 5 days (2026-03-04 → 2026-03-08)
+**Requirements:** 21/21 satisfied | **Files changed:** ~872 | **LOC:** ~88,500 (Python + TypeScript)
+
+**Key accomplishments:**
+- Live event bridge — Unix socket server auto-starts with orchestration; all event types flow from Python event_bus through bridge to dashboard SSE in real-time
+- Gateway-only dispatch — `execFileSync` fallback removed; all L1→L2 directives route exclusively through gateway HTTP API; bootstrap mode added for setup CLI commands
+- Unified AgentRegistry — single source of truth merging openclaw.json + per-agent config.json with auto-discovery and startup drift detection
+- Terminal streaming dashboard — clickable task board opens live L3 output panel with auto-scroll, pause-on-scroll-up, resume-on-scroll-to-bottom behavior
+- Pipeline timeline & unified metrics — `/api/metrics` consolidates Python + dashboard metrics; PipelineStrip shows L1→L2→L3 segments with timestamps and durations
+- Full INTG-01 live E2E verified — directive dispatch → task appears in board → live output streams → metrics update → event order confirmed via Playwright MCP
+- Nyquist compliance — all 15 phases have VALIDATION.md with `nyquist_compliant: true`; 21/21 requirements traced to verified phases
+
+**Git range:** `feat(69-01)` → `feat(81-01)` | **Audit:** 21/21 requirements | 12/12 phases | 22/22 integration checks
+
+---
+
 ## v2.0 Structural Intelligence (Shipped: 2026-03-04)
 
 **Phases:** 61-67 | **Plans:** 17 executed | **Timeline:** 15 days (2026-02-17 → 2026-03-04)
