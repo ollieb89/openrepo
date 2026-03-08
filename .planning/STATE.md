@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Programmatic Integration & Real-Time Streaming
 status: completed
-stopped_at: Phase 81 context gathered
-last_updated: "2026-03-08T01:14:08.206Z"
+stopped_at: Completed 81-alert-metrics-accuracy/81-01-PLAN.md
+last_updated: "2026-03-08T01:39:58.003Z"
 last_activity: 2026-03-05 — Phase 75 Plan 02 complete, 125/127 TS tests pass (10 new pipeline tests), 9 files modified
 progress:
   total_phases: 15
-  completed_phases: 12
-  total_plans: 21
-  completed_plans: 21
+  completed_phases: 13
+  total_plans: 22
+  completed_plans: 22
   percent: 100
 ---
 
@@ -96,6 +96,7 @@ v2.1 decisions:
 - [Phase 80-nyquist-compliance-tech-debt-cleanup]: Retroactive VALIDATION.md uses attestation format (evidence tables from VERIFICATION.md) not pre-execution planning template
 - [Phase 80-nyquist-compliance-tech-debt-cleanup]: collect_metrics() removed — dead code with deadlock risk; collect_metrics_from_state() is sole production API
 - [Phase 80-nyquist-compliance-tech-debt-cleanup]: environment/page.tsx socket path label confirmed correct — matches route.ts; no code change needed
+- [Phase 81-alert-metrics-accuracy]: [Phase 81-alert-metrics-accuracy]: project_id uses Optional[str]=None on AutonomyEvent; _task_project_map threads it through hooks.py; dual emit (escalation_triggered + autonomy.escalation) for bridge routing; collect_metrics_from_state accepts project_id with default empty string for backward compat
 
 ### Pending Todos
 
@@ -109,6 +110,6 @@ None. Previously blocking issues resolved in Phase 68 Plan 01:
 
 ## Session Continuity
 
-Last session: 2026-03-08T01:14:08.201Z
-Stopped at: Phase 81 context gathered
-Resume file: .planning/phases/81-alert-metrics-accuracy/81-CONTEXT.md
+Last session: 2026-03-08T01:39:57.998Z
+Stopped at: Completed 81-alert-metrics-accuracy/81-01-PLAN.md
+Resume file: None
