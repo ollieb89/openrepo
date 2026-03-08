@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from .config import get_state_path
+from .config import get_state_path, DEFAULT_POOL_MAX_CONCURRENT
 from .project_config import get_pool_config
 from .logging import get_logger
 
@@ -26,7 +26,7 @@ _SNAPSHOT_THROTTLE_S: float = 0.75
 # ---------------------------------------------------------------------------
 
 
-def collect_metrics_from_state(state_dict: Dict[str, Any]) -> Dict[str, Any]:
+def collect_metrics_from_state(state_dict: Dict[str, Any], project_id: str = "") -> Dict[str, Any]:
     """Compute orchestration metrics from a pre-loaded state dict.
 
     This is a pure function that receives state as a parameter — it never
@@ -35,6 +35,9 @@ def collect_metrics_from_state(state_dict: Dict[str, Any]) -> Dict[str, Any]:
 
     Args:
         state_dict: The full workspace-state dict (already loaded from disk).
+        project_id: Optional project identifier. When provided, reads max_concurrent
+                    from the project's l3_overrides config via get_pool_config().
+                    Defaults to "" (returns DEFAULT_POOL_MAX_CONCURRENT).
 
     Returns:
         Dict with tasks, pool, memory, autonomy sections — same shape as collect_metrics().
@@ -48,6 +51,9 @@ def collect_metrics_from_state(state_dict: Dict[str, Any]) -> Dict[str, Any]:
     completed = sum(1 for t in task_values if t.get("status") == "completed")
     failed = sum(1 for t in task_values if t.get("status") == "failed")
 
+    pool_cfg = get_pool_config(project_id) if project_id else {}
+    max_concurrent = pool_cfg.get("max_concurrent", DEFAULT_POOL_MAX_CONCURRENT)
+
     return {
         "tasks": {
             "total": total,
@@ -58,7 +64,7 @@ def collect_metrics_from_state(state_dict: Dict[str, Any]) -> Dict[str, Any]:
         },
         "pool": {
             "active_containers": in_progress,
-            "max_concurrent": 3,  # default; project-level config not available here
+            "max_concurrent": max_concurrent,
         },
         "memory": {
             "healthy": True,
@@ -112,7 +118,7 @@ def write_python_metrics_snapshot(
         snapshot_path = state_file.parent / "python-metrics.json"
 
         # Compute metrics from the pre-loaded state dict (no lock re-entry)
-        python_metrics = collect_metrics_from_state(state_dict)
+        python_metrics = collect_metrics_from_state(state_dict, project_id)
 
         try:
             source_state_mtime = state_file.stat().st_mtime

@@ -232,11 +232,16 @@ def test_collect_metrics_returns_project_max_concurrent(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """collect_metrics_from_state with project_id reads max_concurrent from project config."""
-    # Create a project.json with l3_overrides.max_concurrent=5
+    # Create a project.json with required fields + l3_overrides.max_concurrent=5
     project_dir = tmp_path / "projects" / "testproj"
     project_dir.mkdir(parents=True)
+    import json as _json
     (project_dir / "project.json").write_text(
-        '{"l3_overrides": {"max_concurrent": 5}}'
+        _json.dumps({
+            "workspace": str(tmp_path / "workspace"),
+            "tech_stack": {"backend": "python"},
+            "l3_overrides": {"max_concurrent": 5},
+        })
     )
 
     monkeypatch.setenv("OPENCLAW_ROOT", str(tmp_path))
