@@ -10,7 +10,7 @@
 - ✅ **v1.5 Config Consolidation** — Phases 45-53 (shipped 2026-02-25)
 - ✅ **v1.6 Agent Autonomy** — Phases 54-60 (shipped 2026-02-26)
 - ✅ **v2.0 Structural Intelligence** — Phases 61-67 (shipped 2026-03-04)
-- 🔄 **v2.1 Programmatic Integration & Real-Time Streaming** — Phases 68-80 (gap closure in progress)
+- 🔄 **v2.1 Programmatic Integration & Real-Time Streaming** — Phases 68-82 (gap closure in progress)
 
 ---
 
@@ -36,7 +36,7 @@
 
 ---
 
-### 🔄 v2.1 Programmatic Integration & Real-Time Streaming (Gap Closure In Progress)
+### 🔄 v2.1 Programmatic Integration & Real-Time Streaming (Tech Debt Closure In Progress)
 
 **Milestone Goal:** Replace CLI-level coupling with programmatic APIs, activate existing event infrastructure, and deliver live L3 output streaming to the dashboard.
 
@@ -55,6 +55,8 @@
 - [x] **Phase 78: Verification Documentation Closure** - Write missing VERIFICATION.md files for phases 74, 76, 77 (automated portion) (completed 2026-03-06)
 - [x] **Phase 79: INTG-01 Live E2E Execution** - Execute 4 deferred live INTG-01 success criteria with full system running (completed 2026-03-07)
 - [x] **Phase 80: Nyquist Compliance + Tech Debt Cleanup** - Write missing VALIDATION.md for phases 69-73, 76-77; remove dead code; fix cosmetic issues (completed 2026-03-08)
+- [ ] **Phase 81: Alert & Metrics Accuracy** - Fix autonomy alert project_id scoping (GAP-03) and metrics.py hardcoded max_concurrent (GAP-04)
+- [ ] **Phase 82: Nyquist v2.1 Completion** - Run /gsd:validate-phase for phases 74, 75, 78, 79, 80 to flip nyquist_compliant: true
 
 ## Phase Details
 
@@ -236,6 +238,34 @@ Plans:
 Plans:
 - [ ] 80-01-PLAN.md — Write VALIDATION.md for phases 69-73, 76-77; remove dead code; verify socket label (tech debt)
 
+### Phase 81: Alert & Metrics Accuracy
+**Goal**: Autonomy escalation alerts are visible in the per-project alert feed and the metrics endpoint reports the correct per-project `max_concurrent` value
+**Depends on**: Phase 80
+**Requirements**: (no new requirements — closes integration gaps GAP-03, GAP-04)
+**Gap Closure**: Closes GAP-03 and GAP-04 from v2.1 audit integration checker
+**Success Criteria** (what must be TRUE):
+  1. `AutonomyEventBus` includes a real `project_id` in emitted events — `autonomy.escalation` and `autonomy.state_changed` events are no longer silently dropped by `useAlerts.ts`
+  2. Triggering an autonomy state change causes an alert to appear in the dashboard per-project alert feed
+  3. `GET /api/metrics` returns `max_concurrent` matching the project's `l3_overrides.max_concurrent` config (or global default when not overridden) — not always `3`
+**Plans**: 1 plan
+Plans:
+- [ ] 81-01-PLAN.md — Fix AutonomyEventBus project_id scoping and metrics.py max_concurrent config read (GAP-03, GAP-04)
+
+### Phase 82: Nyquist v2.1 Completion
+**Goal**: All v2.1 phases have nyquist_compliant: true in their VALIDATION.md — the milestone is fully Nyquist-attested
+**Depends on**: Phase 81
+**Requirements**: (no new requirements — closes Nyquist gaps from v2.1 audit)
+**Gap Closure**: Closes partial/missing VALIDATION.md for phases 74, 75, 78, 79, 80
+**Success Criteria** (what must be TRUE):
+  1. Phase 74 VALIDATION.md exists with `nyquist_compliant: true`
+  2. Phase 75 VALIDATION.md exists with `nyquist_compliant: true`
+  3. Phase 78 VALIDATION.md exists with `nyquist_compliant: true`
+  4. Phase 79 VALIDATION.md exists with `nyquist_compliant: true`
+  5. Phase 80 VALIDATION.md exists with `nyquist_compliant: true`
+**Plans**: 1 plan
+Plans:
+- [ ] 82-01-PLAN.md — Run /gsd:validate-phase for phases 74, 75, 78, 79, 80 (Nyquist gap closure)
+
 ---
 
 ## Progress
@@ -263,7 +293,9 @@ Plans:
 | 78. Verification Documentation Closure | 2/2 | Complete    | 2026-03-06 | - |
 | 79. INTG-01 Live E2E Execution | 6/6 | Complete    | 2026-03-07 | - |
 | 80. Nyquist Compliance + Tech Debt Cleanup | 1/1 | Complete    | 2026-03-08 | - |
+| 81. Alert & Metrics Accuracy | v2.1 | 0/1 | Pending | - |
+| 82. Nyquist v2.1 Completion | v2.1 | 0/1 | Pending | - |
 
 ---
 *Roadmap created: 2026-02-17*
-*Last updated: 2026-03-08 — Phase 79 Plan 06 complete (6/6 plans); 79-VERIFICATION.md score 9/9; C1/C3/DASH-03 gaps closed; LogViewer.tsx /api/events fix*
+*Last updated: 2026-03-08 — Phases 81-82 added via /gsd:plan-milestone-gaps; closes GAP-03, GAP-04 (alert/metrics accuracy) and Nyquist validation gaps for phases 74, 75, 78, 79, 80*
