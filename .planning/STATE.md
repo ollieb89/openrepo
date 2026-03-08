@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Programmatic Integration & Real-Time Streaming
 status: completed
-stopped_at: Completed 79-06-PLAN.md — C1/C3/DASH-03 gaps closed, 79-VERIFICATION.md 9/9, LogViewer fix
-last_updated: "2026-03-07T23:38:21.502Z"
+stopped_at: Completed 80-01-PLAN.md
+last_updated: "2026-03-08T00:18:27.881Z"
 last_activity: 2026-03-05 — Phase 75 Plan 02 complete, 125/127 TS tests pass (10 new pipeline tests), 9 files modified
 progress:
   total_phases: 13
-  completed_phases: 11
-  total_plans: 20
-  completed_plans: 20
+  completed_phases: 12
+  total_plans: 21
+  completed_plans: 21
   percent: 100
 ---
 
@@ -93,6 +93,9 @@ v2.1 decisions:
 - [Phase 79-05]: DASH-03 scroll indicator requires sufficient terminal output lines for panel overflow — 7 lines insufficient; implementation confirmed correct via code review
 - [Phase 79-intg01-live-e2e-execution]: C1 SSE latency: DOM evidence (task visible without page reload) accepted as criterion proof when injected EventSource cannot authenticate
 - [Phase 79-intg01-live-e2e-execution]: LogViewer.tsx /api/events -> /occc/api/events: same basePath fix as useEvents.ts — Rule 1 auto-fix required for DASH-03 behavioral demonstration
+- [Phase 80-nyquist-compliance-tech-debt-cleanup]: Retroactive VALIDATION.md uses attestation format (evidence tables from VERIFICATION.md) not pre-execution planning template
+- [Phase 80-nyquist-compliance-tech-debt-cleanup]: collect_metrics() removed — dead code with deadlock risk; collect_metrics_from_state() is sole production API
+- [Phase 80-nyquist-compliance-tech-debt-cleanup]: environment/page.tsx socket path label confirmed correct — matches route.ts; no code change needed
 
 ### Pending Todos
 
@@ -106,6 +109,6 @@ None. Previously blocking issues resolved in Phase 68 Plan 01:
 
 ## Session Continuity
 
-Last session: 2026-03-07T23:34:52.737Z
-Stopped at: Completed 79-06-PLAN.md — C1/C3/DASH-03 gaps closed, 79-VERIFICATION.md 9/9, LogViewer fix
+Last session: 2026-03-08T00:18:27.875Z
+Stopped at: Completed 80-01-PLAN.md
 Resume file: None
