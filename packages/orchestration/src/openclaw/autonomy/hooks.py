@@ -35,6 +35,9 @@ _context_store: Dict[str, AutonomyContext] = {}
 # Track state machines per task
 _state_machines: Dict[str, StateMachine] = {}
 
+# Track project_id per task (for event envelope population)
+_task_project_map: Dict[str, str] = {}
+
 
 def on_task_spawn(task_id: str, task_spec: Dict[str, Any]) -> AutonomyContext:
     """
@@ -67,14 +70,19 @@ def on_task_spawn(task_id: str, task_spec: Dict[str, Any]) -> AutonomyContext:
     
     # Store context
     _context_store[task_id] = context
-    
+
+    # Store project_id for this task (used by all subsequent emits)
+    _task_project_map[task_id] = task_spec.get("project_id", "")
+
     # Create state machine for this task
     max_retries = task_spec.get("max_retries", 1)
     _state_machines[task_id] = StateMachine(context, max_retries=max_retries)
-    
+
     # Emit state change event (initial state)
+    project_id = _task_project_map[task_id]
     AutonomyEventBus.emit(AutonomyStateChanged(
         task_id=task_id,
+        project_id=project_id or None,
         old_state="",
         new_state=AutonomyState.PLANNING.value,
         reason="Task spawned, entering planning phase",
@@ -153,13 +161,15 @@ def on_container_healthy(task_id: str) -> None:
     )
     
     # Emit state change event
+    project_id = _task_project_map.get(task_id, "") or None
     AutonomyEventBus.emit(AutonomyStateChanged(
         task_id=task_id,
+        project_id=project_id,
         old_state=old_state,
         new_state=AutonomyState.EXECUTING.value,
         reason="Container healthy, beginning execution",
     ))
-    
+
     logger.info(f"Task {task_id} transitioned to EXECUTING state")
 
 
@@ -199,13 +209,15 @@ def on_task_complete(task_id: str, result: Dict[str, Any]) -> None:
     )
     
     # Emit state change event
+    project_id = _task_project_map.get(task_id, "") or None
     AutonomyEventBus.emit(AutonomyStateChanged(
         task_id=task_id,
+        project_id=project_id,
         old_state=old_state,
         new_state=AutonomyState.COMPLETE.value,
         reason="Task completed successfully",
     ))
-    
+
     logger.info(f"Task {task_id} completed with state COMPLETE")
 
 
@@ -235,25 +247,29 @@ def on_task_failed(task_id: str, error: str) -> None:
         raise ValueError(f"No state machine found for task {task_id}")
     
     old_state = context.state.value
-    
+
+    # Get project_id for this task (for event envelope population)
+    project_id = _task_project_map.get(task_id, "") or None
+
     # Always transition to BLOCKED on failure
     state_machine.transition(
         AutonomyState.BLOCKED,
         reason=f"Task failed: {error}"
     )
-    
+
     # Emit state change event for BLOCKED
     AutonomyEventBus.emit(AutonomyStateChanged(
         task_id=task_id,
+        project_id=project_id,
         old_state=old_state,
         new_state=AutonomyState.BLOCKED.value,
         reason=f"Task failed, entering blocked state: {error}",
     ))
-    
+
     # Let the state machine handle retry vs escalation
     # It will transition to either EXECUTING or ESCALATING
     state_machine.handle_blocked(reason=error)
-    
+
     # Check what state we ended up in
     new_state = context.state
     if new_state == AutonomyState.EXECUTING:
@@ -261,15 +277,17 @@ def on_task_failed(task_id: str, error: str) -> None:
         # Emit state change event for retry
         AutonomyEventBus.emit(AutonomyStateChanged(
             task_id=task_id,
+            project_id=project_id,
             old_state=AutonomyState.BLOCKED.value,
             new_state=AutonomyState.EXECUTING.value,
             reason=f"Retry attempt {context.retry_count}: {error}",
         ))
-        
+
         # Emit retry attempted event
         from .events import AutonomyRetryAttempted
         AutonomyEventBus.emit(AutonomyRetryAttempted(
             task_id=task_id,
+            project_id=project_id,
             attempt_number=context.retry_count,
             max_retries=state_machine.max_retries,
             reason=error,
@@ -279,18 +297,32 @@ def on_task_failed(task_id: str, error: str) -> None:
         # Emit state change event for escalation
         AutonomyEventBus.emit(AutonomyStateChanged(
             task_id=task_id,
+            project_id=project_id,
             old_state=AutonomyState.BLOCKED.value,
             new_state=AutonomyState.ESCALATING.value,
             reason=f"Max retries exceeded, escalating: {error}",
         ))
-        
-        # Emit escalation triggered event
+
+        # Emit escalation triggered event (autonomy.escalation_triggered)
         from .events import AutonomyEscalationTriggered
         AutonomyEventBus.emit(AutonomyEscalationTriggered(
             task_id=task_id,
+            project_id=project_id,
             reason=error,
             confidence=context.confidence_score,
         ))
+
+        # Additionally emit a direct "autonomy.escalation" event so the bridge
+        # (subscribed to EventType.AUTONOMY_ESCALATION) forwards it to the dashboard SSE stream.
+        import time as _time
+        import openclaw.event_bus as _direct_bus
+        _direct_bus.emit({
+            "event_type": "autonomy.escalation",
+            "project_id": project_id,
+            "task_id": task_id,
+            "timestamp": _time.time(),
+            "payload": {"reason": error, "confidence": context.confidence_score},
+        })
 
 
 def on_task_removed(task_id: str, archive: bool = True) -> Optional[AutonomyContext]:
@@ -312,6 +344,7 @@ def on_task_removed(task_id: str, archive: bool = True) -> Optional[AutonomyCont
     """
     context = _context_store.pop(task_id, None)
     _state_machines.pop(task_id, None)
+    _task_project_map.pop(task_id, None)
     
     if context and archive:
         # Archive to memU via AutonomyMemoryStore
@@ -361,9 +394,11 @@ def update_confidence(task_id: str, score: float, factors: Dict[str, float]) -> 
     context.update_timestamp()
     
     # Emit event (debounced)
+    project_id = _task_project_map.get(task_id, "") or None
     from .events import AutonomyConfidenceUpdated
     AutonomyEventBus.emit(AutonomyConfidenceUpdated(
         task_id=task_id,
+        project_id=project_id,
         score=score,
         factors=factors,
     ))

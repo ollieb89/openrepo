@@ -30,28 +30,31 @@ from datetime import datetime
 class AutonomyEvent(ABC):
     """
     Base class for all autonomy events.
-    
+
     All autonomy events must have:
     - event_type: String identifier for the event type
     - task_id: The task this event relates to
     - timestamp: Unix timestamp of when the event occurred
+    - project_id: Optional project identifier for dashboard routing
     - payload: Event-specific data as a dictionary
     """
     task_id: str
     timestamp: float = field(default_factory=time.time)
+    project_id: Optional[str] = None
     event_type: str = field(default="autonomy.base", init=False)
-    
+
     @abstractmethod
     def to_payload(self) -> Dict[str, Any]:
         """Convert event-specific data to a dictionary payload."""
         pass
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert full event to dictionary for serialization."""
         return {
             "event_type": self.event_type,
             "task_id": self.task_id,
             "timestamp": self.timestamp,
+            "project_id": self.project_id,
             "payload": self.to_payload(),
         }
     
@@ -93,6 +96,7 @@ class AutonomyStateChanged(AutonomyEvent):
         return cls(
             task_id=data.get("task_id", ""),
             timestamp=data.get("timestamp", time.time()),
+            project_id=data.get("project_id"),
             old_state=payload.get("old_state", ""),
             new_state=payload.get("new_state", ""),
             reason=payload.get("reason", ""),
@@ -124,6 +128,7 @@ class AutonomyConfidenceUpdated(AutonomyEvent):
         return cls(
             task_id=data.get("task_id", ""),
             timestamp=data.get("timestamp", time.time()),
+            project_id=data.get("project_id"),
             score=payload.get("score", 0.0),
             factors=payload.get("factors", {}),
         )
@@ -154,6 +159,7 @@ class AutonomyEscalationTriggered(AutonomyEvent):
         return cls(
             task_id=data.get("task_id", ""),
             timestamp=data.get("timestamp", time.time()),
+            project_id=data.get("project_id"),
             reason=payload.get("reason", ""),
             confidence=payload.get("confidence", 0.0),
         )
@@ -187,6 +193,7 @@ class AutonomyRetryAttempted(AutonomyEvent):
         return cls(
             task_id=data.get("task_id", ""),
             timestamp=data.get("timestamp", time.time()),
+            project_id=data.get("project_id"),
             attempt_number=payload.get("attempt_number", 1),
             max_retries=payload.get("max_retries", 1),
             reason=payload.get("reason", ""),
@@ -215,6 +222,7 @@ class AutonomyPlanGenerated(AutonomyEvent):
         return cls(
             task_id=data.get("task_id", ""),
             timestamp=data.get("timestamp", time.time()),
+            project_id=data.get("project_id"),
             plan=payload.get("plan", {}),
         )
 
@@ -253,6 +261,7 @@ class AutonomyProgressUpdated(AutonomyEvent):
         return cls(
             task_id=data.get("task_id", ""),
             timestamp=data.get("timestamp", time.time()),
+            project_id=data.get("project_id"),
             step_number=payload.get("step_number", 1),
             total_steps=payload.get("total_steps", 1),
             status=payload.get("status", "started"),
@@ -408,6 +417,7 @@ class AutonomyToolsSelected(AutonomyEvent):
         return cls(
             task_id=data.get("task_id", ""),
             timestamp=data.get("timestamp", time.time()),
+            project_id=data.get("project_id"),
             selected_tools=payload.get("selected_tools", []),
         )
 
@@ -430,6 +440,7 @@ class AutonomyCourseCorrection(AutonomyEvent):
         return cls(
             task_id=data.get("task_id", ""),
             timestamp=data.get("timestamp", time.time()),
+            project_id=data.get("project_id"),
             failed_step=payload.get("failed_step", {}),
             recovery_steps=payload.get("recovery_steps", []),
         )
